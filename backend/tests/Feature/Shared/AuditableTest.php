@@ -24,6 +24,7 @@ beforeEach(function (): void {
         $table->string('phone')->nullable();
         $table->string('secret')->nullable();
         $table->text('iban')->nullable();
+        $table->text('notes')->nullable();
         $table->unsignedInteger('views')->default(0);
         $table->timestamps();
         $table->softDeletes();
@@ -42,7 +43,7 @@ function journalDe(Contract $contrat): array
 it('journalise la création avec les valeurs, masque cachés, chiffrés et masqués, ignore les exclus', function (): void {
     $contrat = Contract::query()->create([
         'organization_id' => ORGANISATION_CONTRAT, 'title' => 'Bail A', 'phone' => '0601020304',
-        'secret' => 's3cr3t', 'iban' => 'FR7630006000011234567890189', 'views' => 3,
+        'secret' => 's3cr3t', 'iban' => 'FR7630006000011234567890189', 'notes' => ['code' => 'porte-1234'], 'views' => 3,
     ]);
 
     [$entree] = journalDe($contrat);
@@ -53,6 +54,7 @@ it('journalise la création avec les valeurs, masque cachés, chiffrés et masqu
         ->and($entree->changes['phone'])->toBe(['old' => null, 'new' => RecordModelChange::MASQUE])
         ->and($entree->changes['secret'])->toBe(['old' => null, 'new' => RecordModelChange::MASQUE])
         ->and($entree->changes['iban'])->toBe(['old' => null, 'new' => RecordModelChange::MASQUE])
+        ->and($entree->changes['notes'])->toBe(['old' => null, 'new' => RecordModelChange::MASQUE])
         ->and($entree->changes)->not->toHaveKeys(['id', 'views', 'created_at', 'updated_at']);
 
     expect(json_encode(DB::table('audit_logs')->get()))->not->toContain('0601020304')->not->toContain('FR7630006000011234567890189')->not->toContain('s3cr3t');

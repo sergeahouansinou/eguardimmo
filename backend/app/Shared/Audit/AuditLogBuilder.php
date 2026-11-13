@@ -36,8 +36,8 @@ final class AuditLogBuilder extends Builder
     public function occurredBetween(?DateTimeInterface $debut, ?DateTimeInterface $finExclue): self
     {
         return $this
-            ->when($debut !== null, fn (self $q): self => $q->where('occurred_at', '>=', $debut))
-            ->when($finExclue !== null, fn (self $q): self => $q->where('occurred_at', '<', $finExclue));
+            ->when($debut !== null, fn (self $q): self => $q->where('occurred_at', '>=', $debut?->format(PreciseTimestamp::FORMAT)))
+            ->when($finExclue !== null, fn (self $q): self => $q->where('occurred_at', '<', $finExclue?->format(PreciseTimestamp::FORMAT)));
     }
 
     public function newestFirst(): self

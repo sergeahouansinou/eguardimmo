@@ -84,7 +84,7 @@ final readonly class RecordModelChange
      */
     private function chiffres(Model $modele): array
     {
-        return array_keys(array_filter($modele->getCasts(), fn (string $cast): bool => str_starts_with($cast, 'encrypted')));
+        return array_keys(array_filter($modele->getCasts(), fn (string $cast): bool => str_contains(strtolower($cast), 'encrypted')));
     }
 
     /**

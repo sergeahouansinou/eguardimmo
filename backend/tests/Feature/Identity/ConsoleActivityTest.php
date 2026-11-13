@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Identity\Models\User;
 use App\Shared\Audit\AuditLog;
 use App\Shared\Audit\RecordAudit;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Notification;
 
 beforeEach(function (): void {
@@ -121,3 +122,26 @@ it('journalise chaque consultation de la console', function (): void {
     expect(AuditLog::query()->where('action', 'console.activity.listed')->where('actor_user_id', $this->operateur->id)->sole()->metadata)->toBe(['action' => 'x.'])
         ->and(AuditLog::query()->where('action', 'console.activity.viewed')->sole()->metadata)->toBe(['audit_log_id' => $entree->id]);
 });
+
+it('pagine sans perte quand plusieurs entrées tombent dans la même seconde', function (): void {
+    foreach (['100', '200', '300'] as $n => $micro) {
+        $this->travelTo(CarbonImmutable::parse('2026-11-14 10:00:00.000'.$micro));
+        app(RecordAudit::class)->handle('meme.'.($n + 1));
+    }
+
+    $premiere = consulter($this, '?action=meme.&per_page=2')->assertJsonPath('data.*.action', ['meme.3', 'meme.2']);
+
+    consulter($this, '?action=meme.&per_page=2&cursor='.$premiere->json('meta.next_cursor'))
+        ->assertJsonPath('data.*.action', ['meme.1']);
+});
+
+it('rejette un curseur forgé en 422, jamais en 500', function (string $curseur): void {
+    consulter($this, '?cursor='.urlencode($curseur))->assertUnprocessable()->assertJsonValidationErrors('cursor');
+})->with([
+    'illisible' => ['abc'],
+    'sans colonnes' => [base64_encode('{"_pointsToNextItems":true}')],
+    'valeurs nulles' => [base64_encode('{"occurred_at":null,"id":null,"_pointsToNextItems":true}')],
+    'id non uuid' => [base64_encode('{"occurred_at":"2026-11-14 10:00:00","id":"1\' or 1=1","_pointsToNextItems":true}')],
+    'colonne en trop' => [base64_encode('{"occurred_at":"2026-11-14 10:00:00","id":"01934f6e-0000-7000-8000-000000000001","action":"x","_pointsToNextItems":true}')],
+    'date invalide' => [base64_encode('{"occurred_at":"pas une date","id":"01934f6e-0000-7000-8000-000000000001","_pointsToNextItems":true}')],
+]);

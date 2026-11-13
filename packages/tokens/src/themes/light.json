@@ -159,6 +159,26 @@
       "text": {
         "$value": "{palette.gris.50}"
       }
+    },
+    "chart": {
+      "called": {
+        "$value": "{palette.gris.400}"
+      },
+      "collected": {
+        "$value": "{palette.petrole.500}"
+      },
+      "due": {
+        "$value": "{palette.danger.600}"
+      },
+      "grid": {
+        "$value": "{palette.gris.200}"
+      },
+      "highlight": {
+        "$value": {
+          "color": "{palette.petrole.900}",
+          "alpha": 0.05
+        }
+      }
     }
   }
 }

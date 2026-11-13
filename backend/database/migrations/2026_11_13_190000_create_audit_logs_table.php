@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -31,10 +32,43 @@ return new class extends Migration
             $table->index(['organization_id', 'occurred_at']);
             $table->index(['subject_type', 'subject_id', 'occurred_at']);
         });
+
+        foreach ($this->verrous() as $instruction) {
+            DB::unprepared($instruction);
+        }
     }
 
     public function down(): void
     {
+        if (DB::getDriverName() === 'pgsql') {
+            DB::unprepared('DROP FUNCTION IF EXISTS audit_logs_ajout_seul() CASCADE');
+        }
+
         Schema::dropIfExists('audit_logs');
+    }
+
+    /**
+     * @return list<literal-string>
+     */
+    private function verrous(): array
+    {
+        $message = 'audit_logs est en ajout seul';
+
+        return match (DB::getDriverName()) {
+            'pgsql' => [
+                "CREATE FUNCTION audit_logs_ajout_seul() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION '{$message}'; END $$",
+                'CREATE TRIGGER audit_logs_sans_modification BEFORE UPDATE OR DELETE ON audit_logs FOR EACH ROW EXECUTE FUNCTION audit_logs_ajout_seul()',
+                'CREATE TRIGGER audit_logs_sans_vidage BEFORE TRUNCATE ON audit_logs FOR EACH STATEMENT EXECUTE FUNCTION audit_logs_ajout_seul()',
+            ],
+            'sqlite' => [
+                "CREATE TRIGGER audit_logs_sans_modification BEFORE UPDATE ON audit_logs BEGIN SELECT RAISE(ABORT, '{$message}'); END",
+                "CREATE TRIGGER audit_logs_sans_suppression BEFORE DELETE ON audit_logs BEGIN SELECT RAISE(ABORT, '{$message}'); END",
+            ],
+            'mysql', 'mariadb' => [
+                "CREATE TRIGGER audit_logs_sans_modification BEFORE UPDATE ON audit_logs FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = '{$message}'",
+                "CREATE TRIGGER audit_logs_sans_suppression BEFORE DELETE ON audit_logs FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = '{$message}'",
+            ],
+            default => throw new RuntimeException('Pilote de base sans verrou du journal d\'audit : '.DB::getDriverName()),
+        };
     }
 };

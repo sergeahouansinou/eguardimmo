@@ -39,7 +39,7 @@ final class AuditLog extends Model
     protected $guarded = ['id'];
 
     protected $casts = [
-        'occurred_at' => 'immutable_datetime',
+        'occurred_at' => PreciseTimestamp::class,
         'changes' => 'array',
         'metadata' => 'array',
     ];

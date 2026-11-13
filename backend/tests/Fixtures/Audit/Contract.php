@@ -6,6 +6,7 @@ namespace Tests\Fixtures\Audit;
 
 use App\Shared\Audit\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Casts\AsEncryptedArrayObject;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -19,7 +20,7 @@ final class Contract extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['iban' => 'encrypted'];
+    protected $casts = ['iban' => 'encrypted', 'notes' => AsEncryptedArrayObject::class];
 
     /**
      * @return list<string>

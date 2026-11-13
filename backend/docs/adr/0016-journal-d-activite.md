@@ -33,8 +33,8 @@ Le journal d'audit sert aux événements de sécurité et à l'historique des en
 ### Deux façons d'écrire, aucune à réécrire
 
 1. **Automatique** : un modèle qui utilise le trait `App\Shared\Audit\Auditable` journalise ses créations, modifications, suppressions et restaurations, avec le différentiel des attributs.
-   - L'écriture a lieu dans la transaction de l'opération : si elle est annulée, la ligne de journal l'est aussi.
-   - Exclus d'office : horodatages, attributs `#[Hidden]` ou chiffrés (`encrypted`). Ils sont notés comme modifiés, avec la valeur `[masqué]`.
+   - L'écriture a lieu dans la transaction de l'opération : si elle est annulée, la ligne de journal l'est aussi. Hors transaction, une modification pourrait rester sans sa ligne de journal : une Action qui écrit un modèle `Auditable` ouvre donc toujours une transaction.
+   - Exclus d'office : horodatages, attributs `#[Hidden]` ou chiffrés (`encrypted*`, `AsEncrypted*`). Ils sont notés comme modifiés, avec la valeur `[masqué]`.
    - Le modèle peut ajouter ses propres exclusions (`auditExcluded()`) et ses attributs masqués (`auditMasked()` : téléphone, IBAN, pièce d'identité).
    - Une modification qui ne touche que des attributs exclus n'est pas journalisée.
 2. **Explicite** : `RecordAudit::handle($action, subject: $modele, metadata: […])` pour un événement métier ou de sécurité qui n'est pas une écriture de modèle (connexion, signature, export, consultation sensible).
@@ -54,6 +54,8 @@ Règles pour les modules :
 ### Immutabilité
 
 - Le modèle interdit modification et suppression. Le query builder du modèle interdit `update` et `delete`.
+- La base l'impose aussi, quel que soit le chemin (`DB::table`, `toBase()`, `increment`, `truncate`) : déclencheurs `BEFORE UPDATE OR DELETE` et `BEFORE TRUNCATE` sous PostgreSQL, équivalents sous SQLite et MySQL, posés par la migration de la table.
+- Les chaînes venues du client (user-agent, métadonnées, différentiel) sont ramenées en UTF-8 valide avant écriture : une ligne invalide ne pourrait plus être lue ni retirée.
 - En production, le compte SQL de l'application n'a que `INSERT` et `SELECT` sur `audit_logs`. C'est une action d'exploitation.
 
 ## Options écartées

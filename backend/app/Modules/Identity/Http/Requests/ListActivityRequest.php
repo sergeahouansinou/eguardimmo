@@ -25,7 +25,7 @@ final class ListActivityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            ...$this->paginationRules(),
+            ...$this->paginationRules(['occurred_at' => 'date', 'id' => 'uuid']),
             'actor' => ['nullable', 'uuid'],
             'subject_type' => ['nullable', 'required_with:subject_id', Rule::in(array_keys(Relation::morphMap()))],
             'subject_id' => ['nullable', 'uuid'],

@@ -6,6 +6,7 @@ use App\Modules\Identity\Models\PersonalAccessToken;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Notifications\NewDeviceLoginNotification;
 use App\Modules\Identity\Security\TwoFactorChallenges;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 
 beforeEach(function (): void {
@@ -160,4 +161,15 @@ it('protège les routes appareils par authentification', function (): void {
     $this->deleteJson('/api/v1/me/devices/01934f6e-0000-7000-8000-000000000001')->assertUnauthorized();
     $this->deleteJson('/api/v1/me/devices/1')->assertNotFound();
     $this->deleteJson('/api/v1/auth/token')->assertUnauthorized();
+});
+
+it('écarte un jeton dont l\'identifiant n\'est pas un UUID sans interroger la base', function (string $jeton): void {
+    DB::enableQueryLog();
+
+    expect(PersonalAccessToken::findToken($jeton))->toBeNull()
+        ->and(DB::getQueryLog())->toBe([]);
+})->with(['abc|x', "1' or 1=1|x", '|x']);
+
+it('répond 401 à un jeton Bearer forgé', function (): void {
+    $this->withToken('abc|x')->getJson('/api/v1/me')->assertUnauthorized();
 });

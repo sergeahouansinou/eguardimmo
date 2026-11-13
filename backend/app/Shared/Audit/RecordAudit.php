@@ -43,12 +43,12 @@ final readonly class RecordAudit
             'organization_id' => $this->organisation($subject),
             'subject_type' => $subject?->getMorphClass(),
             'subject_id' => $subject !== null ? (string) $subject->getKey() : null,
-            'changes' => $changes,
-            'metadata' => $metadata,
+            'changes' => $changes === null ? null : self::utf8($changes),
+            'metadata' => self::utf8($metadata),
             'request_id' => $this->identifiantDeRequete(),
             'route' => $route instanceof Route ? $route->getName() : null,
             'ip' => $this->request->ip(),
-            'user_agent' => Str::limit((string) $this->request->userAgent(), self::USER_AGENT_MAX, '') ?: null,
+            'user_agent' => $this->userAgent(),
         ]);
     }
 
@@ -61,6 +61,31 @@ final readonly class RecordAudit
         }
 
         return hash_hmac('sha256', Str::lower(trim($email)), $cle);
+    }
+
+    /**
+     * @template T of array<array-key, mixed>
+     *
+     * @param  T  $valeurs
+     * @return T
+     */
+    private static function utf8(array $valeurs): array
+    {
+        array_walk_recursive($valeurs, function (mixed &$valeur): void {
+            if (is_string($valeur)) {
+                $valeur = mb_scrub($valeur, 'UTF-8');
+            }
+        });
+
+        return $valeurs;
+    }
+
+    private function userAgent(): ?string
+    {
+        $brut = mb_scrub((string) $this->request->userAgent(), 'UTF-8');
+        $lisible = (string) preg_replace('/[\x00-\x1F\x7F]/u', '', $brut);
+
+        return Str::limit($lisible, self::USER_AGENT_MAX, '') ?: null;
     }
 
     private function auteurCourant(): ?string

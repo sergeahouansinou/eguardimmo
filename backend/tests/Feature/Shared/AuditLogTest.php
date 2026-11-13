@@ -6,6 +6,9 @@ use App\Modules\Identity\Models\User;
 use App\Shared\Audit\AuditLog;
 use App\Shared\Audit\RecordAudit;
 use App\Shared\Tenancy\CurrentOrganization;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 const AUTEUR = '01934f6e-0000-7000-8000-0000000000aa';
@@ -91,4 +94,36 @@ it('refuse de journaliser un e-mail sans clé HMAC', function (): void {
     config(['audit.hmac_key' => '']);
 
     expect(fn () => app(RecordAudit::class)->fingerprint('jean@exemple.fr'))->toThrow(RuntimeException::class);
+});
+
+it('assainit un user-agent et des métadonnées en UTF-8 invalide sans perdre l\'entrée', function (): void {
+    $this->withHeader('User-Agent', "Mozilla\xff\xfe\xc3(\x07\x1b[31m")->get('/up');
+
+    app(RecordAudit::class)->handle('test.action', metadata: ['nom' => "abc\xff"], changes: ['titre' => ['old' => "x\xfe", 'new' => 'y']]);
+
+    $entree = AuditLog::query()->sole();
+    expect(mb_check_encoding((string) $entree->user_agent, 'UTF-8'))->toBeTrue()
+        ->and($entree->user_agent)->not->toMatch('/[\x00-\x1F\x7F]/')
+        ->and($entree->user_agent)->toStartWith('Mozilla')
+        ->and(mb_check_encoding((string) json_encode($entree->metadata), 'UTF-8'))->toBeTrue()
+        ->and($entree->changes['titre']['new'] ?? null)->toBe('y');
+});
+
+it('conserve les microsecondes de l\'horodatage', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-11-14 10:00:00.123456'));
+
+    app(RecordAudit::class)->handle('test.action');
+
+    expect(AuditLog::query()->sole()->occurred_at->format('u'))->toBe('123456');
+});
+
+it('refuse en base toute modification, suppression ou vidage hors de l\'application', function (): void {
+    app(RecordAudit::class)->handle('test.action');
+
+    expect(fn () => DB::table('audit_logs')->update(['action' => 'x']))->toThrow(QueryException::class)
+        ->and(fn () => DB::table('audit_logs')->delete())->toThrow(QueryException::class)
+        ->and(fn () => AuditLog::query()->toBase()->update(['action' => 'x']))->toThrow(QueryException::class)
+        ->and(fn () => DB::table('audit_logs')->increment('action'))->toThrow(QueryException::class)
+        ->and(fn () => DB::table('audit_logs')->truncate())->toThrow(QueryException::class)
+        ->and(DB::table('audit_logs')->where('action', 'test.action')->count())->toBe(1);
 });
