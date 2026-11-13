@@ -1,0 +1,62 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Providers;
+
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Middleware\TrustProxies;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
+
+/**
+ * Limitation de débit et proxies de confiance (docs/adr/0002).
+ */
+final class HttpSecurityServiceProvider extends ServiceProvider
+{
+    public const LIMITE_UTILISATEUR_PAR_MINUTE = 300;
+
+    public const LIMITE_ANONYME_PAR_MINUTE = 60;
+
+    public const LIMITE_AUTH_PAR_COMPTE_PAR_MINUTE = 5;
+
+    public const LIMITE_AUTH_PAR_IP_PAR_MINUTE = 20;
+
+    public function boot(): void
+    {
+        $this->configurerProxies();
+        $this->configurerLimites();
+    }
+
+    private function configurerProxies(): void
+    {
+        $proxies = config('app.trusted_proxies');
+
+        if (is_array($proxies) && $proxies !== []) {
+            TrustProxies::at(array_values(array_filter($proxies, is_string(...))));
+        }
+    }
+
+    private function configurerLimites(): void
+    {
+        // Le throttle du groupe api passe avant auth:sanctum : il faut résoudre l'utilisateur via le guard sanctum.
+        RateLimiter::for('api', function (Request $request): Limit {
+            $identifiant = $request->user('sanctum')?->getAuthIdentifier();
+
+            return is_int($identifiant) || is_string($identifiant)
+                ? Limit::perMinute(self::LIMITE_UTILISATEUR_PAR_MINUTE)->by('user:'.$identifiant)
+                : Limit::perMinute(self::LIMITE_ANONYME_PAR_MINUTE)->by('ip:'.$request->ip());
+        });
+
+        RateLimiter::for('auth', function (Request $request): array {
+            $email = Str::lower(trim((string) $request->string('email')));
+
+            return [
+                Limit::perMinute(self::LIMITE_AUTH_PAR_COMPTE_PAR_MINUTE)->by('auth-compte:'.$email.'|'.$request->ip()),
+                Limit::perMinute(self::LIMITE_AUTH_PAR_IP_PAR_MINUTE)->by('auth-ip:'.$request->ip()),
+            ];
+        });
+    }
+}

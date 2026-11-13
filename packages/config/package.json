@@ -1,0 +1,39 @@
+{
+  "name": "@eguardimmo/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/react-library.json": "./tsconfig/react-library.json",
+    "./tsconfig/nextjs.json": "./tsconfig/nextjs.json",
+    "./eslint": "./eslint/index.js",
+    "./eslint/base": "./eslint/base.js",
+    "./eslint/design-rules": "./eslint/design-rules.js",
+    "./next/security-headers": "./next/security-headers.js",
+    "./env/public": "./env/public.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "pnpm lint && pnpm typecheck && pnpm test"
+  },
+  "dependencies": {
+    "eslint-plugin-jsx-a11y": "catalog:",
+    "eslint-plugin-react-hooks": "catalog:",
+    "typescript-eslint": "catalog:",
+    "zod": "catalog:"
+  },
+  "peerDependencies": {
+    "eslint": "^9",
+    "typescript": "^5.9"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

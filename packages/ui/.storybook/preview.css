@@ -1,0 +1,7 @@
+@import '../src/styles.css';
+
+body {
+  background-color: var(--eg-bg-page);
+  color: var(--eg-text-default);
+  font-family: var(--eg-font-sans);
+}

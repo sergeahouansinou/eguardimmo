@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig/base.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "noEmit": true,
+    "types": ["node"],
+    "lib": ["es2023"]
+  },
+  "include": ["test/**/*.ts", "eslint/**/*.js", "next/**/*.js", "env/**/*.ts", "vitest.config.ts"]
+}

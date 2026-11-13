@@ -1,0 +1,13 @@
+node_modules
+dist
+storybook-static
+.next
+out
+coverage
+.turbo
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+.env*
+!.env.example
+*.pem

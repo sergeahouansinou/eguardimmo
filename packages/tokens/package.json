@@ -1,0 +1,28 @@
+{
+  "name": "@eguardimmo/tokens",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tokens.css": "./generated/tokens.css",
+    "./theme.css": "./generated/theme.css",
+    ".": "./generated/tokens.ts"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check:generated": "node scripts/build.mjs --check",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm check:generated"
+  },
+  "devDependencies": {
+    "@eguardimmo/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

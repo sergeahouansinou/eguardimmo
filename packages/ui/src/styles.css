@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+@import '@eguardimmo/tokens/tokens.css';
+@import '@eguardimmo/tokens/theme.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+
+@source './components';
