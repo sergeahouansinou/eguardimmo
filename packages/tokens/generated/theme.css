@@ -45,6 +45,11 @@
   --color-danger-solid-hover: var(--eg-danger-hover);
   --color-tooltip: var(--eg-tooltip-bg);
   --color-tooltip-fg: var(--eg-tooltip-text);
+  --color-chart-called: var(--eg-chart-called);
+  --color-chart-collected: var(--eg-chart-collected);
+  --color-chart-due: var(--eg-chart-due);
+  --color-chart-grid: var(--eg-chart-grid);
+  --color-chart-highlight: var(--eg-chart-highlight);
   --radius-*: initial;
   --radius-xs: var(--eg-radius-xs);
   --radius-sm: var(--eg-radius-sm);

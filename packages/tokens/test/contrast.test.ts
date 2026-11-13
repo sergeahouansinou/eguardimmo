@@ -60,6 +60,8 @@ describe.each(themes)('contraste WCAG (%s)', (theme) => {
     ['border.control', 'bg.page'],
     ['focus.ring', 'bg.surface'],
     ['focus.ring', 'bg.page'],
+    ['chart.collected', 'bg.surface'],
+    ['chart.due', 'bg.surface'],
   ])('%s sur %s ≥ 3:1 (WCAG 1.4.11)', (foreground, background) => {
     expect(ratio(theme, foreground, background)).toBeGreaterThanOrEqual(NON_TEXT_MIN);
   });

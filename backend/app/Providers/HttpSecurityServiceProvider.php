@@ -26,6 +26,8 @@ final class HttpSecurityServiceProvider extends ServiceProvider
 
     public const LIMITE_DEUX_FACTEURS_PAR_MINUTE = 5;
 
+    public const LIMITE_REAUTHENTIFICATION_PAR_MINUTE = 5;
+
     public function boot(): void
     {
         $this->configurerProxies();
@@ -59,6 +61,14 @@ final class HttpSecurityServiceProvider extends ServiceProvider
                 Limit::perMinute(self::LIMITE_AUTH_PAR_COMPTE_PAR_MINUTE)->by('auth-compte:'.$email.'|'.$request->ip()),
                 Limit::perMinute(self::LIMITE_AUTH_PAR_IP_PAR_MINUTE)->by('auth-ip:'.$request->ip()),
             ];
+        });
+
+        // Opération sensible d'un compte connecté (suppression) : la clé est le compte, pas l'IP partagée d'un CGNAT.
+        RateLimiter::for('reauth', function (Request $request): Limit {
+            $identifiant = $request->user()?->getAuthIdentifier();
+
+            return Limit::perMinute(self::LIMITE_REAUTHENTIFICATION_PAR_MINUTE)
+                ->by(is_string($identifiant) ? 'reauth:'.$identifiant : 'reauth-ip:'.$request->ip());
         });
 
         // Le défi 2FA web n'envoie pas d'e-mail : la clé est le compte en attente, pas l'IP partagée derrière un NAT.

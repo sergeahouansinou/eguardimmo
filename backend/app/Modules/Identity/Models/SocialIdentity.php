@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $email
  * @property bool $email_verified
  * @property string|null $apple_refresh_token
+ * @property string|null $apple_client_id
  * @property Carbon|null $last_used_at
  * @property-read User $user
  */
@@ -35,6 +36,15 @@ final class SocialIdentity extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function releaseForDeletedAccount(): void
+    {
+        $this->forceFill([
+            'subject' => User::withDeletedMarker($this->subject, $this->id),
+            'apple_refresh_token' => null,
+            'apple_client_id' => null,
+        ])->save();
     }
 
     protected function casts(): array

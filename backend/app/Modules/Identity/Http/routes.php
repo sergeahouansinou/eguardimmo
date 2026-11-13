@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Identity\Http\Controllers\CompleteMobileTwoFactorController;
 use App\Modules\Identity\Http\Controllers\Console\ListActivityController;
 use App\Modules\Identity\Http\Controllers\Console\ShowActivityController;
+use App\Modules\Identity\Http\Controllers\DeleteAccountController;
 use App\Modules\Identity\Http\Controllers\IssueConsoleTokenController;
 use App\Modules\Identity\Http\Controllers\IssueMobileTokenController;
 use App\Modules\Identity\Http\Controllers\IssueSocialMobileTokenController;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/me', ShowMeController::class)->name('identity.me');
+    Route::delete('/me', DeleteAccountController::class)->middleware('throttle:reauth')->name('identity.me.destroy');
     Route::get('/me/profiles', ListProfilesController::class)->name('identity.profiles');
     Route::get('/me/devices', ListDevicesController::class)->name('identity.devices.index');
     Route::delete('/me/devices/{device}', RevokeDeviceController::class)->whereUuid('device')->name('identity.devices.destroy');

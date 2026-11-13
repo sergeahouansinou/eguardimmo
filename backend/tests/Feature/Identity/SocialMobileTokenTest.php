@@ -14,9 +14,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
-const NONCE_MOBILE = 'nonce-mobile-0123456789';
-const AUD_GOOGLE = 'ios-client.apps.googleusercontent.com';
-
 beforeEach(function (): void {
     config([
         'services.google.mobile_client_ids' => [AUD_GOOGLE, 'android-client.apps.googleusercontent.com'],
@@ -31,51 +28,6 @@ beforeEach(function (): void {
         VerifyIdentityToken::JWKS_APPLE => fn () => Http::response(jwks($this->cle)),
     ]);
 });
-
-/**
- * @return array{keys: list<array<string, string>>}
- */
-function jwks(OpenSSLAsymmetricKey $cle, string $kid = 'cle-1'): array
-{
-    $details = openssl_pkey_get_details($cle);
-    $b64 = fn (string $v): string => rtrim(strtr(base64_encode($v), '+/', '-_'), '=');
-
-    return ['keys' => [['kty' => 'RSA', 'kid' => $kid, 'use' => 'sig', 'alg' => 'RS256', 'n' => $b64($details['rsa']['n']), 'e' => $b64($details['rsa']['e'])]]];
-}
-
-/**
- * @param  array<string, mixed>  $surcharges
- */
-function idTokenGoogle(OpenSSLAsymmetricKey $cle, array $surcharges = [], string $kid = 'cle-1'): string
-{
-    openssl_pkey_export($cle, $pem);
-
-    return JWT::encode(array_merge([
-        'iss' => 'https://accounts.google.com',
-        'aud' => AUD_GOOGLE,
-        'azp' => AUD_GOOGLE,
-        'sub' => 'g-123',
-        'email' => 'jean@exemple.fr',
-        'email_verified' => true,
-        'name' => 'Jean Dupont',
-        'nonce' => NONCE_MOBILE,
-        'iat' => now()->getTimestamp(),
-        'exp' => now()->addHour()->getTimestamp(),
-    ], $surcharges), $pem, 'RS256', $kid);
-}
-
-function idTokenApple(OpenSSLAsymmetricKey $cle, array $surcharges = []): string
-{
-    return idTokenGoogle($cle, array_merge([
-        'iss' => 'https://appleid.apple.com',
-        'aud' => 'fr.eguardimmo.app',
-        'azp' => null,
-        'sub' => 'a-001',
-        'email_verified' => 'true',
-        'name' => null,
-        'nonce' => hash('sha256', NONCE_MOBILE),
-    ], $surcharges));
-}
 
 function connexionSociale(mixed $test, string $fournisseur, string $idToken, array $extra = []): mixed
 {

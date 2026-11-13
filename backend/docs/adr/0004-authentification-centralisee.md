@@ -40,7 +40,14 @@ Statut : accepté (2026-11-13), révisé le même jour : la console sort du hub 
 - Les adresses relais privées imposent d'enregistrer le domaine d'envoi d'e-mails chez Apple.
 - Le rappel web arrive en POST cross-site (`form_post`). Le cookie `SameSite=Lax` n'y est pas envoyé : l'état OAuth est donc porté par un `state` chiffré, à usage unique, **lié au navigateur** par un cookie binder `SameSite=None; Secure` dont le hash figure dans le `state`. Sans binder, un attaquant ferait ouvrir son propre rappel à la victime (CSRF de connexion, prise de contrôle par liaison).
 - La liaison d'un compte Google/Apple à un compte existant ne part que d'une requête POST authentifiée, avec ré-authentification récente.
-- La suppression de compte depuis l'app (exigence App Store 5.1.1(v)) révoque le jeton Apple.
+- La suppression de compte depuis l'app (exigence App Store 5.1.1(v)) révoque le jeton Apple. `DELETE /api/v1/me` (décision du 2026-11-14) :
+  - elle exige une preuve récente : code 2FA, mot de passe ou `id_token` d'un fournisseur lié (à usage unique), ou une session web confirmée depuis moins de 10 minutes. Avec la 2FA active, le mot de passe ne suffit jamais, même confirmé en session ;
+  - limite de débit par compte (`throttle:reauth`), et le verrou de compte s'applique aussi à la confirmation de mot de passe de Fortify ;
+  - tout se passe sous verrou de la ligne `users` : une liaison sociale concurrente attend, une seconde suppression ne fait rien ;
+  - le compte n'est **jamais effacé** : il est marqué supprimé (`deleted_at`). Son e-mail et le `subject` de ses identités sociales reçoivent le suffixe `-deleted-{id}`, ce qui permet de se réinscrire plus tard avec la même adresse ou le même compte Google ou Apple ;
+  - les données du compte sont conservées telles quelles (nom, adresse d'origine lisible avant le suffixe, empreinte du mot de passe, secret 2FA, appareils), par décision du 2026-11-14. La durée de conservation et la réponse à une demande d'effacement RGPD restent à définir ;
+  - jetons, sessions, liens de réinitialisation et rôle opérateur sont révoqués, puis `Identity\Events\AccountDeleted` est émis : chaque module décide d'anonymiser ou de conserver selon ses obligations ;
+  - la révocation Apple a lieu avant toute écriture. Si Apple est injoignable, la réponse est 503 et le compte reste intact.
 
 ## Options écartées
 

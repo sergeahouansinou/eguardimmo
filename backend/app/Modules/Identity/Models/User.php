@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Identity\Models;
 
 use App\Modules\Identity\Database\Factories\UserFactory;
+use App\Modules\Identity\Enums\SocialProvider;
 use App\Modules\Identity\Notifications\ResetPasswordNotification;
 use App\Modules\Identity\Notifications\VerifyEmailNotification;
 use App\Shared\Audit\Auditable;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -34,6 +36,7 @@ use Laravel\Sanctum\TransientToken;
  * @property Carbon|null $two_factor_confirmed_at
  * @property Carbon|null $last_login_at
  * @property Carbon|null $previous_login_at
+ * @property Carbon|null $deleted_at
  * @property-read Operator|null $operator
  */
 #[Fillable(['name', 'email', 'password'])]
@@ -47,7 +50,7 @@ final class User extends Authenticatable implements MustVerifyEmail
     use HasApiTokens;
 
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
 
     /** @var array<string, mixed> */
     protected $attributes = [
@@ -81,6 +84,27 @@ final class User extends Authenticatable implements MustVerifyEmail
     public function devices(): HasMany
     {
         return $this->hasMany(UserDevice::class);
+    }
+
+    public const DELETED_MARKER = '-deleted-';
+
+    private const LONGUEUR_IDENTIFIANT_MAX = 255;
+
+    /**
+     * Suffixe unique qui libère une valeur unique (e-mail, subject social) d'un compte supprimé sans l'effacer.
+     */
+    public static function withDeletedMarker(string $valeur, string $id): string
+    {
+        $suffixe = self::DELETED_MARKER.$id;
+
+        return mb_substr($valeur, 0, self::LONGUEUR_IDENTIFIANT_MAX - mb_strlen($suffixe)).$suffixe;
+    }
+
+    public function storeAppleRefreshToken(#[\SensitiveParameter] string $jeton, string $clientId): void
+    {
+        $this->socialIdentities()->where('provider', SocialProvider::Apple->value)->first()
+            ?->forceFill(['apple_refresh_token' => $jeton, 'apple_client_id' => $clientId])
+            ->save();
     }
 
     public function isActiveOperator(): bool

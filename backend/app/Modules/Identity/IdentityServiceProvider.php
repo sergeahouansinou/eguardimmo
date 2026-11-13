@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Identity;
 
+use App\Modules\Identity\Actions\CheckAccountPassword;
 use App\Modules\Identity\Console\GrantOperatorCommand;
 use App\Modules\Identity\Console\RevokeOperatorCommand;
 use App\Modules\Identity\Data\ProfileData;
@@ -77,6 +78,7 @@ final class IdentityServiceProvider extends ServiceProvider
     private function configurerFortify(): void
     {
         Fortify::authenticateUsing(fn (Request $request): ?User => $this->app->make(AuthenticateUser::class)($request));
+        Fortify::confirmPasswordsUsing(fn (User $user, ?string $motDePasse): bool => $this->app->make(CheckAccountPassword::class)->handle($user, $motDePasse, 'password_confirmation'));
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
 

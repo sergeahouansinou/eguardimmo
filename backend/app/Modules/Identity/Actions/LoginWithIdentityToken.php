@@ -17,7 +17,7 @@ use SensitiveParameter;
 
 final readonly class LoginWithIdentityToken
 {
-    private const ANTI_REJEU_SECONDES = 7200;
+    public const ANTI_REJEU_SECONDES = 7200;
 
     public function __construct(
         private VerifyIdentityToken $verification,
@@ -41,7 +41,7 @@ final readonly class LoginWithIdentityToken
             $profil = new SocialProfileData($profil->provider, $profil->subject, $profil->email, $profil->emailVerified, trim($nom));
         }
 
-        $cleRejeu = 'identity:id-token:'.hash('sha256', $idToken);
+        $cleRejeu = self::cleAntiRejeu($idToken);
 
         if (! Cache::add($cleRejeu, true, self::ANTI_REJEU_SECONDES)) {
             throw ErrorCode::InvalidIdToken->problem();
@@ -69,14 +69,15 @@ final readonly class LoginWithIdentityToken
             $jetonApple = $this->echangeApple->handle($codeAutorisation, $profil->subject);
 
             if ($jetonApple !== null) {
-                $user->socialIdentities()
-                    ->where('provider', SocialProvider::Apple->value)
-                    ->first()
-                    ?->forceFill(['apple_refresh_token' => $jetonApple])
-                    ->save();
+                $user->storeAppleRefreshToken($jetonApple, (string) config('services.apple.bundle_id'));
             }
         }
 
         return $user;
+    }
+
+    public static function cleAntiRejeu(#[SensitiveParameter] string $idToken): string
+    {
+        return 'identity:id-token:'.hash('sha256', $idToken);
     }
 }

@@ -38,6 +38,7 @@ php artisan make:module Leases   # squelette d'un nouveau module, toujours via c
 | Liste paginée | trait `App\Shared\Http\PaginatesWithCursor` dans la FormRequest : `paginationRules(['colonne_de_tri' => 'règle', 'id' => 'uuid'])` valide le curseur reçu, `perPage()`, puis `cursorPaginate()` côté requête. Une date de tri a besoin des microsecondes (cast `PreciseTimestamp`) sinon le curseur saute des lignes |
 | Modèle métier | trait `App\Shared\Tenancy\BelongsToOrganization` + colonne `organization_id` ; un modèle hors organisation s'ajoute explicitement à la liste de `ArchTest.php` |
 | Polymorphisme | morph map déclarée dans le `{M}ServiceProvider` (`Relation::requireMorphMap()` est actif) |
+| Compte supprimé | `User` porte `SoftDeletes` : un compte supprimé disparaît des requêtes, rien n'est effacé ([ADR 0004](docs/adr/0004-authentification-centralisee.md)). Pour afficher l'auteur d'un historique, `User::withTrashed()`. Un module qui détient des données personnelles écoute `Identity\Events\AccountDeleted` |
 | Montants | `Money\Money` (moneyphp) + `App\Shared\Money\MoneyCast` : entier en unités mineures + colonne devise ISO 4217 vérifiée. Jamais de `float` ; XOF n'a pas de décimales. Dans une Resource, sérialiser explicitement `{amount, currency}` |
 
 ## Frontières (vérifiées par `tests/Architecture/ArchTest.php`)

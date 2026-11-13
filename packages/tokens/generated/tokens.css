@@ -45,6 +45,11 @@
   --eg-danger-hover: #912018;
   --eg-tooltip-bg: #14202A;
   --eg-tooltip-text: #F6F8F8;
+  --eg-chart-called: #9AAAAE;
+  --eg-chart-collected: #1F7F96;
+  --eg-chart-due: #B42318;
+  --eg-chart-grid: #DDE4E5;
+  --eg-chart-highlight: rgb(11 46 56 / 0.05);
 
   --eg-font-sans: Inter, system-ui, sans-serif;
   --eg-text-page-title: 20px;
@@ -148,6 +153,11 @@
     --eg-danger-hover: #912018;
     --eg-tooltip-bg: #14202A;
     --eg-tooltip-text: #F6F8F8;
+    --eg-chart-called: #5F7176;
+    --eg-chart-collected: #2A8FA8;
+    --eg-chart-due: #F97066;
+    --eg-chart-grid: #334349;
+    --eg-chart-highlight: rgb(255 255 255 / 0.06);
   }
 }
 
@@ -197,4 +207,9 @@
   --eg-danger-hover: #912018;
   --eg-tooltip-bg: #14202A;
   --eg-tooltip-text: #F6F8F8;
+  --eg-chart-called: #5F7176;
+  --eg-chart-collected: #2A8FA8;
+  --eg-chart-due: #F97066;
+  --eg-chart-grid: #334349;
+  --eg-chart-highlight: rgb(255 255 255 / 0.06);
 }

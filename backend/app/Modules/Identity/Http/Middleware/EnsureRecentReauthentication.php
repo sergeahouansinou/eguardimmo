@@ -20,16 +20,23 @@ final class EnsureRecentReauthentication
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $minutes = config('identity.reauthentication_minutes');
-        $limite = now()->subMinutes(is_int($minutes) ? $minutes : 10)->getTimestamp();
-
-        $recente = $request->hasSession() && collect([self::CLE_2FA, self::CLE_MOT_DE_PASSE])
-            ->contains(fn (string $cle): bool => (int) $request->session()->get($cle, 0) >= $limite);
-
-        if (! $recente) {
+        if (! self::isRecent($request)) {
             throw ErrorCode::ReauthenticationRequired->problem();
         }
 
         return $next($request);
+    }
+
+    public static function isRecent(Request $request): bool
+    {
+        return self::confirmedRecently($request, self::CLE_2FA) || self::confirmedRecently($request, self::CLE_MOT_DE_PASSE);
+    }
+
+    public static function confirmedRecently(Request $request, string $cle): bool
+    {
+        $minutes = config('identity.reauthentication_minutes');
+        $limite = now()->subMinutes(is_int($minutes) ? $minutes : 10)->getTimestamp();
+
+        return $request->hasSession() && (int) $request->session()->get($cle, 0) >= $limite;
     }
 }

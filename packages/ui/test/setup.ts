@@ -10,4 +10,8 @@ vi.stubGlobal(
   },
 );
 
+Element.prototype.hasPointerCapture = vi.fn(() => false);
+Element.prototype.releasePointerCapture = vi.fn();
+Element.prototype.scrollIntoView = vi.fn();
+
 afterEach(cleanup);

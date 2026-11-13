@@ -39,6 +39,12 @@ final readonly class ResolveSocialLogin
             ->lockForUpdate()
             ->first();
 
+        // Identité restée attachée à un compte supprimé (liaison concurrente) : on la libère au lieu d'échouer.
+        if ($identite !== null && User::query()->whereKey($identite->user_id)->doesntExist()) {
+            $identite->releaseForDeletedAccount();
+            $identite = null;
+        }
+
         if ($identite !== null) {
             if ($intention->type === SocialIntentType::Link && $identite->user_id !== $intention->userId) {
                 throw ErrorCode::IdentityAlreadyLinked->problem();
@@ -92,6 +98,10 @@ final readonly class ResolveSocialLogin
 
     private function rattacher(User $user, SocialProfileData $profil): User
     {
+        if (User::query()->whereKey($user->id)->lockForUpdate()->doesntExist()) {
+            throw ErrorCode::NoAccount->problem();
+        }
+
         $dejaLie = $user->socialIdentities()->where('provider', $profil->provider->value)->exists();
 
         if ($dejaLie) {

@@ -6,6 +6,7 @@ namespace App\Modules\Identity\Http\Requests;
 
 use App\Modules\Identity\Data\RegistrationData;
 use App\Modules\Identity\Enums\IntendedProfile;
+use App\Modules\Identity\Models\User;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -25,7 +26,7 @@ final class RegisterRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email:rfc', 'max:255'],
+            'email' => ['required', 'string', 'email:rfc', 'max:255', 'not_regex:/'.preg_quote(User::DELETED_MARKER, '/').'/i'],
             'password' => ['required', 'string', 'max:255', Password::defaults(), 'confirmed'],
             'intended_profile' => [
                 'bail',

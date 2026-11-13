@@ -45,6 +45,11 @@ export const TAILWIND_COLOR_NAMES = {
   'danger.hover': 'danger-solid-hover',
   'tooltip.bg': 'tooltip',
   'tooltip.text': 'tooltip-fg',
+  'chart.called': 'chart-called',
+  'chart.collected': 'chart-collected',
+  'chart.due': 'chart-due',
+  'chart.grid': 'chart-grid',
+  'chart.highlight': 'chart-highlight',
 };
 
 /**

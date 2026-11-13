@@ -70,6 +70,13 @@ export const tokens = {
         bg: "#14202A",
         text: "#F6F8F8",
       },
+      chart: {
+        called: "#9AAAAE",
+        collected: "#1F7F96",
+        due: "#B42318",
+        grid: "#DDE4E5",
+        highlight: "#0B2E380D",
+      },
     },
     dark: {
       bg: {
@@ -139,6 +146,13 @@ export const tokens = {
       tooltip: {
         bg: "#14202A",
         text: "#F6F8F8",
+      },
+      chart: {
+        called: "#5F7176",
+        collected: "#2A8FA8",
+        due: "#F97066",
+        grid: "#334349",
+        highlight: "#FFFFFF0F",
       },
     },
   },

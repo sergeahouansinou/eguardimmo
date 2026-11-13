@@ -46,6 +46,11 @@ abstract final class EgTokens {
   static const Color lightDangerHover = Color(0xFF912018);
   static const Color lightTooltipBg = Color(0xFF14202A);
   static const Color lightTooltipText = Color(0xFFF6F8F8);
+  static const Color lightChartCalled = Color(0xFF9AAAAE);
+  static const Color lightChartCollected = Color(0xFF1F7F96);
+  static const Color lightChartDue = Color(0xFFB42318);
+  static const Color lightChartGrid = Color(0xFFDDE4E5);
+  static const Color lightChartHighlight = Color(0x0D0B2E38);
 
   static const Color darkBgPage = Color(0xFF181818);
   static const Color darkBgSurface = Color(0xFF1F1F1F);
@@ -91,6 +96,11 @@ abstract final class EgTokens {
   static const Color darkDangerHover = Color(0xFF912018);
   static const Color darkTooltipBg = Color(0xFF14202A);
   static const Color darkTooltipText = Color(0xFFF6F8F8);
+  static const Color darkChartCalled = Color(0xFF5F7176);
+  static const Color darkChartCollected = Color(0xFF2A8FA8);
+  static const Color darkChartDue = Color(0xFFF97066);
+  static const Color darkChartGrid = Color(0xFF334349);
+  static const Color darkChartHighlight = Color(0x0FFFFFFF);
 
   static const String fontFamilySans = 'Inter';
   static const double textPageTitleFontSize = 20.0;

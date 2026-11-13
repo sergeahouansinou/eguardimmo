@@ -53,7 +53,7 @@ final class ActivityLog
     private function joindreAuteurs(Collection $entrees): void
     {
         $identifiants = $entrees->pluck('actor_user_id')->filter()->unique()->values();
-        $auteurs = User::query()->whereIn('id', $identifiants)->get(['id', 'name', 'email'])->keyBy('id');
+        $auteurs = User::withTrashed()->whereIn('id', $identifiants)->get(['id', 'name', 'email'])->keyBy('id');
 
         $entrees->each(fn (AuditLog $entree) => $entree->setRelation(self::RELATION_AUTEUR, $auteurs->get((string) $entree->actor_user_id)));
     }

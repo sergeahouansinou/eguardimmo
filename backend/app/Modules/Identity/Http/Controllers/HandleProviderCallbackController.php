@@ -46,8 +46,7 @@ final class HandleProviderCallbackController
         }
 
         if ($jetonApple !== null) {
-            $user->socialIdentities()->where('provider', SocialProvider::Apple->value)->first()
-                ?->forceFill(['apple_refresh_token' => $jetonApple])->save();
+            $user->storeAppleRefreshToken($jetonApple, (string) config('services.apple.client_id'));
         }
 
         return $this->finaliser($this->ouvrirSession($request, $user, $etat));
