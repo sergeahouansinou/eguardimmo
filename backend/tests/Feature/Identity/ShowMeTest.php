@@ -11,7 +11,8 @@ it('refuse /me sans jeton', function (): void {
 it('renvoie un 401 JSON même sans en-tête Accept JSON', function (): void {
     $this->get('/api/v1/me', ['Accept' => 'text/html'])
         ->assertUnauthorized()
-        ->assertJsonPath('message', 'Unauthenticated.');
+        ->assertHeader('Content-Type', 'application/problem+json')
+        ->assertJsonPath('code', 'unauthenticated');
 });
 
 it('refuse un jeton invalide', function (): void {

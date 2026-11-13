@@ -37,4 +37,21 @@ return [
         ],
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID_WEB'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => rtrim((string) env('APP_URL'), '/').'/auth/social/google/callback',
+        'mobile_client_ids' => array_values(array_filter(array_map('trim', explode(',', (string) env('GOOGLE_CLIENT_IDS_MOBILE', ''))))),
+    ],
+
+    'apple' => [
+        'client_id' => env('APPLE_SERVICES_ID'),
+        'client_secret' => null,
+        'redirect' => rtrim((string) env('APP_URL'), '/').'/auth/social/apple/callback',
+        'team_id' => env('APPLE_TEAM_ID'),
+        'key_id' => env('APPLE_KEY_ID'),
+        'private_key_path' => env('APPLE_PRIVATE_KEY_PATH'),
+        'bundle_id' => env('APPLE_BUNDLE_ID'),
+    ],
+
 ];

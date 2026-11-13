@@ -24,6 +24,8 @@ final class HttpSecurityServiceProvider extends ServiceProvider
 
     public const LIMITE_AUTH_PAR_IP_PAR_MINUTE = 20;
 
+    public const LIMITE_DEUX_FACTEURS_PAR_MINUTE = 5;
+
     public function boot(): void
     {
         $this->configurerProxies();
@@ -56,6 +58,16 @@ final class HttpSecurityServiceProvider extends ServiceProvider
             return [
                 Limit::perMinute(self::LIMITE_AUTH_PAR_COMPTE_PAR_MINUTE)->by('auth-compte:'.$email.'|'.$request->ip()),
                 Limit::perMinute(self::LIMITE_AUTH_PAR_IP_PAR_MINUTE)->by('auth-ip:'.$request->ip()),
+            ];
+        });
+
+        // Le défi 2FA web n'envoie pas d'e-mail : la clé est le compte en attente, pas l'IP partagée derrière un NAT.
+        RateLimiter::for('two-factor', function (Request $request): array {
+            $enAttente = $request->hasSession() ? $request->session()->get('login.id') : null;
+
+            return [
+                Limit::perMinute(self::LIMITE_DEUX_FACTEURS_PAR_MINUTE)->by('two-factor:'.(is_scalar($enAttente) ? (string) $enAttente : 'ip:'.$request->ip())),
+                Limit::perMinute(self::LIMITE_AUTH_PAR_IP_PAR_MINUTE)->by('two-factor-ip:'.$request->ip()),
             ];
         });
     }

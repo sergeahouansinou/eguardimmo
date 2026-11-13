@@ -25,7 +25,7 @@ trait BelongsToOrganization
                 return;
             }
 
-            if ((int) $fournie !== $courante) {
+            if ((string) $fournie !== $courante) {
                 throw new OrganizationMismatch("Création refusée : organisation [{$fournie}] différente de l'organisation courante [{$courante}].");
             }
         });

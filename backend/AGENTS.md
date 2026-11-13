@@ -23,6 +23,7 @@ php artisan make:module Leases   # squelette d'un nouveau module, toujours via c
 | Entrée HTTP | `Http/Controllers/{Nom}Controller.php` : mono-action `__invoke`, aucune logique métier |
 | Validation | `Http/Requests/{Nom}Request.php` : `rules()` en liste blanche, `authorize()`, `toData()` qui construit le DTO |
 | Sortie JSON | `Http/Resources/{Nom}Resource.php`. Ne jamais renvoyer un modèle brut |
+| Erreur | `throw ErrorCode::X->problem()` avec l'enum `Enums/ErrorCode` du module ; rendu RFC 9457 centralisé ([ADR 0014](docs/adr/0014-format-des-erreurs-api.md)). Jamais de `JsonResponse` d'erreur ni de classe d'exception propre au module |
 | Routes | `Http/routes.php` du module, montées automatiquement sous `/api/v1`. Chaque route a `auth:sanctum` et un nom préfixé par le module (`leases.show`). Une route publique s'ajoute explicitement dans `ROUTES_PUBLIQUES` de `tests/Feature/RoutesTest.php` |
 | DTO | `Data/` : classe `final readonly` |
 | Autorisation | `Policies/{Modèle}Policy.php`, liée au modèle par `#[UsePolicy]` |
@@ -32,6 +33,9 @@ php artisan make:module Leases   # squelette d'un nouveau module, toujours via c
 | Lecture par un autre module | `PublicApi/` : classe `final` qui renvoie des DTO, jamais de modèle |
 | Lecture pour un espace | `Queries/` : seul endroit où `AcrossOrganizations` est permis (espaces locataire, propriétaire, console) |
 | Règle qui dépend du pays | `Jurisdictions/Eu/` (commun UE), `Jurisdictions/{Pays}/` (`Fr`, `Be`, `Lu`, `Ca`), `Jurisdictions/{Pays}/{Subdivision}/` (`Be/Bru`, `Be/Wal`, `Ca/Qc`), derrière un contrat du module. Le bail suit le lieu du bien, la facturation le siège de l'organisation. Pays choisi à la création parmi le registre des juridictions complètes ; jamais de `if ($pays === …)`, jamais de repli ([ADR 0008](docs/adr/0008-juridictions.md)) |
+| Identifiant | UUID v7 partout ([ADR 0015](docs/adr/0015-identifiants-uuid.md)) : trait `HasUuids` sur chaque modèle (vérifié par `ArchTest.php`), `uuid('id')->primary()`, `foreignUuid()`, `uuidMorphs()`, `whereUuid()` sur les paramètres de route. Jamais de `id()` ni de `foreignId()` |
+| Journal d'activité | Historique d'une entité : trait `App\Shared\Audit\Auditable` sur le modèle (création, modification avec avant/après, suppression, restauration), `auditMasked()` pour les données personnelles, `auditExcluded()` pour le bruit. Action métier sans écriture de modèle (connexion, export, consultation sensible) : `RecordAudit::handle('{module}.{objet}.{verbe}', subject: $modele, metadata: [...])`. Auteur, organisation, IP, route et `request_id` sont remplis seuls ([ADR 0016](docs/adr/0016-journal-d-activite.md)). Une écriture de masse (`query()->update()`, `insert()`) ne déclenche aucun événement Eloquent : journaliser avec `RecordAudit` dans la même transaction. Jamais de donnée personnelle ni de secret en clair dans `metadata` |
+| Liste paginée | trait `App\Shared\Http\PaginatesWithCursor` dans la FormRequest (`paginationRules()`, `perPage()`), `cursorPaginate()` côté requête |
 | Modèle métier | trait `App\Shared\Tenancy\BelongsToOrganization` + colonne `organization_id` ; un modèle hors organisation s'ajoute explicitement à la liste de `ArchTest.php` |
 | Polymorphisme | morph map déclarée dans le `{M}ServiceProvider` (`Relation::requireMorphMap()` est actif) |
 | Montants | `Money\Money` (moneyphp) + `App\Shared\Money\MoneyCast` : entier en unités mineures + colonne devise ISO 4217 vérifiée. Jamais de `float` ; XOF n'a pas de décimales. Dans une Resource, sérialiser explicitement `{amount, currency}` |
@@ -75,6 +79,7 @@ php artisan make:module Leases   # squelette d'un nouveau module, toujours via c
 - Applications web d'espace (`apps/locataire`, `apps/proprietaire`, `apps/agence`, `apps/sebook`, ADR 0010) : session Sanctum en cookie (SPA). Console : jeton opérateur détenu par son serveur (ADR 0004). Mobile : jeton Sanctum, 30 jours. Aucun jeton dans le navigateur.
 - Toute route d'authentification (login, OTP, mot de passe oublié, inscription) porte `throttle:auth`.
 - Nouvelle variable de sécurité : l'ajouter d'abord dans `.env.example`.
+- Rotation de `APP_KEY` (elle chiffre sessions, cookies, `state` OAuth, secrets 2FA et `apple_refresh_token`) : placer l'ancienne clé dans `APP_PREVIOUS_KEYS` (liste séparée par des virgules), poser la nouvelle avec `php artisan key:generate --show` puis la reporter dans `APP_KEY`, redéployer. Les données restent lisibles et se rechiffrent à l'écriture ; retirer l'ancienne clé seulement après avoir rechiffré les colonnes concernées. Une clé compromise se retire immédiatement : sessions et jetons sont alors à révoquer.
 
 ## Règles de code
 

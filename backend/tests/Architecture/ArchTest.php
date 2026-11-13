@@ -2,18 +2,25 @@
 
 declare(strict_types=1);
 
+use App\Modules\Identity\Models\Operator;
+use App\Modules\Identity\Models\PersonalAccessToken;
+use App\Modules\Identity\Models\SocialIdentity;
 use App\Modules\Identity\Models\User;
+use App\Modules\Identity\Models\UserDevice;
+use App\Shared\Audit\AuditLog;
 use App\Shared\Tenancy\AcrossOrganizations;
 use App\Shared\Tenancy\BelongsToOrganization;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\ServiceProvider;
 
 // Modèles qui n'appartiennent à aucune organisation ; toute autre entrée est une décision d'architecture.
-$horsOrganisation = [User::class];
+$horsOrganisation = [User::class, Operator::class, SocialIdentity::class, UserDevice::class, PersonalAccessToken::class];
 
 $modules = array_map('basename', glob(__DIR__.'/../../app/Modules/*', GLOB_ONLYDIR) ?: []);
 
@@ -32,10 +39,16 @@ arch('aucun helper de debug ni env() hors config')
     ->expect(['dd', 'ddd', 'dump', 'env', 'exit', 'ray'])
     ->not->toBeUsed();
 
+// Le journal d'audit est technique et transverse : seul modèle autorisé hors d'un module.
 arch('modèles Eloquent uniquement dans Models')
     ->expect('App')
     ->not->toExtend(Model::class)
-    ->ignoring($dansChaqueModule('Models'));
+    ->ignoring([...$dansChaqueModule('Models'), 'App\\Shared\\Audit\\AuditLog']);
+
+// ADR 0015 : clés UUID v7 partout.
+arch('journal d\'audit en UUID')
+    ->expect(AuditLog::class)
+    ->toUseTrait(HasUuids::class);
 
 arch('FormRequest uniquement dans Http\Requests')
     ->expect('App')
@@ -81,6 +94,11 @@ test('aucun contournement du scope d\'organisation hors Shared\Tenancy', functio
     expect($fautifs)->toBe([]);
 });
 
+// ADR 0014 : une erreur métier se lève par ErrorCode::X->problem(), le rendu est centralisé dans ProblemRenderer.
+arch('aucune exception propre à un module')
+    ->expect('App\Modules')
+    ->not->toImplement(Throwable::class);
+
 // Seuls ces dossiers d'un module sont visibles des autres ; tout le reste lui est privé.
 $publics = ['PublicApi', 'Data', 'Enums', 'Events'];
 
@@ -100,6 +118,10 @@ foreach ($modules as $module) {
             $regle->ignoring('App\Modules\Identity\Models\User');
         }
     }
+
+    arch("{$module} : aucun middleware ne construit de réponse d'erreur")
+        ->expect("{$ns}\\Http\\Middleware")
+        ->not->toUse(JsonResponse::class);
 
     // Une règle par namespace : avec un tableau en cible, Pest ne détecte pas la négation.
     foreach (['Data', 'Events', 'PublicApi'] as $public) {
@@ -149,6 +171,10 @@ foreach ($modules as $module) {
         ->expect("{$ns}\\Models")
         ->toUseTrait(BelongsToOrganization::class)
         ->ignoring($horsOrganisation);
+
+    arch("{$module} : modèles identifiés par UUID")
+        ->expect("{$ns}\\Models")
+        ->toUseTrait(HasUuids::class);
 
     arch("{$module} : modèles Eloquent")
         ->expect("{$ns}\\Models")

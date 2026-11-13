@@ -6,7 +6,12 @@ use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as Routes;
 
 // Toute route publique est une décision explicite : elle doit figurer ici.
-const ROUTES_PUBLIQUES = [];
+const ROUTES_PUBLIQUES = [
+    'api/v1/auth/token',
+    'api/v1/auth/token/two-factor',
+    'api/v1/auth/social/{provider}/token',
+    'api/v1/console/auth/token',
+];
 
 /**
  * @return list<Route>
@@ -47,4 +52,41 @@ it('nomme chaque route API avec le préfixe de son module, sans doublon', functi
     }
 
     expect($noms)->toBe(array_values(array_unique($noms)));
+});
+
+it('limite chaque route publique par throttle:auth', function (): void {
+    foreach (routesApi() as $route) {
+        if (! in_array('auth:sanctum', $route->gatherMiddleware(), true)) {
+            expect($route->gatherMiddleware())->toContain('throttle:auth');
+        }
+    }
+});
+
+it('limite chaque route d\'authentification web par throttle:auth ou par le limiteur 2FA', function (string $nom, string $limiteur): void {
+    $route = Routes::getRoutes()->getByName($nom);
+
+    expect($route)->not->toBeNull()
+        ->and($route?->gatherMiddleware())->toContain($limiteur);
+})->with([
+    ['login.store', 'throttle:auth'],
+    ['identity.register', 'throttle:auth'],
+    ['password.email', 'throttle:auth'],
+    ['password.update', 'throttle:auth'],
+    ['password.confirm.store', 'throttle:auth'],
+    ['verification.send', 'throttle:auth'],
+    ['user-password.update', 'throttle:auth'],
+    ['two-factor.confirm', 'throttle:auth'],
+    ['identity.reauthenticate.two-factor', 'throttle:auth'],
+    ['identity.social.redirect', 'throttle:auth'],
+    ['identity.social.link', 'throttle:auth'],
+    ['identity.social.callback', 'throttle:auth'],
+    ['two-factor.login.store', 'throttle:two-factor'],
+]);
+
+it('ne réserve /console qu\'aux jetons opérateur', function (): void {
+    foreach (routesApi() as $route) {
+        if (str_starts_with($route->uri(), 'api/v1/console/') && ! in_array($route->uri(), ROUTES_PUBLIQUES, true)) {
+            expect($route->gatherMiddleware())->toContain('space:operator');
+        }
+    }
 });

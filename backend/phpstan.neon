@@ -8,3 +8,5 @@ parameters:
         - database
         - tests/Fixtures
     level: 8
+    databaseMigrationsPath:
+        - app/Modules/Identity/Database/Migrations
