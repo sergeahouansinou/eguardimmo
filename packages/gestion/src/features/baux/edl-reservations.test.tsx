@@ -26,7 +26,7 @@ describe('EtatsLieuxPage', () => {
     const { container } = renderLot(<EtatsLieuxPage />);
     const table = await screen.findByRole('table', { name: 'États des lieux' });
     expect(dataRows(table)).toHaveLength(3);
-    expect(screen.getByRole('tab', { name: /Signés/ }).textContent).toContain('2');
+    expect(screen.getByRole('tab', { name: /Signés/ }).textContent).toContain('3');
     expect(screen.getByRole('tab', { name: /Archivés/ }).textContent).toContain('1');
     await expectNoA11yViolations(container);
   });

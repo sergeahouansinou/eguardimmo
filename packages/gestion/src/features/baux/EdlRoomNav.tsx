@@ -12,7 +12,7 @@ export function roomProgress(room: SurveyRoom) {
 
 export function RoomNav({ rooms, selected, onSelect }: { rooms: readonly SurveyRoom[]; selected: string; onSelect: (room: string) => void }) {
   return (
-    <nav aria-label="Pièces du relevé" className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:w-52 lg:shrink-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0">
+    <nav aria-label="Pièces du relevé" className="relative -mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:w-52 lg:shrink-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0">
       {rooms.map((room) => {
         const { done, total, issues } = roomProgress(room);
         const active = room.room === selected;

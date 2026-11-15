@@ -4,6 +4,7 @@ export { BailFormPage } from './BailFormPage';
 export { BailSortiePage } from './BailSortiePage';
 export { BauxPage } from './BauxPage';
 export { EtatLieuxFormPage } from './EtatLieuxFormPage';
+export { EtatLieuxComparePage } from './EtatLieuxComparePage';
 export { EtatLieuxPage } from './EtatLieuxPage';
 export { EtatsLieuxPage } from './EtatsLieuxPage';
 export { ReservationContratPage } from './ReservationContratPage';

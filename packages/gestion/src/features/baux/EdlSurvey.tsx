@@ -31,7 +31,7 @@ export function SurveyReadOnly({ survey }: { survey: readonly SurveyRoom[] }) {
               <li key={element.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line py-2 first:border-t-0">
                 <span className="w-40 text-body-strong text-fg">{element.label}</span>
                 <Badge tone={stateTone[element.state]}>{surveyStateLabel[element.state]}</Badge>
-                <span className="min-w-0 flex-1 text-body text-fg-muted">{element.note}</span>
+                <span className="min-w-0 basis-full text-body text-fg-muted sm:flex-1 sm:basis-0">{element.note}</span>
                 {element.photos.length > 0 ? <span className="text-caption text-fg-subtle">{`${String(element.photos.length)} photo${element.photos.length > 1 ? 's' : ''}`}</span> : null}
               </li>
             ))}
@@ -135,7 +135,7 @@ export function EdlSurveyEditor({ edl }: { edl: Edl }) {
           </section>
         ) : null}
       </div>
-      <div className="sticky bottom-0 -mx-4 -mb-4 flex items-center justify-between gap-2 rounded-b-lg border-t border-line bg-surface py-3 pr-16 pl-4">
+      <div className="sticky bottom-0 -mx-4 -mb-4 flex flex-wrap items-center justify-between gap-2 rounded-b-lg border-t border-line bg-surface py-3 pr-16 pl-4">
         {next ? <Button variant="secondary" onClick={() => { setSelected(next.room); }}>{`Pièce suivante : ${next.room}`}</Button> : <span />}
         <Button loading={save.isPending} onClick={() => { void submit(); }}>Enregistrer le relevé</Button>
       </div>

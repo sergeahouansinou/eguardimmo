@@ -274,16 +274,38 @@ const entrySurvey: SurveyRoom[] = emptySurvey(allRooms).map((room) => ({
   }),
 }));
 
+const studioRooms = ['Séjour', 'Cuisine', 'Salle de bains'];
+
+const studioEntrySurvey = (): SurveyRoom[] => entrySurvey.filter((room) => studioRooms.includes(room.room));
+
+const studioExitSurvey = (): SurveyRoom[] =>
+  studioEntrySurvey().map((room) => ({
+    ...room,
+    elements: room.elements.map((element) => {
+      if (room.room === 'Cuisine' && element.label === 'Équipements') return { ...element, state: 'usage' as const, note: 'Plaque de cuisson rayée.', photos: [] };
+      if (room.room === 'Salle de bains' && element.label === 'Murs') return { ...element, state: 'degrade' as const, note: 'Traces d’humidité près de la douche.', photos: ['sdb-murs-sortie.jpg'] };
+      return element;
+    }),
+  }));
+
 const rawEdls: readonly Omit<Edl, 'survey'>[] = [
   { id: 'edl-2026-004', reference: 'EDL-2026-004', type: 'entree', unitId: 'apt-a1', tenantId: 'koffi-adjovi', date: '2026-04-01', createdOn: '2026-04-01', templateId: 'appartement-standard', status: 'signe', rooms: allRooms, archived: false },
   { id: 'edl-2026-005', reference: 'EDL-2026-005', type: 'sortie', unitId: 'studio-2e', tenantId: 'ibrahim-yao', date: null, createdOn: null, templateId: 'appartement-standard', status: 'a_planifier', rooms: allRooms, archived: false },
   { id: 'edl-2026-006', reference: 'EDL-2026-006', type: 'intermediaire', unitId: 'villa-rdc', tenantId: 'marc-dossou', date: '2026-10-05', createdOn: '2026-10-05', templateId: 'maison-avec-jardin', status: 'brouillon', rooms: allRooms, archived: false },
   { id: 'edl-2025-011', reference: 'EDL-2025-011', type: 'entree', unitId: 'apt-b1', tenantId: 'clarisse-hounkpatin', date: '2025-09-01', createdOn: '2025-09-01', templateId: 'appartement-standard', status: 'signe', rooms: allRooms, archived: false },
+  { id: 'edl-2025-014', reference: 'EDL-2025-014', type: 'entree', unitId: 'studio-b3', tenantId: 'yann-le-gall', date: '2025-02-01', createdOn: '2025-02-01', templateId: 'studio-meuble', status: 'signe', rooms: studioRooms, archived: false },
   { id: 'edl-2026-007', reference: 'EDL-2026-007', type: 'sortie', unitId: 'studio-b3', tenantId: 'yann-le-gall', date: '2027-01-31', createdOn: '2026-11-09', templateId: 'studio-meuble', status: 'prevu', rooms: ['Séjour', 'Cuisine', 'Salle de bains'], archived: false },
   { id: 'edl-2023-001', reference: 'EDL-2023-001', type: 'sortie', unitId: 'apt-a1', tenantId: 'sarah-mensah', date: '2023-03-15', createdOn: '2023-03-15', templateId: 'appartement-standard', status: 'signe', rooms: allRooms, archived: true },
 ];
 
-export const demoEdls: readonly Edl[] = rawEdls.map((edl) => ({ ...edl, survey: edl.id === 'edl-2026-004' || edl.id === 'edl-2025-011' ? structuredClone(entrySurvey) : [] }));
+const edlSurveyFor = (id: string): SurveyRoom[] => {
+  if (id === 'edl-2026-004' || id === 'edl-2025-011') return structuredClone(entrySurvey);
+  if (id === 'edl-2025-014') return studioEntrySurvey();
+  if (id === 'edl-2026-007') return studioExitSurvey();
+  return [];
+};
+
+export const demoEdls: readonly Edl[] = rawEdls.map((edl) => ({ ...edl, survey: edlSurveyFor(edl.id) }));
 
 export const demoReservations: readonly Reservation[] = [
   { id: 'rs-2026-031', reference: 'RS-2026-031', unitId: 'studio-plage', guest: 'Anna Kowalski', arrival: '2026-11-18', departure: '2026-11-25', amount: euros(630), deposit: euros(300), paid: euros(189), status: 'acompte_recu', optionUntil: null, confirmationSentOn: null, reminderSentOn: null },

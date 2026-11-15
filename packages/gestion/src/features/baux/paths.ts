@@ -8,6 +8,7 @@ export const bauxPaths = {
   edls: '/baux/etats-des-lieux',
   newEdl: '/baux/etats-des-lieux/nouveau',
   edl: (id: string) => `/baux/etats-des-lieux/${id}`,
+  compareEdl: (id: string) => `/baux/etats-des-lieux/${id}/comparer`,
   editEdl: (id: string) => `/baux/etats-des-lieux/${id}/modifier`,
   reservations: '/baux/reservations',
   newReservation: '/baux/reservations/nouvelle',

@@ -1,6 +1,6 @@
 'use client';
 
-import { Archive, ArchiveRestore, ClipboardList, FileText, LogOut, Pencil, PenLine, Printer, Send, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, ClipboardList, FileText, GitCompare, LogOut, Pencil, PenLine, Printer, Send, Trash2 } from 'lucide-react';
 import {
   Card,
   ConfirmDialog,
@@ -73,6 +73,7 @@ export function EtatsLieuxPage() {
     { id: 'open', label: 'Ouvrir', icon: FileText, onSelect: () => { push(bauxPaths.edl(edl.id)); } },
     { id: 'edit', label: 'Modifier', icon: Pencil, disabled: edl.status === 'signe' || edl.archived, onSelect: () => { push(bauxPaths.editEdl(edl.id)); } },
     { id: 'pdf', label: 'Télécharger le PDF', icon: Printer, onSelect: () => { push(`${bauxPaths.edl(edl.id)}?imprimer=1`); } },
+    { id: 'compare', label: 'Comparer avec l’entrée', icon: GitCompare, disabled: edl.type === 'entree', onSelect: () => { push(bauxPaths.compareEdl(edl.id)); } },
     { id: 'send', label: 'Envoyer pour signature', icon: Send, disabled: edl.status === 'signe' || edl.archived, onSelect: () => { void sendForSignature(edl); } },
     { id: 'exit', label: 'Préparer l’état de sortie', icon: LogOut, disabled: edl.type !== 'entree' || edl.archived, onSelect: () => { void prepareExitState(edl); } },
     {

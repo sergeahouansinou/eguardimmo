@@ -79,6 +79,7 @@ function EdlSheet({ edl, crumbs }: { edl: Edl; crumbs: { label: string; href: st
         actions={
           <>
             <IconButton variant="secondary" label="Télécharger le PDF" icon={Printer} onClick={() => { window.print(); }} />
+            {edl.type !== 'entree' ? <LinkButton href={bauxPaths.compareEdl(edl.id)}>Comparer avec l’entrée</LinkButton> : null}
             {edl.type === 'entree' && !edl.archived ? (
               <Button variant="secondary" loading={preparePending} onClick={() => { void prepareExitState(edl); }}>
                 <LogOut size={14} aria-hidden="true" />

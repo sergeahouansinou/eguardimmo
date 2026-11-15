@@ -16,6 +16,7 @@ import {
   CourrierFormPage,
   CourriersPage,
   EtatLieuxFormPage,
+  EtatLieuxComparePage,
   EtatLieuxPage,
   EtatsLieuxPage,
   LocataireDetailPage,
@@ -48,6 +49,7 @@ export const BailEcheancierScreen = bindLot(BailEcheancierPage);
 export const BailSortieScreen = bindLot(BailSortiePage);
 export const EtatsLieuxScreen = bindLot(EtatsLieuxPage);
 export const EtatLieuxScreen = bindLot(EtatLieuxPage);
+export const EtatLieuxCompareScreen = bindLot(EtatLieuxComparePage);
 export const EtatLieuxFormScreen = bindLot(EtatLieuxFormPage);
 export const ReservationsScreen = bindLot(ReservationsPage);
 export const ReservationFormScreen = bindLot(ReservationFormPage);
