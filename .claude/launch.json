@@ -1,11 +1,10 @@
 {
   "version": "0.0.1",
   "configurations": [
-    {
-      "name": "proprietaire",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@eguardimmo/proprietaire", "dev"],
-      "port": 3020
-    }
+    { "name": "agence", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@eguardimmo/agence", "dev"], "port": 3010 },
+    { "name": "proprietaire", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@eguardimmo/proprietaire", "dev"], "port": 3020 },
+    { "name": "locataire", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@eguardimmo/locataire", "dev"], "port": 3030 },
+    { "name": "auth", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@eguardimmo/auth", "dev"], "port": 3040 },
+    { "name": "console", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@eguardimmo/console", "dev"], "port": 3050 }
   ]
 }
