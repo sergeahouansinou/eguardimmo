@@ -18,10 +18,10 @@ describe('BureauPage', () => {
   it('affiche les quatre indicateurs calculés depuis les montants', async () => {
     renderWithSource(<BureauPage Link={TestLink} />);
     const encaisse = await screen.findByRole('region', { name: 'Encaissé en novembre' });
-    expect(encaisse.textContent).toContain(`4${NBSP}180${NBSP}€`);
-    expect(encaisse.textContent).toContain(`sur 5${NBSP}300${NBSP}€ appelés · 79 %`);
+    expect(encaisse.textContent).toContain(`7${NBSP}770${NBSP}€`);
+    expect(encaisse.textContent).toContain(`sur 8${NBSP}890${NBSP}€ appelés · 87 %`);
     expect(screen.getByRole('region', { name: 'Impayés' }).textContent).toContain('3 locataires · aucun au-delà de 30 jours');
-    expect(screen.getByRole('region', { name: "Taux d'occupation" }).textContent).toContain('10 lots loués sur 11 · 1 vacant');
+    expect(screen.getByRole('region', { name: "Taux d'occupation" }).textContent).toContain('8 lots loués sur 11 · 3 vacants');
     const cash = screen.getByRole('region', { name: 'Cash-flow net, novembre' });
     expect(cash.textContent).toContain(`+2${NBSP}640${NBSP}€`);
     expect(cash.textContent).toContain('+14 % vs octobre');
@@ -47,7 +47,7 @@ describe('BureauPage', () => {
     expect(screen.getByRole('region', { name: 'Échéances' }).textContent).toContain('01/12');
     const payments = screen.getByRole('region', { name: 'Derniers encaissements' });
     expect(payments.textContent).toContain('Studio 2e · partiel');
-    expect(payments.textContent).toContain(`1${NBSP}150${NBSP}€`);
+    expect(payments.textContent).toContain(`2${NBSP}100${NBSP}€`);
   });
 
   it('décrit le graphique pour les lecteurs d’écran et l’infobulle du mois courant', async () => {

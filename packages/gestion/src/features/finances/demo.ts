@@ -1,49 +1,60 @@
 import { slugify } from './derive';
+import { demoLeases } from '../baux/demo';
+import { demoTenants, demoUnits } from '../locataires/demo';
 import type { Bail, Depense, Echeance, Facture, FinancesData, LigneBancaire, Paiement, Relance } from './schemas';
 
 const euros = (value: number) => Math.round(value * 100);
 export const DEMO_TODAY = '2026-11-13';
 export const DEMO_NOW = '2026-11-13T10:02:00+01:00';
 
-const bail = (numero: string, locataire: string, unite: string, immeuble: string, proprietaire: string): Bail => ({
-  id: slugify(numero),
-  numero,
-  locataireId: slugify(locataire),
-  locataire,
-  unite,
-  immeuble,
-  proprietaire,
+const PROPRIETAIRES: Readonly<Record<string, string>> = { 'Maison Rivière': 'SCI Rivière' };
+const PROPRIETAIRE_PAR_DEFAUT = 'Awa Diallo';
+const NOVEMBRE = '2026-11-01';
+const DECEMBRE = '2026-12-01';
+
+const BAUX_SUIVIS = ['apt-a1', 'apt-b1', 'studio-2e', 'villa-rdc', 'apt-a2', 'studio-b3', 'apt-a3', 'apt-b2', 'studio-c2'] as const;
+const ENCAISSE_NOVEMBRE: Readonly<Record<string, number>> = { 'apt-a1': 0, 'apt-b1': euros(810), 'studio-2e': euros(720), 'villa-rdc': euros(2100) };
+
+const nomLocataire = (tenantId: string): string => {
+  const tenant = demoTenants.find((item) => item.id === tenantId);
+  if (!tenant) throw new Error(`Locataire de démonstration absent : ${tenantId}`);
+  return `${tenant.firstName} ${tenant.lastName}`;
+};
+
+const bauxCanoniques = BAUX_SUIVIS.map((unitId) => {
+  const lease = demoLeases.find((item) => item.unitId === unitId && (item.status === 'en_cours' || item.status === 'preavis'));
+  const unit = demoUnits.find((item) => item.id === unitId);
+  const tenantId = lease?.tenantIds[0];
+  if (!lease || !unit || !tenantId) throw new Error(`Bail de démonstration absent : ${unitId}`);
+  return { lease, unit, tenantId, locataire: nomLocataire(tenantId), appele: lease.rent + lease.charges };
 });
 
-const baux: Bail[] = [
-  bail('BL-2023-0007', 'Koffi Adjovi', 'Apt A1', 'Les Tilleuls', 'Awa Diallo'),
-  bail('BL-2021-0001', 'Koffi Adjovi', 'Studio C2', 'Les Tilleuls', 'Awa Diallo'),
-  bail('BL-2024-0003', 'Clarisse Hounkpatin', 'Apt B1', 'Les Tilleuls', 'Awa Diallo'),
-  bail('BL-2025-0004', 'Ibrahim Yao', 'Studio 2e', 'Résidence du Parc', 'Awa Diallo'),
-  bail('BL-2022-0002', 'Marc Dossou', 'Villa RDC', 'Maison Rivière', 'SCI Rivière'),
-  bail('BL-2024-0006', 'Nadège Sossou', 'Apt A2', 'Les Tilleuls', 'Awa Diallo'),
-  bail('BL-2026-0009', 'Léa Martin', 'Apt B3', 'Les Tilleuls', 'Awa Diallo'),
-];
+const baux: Bail[] = bauxCanoniques.map(({ lease, unit, tenantId, locataire }) => ({
+  id: slugify(lease.reference),
+  numero: lease.reference,
+  locataireId: tenantId,
+  locataire,
+  unite: unit.label,
+  immeuble: unit.building,
+  proprietaire: PROPRIETAIRES[unit.building] ?? PROPRIETAIRE_PAR_DEFAUT,
+}));
 
 const echeance = (locataire: string, bailNumero: string, libelle: string, date: string, montant: number, paye: number): Echeance => ({
-  id: `ech-${date.slice(0, 7)}-${slugify(locataire)}${libelle.startsWith('Provision') ? '-charges' : ''}`,
+  id: `ech-${date.slice(0, 7)}-${slugify(locataire)}`,
   bailId: slugify(bailNumero),
   libelle,
   echeance: date,
-  montant: euros(montant),
-  paye: euros(paye),
+  montant,
+  paye,
   statut: 'active',
   justificatifs: [],
 });
 
 const echeances: Echeance[] = [
-  echeance('Koffi Adjovi', 'BL-2023-0007', 'Loyer novembre 2026', '2026-11-01', 850, 0),
-  echeance('Clarisse Hounkpatin', 'BL-2024-0003', 'Loyer novembre 2026', '2026-11-01', 1020, 810),
-  echeance('Ibrahim Yao', 'BL-2025-0004', 'Loyer novembre 2026', '2026-11-01', 780, 720),
-  echeance('Marc Dossou', 'BL-2022-0002', 'Loyer novembre 2026', '2026-11-01', 2050, 2100),
-  echeance('Nadège Sossou', 'BL-2024-0006', 'Loyer novembre 2026', '2026-11-01', 400, 400),
-  echeance('Léa Martin', 'BL-2026-0009', 'Provision charges novembre 2026', '2026-11-01', 200, 200),
-  echeance('Marc Dossou', 'BL-2022-0002', 'Loyer décembre 2026', '2026-12-01', 2050, 0),
+  ...bauxCanoniques.map(({ lease, unit, locataire, appele }) => echeance(locataire, lease.reference, 'Loyer novembre 2026', NOVEMBRE, appele, ENCAISSE_NOVEMBRE[unit.id] ?? appele)),
+  ...bauxCanoniques
+    .filter(({ unit }) => unit.id === 'villa-rdc')
+    .map(({ lease, locataire, appele }) => echeance(locataire, lease.reference, 'Loyer décembre 2026', DECEMBRE, appele, 0)),
 ];
 
 const payment = (id: string, locataire: string, bailNumero: string, date: string, montant: number, mode: Paiement['mode'], extra: Partial<Paiement> = {}): Paiement => ({
@@ -51,7 +62,7 @@ const payment = (id: string, locataire: string, bailNumero: string, date: string
   bailId: slugify(bailNumero),
   echeanceId: echeances.find((item) => item.bailId === slugify(bailNumero) && item.echeance.startsWith('2026-11'))?.id ?? null,
   date,
-  montant: euros(montant),
+  montant,
   mode,
   nature: 'echeance',
   reference: '',
@@ -63,17 +74,27 @@ const payment = (id: string, locataire: string, bailNumero: string, date: string
   ...extra,
 });
 
+const numeroDe = (unitId: string): string => {
+  const found = bauxCanoniques.find(({ unit }) => unit.id === unitId);
+  if (!found) throw new Error(`Bail de démonstration absent : ${unitId}`);
+  return found.lease.reference;
+};
+const appeleDe = (unitId: string): number => bauxCanoniques.find(({ unit }) => unit.id === unitId)?.appele ?? 0;
+
 const paiements: Paiement[] = [
-  payment('pay-nadege-sossou', 'Nadège Sossou', 'BL-2024-0006', '2026-11-12', 400, 'virement'),
-  payment('pay-ibrahim-yao', 'Ibrahim Yao', 'BL-2025-0004', '2026-11-12', 720, 'virement', {
+  payment('pay-nadege-sossou', 'Nadège Sossou', numeroDe('apt-a2'), '2026-11-12', appeleDe('apt-a2'), 'virement'),
+  payment('pay-ibrahim-yao', 'Ibrahim Yao', numeroDe('studio-2e'), '2026-11-12', euros(720), 'virement', {
     nature: 'acompte_loyer',
     reference: 'VIR-IY-1112',
     note: 'Virement reçu le 12/11, solde annoncé pour le 20/11.',
     recuId: 'rc-2026-0187',
   }),
-  payment('pay-marc-dossou', 'Marc Dossou', 'BL-2022-0002', '2026-11-10', 2100, 'virement'),
-  payment('pay-clarisse-hounkpatin', 'Clarisse Hounkpatin', 'BL-2024-0003', '2026-11-05', 810, 'prelevement'),
-  payment('pay-lea-martin', 'Léa Martin', 'BL-2026-0009', '2026-11-05', 200, 'virement', { libelle: 'Provision charges novembre 2026, Léa Martin' }),
+  payment('pay-marc-dossou', 'Marc Dossou', numeroDe('villa-rdc'), '2026-11-10', euros(2100), 'virement'),
+  payment('pay-clarisse-hounkpatin', 'Clarisse Hounkpatin', numeroDe('apt-b1'), '2026-11-05', euros(810), 'prelevement'),
+  payment('pay-fatou-bamba', 'Fatou Bamba', numeroDe('apt-b2'), '2026-11-04', appeleDe('apt-b2'), 'virement'),
+  payment('pay-yann-le-gall', 'Yann Le Gall', numeroDe('studio-b3'), '2026-11-03', appeleDe('studio-b3'), 'virement'),
+  payment('pay-awa-traore', 'Awa Traoré', numeroDe('apt-a3'), '2026-11-03', appeleDe('apt-a3'), 'prelevement'),
+  payment('pay-moussa-diallo', 'Moussa Diallo', numeroDe('studio-c2'), '2026-11-02', appeleDe('studio-c2'), 'virement'),
 ];
 
 const depense = (id: string, bien: string, type: Depense['type'], date: string, montant: number, fournisseur: string, description: string, numeroFacture: string): Depense => ({
@@ -115,7 +136,7 @@ const OBJETS: [string, number][] = [
   ['Frais de quittancement', 8],
   ['Réparation locative', 64],
 ];
-const DESTINATAIRES = ['Koffi Adjovi', 'Clarisse Hounkpatin', 'Ibrahim Yao', 'Marc Dossou', 'Nadège Sossou', 'Léa Martin'];
+const DESTINATAIRES = ['Koffi Adjovi', 'Clarisse Hounkpatin', 'Ibrahim Yao', 'Marc Dossou', 'Nadège Sossou', 'Yann Le Gall'];
 
 function facture(n: number, fields: Partial<Facture> & Pick<Facture, 'date' | 'destinataire' | 'objet' | 'montantTtc'>): Facture {
   const numero = `FA-2026-${String(n).padStart(4, '0')}`;
@@ -178,7 +199,7 @@ function seedInvoices(): Facture[] {
     return found;
   };
   const fa7 = byNumber(7);
-  const fa19: Facture = { ...byNumber(19), destinataire: 'Nadège Sossou', locataireId: 'nadege-sossou', bailId: 'bl-2024-0006', objet: 'Frais d’état des lieux', montantHt: euros(100), montantTtc: euros(100), statut: 'attente', payeLe: null, avoirId: 'av-2026-0002' };
+  const fa19: Facture = { ...byNumber(19), destinataire: 'Nadège Sossou', locataireId: 'nadege-sossou', bailId: 'bl-2024-0011', objet: 'Frais d’état des lieux', montantHt: euros(100), montantTtc: euros(100), statut: 'attente', payeLe: null, avoirId: 'av-2026-0002' };
   fa19.lignes = [{ designation: fa19.objet, reference: '', quantite: 1, prixUnitaire: euros(100), montant: euros(100) }];
   const av1 = avoir(1, '2026-03-30', fa7);
   fa7.avoirId = av1.id;
@@ -255,7 +276,7 @@ export function createDemoFinances(): FinancesData {
         numero: 'RC-2026-0187',
         date: '2026-11-12',
         paiementId: 'pay-ibrahim-yao',
-        bailId: 'bl-2025-0004',
+        bailId: 'bl-2025-0002',
         echeanceId: 'ech-2026-11-ibrahim-yao',
         nature: 'acompte_loyer',
         montant: euros(720),
@@ -291,7 +312,7 @@ export function createDemoFinances(): FinancesData {
         annee: 2026,
         amortissementsLmnp: euros(4800),
         lignes: [
-          { id: 'loyers', categorie: 'Loyers encaissés', detail: '12 mois, 4 baux actifs', sens: 'recette', montant: euros(20900), justificatifs: 'complet', manquants: 0 },
+          { id: 'loyers', categorie: 'Loyers encaissés', detail: '11 mois, 9 baux actifs', sens: 'recette', montant: euros(89470), justificatifs: 'complet', manquants: 0 },
           { id: 'travaux', categorie: 'Travaux', detail: 'Plomberie, peinture, serrurerie', sens: 'charge', montant: euros(1900), justificatifs: 'manquants', manquants: 3 },
           { id: 'taxes', categorie: 'Taxes foncières', detail: 'Villa RDC, Apt A1', sens: 'charge', montant: euros(1350), justificatifs: 'complet', manquants: 0 },
           { id: 'assurance', categorie: 'Assurance', detail: 'Multirisque, 3 immeubles', sens: 'charge', montant: euros(965), justificatifs: 'complet', manquants: 0 },
@@ -301,7 +322,7 @@ export function createDemoFinances(): FinancesData {
         annee: 2025,
         amortissementsLmnp: euros(4800),
         lignes: [
-          { id: 'loyers', categorie: 'Loyers encaissés', detail: '12 mois, 4 baux actifs', sens: 'recette', montant: euros(19800), justificatifs: 'complet', manquants: 0 },
+          { id: 'loyers', categorie: 'Loyers encaissés', detail: '12 mois, 9 baux dont 3 en cours d’année', sens: 'recette', montant: euros(85840), justificatifs: 'complet', manquants: 0 },
           { id: 'travaux', categorie: 'Travaux', detail: 'Peinture, électricité', sens: 'charge', montant: euros(2400), justificatifs: 'complet', manquants: 0 },
           { id: 'taxes', categorie: 'Taxes foncières', detail: 'Villa RDC, Apt A1', sens: 'charge', montant: euros(1350), justificatifs: 'complet', manquants: 0 },
           { id: 'assurance', categorie: 'Assurance', detail: 'Multirisque, 3 immeubles', sens: 'charge', montant: euros(940), justificatifs: 'complet', manquants: 0 },

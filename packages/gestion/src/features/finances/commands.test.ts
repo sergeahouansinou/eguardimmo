@@ -37,13 +37,14 @@ const payment = (montant: number, extra: Partial<Extract<Draft, { type: 'recordP
 describe('paiements', () => {
   it('un paiement partiel réduit le reste dû et émet un reçu numéroté', async () => {
     const source = createDemoFinancesSource();
+    const before = await read(source);
     const result = await send(source, payment(30000));
     const data = await read(source);
     expect(resteDu(echeanceOf(data, KOFFI))).toBe(55000);
     expect(data.recus.map((recu) => recu.numero)).toContain('RC-2026-0188');
     expect(result.href).toMatch(/^\/finances\/recus\//);
     expect(data.paiements.filter((paiement) => paiement.echeanceId === KOFFI)).toHaveLength(1);
-    expect(periodKpis(data, '2026-11').encaisse).toBe(418000 + 30000);
+    expect(periodKpis(data, '2026-11').encaisse).toBe(periodKpis(before, '2026-11').encaisse + 30000);
   });
 
   it('un règlement qui solde l’échéance n’émet pas de reçu d’acompte', async () => {
@@ -71,7 +72,7 @@ describe('paiements', () => {
     const source = createDemoFinancesSource();
     await expect(send(source, payment(30000, { date: '2026-11-14' }))).rejects.toThrow();
     await expect(send(source, payment(0))).rejects.toThrow(/invalides/);
-    await expect(send(source, payment(30000, { bailId: 'bl-2022-0002' }))).rejects.toThrow();
+    await expect(send(source, payment(30000, { bailId: 'bl-2024-0009' }))).rejects.toThrow();
     const data = await read(source);
     expect(resteDu(echeanceOf(data, KOFFI))).toBe(85000);
   });
@@ -216,7 +217,7 @@ describe('recouvrement', () => {
 describe('patrimoine et banque', () => {
   it('émet un décompte de charges : solde positif facturé, négatif à rembourser', async () => {
     const source = createDemoFinancesSource();
-    const base = { type: 'saveRegularisation' as const, regularisationId: null, bailId: 'bl-2022-0002', debut: '2026-01-01', fin: '2026-12-31', justificatifs: [] as string[], emettre: true };
+    const base = { type: 'saveRegularisation' as const, regularisationId: null, bailId: 'bl-2024-0009', debut: '2026-01-01', fin: '2026-12-31', justificatifs: [] as string[], emettre: true };
     const due = await send(source, { ...base, provisions: 120000, chargesReelles: 151200 });
     const after = await read(source);
     expect(after.factures.find((facture) => facture.id === due.href?.split('/').pop())?.montantTtc).toBe(31200);

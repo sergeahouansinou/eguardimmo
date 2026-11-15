@@ -246,7 +246,7 @@ describe('Occupation', () => {
     expect(kpi('Occupation actuelle')).toContain('91 %');
     expect(kpi('Vacance cumulée')).toContain('5 mois');
     expect(kpi('Vacance cumulée')).toContain('152 jours');
-    expect(screen.getByText('Préavis reçu')).toBeTruthy();
+    expect(screen.getAllByText('Préavis reçu')).toHaveLength(2);
     expect(screen.getByRole('grid', { name: "Planning d'occupation" })).toBeTruthy();
   });
 

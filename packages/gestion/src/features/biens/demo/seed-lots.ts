@@ -89,30 +89,30 @@ const lotSeeds: LotSeed[] = [
     row: {
       id: 'apt-a2', name: 'Apt A2', immeubleId: 'les-tilleuls', type: 'appartement', surface: 70.5, rooms: 3, floor: '3e',
       tenant: { id: 'nadege-sossou', name: 'Nadège Sossou' }, rent: euros(990), listing: 'hors_ligne', status: 'a_jour',
-      tantiemes: 140, elevatorShares: 140, leaseEnd: '2027-06-30', leaseNote: null, archived: false,
+      tantiemes: 140, elevatorShares: 140, leaseEnd: '2027-08-31', leaseNote: null, archived: false,
     },
     elevator: true, heating: 'electrique', amenities: ['cuisine_equipee', 'balcon', 'lave_linge'], rentExcl: euros(900), charges: euros(90),
   },
   {
     row: {
       id: 'apt-b1', name: 'Apt B1', immeubleId: 'les-tilleuls', type: 'appartement', surface: 52, rooms: 2, floor: '1er',
-      tenant: { id: 'clarisse-hounkpatin', name: 'Clarisse Hounkpatin' }, rent: euros(810), listing: 'hors_ligne', status: 'a_jour',
-      tantiemes: 104, elevatorShares: 104, leaseEnd: '2028-08-31', leaseNote: null, archived: false,
+      tenant: { id: 'clarisse-hounkpatin', name: 'Clarisse Hounkpatin' }, rent: euros(1020), listing: 'hors_ligne', status: 'retard',
+      tantiemes: 104, elevatorShares: 104, leaseEnd: '2027-08-31', leaseNote: null, archived: false,
     },
-    elevator: true, heating: 'electrique', amenities: ['cuisine_equipee'], rentExcl: euros(740), charges: euros(70),
+    elevator: true, heating: 'electrique', amenities: ['cuisine_equipee'], rentExcl: euros(930), charges: euros(90),
   },
   {
     row: {
-      id: 'lot-b3', name: 'Lot B3', immeubleId: 'les-tilleuls', type: 'studio', surface: 28, rooms: 1, floor: '5e',
-      tenant: { id: 'yann-le-gall', name: 'Yann Le Gall' }, rent: euros(450), listing: 'hors_ligne', status: 'preavis',
+      id: 'studio-b3', name: 'Studio B3', immeubleId: 'les-tilleuls', type: 'studio', surface: 28, rooms: 1, floor: '5e',
+      tenant: { id: 'yann-le-gall', name: 'Yann Le Gall' }, rent: euros(700), listing: 'hors_ligne', status: 'preavis',
       tantiemes: 30, elevatorShares: 30, leaseEnd: '2027-01-31', leaseNote: null, archived: false,
     },
-    elevator: true, heating: 'electrique', amenities: ['cuisine_equipee'], rentExcl: euros(410), charges: euros(40),
+    elevator: true, heating: 'electrique', amenities: ['cuisine_equipee'], rentExcl: euros(650), charges: euros(50),
   },
   {
     row: {
       id: 'parking-p4', name: 'Parking P4', immeubleId: 'les-tilleuls', type: 'parking', surface: 12, rooms: 0, floor: '-1',
-      tenant: { id: 'hugo-bernard', name: 'Hugo Bernard' }, rent: euros(70), listing: 'hors_ligne', status: 'a_jour',
+      tenant: { id: 'awa-traore', name: 'Awa Traoré' }, rent: euros(70), listing: 'hors_ligne', status: 'a_jour',
       tantiemes: 10, elevatorShares: null, leaseEnd: null, leaseNote: 'Tacite, 1 mois', archived: false,
     },
     elevator: false, heating: 'electrique', amenities: [], rentExcl: euros(70), charges: 0,
@@ -120,10 +120,10 @@ const lotSeeds: LotSeed[] = [
   {
     row: {
       id: 'studio-2e', name: 'Studio 2e', immeubleId: 'residence-du-parc', type: 'studio', surface: 24, rooms: 1, floor: '2e',
-      tenant: { id: 'ibrahim-yao', name: 'Ibrahim Yao' }, rent: euros(720), listing: 'en_ligne', status: 'preavis',
-      tantiemes: null, elevatorShares: null, leaseEnd: '2027-02-28', leaseNote: null, archived: false,
+      tenant: { id: 'ibrahim-yao', name: 'Ibrahim Yao' }, rent: euros(780), listing: 'en_ligne', status: 'preavis',
+      tantiemes: null, elevatorShares: null, leaseEnd: '2026-12-31', leaseNote: null, archived: false,
     },
-    elevator: true, heating: 'electrique', amenities: ['cuisine_equipee', 'lave_linge'], rentExcl: euros(650), charges: euros(70),
+    elevator: true, heating: 'electrique', amenities: ['cuisine_equipee', 'lave_linge'], rentExcl: euros(720), charges: euros(60),
   },
   {
     row: {
@@ -144,16 +144,16 @@ const lotSeeds: LotSeed[] = [
   {
     row: {
       id: 'villa-rdc', name: 'Villa RDC', immeubleId: 'maison-riviere', type: 'maison', surface: 140, rooms: 5, floor: 'RDC',
-      tenant: { id: 'marc-dossou', name: 'Marc Dossou' }, rent: euros(1900), listing: 'hors_ligne', status: 'a_jour',
-      tantiemes: null, elevatorShares: null, leaseEnd: '2028-05-31', leaseNote: null, archived: false,
+      tenant: { id: 'marc-dossou', name: 'Marc Dossou' }, rent: euros(2050), listing: 'hors_ligne', status: 'a_jour',
+      tantiemes: null, elevatorShares: null, leaseEnd: '2027-06-30', leaseNote: null, archived: false,
     },
-    elevator: false, heating: 'gaz', amenities: ['cuisine_equipee', 'balcon', 'cave', 'lave_linge'], rentExcl: euros(1750), charges: euros(150),
+    elevator: false, heating: 'gaz', amenities: ['cuisine_equipee', 'balcon', 'cave', 'lave_linge'], rentExcl: euros(1900), charges: euros(150),
   },
   {
     row: {
       id: 'studio-jardin', name: 'Studio jardin', immeubleId: 'maison-riviere', type: 'studio', surface: 25, rooms: 1, floor: 'RDC',
-      tenant: { id: 'lea-martin', name: 'Léa Martin' }, rent: euros(550), listing: 'hors_ligne', status: 'a_jour',
-      tantiemes: null, elevatorShares: null, leaseEnd: '2027-09-30', leaseNote: null, archived: false,
+      tenant: null, rent: euros(550), listing: 'en_ligne', status: 'a_louer',
+      tantiemes: null, elevatorShares: null, leaseEnd: null, leaseNote: null, archived: false,
     },
     elevator: false, heating: 'electrique', amenities: ['cuisine_equipee'], rentExcl: euros(500), charges: euros(50),
   },

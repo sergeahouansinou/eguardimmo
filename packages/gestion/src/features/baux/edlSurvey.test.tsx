@@ -75,7 +75,7 @@ describe('Relevé pièce par pièce', () => {
   });
 
   it('montre le relevé en lecture seule pour un état des lieux signé', async () => {
-    const { container } = renderLot(<EtatLieuxPage id="edl-2026-004" />);
+    const { container } = renderLot(<EtatLieuxPage id="edl-2023-002" />);
     const section = await openRoom('Séjour');
     expect(within(section).getAllByText('Bon état').length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: 'Enregistrer le relevé' })).toBeNull();
@@ -83,9 +83,9 @@ describe('Relevé pièce par pièce', () => {
   });
 
   it('refuse l’enregistrement d’un relevé sur un état signé côté source', async () => {
-    const { sources } = renderLot(<EtatLieuxPage id="edl-2026-004" />);
+    const { sources } = renderLot(<EtatLieuxPage id="edl-2023-002" />);
     await screen.findByRole('region', { name: 'Relevé, Entrée' });
-    await expect(sources.baux.saveEdlSurvey('edl-2026-004', [])).rejects.toThrow('Un état des lieux signé ne peut plus être modifié.');
+    await expect(sources.baux.saveEdlSurvey('edl-2023-002', [])).rejects.toThrow('Un état des lieux signé ne peut plus être modifié.');
   });
 
   it('refuse une pièce non contrôlée dans l’état des lieux', async () => {
@@ -96,7 +96,7 @@ describe('Relevé pièce par pièce', () => {
 
 describe('Actions de l’état des lieux', () => {
   it('prépare l’état de sortie depuis l’entrée et refuse un doublon', async () => {
-    const { sources, push } = renderLot(<EtatLieuxPage id="edl-2026-004" />);
+    const { sources, push } = renderLot(<EtatLieuxPage id="edl-2023-002" />);
     await userEvent.click(await screen.findByRole('button', { name: 'Préparer l’état de sortie' }));
     await waitFor(() => { expect(push).toHaveBeenCalledWith('/baux/etats-des-lieux/edl-2026-008'); });
     const created = (await edlsOf(sources.baux)).find((edl) => edl.id === 'edl-2026-008');

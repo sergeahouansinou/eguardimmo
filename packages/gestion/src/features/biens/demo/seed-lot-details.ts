@@ -140,7 +140,7 @@ export const aptA1Rich: LotRichDetail = {
   ],
 };
 
-export const lotB3Rich: Partial<LotRichDetail> = {
+export const studioB3Rich: Partial<LotRichDetail> = {
   subtitle: '12 rue des Lilas, 75011 Paris · Bâtiment B, 5e étage · Studio meublé, 28 m²',
   badges: [
     { label: 'Loué', tone: 'success' },
@@ -156,7 +156,7 @@ export const lotB3Rich: Partial<LotRichDetail> = {
     builtYear: 1972,
     rental: 'Meublé, loi de 1989',
     dpe: { energy: 'D', ghg: 'C' },
-    rentCc: euros(450),
+    rentCc: euros(700),
   },
 };
 
@@ -191,23 +191,23 @@ const aptA1Periods: Period[] = [
   period('vacance-2016', 'vacance', '2016-06-15', '2016-08-31', { note: 'Travaux après achat' }),
   period('bail-julien-petit', 'bail', '2016-09-01', '2019-12-31', {
     occupant: tenant('julien-petit', 'Julien Petit'), leaseType: 'Vide, 3 ans', status: 'termine',
-    entryRent: euros(690), lastRent: euros(712), deposit: euros(690), exitNote: '2 retenues, 140 €',
+    entryRent: euros(590), lastRent: euros(612), deposit: euros(590), exitNote: '2 retenues, 140 €',
   }),
   period('vacance-2020', 'vacance', '2020-01-01', '2020-01-14', { note: 'Relocation' }),
   period('bail-sarah-mensah', 'bail', '2020-01-15', '2023-03-15', {
     occupant: tenant('sarah-mensah', 'Sarah Mensah'), leaseType: 'Vide, 3 ans', status: 'termine',
-    entryRent: euros(720), lastRent: euros(731), deposit: euros(720), exitNote: 'Conforme, aucune retenue',
+    entryRent: euros(640), lastRent: euros(660), deposit: euros(690), exitNote: 'Conforme, aucune retenue',
   }),
   period('vacance-2023', 'vacance', '2023-03-16', '2023-03-31', { note: 'Peinture du séjour' }),
   period('bail-koffi-adjovi', 'bail', '2023-04-01', null, {
     occupant: tenant('koffi-adjovi', 'Koffi Adjovi'), leaseType: 'Vide, 6 ans', status: 'en_cours',
-    entryRent: euros(745), lastRent: euros(770), deposit: euros(745),
+    entryRent: euros(745), lastRent: euros(770), deposit: euros(770),
   }),
 ];
 
-const lotB3Periods: Period[] = [
+const studioB3Periods: Period[] = [
   period('v-2016', 'vacance', '2016-06-01', '2016-08-31', { note: 'Achat et remise en état' }),
-  period('b-lea-martin', 'bail', '2016-09-01', '2017-06-30', { occupant: tenant('lea-martin', 'Léa Martin'), leaseType: 'Meublé étudiant', status: 'termine', entryRent: euros(360), lastRent: euros(360), deposit: euros(720) }),
+  period('b-elodie-fournier', 'bail', '2016-09-01', '2017-06-30', { occupant: tenant('elodie-fournier', 'Élodie Fournier'), leaseType: 'Meublé étudiant', status: 'termine', entryRent: euros(360), lastRent: euros(360), deposit: euros(720) }),
   period('v-2017', 'vacance', '2017-07-01', '2017-08-31', { note: 'Été' }),
   period('b-thomas-girard', 'bail', '2017-09-01', '2018-08-31', { occupant: tenant('thomas-girard', 'Thomas Girard'), leaseType: 'Meublé, 1 an', status: 'termine', entryRent: euros(365), lastRent: euros(365), deposit: euros(730) }),
   period('b-ines-bakari', 'bail', '2018-09-01', '2019-06-30', { occupant: tenant('ines-bakari', 'Inès Bakari'), leaseType: 'Meublé étudiant', status: 'termine', entryRent: euros(370), lastRent: euros(370), deposit: euros(740) }),
@@ -220,7 +220,7 @@ const lotB3Periods: Period[] = [
   period('b-aicha-kone', 'bail', '2022-10-01', '2023-09-30', { occupant: tenant('aicha-kone', 'Aïcha Koné'), leaseType: 'Meublé, 1 an', status: 'termine', entryRent: euros(395), lastRent: euros(395), deposit: euros(790) }),
   period('b-lucas-moreau', 'bail', '2023-10-01', '2024-09-30', { occupant: tenant('lucas-moreau', 'Lucas Moreau'), leaseType: 'Meublé, 1 an', status: 'termine', entryRent: euros(400), lastRent: euros(400), deposit: euros(800) }),
   period('v-2024', 'vacance', '2024-10-01', '2024-10-31', { note: 'Relocation' }),
-  period('b-yann-le-gall', 'bail', '2024-11-01', null, { occupant: tenant('yann-le-gall', 'Yann Le Gall'), leaseType: 'Meublé, 1 an renouvelé', status: 'preavis', noticeEndsOn: '2027-01-31', entryRent: euros(410), lastRent: euros(410), deposit: euros(820) }),
+  period('b-yann-le-gall', 'bail', '2024-11-01', null, { occupant: tenant('yann-le-gall', 'Yann Le Gall'), leaseType: 'Meublé, 1 an renouvelé', status: 'preavis', noticeEndsOn: '2027-01-31', entryRent: euros(650), lastRent: euros(650), deposit: euros(1000) }),
 ];
 
 const months: readonly (readonly [string, number, string | null])[] = [
@@ -241,16 +241,16 @@ const months: readonly (readonly [string, number, string | null])[] = [
 const aptA1Operations = [
   ['op-1', '2026-11-12', 'Loyer de novembre', 'Loyer', null, { label: 'Impayé', tone: 'danger' }],
   ['op-2', '2026-11-03', 'Fuite sous évier, acompte plombier', 'Travaux', null, { label: 'À venir', tone: 'warning' }],
-  ['op-3', '2026-10-01', 'Loyer d’octobre', 'Loyer', euros(770), { label: 'Encaissé', tone: 'success' }],
+  ['op-3', '2026-10-01', 'Loyer d’octobre', 'Loyer', euros(850), { label: 'Encaissé', tone: 'success' }],
   ['op-4', '2026-09-15', 'Taxe foncière 2026', 'Impôt', -euros(940), { label: 'Payé', tone: 'neutral' }],
-  ['op-5', '2026-09-01', 'Loyer de septembre', 'Loyer', euros(770), { label: 'Encaissé', tone: 'success' }],
-  ['op-6', '2026-08-01', 'Loyer d’août', 'Loyer', euros(770), { label: 'Encaissé', tone: 'success' }],
-  ['op-7', '2026-07-01', 'Loyer de juillet', 'Loyer', euros(770), { label: 'Encaissé', tone: 'success' }],
-  ['op-8', '2026-06-01', 'Loyer de juin', 'Loyer', euros(770), { label: 'Encaissé', tone: 'success' }],
+  ['op-5', '2026-09-01', 'Loyer de septembre', 'Loyer', euros(850), { label: 'Encaissé', tone: 'success' }],
+  ['op-6', '2026-08-01', 'Loyer d’août', 'Loyer', euros(850), { label: 'Encaissé', tone: 'success' }],
+  ['op-7', '2026-07-01', 'Loyer de juillet', 'Loyer', euros(850), { label: 'Encaissé', tone: 'success' }],
+  ['op-8', '2026-06-01', 'Loyer de juin', 'Loyer', euros(850), { label: 'Encaissé', tone: 'success' }],
   ['op-9', '2026-05-20', 'Entretien annuel du climatiseur', 'Travaux', -euros(95), { label: 'Payé', tone: 'neutral' }],
-  ['op-10', '2026-05-01', 'Loyer de mai', 'Loyer', euros(770), { label: 'Encaissé', tone: 'success' }],
-  ['op-11', '2026-04-01', 'Loyer d’avril', 'Loyer', euros(770), { label: 'Encaissé', tone: 'success' }],
-  ['op-12', '2026-03-01', 'Loyer de mars', 'Loyer', euros(770), { label: 'Encaissé', tone: 'success' }],
+  ['op-10', '2026-05-01', 'Loyer de mai', 'Loyer', euros(850), { label: 'Encaissé', tone: 'success' }],
+  ['op-11', '2026-04-01', 'Loyer d’avril', 'Loyer', euros(850), { label: 'Encaissé', tone: 'success' }],
+  ['op-12', '2026-03-01', 'Loyer de mars', 'Loyer', euros(850), { label: 'Encaissé', tone: 'success' }],
 ] as const;
 
 export const aptA1Extras: LotExtras = {
@@ -259,15 +259,15 @@ export const aptA1Extras: LotExtras = {
     acquisitionDate: '2016-06-15',
     periods: aptA1Periods,
     rentSteps: [
-      { year: 2017, rent: euros(690), event: null },
-      { year: 2018, rent: euros(698), event: null },
-      { year: 2019, rent: euros(712), event: 'Révision IRL' },
-      { year: 2020, rent: euros(720), event: 'Relocation' },
-      { year: 2021, rent: euros(722), event: null },
-      { year: 2022, rent: euros(727), event: null },
-      { year: 2023, rent: euros(731), event: null },
-      { year: 2024, rent: euros(745), event: 'Relocation' },
-      { year: 2025, rent: euros(756), event: 'Révision IRL' },
+      { year: 2017, rent: euros(590), event: null },
+      { year: 2018, rent: euros(598), event: null },
+      { year: 2019, rent: euros(612), event: 'Révision IRL' },
+      { year: 2020, rent: euros(640), event: 'Relocation' },
+      { year: 2021, rent: euros(642), event: null },
+      { year: 2022, rent: euros(647), event: null },
+      { year: 2023, rent: euros(745), event: 'Relocation' },
+      { year: 2024, rent: euros(752), event: null },
+      { year: 2025, rent: euros(762), event: 'Révision IRL' },
       { year: 2026, rent: euros(770), event: 'Révision IRL' },
     ],
     inspections: [
@@ -320,8 +320,8 @@ export const aptA1Extras: LotExtras = {
     balanceNote: 'Loyer et charges de novembre',
     months: months.map(([month, expenses, expenseNote]) => ({
       month,
-      called: euros(770),
-      collected: month === '2026-11' ? 0 : euros(770),
+      called: euros(850),
+      collected: month === '2026-11' ? 0 : euros(850),
       expenses,
       expenseNote,
     })),
@@ -332,11 +332,11 @@ export const aptA1Extras: LotExtras = {
   },
 };
 
-export const lotB3Extras: Partial<LotExtras> = {
+export const studioB3Extras: Partial<LotExtras> = {
   occupation: {
     asOf: '2026-11-13',
     acquisitionDate: '2016-06-01',
-    periods: lotB3Periods,
+    periods: studioB3Periods,
     rentSteps: [],
     inspections: [],
   },
@@ -346,10 +346,10 @@ export const lotB3Extras: Partial<LotExtras> = {
     kind: 'Bail meublé, 1 an renouvelé',
     startDate: '2024-11-01',
     endDate: '2027-01-31',
-    rentExcl: euros(410),
-    provisions: euros(40),
-    deposit: euros(820),
-    nextRevision: null,
+    rentExcl: euros(650),
+    provisions: euros(50),
+    deposit: euros(1000),
+    nextRevision: '2027-11-01',
     balance: 0,
   },
 };

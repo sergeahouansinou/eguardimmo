@@ -35,7 +35,7 @@ describe('DocumentsPage', () => {
     expect(bail.textContent).toContain("Bail d'habitation vide");
     expect(bail.textContent).toContain('Koffi Adjovi');
     expect(bail.textContent).toContain('1,2 Mo');
-    expect(bail.textContent).toContain('01/04/2026');
+    expect(bail.textContent).toContain('01/04/2023');
     expect(screen.getByRole('row', { name: /Diagnostic électrique/ }).textContent).toContain('860 Ko');
     expect(screen.getByRole('switch', { name: 'Partagé : Bail signé, Apt A1.pdf' }).getAttribute('aria-checked')).toBe('true');
     expect(screen.getByRole('switch', { name: 'Privé : Diagnostic électrique.pdf' }).getAttribute('aria-checked')).toBe('false');

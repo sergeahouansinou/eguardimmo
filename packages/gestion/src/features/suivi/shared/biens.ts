@@ -39,7 +39,6 @@ export const INTERVENANTS = ['Plomberie Sanvi', 'Peinture Dupont', 'Chauffage Me
 
 export const TENANT_BY_BIEN: Partial<Record<BienId, string>> = {
   'apt-a1': 'Koffi Adjovi',
-  'apt-b3': 'Léa Martin',
   'villa-rdc': 'Marc Dossou',
 };
 

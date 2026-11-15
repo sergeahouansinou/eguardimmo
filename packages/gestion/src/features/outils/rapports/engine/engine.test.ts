@@ -86,7 +86,7 @@ describe('cohérence avec les données des autres lots', () => {
     expect(run('etat-locatif').rows).toHaveLength(demoUnits.length);
     expect(totalOf('depenses-par-bien', 'amount')).toBe(finances.depenses.reduce((sum, expense) => sum + expense.montantTtc, 0));
     expect(totalOf('prets-immobiliers', 'remaining')).toBe(finances.prets.filter((loan) => !loan.supprime && loan.statut !== 'archive').reduce((sum, loan) => sum + loan.restantDu, 0));
-    expect(run('revenus-fonciers').kpis[0]?.value.replace(/\u00a0/g, ' ')).toBe('20 900 €');
+    expect(run('revenus-fonciers').kpis[0]?.value.replace(/\u00a0/g, ' ')).toBe('89 470 €');
   });
 
   it('équilibre l’export comptable : appels, encaissements et dépenses', () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createDemoFinances } from './demo';
+import { demoWithRenewalLease } from './testing/data';
 import { grandLivreOf } from './grandLivre';
 
 describe('grandLivreOf', () => {
@@ -39,9 +40,10 @@ describe('grandLivreOf', () => {
   });
 
   it('filtre par bail et ignore un locataire inconnu', () => {
-    const data = createDemoFinances();
-    const filtered = grandLivreOf(data, 'koffi-adjovi', 'bl-2021-0001');
-    expect(filtered?.lignes.every((ligne) => ligne.bien.startsWith('Studio C2') || ligne.bien === '')).toBe(true);
+    const data = demoWithRenewalLease();
+    const filtered = grandLivreOf(data, 'awa-traore', 'bl-2026-0018');
+    expect(grandLivreOf(data, 'awa-traore')?.lignes.some((ligne) => ligne.kind === 'echeance')).toBe(true);
+    expect(filtered?.lignes.filter((ligne) => ligne.kind === 'echeance' || ligne.kind === 'paiement')).toEqual([]);
     expect(filtered?.baux).toHaveLength(2);
     expect(grandLivreOf(data, 'inconnu')).toBeUndefined();
   });

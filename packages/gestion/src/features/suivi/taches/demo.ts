@@ -21,7 +21,7 @@ const doneRows = [
   ['Relance du loyer de septembre', 'apt-a1', 'Marie Chabi', '2026-10-12'],
   ['Appel du syndic pour les charges', 'residence-du-parc', 'Marie Chabi', '2026-10-09'],
   ['Photos de l’état des lieux de sortie', 'apt-b3', 'Paul Agossou', '2026-10-02'],
-  ['Remise des clés au nouveau locataire', 'apt-b3', 'Paul Agossou', '2026-10-01'],
+  ['Remise des clés à l’agence après le départ', 'apt-b3', 'Paul Agossou', '2026-10-01'],
   ['Devis peinture cage d’escalier', 'residence-du-parc', 'Marie Chabi', '2026-09-28'],
   ['Relevé des compteurs de septembre', 'apt-a1', 'Paul Agossou', '2026-09-20'],
   ['Contrôle de l’extincteur', 'residence-du-parc', 'Paul Agossou', '2026-09-15'],

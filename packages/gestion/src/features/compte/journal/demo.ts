@@ -61,7 +61,7 @@ const FILLER_TEMPLATES: readonly { actor: Actor; type: EventType; action: string
   { actor: MARC, type: 'paiement', action: 'A enregistré un paiement de 850 €', detail: 'Koffi Adjovi, Apt A1' },
   { actor: AWA, type: 'document', action: 'A émis la quittance QT-2026-0398', detail: 'Scellée, empreinte 7d10…c2a4' },
   { actor: MARC, type: 'connexion', action: "S'est connecté", detail: 'Navigateur web' },
-  { actor: AWA, type: 'paiement', action: 'A enregistré un paiement de 1 150 €', detail: 'Marc Dossou, Villa RDC' },
+  { actor: AWA, type: 'paiement', action: 'A enregistré un paiement de 2 050 €', detail: 'Marc Dossou, Villa RDC' },
   { actor: MARC, type: 'export', action: 'A exporté la liste des locataires', detail: 'CSV, tous les biens' },
   { actor: JULIEN, type: 'securite', action: 'Connexion refusée', detail: 'Double authentification non activée' },
   { actor: AWA, type: 'document', action: "A envoyé l'avis d'échéance AV-2026-1101-A1", detail: 'Koffi Adjovi, par e-mail' },

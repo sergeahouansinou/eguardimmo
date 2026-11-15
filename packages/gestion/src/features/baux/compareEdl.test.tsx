@@ -23,13 +23,13 @@ describe('compareEdl', () => {
   });
 
   it('retrouve l’entrée du même bien, de préférence du même locataire', () => {
-    expect(findEntryFor(edl('edl-2026-007'), demoEdls)?.id).toBe('edl-2025-014');
+    expect(findEntryFor(edl('edl-2026-007'), demoEdls)?.id).toBe('edl-2024-012');
     expect(findEntryFor(edl('edl-2026-005'), demoEdls)).toBeNull();
-    expect(findEntryFor(edl('edl-2023-001'), demoEdls)?.id).toBe('edl-2026-004');
+    expect(findEntryFor(edl('edl-2023-001'), demoEdls)?.id).toBe('edl-2023-002');
   });
 
   it('compte les dégradations entre l’entrée et la sortie', () => {
-    const counts = countEvolutions(compareSurveys(edl('edl-2025-014').survey, edl('edl-2026-007').survey));
+    const counts = countEvolutions(compareSurveys(edl('edl-2024-012').survey, edl('edl-2026-007').survey));
     expect(counts.degradation).toBe(2);
     expect(counts.amelioration).toBe(0);
     expect(counts.identique).toBeGreaterThan(5);
@@ -55,7 +55,7 @@ describe('EtatLieuxComparePage', () => {
   });
 
   it('refuse de comparer un état d’entrée', async () => {
-    renderLot(<EtatLieuxComparePage id="edl-2026-004" />);
+    renderLot(<EtatLieuxComparePage id="edl-2023-002" />);
     expect(await screen.findByText('Il n’y a rien à comparer')).toBeTruthy();
   });
 

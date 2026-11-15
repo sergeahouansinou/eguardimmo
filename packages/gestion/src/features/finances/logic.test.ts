@@ -105,7 +105,7 @@ describe('calculs du registre de démonstration', () => {
   const data = createDemoFinances();
 
   it('chiffre le mois de novembre 2026 à partir des lignes', () => {
-    expect(periodKpis(data, '2026-11')).toEqual({ attendu: 530000, encaisse: 418000, depenses: 28500, reparations: 8500, resultat: 389500 });
+    expect(periodKpis(data, '2026-11')).toEqual({ attendu: 889000, encaisse: 777000, depenses: 28500, reparations: 8500, resultat: 748500 });
   });
 
   it('classe les impayés par ancienneté puis par montant, avec leur total', () => {
@@ -135,9 +135,9 @@ describe('calculs du registre de démonstration', () => {
   it('simule les régimes fiscaux sans flottant', () => {
     const bilan = data.bilans.find((item) => item.annee === 2026);
     if (!bilan) throw new Error('bilan absent');
-    expect(bilanView(bilan, 'foncier_reel')).toMatchObject({ recettes: 2090000, charges: 421500, net: 1668500 });
-    expect(bilanView(bilan, 'micro_foncier')).toMatchObject({ charges: 627000, net: 1463000 });
-    expect(bilanView(bilan, 'micro_bic')).toMatchObject({ charges: 1045000, net: 1045000 });
+    expect(bilanView(bilan, 'foncier_reel')).toMatchObject({ recettes: 8947000, charges: 421500, net: 8525500 });
+    expect(bilanView(bilan, 'micro_foncier')).toMatchObject({ charges: 2684100, net: 6262900 });
+    expect(bilanView(bilan, 'micro_bic')).toMatchObject({ charges: 4473500, net: 4473500 });
     expect(bilanView(bilan, 'lmnp_reel').charges).toBe(421500 + bilan.amortissementsLmnp);
   });
 

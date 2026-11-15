@@ -31,7 +31,7 @@ const SEEDS: LotSeed[] = [
   { id: 'apt-a1', name: 'Apt A1', buildingId: 'les-tilleuls', type: 'appartement', rent: 770, charges: 2480, cost: 152000, loan: 560, candidates: 0, previous: { rent: 679, charges: 1950, cost: 145000 }, current: FULL, before: FULL },
   { id: 'apt-a2', name: 'Apt A2', buildingId: 'les-tilleuls', type: 'appartement', rent: 880, charges: 2610, cost: 171000, loan: 600, candidates: 0, previous: { rent: 776, charges: 2060, cost: 163000 }, current: FULL, before: FULL },
   { id: 'apt-b1', name: 'Apt B1', buildingId: 'les-tilleuls', type: 'appartement', rent: 720, charges: 2230, cost: 139000, loan: 480, candidates: 0, previous: { rent: 635, charges: 1760, cost: 133000 }, current: FULL, before: FULL },
-  { id: 'lot-b3', name: 'Lot B3', buildingId: 'les-tilleuls', type: 'appartement', rent: 390, charges: 1040, cost: 68000, loan: 0, candidates: 0, previous: { rent: 344, charges: 820, cost: 65000 }, current: 'OOOOOOOOOOPP', before: FULL },
+  { id: 'studio-b3', name: 'Studio B3', buildingId: 'les-tilleuls', type: 'appartement', rent: 390, charges: 1040, cost: 68000, loan: 0, candidates: 0, previous: { rent: 344, charges: 820, cost: 65000 }, current: 'OOOOOOOOOOPP', before: FULL },
   { id: 'parking-p4', name: 'Parking P4', buildingId: 'les-tilleuls', type: 'stationnement', rent: 60, charges: 120, cost: 11000, loan: 0, candidates: 0, previous: { rent: 53, charges: 90, cost: 11000 }, current: FULL, before: FULL },
   { id: 'studio-2e', name: 'Studio 2e', buildingId: 'residence-du-parc', type: 'studio', rent: 640, charges: 2940, cost: 118000, loan: 280, candidates: 0, previous: { rent: 564, charges: 2310, cost: 113000 }, current: FULL, before: FULL },
   { id: 'studio-1er', name: 'Studio 1er', buildingId: 'residence-du-parc', type: 'studio', rent: 610, charges: 1870, cost: 112000, loan: 0, candidates: 3, previous: { rent: 538, charges: 1470, cost: 107000 }, current: 'VTTOOOOOOPVV', before: FULL },
@@ -79,8 +79,8 @@ export const ARREARS: Arrears[] = [
 export const PREVIOUS_SHORTFALL = { lotId: 'apt-a1', month: '2025-06', amount: euros(1090) };
 
 export const LEASE_ENDS: LeaseEnd[] = [
-  { lotId: 'lot-b3', date: '2026-12-01', kind: 'preavis' },
-  { lotId: 'apt-b1', date: '2027-04-30', kind: 'reconduction' },
+  { lotId: 'studio-2e', date: '2026-12-31', kind: 'preavis' },
+  { lotId: 'studio-b3', date: '2027-01-31', kind: 'preavis' },
+  { lotId: 'apt-b1', date: '2027-08-31', kind: 'reconduction' },
   { lotId: 'villa-etage', date: '2027-06-14', kind: 'reconduction' },
-  { lotId: 'studio-2e', date: '2027-08-31', kind: 'etudiant' },
 ];

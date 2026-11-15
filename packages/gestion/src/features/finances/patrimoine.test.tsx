@@ -19,9 +19,9 @@ describe('BilanPage', () => {
     const { container } = renderFinances((props) => <BilanPage {...props} />);
     expect(await screen.findByRole('heading', { name: 'Bilan 2026' })).toBeTruthy();
     const kpis = norm(screen.getByRole('region', { name: 'Résultat de l’année' }).textContent);
-    expect(kpis).toContain('20 900 €');
+    expect(kpis).toContain('89 470 €');
     expect(kpis).toContain('4 215 €');
-    expect(kpis).toContain('16 685 €');
+    expect(kpis).toContain('85 255 €');
     expect(screen.getByText('3 factures manquantes')).toBeTruthy();
     await expectNoA11yViolations(container);
   });
@@ -31,11 +31,11 @@ describe('BilanPage', () => {
     await screen.findByRole('heading', { name: 'Bilan 2026' });
     await userEvent.click(screen.getByRole('radio', { name: 'Micro-foncier' }));
     const kpis = norm(screen.getByRole('region', { name: 'Résultat de l’année' }).textContent);
-    expect(kpis).toContain('6 270 €');
-    expect(kpis).toContain('14 630 €');
+    expect(kpis).toContain('26 841 €');
+    expect(kpis).toContain('62 629 €');
     expect(screen.getByText('Abattement forfaitaire de 30 %')).toBeTruthy();
     await userEvent.click(screen.getByRole('radio', { name: 'Micro-BIC' }));
-    expect(norm(screen.getByRole('region', { name: 'Résultat de l’année' }).textContent)).toContain('10 450 €');
+    expect(norm(screen.getByRole('region', { name: 'Résultat de l’année' }).textContent)).toContain('44 735 €');
   });
 
   it('change d’année et signale une année sans bilan', async () => {

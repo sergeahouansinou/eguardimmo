@@ -21,7 +21,7 @@ describe('LocatairesPage', () => {
   it('affiche les dossiers à suivre, les compteurs d’onglets et l’alerte de retard', async () => {
     const { container } = renderLot(<LocatairesPage />);
     expect(await screen.findByRole('link', { name: 'Koffi Adjovi' })).toBeTruthy();
-    expect(screen.getByRole('tab', { name: /À suivre/ }).textContent).toContain('3');
+    expect(screen.getByRole('tab', { name: /À suivre/ }).textContent).toContain('4');
     expect(screen.getByRole('tab', { name: /Archivés/ }).textContent).toContain('3');
     expect(norm(document.body.textContent)).toContain('850 € de loyer en retard');
     expect(screen.getByRole('link', { name: 'Ibrahim Yao' })).toBeTruthy();

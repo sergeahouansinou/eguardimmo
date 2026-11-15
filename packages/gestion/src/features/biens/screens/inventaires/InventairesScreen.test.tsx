@@ -93,7 +93,7 @@ describe('InventairesScreen', () => {
     const source = createDemoBiensSource({ latencyMs: 0 });
     await listed(source);
     await pickAction('INV-2026-0006', 'Envoyer pour signature');
-    expect((await screen.findAllByText('Demande de signature envoyée à Léa Martin')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('Demande de signature envoyée à Yann Le Gall')).length).toBeGreaterThan(0);
     expect(await screen.findByText('Signature demandée le 13/11/2026')).toBeTruthy();
     await pickAction('INV-2026-0003', 'Envoyer pour signature');
     expect((await screen.findAllByText('Aucun locataire à qui envoyer l’inventaire : renseignez-le d’abord.')).length).toBeGreaterThan(0);

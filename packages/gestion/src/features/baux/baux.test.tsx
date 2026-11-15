@@ -180,7 +180,7 @@ describe('BailDetailPage', () => {
     await userEvent.click(screen.getByRole('tab', { name: /Documents/ }));
     expect(await screen.findByText('Bail signé')).toBeTruthy();
     await userEvent.click(screen.getByRole('tab', { name: /États des lieux/ }));
-    expect(await screen.findByText(/EDL-2026-004/)).toBeTruthy();
+    expect(await screen.findByText(/EDL-2023-002/)).toBeTruthy();
     await userEvent.click(screen.getByRole('tab', { name: /Historique/ }));
     expect(await screen.findByText('Relance envoyée par e-mail')).toBeTruthy();
     await expectNoA11yViolations(container);

@@ -29,7 +29,7 @@ const papers: [string, ReactElement][] = [
   ['attestation', <AttestationApercuPage key="t" id="at-2023-0018" />],
   ['courrier', <CourrierApercuPage key="c" id="cr-2026-0041" />],
   ['modèle', <ModeleApercuPage key="m" id={firstOf(demoTemplateIds)} />],
-  ['état des lieux', <EtatLieuxPage key="e" id="edl-2026-004" />],
+  ['état des lieux', <EtatLieuxPage key="e" id="edl-2023-002" />],
   ['contrat de location', <ReservationContratPage key="r" id="rs-2026-031" />],
 ];
 

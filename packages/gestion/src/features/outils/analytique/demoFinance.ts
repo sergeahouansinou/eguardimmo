@@ -38,7 +38,7 @@ const COPROPRIETE_WEIGHTS: Record<string, number> = {
   'apt-a1': 12,
   'apt-a2': 12,
   'apt-b1': 12,
-  'lot-b3': 8,
+  'studio-b3': 8,
   'parking-p4': 2,
   'studio-2e': 8,
   'studio-1er': 8,

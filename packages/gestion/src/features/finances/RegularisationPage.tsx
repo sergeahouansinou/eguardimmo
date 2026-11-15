@@ -44,7 +44,7 @@ function RegularisationForm({ data, Link, navigate }: ScreenProps & { data: Fina
   const exec = useExec({ navigate });
   const requestKey = useRef(newRequestKey());
   const [draftId, setDraftId] = useState<string | null>(null);
-  const [bailId, setBailId] = useState('bl-2021-0001');
+  const [bailId, setBailId] = useState(data.baux[0]?.id ?? '');
   const [debut, setDebut] = useState('2026-01-01');
   const [fin, setFin] = useState('2026-12-31');
   const [provisions, setProvisions] = useState('1200');

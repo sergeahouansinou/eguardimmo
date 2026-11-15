@@ -6,6 +6,7 @@ import { dismissFlash } from './flash';
 import { GrandLivrePage } from './GrandLivrePage';
 import { RelancePage } from './relance/RelancePage';
 import { createDemoFinancesSource } from './source';
+import { demoWithRenewalLease } from './testing/data';
 import { norm, renderFinances, snapshotOf } from './testing/render';
 
 const KOFFI = 'ech-2026-11-koffi-adjovi';
@@ -29,10 +30,10 @@ describe('GrandLivrePage', () => {
   });
 
   it('filtre par bail quand le locataire en a plusieurs', async () => {
-    renderFinances((props) => <GrandLivrePage {...props} echeanceId={KOFFI} />);
+    renderFinances((props) => <GrandLivrePage {...props} echeanceId="ech-2026-11-awa-traore" />, createDemoFinancesSource({ seed: demoWithRenewalLease() }));
     await screen.findByRole('table', { name: 'Écritures' });
     await userEvent.click(screen.getByRole('combobox', { name: /^Bail/ }));
-    await userEvent.click(await screen.findByRole('option', { name: /BL-2021-0001/ }));
+    await userEvent.click(await screen.findByRole('option', { name: /BL-2026-0018/ }));
     expect(await screen.findByText('Aucune écriture')).toBeTruthy();
   });
 

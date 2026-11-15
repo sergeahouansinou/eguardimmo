@@ -66,7 +66,7 @@ export const demoInterventions: readonly Intervention[] = [
     dueDate: '2026-10-08',
     updatedAt: '2026-10-09',
     description: 'Serrure de la porte d’entrée bloquée.',
-    notifyTenant: true,
+    notifyTenant: false,
     photos: [],
     archived: true,
     quote: { amount: euros(120), receivedOn: '2026-10-05', status: 'accepte' },

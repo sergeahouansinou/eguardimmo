@@ -22,7 +22,7 @@ export const FORECAST: Forecast = {
         { index: 6, delta: euros(20) },
         { index: 11, delta: euros(30) },
       ],
-      vacancies: [{ lotId: 'lot-b3', fromIndex: 0, toIndex: 1, rent: euros(390) }],
+      vacancies: [{ lotId: 'studio-b3', fromIndex: 0, toIndex: 1, rent: euros(390) }],
       other: [{ index: 1, amount: euros(120) }],
       reference: { inflows: euros(27400), outflows: euros(11100), balance: euros(15900) },
     },

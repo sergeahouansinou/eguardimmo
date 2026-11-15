@@ -333,14 +333,14 @@ describe('relevés et inventaires', () => {
 
   it('modifie un inventaire et envoie la demande de signature au locataire', async () => {
     const demo = source();
-    await demo.updateInventaire('inv-2026-0006', { lotId: 'lot-b3', template: 'Meublé, studio', tenant: null, value: 510000 });
+    await demo.updateInventaire('inv-2026-0006', { lotId: 'studio-b3', template: 'Meublé, studio', tenant: null, value: 510000 });
     await demo.requestInventaireSignature('inv-2026-0006');
     const item = inventairesSchema.parse(await demo.inventaires()).items.find((entry) => entry.id === 'inv-2026-0006');
     expect(item).toMatchObject({ template: 'Meublé, studio', value: 510000, tenant: 'Yann Le Gall', signatureSentOn: '2026-11-13' });
-    await demo.updateInventaire('inv-2026-0006', { lotId: 'lot-b3', template: 'Meublé, studio', tenant: 'Léa Martin', value: 510000 });
+    await demo.updateInventaire('inv-2026-0006', { lotId: 'studio-b3', template: 'Meublé, studio', tenant: 'Lucas Moreau', value: 510000 });
     expect(inventairesSchema.parse(await demo.inventaires()).items.find((entry) => entry.id === 'inv-2026-0006')?.signatureSentOn).toBeNull();
-    await expect(demo.updateInventaire('inv-2026-0006', { lotId: 'lot-b3', template: 'Inconnu', tenant: null, value: 1 })).rejects.toThrow('Modèle');
-    await expect(demo.updateInventaire('inconnu', { lotId: 'lot-b3', template: 'Meublé, studio', tenant: null, value: 1 })).rejects.toThrow('introuvable');
+    await expect(demo.updateInventaire('inv-2026-0006', { lotId: 'studio-b3', template: 'Inconnu', tenant: null, value: 1 })).rejects.toThrow('Modèle');
+    await expect(demo.updateInventaire('inconnu', { lotId: 'studio-b3', template: 'Meublé, studio', tenant: null, value: 1 })).rejects.toThrow('introuvable');
   });
 
   it('refuse d’envoyer pour signature un inventaire sans locataire', async () => {

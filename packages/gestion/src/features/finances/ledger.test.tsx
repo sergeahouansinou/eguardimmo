@@ -23,10 +23,10 @@ describe('OperationsPage', () => {
     const { container } = renderFinances((props) => <OperationsPage {...props} />);
     const table = await screen.findByRole('table', { name: 'Échéances à encaisser' });
     const kpis = norm(screen.getByRole('region', { name: 'Chiffres de la période' }).textContent);
-    expect(kpis).toContain('4 180 €');
-    expect(kpis).toContain('sur 5 300 € attendus');
+    expect(kpis).toContain('7 770 €');
+    expect(kpis).toContain('sur 8 890 € attendus');
     expect(kpis).toContain('285 €');
-    expect(kpis).toContain('3 895 €');
+    expect(kpis).toContain('7 485 €');
     expect(within(table).getAllByRole('row').slice(1)).toHaveLength(4);
     expect(norm(rowAt(table, 1).textContent)).toContain('Koffi Adjovi');
     expect(rowAt(table, 1).textContent).toContain('Retard, 12 jours');
@@ -183,7 +183,7 @@ describe('PaiementFormPage', () => {
     await userEvent.type(date, '2026-12-01');
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer le paiement' }));
     expect(await screen.findByText(/futur/)).toBeTruthy();
-    expect((await snapshotOf(source)).paiements).toHaveLength(5);
+    expect((await snapshotOf(source)).paiements).toHaveLength(8);
   });
 
   it('signale une échéance introuvable', async () => {

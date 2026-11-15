@@ -39,9 +39,9 @@ export const tilleulsExtras: ImmeubleExtras = {
     regularisation: [
       { lotId: 'apt-a1', lotName: 'Apt A1', tenant: 'Koffi Adjovi', tantiemes: 128, provisions: euros(960), recoverable: euros(944) },
       { lotId: 'apt-a2', lotName: 'Apt A2', tenant: 'Nadège Sossou', tantiemes: 140, provisions: euros(1080), recoverable: euros(1033) },
-      { lotId: 'apt-b1', lotName: 'Apt B1', tenant: 'Clarisse Hounkpatin', tantiemes: 104, provisions: euros(840), recoverable: euros(767) },
-      { lotId: 'lot-b3', lotName: 'Lot B3', tenant: 'Yann Le Gall', tantiemes: 30, provisions: euros(420), recoverable: euros(221) },
-      { lotId: 'parking-p4', lotName: 'Parking P4', tenant: 'Hugo Bernard', tantiemes: 10, provisions: euros(60), recoverable: euros(74) },
+      { lotId: 'apt-b1', lotName: 'Apt B1', tenant: 'Clarisse Hounkpatin', tantiemes: 104, provisions: euros(1080), recoverable: euros(767) },
+      { lotId: 'studio-b3', lotName: 'Studio B3', tenant: 'Yann Le Gall', tantiemes: 30, provisions: euros(600), recoverable: euros(221) },
+      { lotId: 'parking-p4', lotName: 'Parking P4', tenant: 'Awa Traoré', tantiemes: 10, provisions: euros(60), recoverable: euros(74) },
     ],
   },
   copro: {
@@ -92,11 +92,11 @@ export const tilleulsExtras: ImmeubleExtras = {
       { id: 'groom-porte', date: '2026-09-14', title: 'Groom de la porte d’entrée', place: 'Parties communes', provider: 'Syndic', paidBy: 'Copropriété', cost: null, costNote: null, status: { label: 'Terminée', tone: 'neutral' } },
       { id: 'mitigeur', date: '2026-07-02', title: 'Remplacement du mitigeur de douche', place: 'Apt A2', provider: 'Plomberie Martin', paidBy: 'Bailleur', cost: euros(145), costNote: null, status: { label: 'Terminée', tone: 'neutral' } },
       { id: 'clim-annuel', date: '2026-05-20', title: 'Entretien annuel du climatiseur', place: 'Apt A1', provider: 'Clim Services 75', paidBy: 'Bailleur', cost: euros(95), costNote: null, status: { label: 'Terminée', tone: 'neutral' } },
-      { id: 'toiture', date: '2026-03-11', title: 'Infiltration par la toiture', place: 'Lot B3', provider: 'Syndic, assurance', paidBy: 'Copropriété', cost: null, costNote: 'Sinistre', status: { label: 'Terminée', tone: 'neutral' } },
+      { id: 'toiture', date: '2026-03-11', title: 'Infiltration par la toiture', place: 'Studio B3', provider: 'Syndic, assurance', paidBy: 'Copropriété', cost: null, costNote: 'Sinistre', status: { label: 'Terminée', tone: 'neutral' } },
       { id: 'prise', date: '2026-02-18', title: 'Prise électrique arrachée', place: 'Apt B1', provider: 'Élec Services', paidBy: 'Locataire', cost: euros(60), costNote: null, status: { label: 'Terminée', tone: 'neutral' } },
     ],
     claims: [
-      { id: 'sinistre-toiture', title: 'Infiltration par la toiture, Lot B3', detail: '11/03/2026 · assurance de l’immeuble, 860 € versés', pill: { label: 'Clos', tone: 'neutral' }, warn: false },
+      { id: 'sinistre-toiture', title: 'Infiltration par la toiture, Studio B3', detail: '11/03/2026 · assurance de l’immeuble, 860 € versés', pill: { label: 'Clos', tone: 'neutral' }, warn: false },
       { id: 'pno', title: 'Assurance propriétaire non occupant', detail: 'Vos 5 lots · échéance 31/12/2026', pill: { label: 'À renouveler', tone: 'warning' }, warn: true },
     ],
     providers: [

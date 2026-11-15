@@ -13,7 +13,7 @@ describe('données de démonstration', () => {
     const urgent = demoBureau.todos.filter((todo) => todo.urgent).length;
     expect(demoBureau.todos).toHaveLength(7);
     expect(urgent).toBe(2);
-    expect(demoBureau.rentHistory.at(-1)).toEqual({ month: '2026-11', called: 530_000, collected: 418_000 });
+    expect(demoBureau.rentHistory.at(-1)).toEqual({ month: '2026-11', called: 889_000, collected: 777_000 });
   });
 
   it('marquent les notifications comme lues sans toucher aux données d’origine', async () => {

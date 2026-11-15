@@ -5,7 +5,7 @@ import { seedDocuments } from './seed-documents';
 import { climatiseurRich } from './seed-equipements-rich';
 import { seedEquipements } from './seed-equipements';
 import { tilleulsExtras } from './seed-immeubles';
-import { aptA1Extras, aptA1Rich, lotB3Extras, lotB3Rich } from './seed-lot-details';
+import { aptA1Extras, aptA1Rich, studioB3Extras, studioB3Rich } from './seed-lot-details';
 import { seedImmeubles, seedLots } from './seed-lots';
 import { meterSeeds, seedInventaires, seedReadings } from './seed-readings';
 
@@ -32,7 +32,7 @@ export function emptyImmeubleExtras(): ImmeubleExtras {
 export function createDemoState(): DemoState {
   const lots = structuredClone(seedLots()).map((lot) => {
     if (lot.row.id === 'apt-a1') return { ...lot, rich: aptA1Rich };
-    if (lot.row.id === 'lot-b3') return { ...lot, rich: lotB3Rich };
+    if (lot.row.id === 'studio-b3') return { ...lot, rich: studioB3Rich };
     return lot;
   });
   return {
@@ -40,7 +40,7 @@ export function createDemoState(): DemoState {
     lots,
     lotExtras: structuredClone({
       'apt-a1': aptA1Extras,
-      'lot-b3': { ...emptyLotExtras(), ...lotB3Extras },
+      'studio-b3': { ...emptyLotExtras(), ...studioB3Extras },
     }),
     immeubleExtras: structuredClone({ 'les-tilleuls': tilleulsExtras }),
     equipements: structuredClone(seedEquipements).map((record) => ({
