@@ -31,8 +31,9 @@ export function Tooltip({
           <TooltipPrimitive.Content
             side={side}
             sideOffset={6}
+            collisionPadding={8}
             className={cx(
-              'z-50 rounded-sm bg-tooltip px-2 py-1 text-caption text-tooltip-fg',
+              'z-50 max-w-[min(20rem,calc(100vw-1rem))] rounded-sm bg-tooltip px-2 py-1 text-caption break-words text-tooltip-fg',
               className,
             )}
           >
