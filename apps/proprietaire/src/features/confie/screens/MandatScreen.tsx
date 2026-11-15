@@ -1,7 +1,7 @@
 "use client";
 
-import { Alert, Badge, Button, StatCard } from "@eguardimmo/ui";
-import { Building, FileText } from "lucide-react";
+import { Alert, Badge, Button, Icon, StatCard } from "@eguardimmo/ui";
+import { Building, FileText, FileX } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { formatDate, formatRemaining } from "../data/dates";
@@ -58,7 +58,7 @@ function Mandat({ data }: { data: ConfieData }) {
             {request ? (
               <Button variant="secondary" onClick={() => { setCancelling(true); }}>Annuler ma demande de fin</Button>
             ) : (
-              <Button variant="secondary" asChild><Link href={confieRoutes.mandatFin}>Demander la fin du mandat</Link></Button>
+              <Button variant="secondary" asChild><Link href={confieRoutes.mandatFin}><Icon icon={FileX} />Demander la fin du mandat</Link></Button>
             )}
           </>
         }

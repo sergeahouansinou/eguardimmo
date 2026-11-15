@@ -1,7 +1,7 @@
 'use client';
 
 import { Alert, Avatar, Badge, Button, Icon, Tab, TabList, TabPanel, Tabs } from '@eguardimmo/ui';
-import { Info, KeyRound, ShieldAlert, ShieldOff } from 'lucide-react';
+import { Info, KeyRound, Power, ShieldAlert, ShieldOff } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useAccount } from '@/console/hooks/queries';
@@ -303,6 +303,7 @@ function SecuritySection({ detail, onRevoke }: { detail: AccountDetail; onRevoke
       title="Sécurité"
       aside={
         <Button variant="secondary" size="sm" disabled={security.sessions === 0} onClick={onRevoke}>
+          <Icon icon={Power} />
           Révoquer les sessions
         </Button>
       }

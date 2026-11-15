@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Badge, Button, Switch } from '@eguardimmo/ui';
+import { Alert, Badge, Button, Icon, Switch } from '@eguardimmo/ui';
+import { Check } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -124,6 +125,7 @@ function ModulesForm({ id, data }: { id: string; data: OrganisationModules }) {
               <Link href={`/organisations/${id}`}>Annuler</Link>
             </Button>
             <Button loading={save.isPending} onClick={submit}>
+              <Icon icon={Check} />
               Enregistrer
             </Button>
           </>

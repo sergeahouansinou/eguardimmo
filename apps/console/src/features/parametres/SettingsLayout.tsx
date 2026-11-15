@@ -17,7 +17,7 @@ export function SettingsLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const current = SECTIONS.find((section) => section.href === pathname) ?? SECTIONS[0];
   return (
-    <div className="flex max-w-[720px] flex-col gap-4">
+    <div className={cx('flex flex-col gap-4', current.href !== '/parametres/notifications' && 'max-w-[720px]')}>
       <PageHeader
         Link={Link}
         breadcrumb={[{ label: 'Paramètres', href: '/parametres' }, { label: current.label }]}

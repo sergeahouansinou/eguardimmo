@@ -79,6 +79,7 @@ function DetailContent({ detail }: { detail: RgpdDetail }) {
             </Button>
             {next ? (
               <Button variant={next.strong ? 'danger' : 'primary'} onClick={() => { setStepOpen(true); }}>
+                <Icon icon={Check} />
                 {next.actionLabel}
               </Button>
             ) : null}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar, Badge, Button, Icon } from "@eguardimmo/ui";
-import { CircleCheck, MessageSquare, TriangleAlert } from "lucide-react";
+import { CircleCheck, Handshake, MessageSquare, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { formatDate } from "../data/dates";
 import { useConfie } from "../data/queries";
@@ -32,7 +32,7 @@ function Agence({ data }: { data: ConfieData }) {
         subtitle={`Agence gestionnaire de vos ${String(mandate.lotIds.length)} lots depuis le ${formatDate(mandate.signedOn)}.`}
         actions={
           <>
-            <Button variant="secondary" asChild><Link href={confieRoutes.mandat}>Voir mon mandat</Link></Button>
+            <Button variant="secondary" asChild><Link href={confieRoutes.mandat}><Icon icon={Handshake} />Voir mon mandat</Link></Button>
             <Button asChild><Link href={confieRoutes.messageNouveau}><Icon icon={MessageSquare} />Écrire à l&apos;agence</Link></Button>
           </>
         }
@@ -64,7 +64,7 @@ function Agence({ data }: { data: ConfieData }) {
             ]}
           />
           <Button variant="secondary" asChild className="self-start">
-            <Link href={confieRoutes.messageNouveau}>Écrire à {agency.manager.name.split(" ")[0]}</Link>
+            <Link href={confieRoutes.messageNouveau}><Icon icon={MessageSquare} />Écrire à {agency.manager.name.split(" ")[0]}</Link>
           </Button>
         </Section>
       </Pair>

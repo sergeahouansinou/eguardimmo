@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge, Button, StatCard } from "@eguardimmo/ui";
-import { CircleCheck, TriangleAlert } from "lucide-react";
+import { Badge, Button, Icon, StatCard } from "@eguardimmo/ui";
+import { CircleCheck, FileText, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { formatDate, monthLabel, monthName } from "../data/dates";
 import { useConfie } from "../data/queries";
@@ -54,7 +54,7 @@ function Fiscalite({ data }: { data: ConfieData }) {
         actions={
           <>
             <SecondaryDownload title={`Revenus fonciers ${year}`} label="Exporter en PDF" />
-            <Button asChild><Link href={confieRoutes.declaration}>Préparer la déclaration 2044</Link></Button>
+            <Button asChild><Link href={confieRoutes.declaration}><Icon icon={FileText} />Préparer la déclaration 2044</Link></Button>
           </>
         }
       />

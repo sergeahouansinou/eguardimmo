@@ -21,6 +21,9 @@ export function NotificationsScreen() {
   );
 }
 
+const HALF = Math.ceil(NOTIFICATION_GROUPS.length / 2);
+const COLUMNS = [NOTIFICATION_GROUPS.slice(0, HALF), NOTIFICATION_GROUPS.slice(HALF)];
+
 function sameValues(left: NotificationPrefs, right: NotificationPrefs): boolean {
   const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
   return [...keys].every((key) => left[key] === right[key]);
@@ -46,35 +49,41 @@ function NotificationsForm({ saved }: { saved: NotificationPrefs }) {
       }}
       className="flex flex-col gap-4"
     >
-      {NOTIFICATION_GROUPS.map((group) => {
-        const active = group.items.filter((item) => draft[item.key] === true).length;
-        return (
-          <Section
-            key={group.id}
-            id={`notif-${group.id}`}
-            title={group.label}
-            aside={<span className="text-caption text-fg-subtle">{`${String(active)} sur ${String(group.items.length)} actives`}</span>}
-          >
-            <ul>
-              {group.items.map((item) => (
-                <ListRow
-                  key={item.key}
-                  title={item.label}
-                  detail={item.detail}
-                  trailing={
-                    <Switch
-                      label={item.label}
-                      hideLabel
-                      checked={draft[item.key] === true}
-                      onCheckedChange={(next) => { setDraft((current) => ({ ...current, [item.key]: next })); }}
-                    />
-                  }
-                />
-              ))}
-            </ul>
-          </Section>
-        );
-      })}
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+        {COLUMNS.map((groups, index) => (
+          <div key={index} className="flex min-w-0 flex-col gap-4">
+            {groups.map((group) => {
+              const active = group.items.filter((item) => draft[item.key] === true).length;
+              return (
+                <Section
+                  key={group.id}
+                  id={`notif-${group.id}`}
+                  title={group.label}
+                  aside={<span className="text-caption text-fg-subtle">{`${String(active)} sur ${String(group.items.length)} actives`}</span>}
+                >
+                  <ul>
+                    {group.items.map((item) => (
+                      <ListRow
+                        key={item.key}
+                        title={item.label}
+                        detail={item.detail}
+                        trailing={
+                          <Switch
+                            label={item.label}
+                            hideLabel
+                            checked={draft[item.key] === true}
+                            onCheckedChange={(next) => { setDraft((current) => ({ ...current, [item.key]: next })); }}
+                          />
+                        }
+                      />
+                    ))}
+                  </ul>
+                </Section>
+              );
+            })}
+          </div>
+        ))}
+      </div>
       {failure ? <Alert tone="danger">{failure}</Alert> : null}
       <SaveBar pending={save.isPending} dirty={dirty} onCancel={() => { setDraft(saved); setFailure(null); }} />
     </form>

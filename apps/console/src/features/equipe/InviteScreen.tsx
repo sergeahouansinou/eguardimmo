@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Badge, Button, TextField } from '@eguardimmo/ui';
+import { Alert, Badge, Button, Icon, TextField } from '@eguardimmo/ui';
+import { Send } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -94,6 +95,7 @@ export function InviteScreen() {
           <Link href="/equipe">Annuler</Link>
         </Button>
         <Button type="submit" loading={formState.isSubmitting}>
+          <Icon icon={Send} />
           Envoyer l’invitation
         </Button>
       </div>

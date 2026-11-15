@@ -1,7 +1,7 @@
 'use client';
 
 import { Alert, Button, Checkbox, Chip, Icon, Select, TextField } from '@eguardimmo/ui';
-import { Info } from 'lucide-react';
+import { Check, Info } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -281,6 +281,7 @@ function PlanForm({ modules, detail }: { modules: ModuleRow[]; detail: PlanDetai
           <Link href="/abonnements">Annuler</Link>
         </Button>
         <Button type="submit" loading={formState.isSubmitting}>
+          <Icon icon={Check} />
           Enregistrer le plan
         </Button>
       </div>

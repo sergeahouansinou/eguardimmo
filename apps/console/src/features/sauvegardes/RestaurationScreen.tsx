@@ -1,7 +1,7 @@
 'use client';
 
 import { Alert, Button, Icon, Select, TextField, Textarea } from '@eguardimmo/ui';
-import { TriangleAlert } from 'lucide-react';
+import { ShieldCheck, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
@@ -179,7 +179,10 @@ function Form({ backups, equipe }: { backups: Backup[]; equipe: Equipe }) {
           <Button variant="secondary" asChild>
             <Link href="/sauvegardes">Annuler</Link>
           </Button>
-          <Button type="submit">Envoyer pour validation</Button>
+          <Button type="submit">
+            <Icon icon={ShieldCheck} />
+            Envoyer pour validation
+          </Button>
         </div>
       </form>
       {backup ? (

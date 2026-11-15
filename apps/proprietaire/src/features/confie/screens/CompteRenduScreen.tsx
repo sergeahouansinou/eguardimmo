@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge, Button, StatCard } from "@eguardimmo/ui";
-import { CircleCheck, CircleAlert, Wrench } from "lucide-react";
+import { Badge, Button, Icon, StatCard } from "@eguardimmo/ui";
+import { CircleCheck, CircleAlert, Eye, Wrench } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { formatDate, monthLabel, plural } from "../data/dates";
@@ -75,7 +75,7 @@ function CompteRendu({ data, report }: { data: ConfieData; report: Report }) {
         subtitle={`Du ${formatDate(report.startOn)} au ${formatDate(report.endOn)} · établi le ${formatDate(report.availableOn)} par ${data.agency.name}`}
         actions={
           <>
-            <Button variant="secondary" asChild><Link href={confieRoutes.apercu(report.id)}>Aperçu du PDF</Link></Button>
+            <Button variant="secondary" asChild><Link href={confieRoutes.apercu(report.id)}><Icon icon={Eye} />Aperçu du PDF</Link></Button>
             <PrimaryDownload title={`Compte rendu de gestion, ${report.label}`} label="Télécharger le PDF" />
           </>
         }

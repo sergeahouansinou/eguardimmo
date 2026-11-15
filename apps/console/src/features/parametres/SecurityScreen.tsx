@@ -1,7 +1,7 @@
 'use client';
 
 import { Alert, Badge, Button, Icon, Switch, TextField, Textarea } from '@eguardimmo/ui';
-import { Info, KeyRound, ShieldCheck } from 'lucide-react';
+import { ExternalLink, Info, KeyRound, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { z } from 'zod';
@@ -103,7 +103,10 @@ function SecurityForm({ settings }: { settings: SecuritySettings }) {
           title="Mes identifiants"
           aside={
             <Button variant="secondary" size="sm" asChild>
-              <Link href="/parametres/informations">Gérer dans Mon compte</Link>
+              <Link href="/parametres/informations">
+                <Icon icon={ExternalLink} />
+                Gérer dans Mon compte
+              </Link>
             </Button>
           }
         >

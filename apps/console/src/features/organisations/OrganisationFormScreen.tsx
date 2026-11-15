@@ -1,7 +1,7 @@
 'use client';
 
 import { Alert, Button, Checkbox, Icon, Select, TextField } from '@eguardimmo/ui';
-import { Info } from 'lucide-react';
+import { Info, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -177,6 +177,7 @@ function FormContent({ plans }: { plans: PlanRow[] }) {
           <Link href="/organisations">Annuler</Link>
         </Button>
         <Button type="submit" loading={formState.isSubmitting}>
+          <Icon icon={Plus} />
           Créer l’organisation
         </Button>
       </div>

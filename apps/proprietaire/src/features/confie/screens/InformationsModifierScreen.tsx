@@ -1,7 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, Button, TextField } from "@eguardimmo/ui";
+import { Alert, Button, Icon, TextField } from "@eguardimmo/ui";
+import { Landmark } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -73,7 +74,7 @@ function Modifier({ profile }: { profile: Profile }) {
             <div className="min-w-0 flex-1 basis-64">
               <TextField label="IBAN" placeholder="Ex. : FR76 3000 6000 0112 3456 7890 189" value={`•••• •••• •••• ${profile.payout.ibanLast4}`} readOnly hint="Un code de confirmation est envoyé par e-mail pour changer d'IBAN." />
             </div>
-            <Button variant="secondary" onClick={() => { setIbanOpen(true); }}>Changer d&apos;IBAN</Button>
+            <Button variant="secondary" onClick={() => { setIbanOpen(true); }}><Icon icon={Landmark} />Changer d&apos;IBAN</Button>
           </div>
         </Section>
         <Section title="Coordonnées">

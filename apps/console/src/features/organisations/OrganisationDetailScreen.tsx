@@ -1,7 +1,7 @@
 'use client';
 
 import { Alert, Avatar, Badge, Button, Icon, Tab, TabList, TabPanel, Tabs } from '@eguardimmo/ui';
-import { FileClock, Info, KeyRound, Puzzle, ShieldAlert } from 'lucide-react';
+import { CreditCard, FileClock, Info, KeyRound, Puzzle, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useOrganisation } from '@/console/hooks/queries';
@@ -76,6 +76,7 @@ function DetailContent({ detail }: { detail: OrganisationDetail }) {
               </Link>
             </Button>
             <Button variant="secondary" onClick={() => { setDialog('plan'); }}>
+              <Icon icon={CreditCard} />
               Changer de plan
             </Button>
             <Button variant="secondary" onClick={() => { setDialog('access'); }}>
