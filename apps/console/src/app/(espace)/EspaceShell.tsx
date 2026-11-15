@@ -1,8 +1,11 @@
 "use client";
 
+import { useTicketStats } from "@eguardimmo/messagerie";
 import { SpaceShell } from "@eguardimmo/shell";
+import type { ShellCounts } from "@eguardimmo/shell";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useMemo } from "react";
 import type { ReactNode } from "react";
 import {
   RAIL_STORAGE_KEY,
@@ -18,6 +21,11 @@ import {
 export function EspaceShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const openTickets = useTicketStats().data?.open;
+  const navigationWithTickets = useMemo(
+    () => (counts: ShellCounts | undefined) => navigation(openTickets === undefined ? counts : { ...counts, support: openTickets }),
+    [openTickets],
+  );
   return (
     <SpaceShell
       spaceLabel={SPACE_LABEL}
@@ -26,7 +34,7 @@ export function EspaceShell({ children }: { children: ReactNode }) {
       linkComponent={Link}
       onNavigate={(href) => { router.push(href); }}
       railStorageKey={RAIL_STORAGE_KEY}
-      navigation={navigation}
+      navigation={navigationWithTickets}
       bottomItems={bottomItems}
       accountMenu={accountMenu}
       helpMenu={helpMenu}
