@@ -183,14 +183,14 @@ function Biens({ index }: { index: Portefeuille }) {
               Exporter
             </Button>
             <Button asChild>
-              <Link href="/biens/nouveau">Ajouter un bien</Link>
+              <Link href={agenceRoutes.bienNew}>Ajouter un bien</Link>
             </Button>
           </>
         }
       />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Lots sous mandat" value={lines.length}>
-          <span className="text-caption text-fg-subtle">{`${String(rented)} loués, ${lines.length === rented ? "aucun vacant" : `${String(lines.length - rented)} vacants`}`}</span>
+          <span className="text-caption text-fg-subtle">{`${String(rented)} loués, ${lines.length === rented ? "aucun vacant" : plural(lines.length - rented, "vacant", "vacants")}`}</span>
         </StatCard>
         <StatCard label="Loyers appelés" value={formatEuros(called)}>
           <span className="text-caption text-fg-subtle">charges comprises, par mois</span>

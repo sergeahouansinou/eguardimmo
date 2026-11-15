@@ -203,7 +203,7 @@ function Locataires({ index }: { index: Portefeuille }) {
               Exporter
             </Button>
             <Button asChild>
-              <Link href="/locataires/invitation">Inviter un locataire</Link>
+              <Link href={agenceRoutes.locataireInvitation}>Inviter un locataire</Link>
             </Button>
           </>
         }

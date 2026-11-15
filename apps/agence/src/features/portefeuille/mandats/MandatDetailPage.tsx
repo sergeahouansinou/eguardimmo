@@ -15,7 +15,7 @@ import { initialsOf } from "@/lib/text";
 import { RowMenu } from "@/components/ui/RowMenu";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { useDemoDownload } from "@/components/ui/useDemoDownload";
-import { agenceRoutes, mandantHref, mandatTerminationHref } from "@/espace/routes";
+import { agenceRoutes, mandantHref, mandatAvenantHref, mandatTerminationHref } from "@/espace/routes";
 import { formatDay, relativeMonths } from "@/lib/dates";
 import { formatEuros, formatEurosExact, formatRate } from "@/lib/money";
 import { eventsFor, mandatDocuments } from "../detailItems";
@@ -94,7 +94,7 @@ function MandatDetail({ index, id }: { index: Portefeuille; id: string }) {
               Télécharger le mandat
             </Button>
             <Button asChild>
-              <Link href={`/mandats/avenant?mandat=${mandat.id}`}>Ajouter un avenant</Link>
+              <Link href={mandatAvenantHref(mandat.id)}>Ajouter un avenant</Link>
             </Button>
             <RowMenu
               label={`Autres actions pour le mandat ${mandat.number}`}

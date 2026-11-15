@@ -65,6 +65,8 @@ export const bienSchema = z.object({
   syndic: z.string(),
   pnoUntilIso: isoDaySchema,
   propertyTax: z.string(),
+  targetRentMinor: minorSchema.optional(),
+  targetChargesMinor: minorSchema.optional(),
 });
 export type Bien = z.infer<typeof bienSchema>;
 
@@ -153,6 +155,52 @@ export const complianceItemSchema = z.object({
 });
 export type ComplianceItem = z.infer<typeof complianceItemSchema>;
 
+export const avenantKindSchema = z.enum(["honoraires", "duree", "reversement", "travaux"]);
+export type AvenantKind = z.infer<typeof avenantKindSchema>;
+
+export const avenantSchema = z.object({
+  id: slugSchema,
+  number: z.string().regex(/^AV-\d{4}-\d{4}$/),
+  mandatId: slugSchema,
+  kind: avenantKindSchema,
+  effectIso: isoDaySchema,
+  createdIso: isoDaySchema,
+  applied: z.boolean(),
+  feeBasisPoints: z.number().int().min(0).max(2_000).optional(),
+  endIso: isoDaySchema.optional(),
+  payoutDay: z.number().int().min(1).max(28).optional(),
+  worksLimitMinor: minorSchema.optional(),
+  previous: z.string(),
+  next: z.string(),
+  note: z.string(),
+});
+export type Avenant = z.infer<typeof avenantSchema>;
+
+export const invitationStatusSchema = z.enum(["envoyee", "acceptee", "expiree", "annulee"]);
+export type InvitationStatus = z.infer<typeof invitationStatusSchema>;
+
+export const invitationSchema = z.object({
+  id: slugSchema,
+  email: z.email(),
+  name: z.string().min(1),
+  bailId: slugSchema,
+  message: z.string(),
+  link: z.url({ protocol: /^https$/ }),
+  sentIso: isoDaySchema,
+  expiresIso: isoDaySchema,
+  status: invitationStatusSchema,
+  reminders: z.number().int().nonnegative(),
+});
+export type Invitation = z.infer<typeof invitationSchema>;
+
+export const avisSchema = z.object({
+  id: z.string().regex(/^[a-z0-9-]+@\d{4}-\d{2}$/),
+  bailId: slugSchema,
+  month: yearMonthSchema,
+  sentIso: isoDaySchema,
+});
+export type Avis = z.infer<typeof avisSchema>;
+
 export const portefeuilleSchema = z.object({
   agencyName: z.string().min(1),
   managerFirstName: z.string().min(1),
@@ -166,5 +214,8 @@ export const portefeuilleSchema = z.object({
   interventions: z.array(interventionSummarySchema),
   messages: z.array(messageSummarySchema),
   compliance: z.array(complianceItemSchema),
+  avenants: z.array(avenantSchema),
+  invitations: z.array(invitationSchema),
+  avis: z.array(avisSchema),
 });
 export type PortefeuilleData = z.infer<typeof portefeuilleSchema>;

@@ -94,6 +94,7 @@ describe("fiche bail", () => {
     expect(screen.getByText("700 € par mois")).toBeTruthy();
     expect(screen.getByText("Conditions du bail")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Émettre l'avis d'échéance" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Enregistrer un paiement" }).getAttribute("href")).toBe("/finances/encaissements/nouveau");
     await expectNoA11yViolations(container);
   });
 
@@ -113,6 +114,7 @@ describe("fiche bail", () => {
     renderPortefeuille(<BailDetailPage id="b-2026-022" />);
     expect(await screen.findByText("Bail en brouillon")).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Émettre l'avis d'échéance" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Enregistrer un paiement" })).toBeNull();
     await user.click(screen.getByRole("tab", { name: /Échéances/ }));
     expect(screen.getByText("Aucune échéance appelée pour le moment.")).toBeTruthy();
   });

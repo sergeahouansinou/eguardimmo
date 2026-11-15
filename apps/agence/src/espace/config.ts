@@ -23,6 +23,7 @@ import {
   Wrench,
   Bell,
 } from "lucide-react";
+import { authUrl } from "@eguardimmo/shell";
 import type { ShellCounts } from "@eguardimmo/shell";
 import type {
   AccountMenuConfig,
@@ -96,8 +97,8 @@ export const bottomItems: BottomItem[] = [
 
 export const accountMenu: AccountMenuConfig = {
   roleLabels: { admin: "Administrateur", gestionnaire: "Gestionnaire", comptable: "Comptable" },
-  switchSpace: { href: r.profiles },
-  signOut: { href: r.signOut },
+  switchSpace: { href: authUrl("/profils") },
+  signOut: { href: authUrl("/deconnecte") },
   groups: [
     {
       id: "compte",
@@ -158,15 +159,7 @@ export const addMenu: AddMenuGroup[] = [
 
 export const helpMenu: HelpMenuItem[] = [{ id: "centre-aide", label: "Centre d'aide", href: r.aide }];
 
-export const plannedScreens: ReadonlyMap<string, string> = new Map([
-  ["/biens/nouveau", "Nouveau bien"],
-  ["/locataires/invitation", "Inviter un locataire"],
-  ["/mandats/avenant", "Nouvel avenant"],
-  ["/baux/avis-echeance", "Avis d'échéance"],
-  [r.profiles, "Choix du profil"],
-  [r.notifications, "Notifications"],
-  [r.signOut, "Déconnexion"],
-]);
+export const plannedScreens: ReadonlyMap<string, string> = new Map();
 
 export const deliveredPages: readonly (readonly [href: string, label: string])[] = [
   [r.home, "Accueil"],
@@ -174,10 +167,14 @@ export const deliveredPages: readonly (readonly [href: string, label: string])[]
   [r.mandantNew, "Nouveau mandant"],
   [r.mandats, "Mandats"],
   [r.mandatNew, "Nouveau mandat"],
+  [r.mandatAvenant, "Nouvel avenant"],
   [r.biens, "Biens sous mandat"],
+  [r.bienNew, "Nouveau bien"],
   [r.locataires, "Locataires"],
+  [r.locataireInvitation, "Inviter un locataire"],
   [r.baux, "Baux"],
   [r.bailNew, "Nouveau bail"],
+  [r.avisEcheance, "Avis d'échéance"],
   [r.encaissements, "Encaissements"],
   [r.encaissementNew, "Nouvel encaissement, saisir un paiement"],
   [r.impayes, "Impayés"],
@@ -205,6 +202,7 @@ export const deliveredPages: readonly (readonly [href: string, label: string])[]
   [r.compte, "Mon compte"],
   [r.compteSecurite, "Connexion et sécurité"],
   [r.compteNotifications, "Notifications du compte"],
+  [r.notifications, "Toutes les notifications"],
   [r.compteAbonnement, "Abonnement"],
   [r.aide, "Centre d'aide"],
 ];

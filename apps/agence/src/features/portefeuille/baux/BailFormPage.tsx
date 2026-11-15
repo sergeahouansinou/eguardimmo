@@ -180,7 +180,7 @@ function BailForm({ index }: { index: Portefeuille }) {
             />
             <p className="text-caption text-fg-subtle">
               Le locataire n&apos;est pas dans la liste ?{" "}
-              <Link href="/locataires/invitation" className="text-fg-link hover:underline">
+              <Link href={agenceRoutes.locataireInvitation} className="text-fg-link hover:underline">
                 Inviter un locataire
               </Link>
             </p>

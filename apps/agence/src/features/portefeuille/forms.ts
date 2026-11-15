@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { addMonths, addDays, formatDay, isoDayOrNull } from "@/lib/dates";
-import { mandantTypeSchema, paymentModeSchema } from "./schemas";
+import { avenantKindSchema, mandantTypeSchema, paymentModeSchema } from "./schemas";
+import type { AvenantKind } from "./schemas";
 
 export function isValidIban(raw: string): boolean {
   const iban = raw.replace(/\s+/g, "").toUpperCase();
@@ -178,3 +179,82 @@ export function makeTerminationFormSchema(todayIso: string) {
     });
 }
 export type TerminationFormValues = z.infer<ReturnType<typeof makeTerminationFormSchema>>;
+
+export const bienFormSchema = z.object({
+  mandatId: required("Choisissez le mandat."),
+  name: required("Nommez le lot, par exemple Apt 8."),
+  kind: required("Indiquez le type, par exemple T3."),
+  surface: decimalField("Indiquez la surface en m², par exemple 40.").refine((value) => (parseDecimal(value) ?? 0) > 0, "La surface est supérieure à 0 m²."),
+  street: required("Indiquez l'adresse, par exemple 40 rue de Brest."),
+  postalCode: z.string().trim().regex(/^\d{5}$/, "Le code postal comporte 5 chiffres, par exemple 69002."),
+  city: required("Indiquez la ville, par exemple Lyon."),
+  floor: z.string().trim().max(80, "L'étage ne dépasse pas 80 caractères."),
+  dpe: z.string().trim().max(80, "Le DPE ne dépasse pas 80 caractères."),
+  heating: z.string().trim().max(80, "Le chauffage ne dépasse pas 80 caractères."),
+  syndic: z.string().trim().max(80, "Le syndic ne dépasse pas 80 caractères."),
+  propertyTax: z.string().trim().max(80, "La taxe foncière ne dépasse pas 80 caractères."),
+  rent: decimalField("Saisissez le loyer hors charges visé, par exemple 620.").refine((value) => (parseDecimal(value) ?? 0) > 0, "Le loyer est supérieur à 0 €."),
+  charges: decimalField("Saisissez les provisions sur charges, par exemple 60 (0 si aucune)."),
+});
+export type BienFormValues = z.infer<typeof bienFormSchema>;
+
+export const AVENANT_KINDS: readonly { value: AvenantKind; label: string; description: string }[] = [
+  { value: "honoraires", label: "Honoraires", description: "Nouveau taux, calculé sur les loyers encaissés" },
+  { value: "duree", label: "Durée", description: "Prolongation, nouvelle échéance du mandat" },
+  { value: "reversement", label: "Reversement", description: "Nouveau jour de virement au mandant" },
+  { value: "travaux", label: "Travaux", description: "Nouveau plafond de travaux sans accord" },
+];
+
+export interface AvenantFormContext {
+  todayIso: string;
+  endIsoByMandat: Readonly<Record<string, string>>;
+}
+
+export function makeAvenantFormSchema(context: AvenantFormContext) {
+  return z
+    .object({
+      mandatId: required("Choisissez le mandat."),
+      kind: avenantKindSchema,
+      effectIso: z.string().refine((value) => isoDayOrNull(value) !== null, "Indiquez la date d'effet."),
+      feePercent: z.string().trim(),
+      endIso: z.string(),
+      payoutDay: z.string(),
+      worksLimit: z.string().trim(),
+      note: z.string().trim().max(500, "Le motif ne dépasse pas 500 caractères."),
+    })
+    .superRefine((values, ctx) => {
+      if (isoDayOrNull(values.effectIso) && values.effectIso < context.todayIso) {
+        ctx.addIssue({ code: "custom", path: ["effectIso"], message: `La date d'effet ne peut pas être antérieure au ${formatDay(context.todayIso)}.` });
+      }
+      if (values.kind === "honoraires") {
+        const rate = parseDecimal(values.feePercent);
+        if (rate === null || rate <= 0 || rate > 20) {
+          ctx.addIssue({ code: "custom", path: ["feePercent"], message: "Saisissez un taux entre 0,01 et 20 %, par exemple 6,50." });
+        }
+      }
+      if (values.kind === "duree") {
+        const current = context.endIsoByMandat[values.mandatId];
+        if (isoDayOrNull(values.endIso) === null) {
+          ctx.addIssue({ code: "custom", path: ["endIso"], message: "Indiquez la nouvelle échéance." });
+        } else if (current && values.endIso <= current) {
+          ctx.addIssue({ code: "custom", path: ["endIso"], message: `La nouvelle échéance doit suivre l'échéance actuelle du ${formatDay(current)}.` });
+        }
+      }
+      if (values.kind === "reversement" && !/^(?:[1-9]|1\d|2[0-8])$/.test(values.payoutDay)) {
+        ctx.addIssue({ code: "custom", path: ["payoutDay"], message: "Choisissez un jour entre 1 et 28." });
+      }
+      if (values.kind === "travaux" && parseDecimal(values.worksLimit) === null) {
+        ctx.addIssue({ code: "custom", path: ["worksLimit"], message: "Saisissez un montant en euros, par exemple 500." });
+      }
+    });
+}
+export type AvenantFormValues = z.infer<ReturnType<typeof makeAvenantFormSchema>>;
+
+export const invitationFormSchema = z.object({
+  email: z.email("Saisissez une adresse e-mail valide, par exemple chloe.martin@example.com."),
+  bailId: required("Choisissez le bail concerné."),
+  message: z.string().trim().min(10, "Rédigez un message d'au moins 10 caractères.").max(500, "Le message ne dépasse pas 500 caractères."),
+});
+export type InvitationFormValues = z.infer<typeof invitationFormSchema>;
+
+export const DEFAULT_INVITATION_MESSAGE = "Bonjour, activez votre espace locataire pour suivre vos loyers, télécharger vos quittances et échanger avec l'agence.";

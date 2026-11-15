@@ -4,10 +4,14 @@ export const agenceRoutes = {
   mandantNew: "/mandants/nouveau",
   mandats: "/mandats",
   mandatNew: "/mandats/nouveau",
+  mandatAvenant: "/mandats/avenant",
   biens: "/biens",
+  bienNew: "/biens/nouveau",
   locataires: "/locataires",
+  locataireInvitation: "/locataires/invitation",
   baux: "/baux",
   bailNew: "/baux/nouveau",
+  avisEcheance: "/baux/avis-echeance",
   encaissements: "/finances/encaissements",
   encaissementNew: "/finances/encaissements/nouveau",
   impayes: "/finances/impayes",
@@ -37,9 +41,7 @@ export const agenceRoutes = {
   compteNotifications: "/compte/notifications",
   compteAbonnement: "/compte/abonnement",
   aide: "/aide",
-  profiles: "/choix-du-profil",
   notifications: "/notifications",
-  signOut: "/deconnexion",
 } as const;
 
 export function mandantHref(id: string): string {
@@ -68,4 +70,22 @@ export function bailHref(id: string): string {
 
 export function campagneEditHref(id: string): string {
   return `${agenceRoutes.campagnes}/${id}/modifier`;
+}
+
+export function bailNewHref(bienId: string): string {
+  return `${agenceRoutes.bailNew}?bien=${encodeURIComponent(bienId)}`;
+}
+
+export function mandatAvenantHref(mandatId: string): string {
+  return `${agenceRoutes.mandatAvenant}?mandat=${encodeURIComponent(mandatId)}`;
+}
+
+export function locataireInvitationHref(bailId: string): string {
+  return `${agenceRoutes.locataireInvitation}?bail=${encodeURIComponent(bailId)}`;
+}
+
+export function avisEcheanceHref(bailId: string, month?: string): string {
+  const params = new URLSearchParams({ bail: bailId });
+  if (month) params.set("mois", month);
+  return `${agenceRoutes.avisEcheance}?${params.toString()}`;
 }

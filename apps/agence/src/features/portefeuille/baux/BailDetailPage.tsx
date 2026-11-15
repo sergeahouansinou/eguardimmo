@@ -15,7 +15,7 @@ import { QueryState } from "@/components/ui/QueryState";
 import { RowMenu } from "@/components/ui/RowMenu";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { useDemoDownload } from "@/components/ui/useDemoDownload";
-import { agenceRoutes, bienHref, locataireHref, mandantHref } from "@/espace/routes";
+import { agenceRoutes, avisEcheanceHref, bienHref, locataireHref, mandantHref } from "@/espace/routes";
 import { addMonths, formatDay, monthName, parseDay, relativeMonths } from "@/lib/dates";
 import { formatEuros, formatEurosExact } from "@/lib/money";
 import { bailActions, bailDocuments, eventsFor } from "../detailItems";
@@ -102,7 +102,12 @@ function BailDetail({ index, id }: { index: Portefeuille; id: string }) {
             </Button>
             {isCurrent ? (
               <Button asChild>
-                <Link href="/baux/avis-echeance">Émettre l&apos;avis d&apos;échéance</Link>
+                <Link href={avisEcheanceHref(bail.id)}>Émettre l&apos;avis d&apos;échéance</Link>
+              </Button>
+            ) : null}
+            {isCurrent ? (
+              <Button variant="secondary" asChild>
+                <Link href={agenceRoutes.encaissementNew}>Enregistrer un paiement</Link>
               </Button>
             ) : null}
             <RowMenu

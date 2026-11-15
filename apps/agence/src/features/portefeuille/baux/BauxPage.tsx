@@ -13,7 +13,7 @@ import { PillBadge } from "@/components/ui/PillBadge";
 import { QueryState } from "@/components/ui/QueryState";
 import { RowMenu } from "@/components/ui/RowMenu";
 import { SearchField } from "@/components/ui/SearchField";
-import { agenceRoutes, bailHref, locataireHref, mandantHref } from "@/espace/routes";
+import { agenceRoutes, avisEcheanceHref, bailHref, locataireHref, mandantHref } from "@/espace/routes";
 import { downloadCsv, toCsv } from "@/lib/csv";
 import { daysBetween, formatDay } from "@/lib/dates";
 import { formatEuros, formatEurosExact, formatEurosSigned } from "@/lib/money";
@@ -164,7 +164,7 @@ function Baux({ index }: { index: Portefeuille }) {
             label={`Actions pour le bail ${bail.number}`}
             items={[
               { id: "voir", label: "Voir le bail", icon: Eye, href: bailHref(bail.id) },
-              ...(bail.status === "en_cours" ? [{ id: "avis", label: "Émettre l'avis d'échéance", icon: FilePlus, href: "/baux/avis-echeance" }] : []),
+              ...(bail.status === "en_cours" ? [{ id: "avis", label: "Émettre l'avis d'échéance", icon: FilePlus, href: avisEcheanceHref(bail.id) }] : []),
             ]}
           />
         </span>
@@ -201,6 +201,9 @@ function Baux({ index }: { index: Portefeuille }) {
           <>
             <Button variant="secondary" onClick={exportCsv}>
               Exporter
+            </Button>
+            <Button variant="secondary" asChild>
+              <Link href={agenceRoutes.avisEcheance}>Avis d&apos;échéance</Link>
             </Button>
             <Button asChild>
               <Link href={agenceRoutes.bailNew}>Nouveau bail</Link>

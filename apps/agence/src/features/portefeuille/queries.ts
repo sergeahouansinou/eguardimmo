@@ -6,7 +6,7 @@ import type { ClientQuery } from "@eguardimmo/shell";
 import { indexPortefeuille } from "./selectors";
 import type { Portefeuille } from "./selectors";
 import { parsePortefeuille, usePortefeuilleSource } from "./source";
-import type { NewBail, NewMandant, NewMandat, PatchKind } from "./source";
+import type { NewAvenant, NewBail, NewBien, NewInvitation, NewMandant, NewMandat, PatchKind, SendAvisInput } from "./source";
 import type { Termination } from "./schemas";
 
 export const portefeuilleKeys = {
@@ -61,4 +61,34 @@ export function usePatchEntity() {
   return useInvalidating((input: { kind: PatchKind; id: string; patch: Record<string, unknown> }) =>
     source.patch(input.kind, input.id, input.patch),
   );
+}
+
+export function useCreateBien() {
+  const source = usePortefeuilleSource();
+  return useInvalidating((input: NewBien) => source.createBien(input));
+}
+
+export function useCreateAvenant() {
+  const source = usePortefeuilleSource();
+  return useInvalidating((input: NewAvenant) => source.createAvenant(input));
+}
+
+export function useCreateInvitation() {
+  const source = usePortefeuilleSource();
+  return useInvalidating((input: NewInvitation) => source.createInvitation(input));
+}
+
+export function useResendInvitation() {
+  const source = usePortefeuilleSource();
+  return useInvalidating((id: string) => source.resendInvitation(id));
+}
+
+export function useCancelInvitation() {
+  const source = usePortefeuilleSource();
+  return useInvalidating((id: string) => source.cancelInvitation(id));
+}
+
+export function useSendAvis() {
+  const source = usePortefeuilleSource();
+  return useInvalidating((input: SendAvisInput) => source.sendAvis(input));
 }

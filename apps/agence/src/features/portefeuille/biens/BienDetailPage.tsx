@@ -30,7 +30,7 @@ import { PillBadge } from "@/components/ui/PillBadge";
 import { QueryState } from "@/components/ui/QueryState";
 import { RowMenu } from "@/components/ui/RowMenu";
 import { SectionCard } from "@/components/ui/SectionCard";
-import { agenceRoutes, bailHref, locataireHref, mandantHref, mandatHref } from "@/espace/routes";
+import { agenceRoutes, bailHref, bailNewHref, locataireHref, mandantHref, mandatHref } from "@/espace/routes";
 import { formatDay, monthName, ofMonth } from "@/lib/dates";
 import { applyRate, formatEuros, formatEurosExact, formatRate } from "@/lib/money";
 import { initialsOf } from "@/lib/text";
@@ -83,6 +83,7 @@ function BienDetail({ index, id }: { index: Portefeuille; id: string }) {
   const fee = (collected: number) => applyRate(collected, mandat?.feeBasisPoints ?? 0);
   const month = monthName(data.todayIso);
   const pill = bienPill(bail, data.todayIso);
+  const target = bien.targetRentMinor === undefined ? undefined : bien.targetRentMinor + (bien.targetChargesMinor ?? 0);
 
   const paymentsTable = (limit?: number) => {
     const shown = limit === undefined ? payments : payments.slice(0, limit);
@@ -177,8 +178,8 @@ function BienDetail({ index, id }: { index: Portefeuille; id: string }) {
 
         <TabPanel value="resume" className="flex min-w-0 flex-col gap-3">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="Loyer charges comprises" value={bail ? formatEurosExact(calledMinor(bail)) : "—"}>
-              <span className="text-caption text-fg-subtle">{bail ? `${formatEuros(bail.rentMinor)} de loyer et ${formatEuros(bail.chargesMinor)} de provisions` : "aucun bail en cours"}</span>
+            <StatCard label="Loyer charges comprises" value={bail ? formatEurosExact(calledMinor(bail)) : target === undefined ? "—" : formatEurosExact(target)}>
+              <span className="text-caption text-fg-subtle">{bail ? `${formatEuros(bail.rentMinor)} de loyer et ${formatEuros(bail.chargesMinor)} de provisions` : target === undefined ? "aucun bail en cours" : "loyer visé, aucun bail en cours"}</span>
             </StatCard>
             <StatCard label={`Encaissé en ${month}`} value={bail ? formatEurosExact(bail.overdueSinceIso ? 0 : calledMinor(bail)) : "—"} tone={bail?.overdueSinceIso ? "danger" : "default"}>
               <span className="text-caption text-fg-subtle">{bail?.overdueSinceIso ? "Non réglé" : lastPayment?.paidIso ? `Payé le ${formatDay(lastPayment.paidIso)}` : "—"}</span>
@@ -242,7 +243,14 @@ function BienDetail({ index, id }: { index: Portefeuille; id: string }) {
                     />
                   </>
                 ) : (
-                  <p className="text-body text-fg-subtle">Ce lot est vacant.</p>
+                  <>
+                    <p className="text-body text-fg-subtle">Ce lot est vacant.</p>
+                    <div>
+                      <Button variant="secondary" size="sm" asChild>
+                        <Link href={bailNewHref(bien.id)}>Créer un bail</Link>
+                      </Button>
+                    </div>
+                  </>
                 )}
               </SectionCard>
               {mandant ? (
