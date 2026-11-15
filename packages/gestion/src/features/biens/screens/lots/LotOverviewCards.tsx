@@ -9,6 +9,7 @@ import { formatDate } from '../../lib/dates';
 import { formatNumber } from '../../lib/amount';
 import { initialsOf } from '../../lib/text';
 import { occupancyRate } from '../../lib/timeline';
+import { occupationStats } from '../../lib/occupationStats';
 import { diagnosticSummary, equipementLine, periodDetail, periodStatus } from '../../lib/summaries';
 import { DIAGNOSTIC_LABELS, METER_LABELS } from '../../lib/labels';
 import { biensPaths, externalPaths } from '../../paths';
@@ -27,6 +28,8 @@ export function OccupationCard({ id }: { id: string }) {
       {(data) => {
         const leases = data.periods.filter((period) => period.kind === 'bail');
         const recent = [...leases].sort((a, b) => b.startDate.localeCompare(a.startDate)).slice(0, 3);
+        const earlier = leases.length - recent.length;
+        const stats = occupationStats(data);
         return (
           <Panel
             title="Historique d’occupation"
@@ -42,6 +45,15 @@ export function OccupationCard({ id }: { id: string }) {
               <>
                 <p className="text-body text-fg-muted">{`${String(occupancyRate(data.periods, data.asOf))} % du temps loué depuis l’achat`}</p>
                 <OccupationTimeline periods={data.periods} asOf={data.asOf} />
+                <p className="text-caption text-fg-muted">
+                  {[
+                    `${String(stats.tenants)} locataire${stats.tenants > 1 ? 's' : ''}`,
+                    stats.averageLease ? `Bail moyen ${stats.averageLease}` : null,
+                    `Vacance cumulée ${stats.vacancy}`,
+                  ]
+                    .filter((part) => part !== null)
+                    .join(' · ')}
+                </p>
                 <EntryList
                   label="Derniers occupants"
                   items={recent.map((period) => ({
@@ -51,6 +63,11 @@ export function OccupationCard({ id }: { id: string }) {
                     badge: periodStatus(period),
                   }))}
                 />
+                {earlier > 0 ? (
+                  <Button variant="link" asChild>
+                    <Link href={biensPaths.lot(id, 'locations')}>{`Voir les ${String(earlier)} locations précédentes`}</Link>
+                  </Button>
+                ) : null}
               </>
             )}
           </Panel>

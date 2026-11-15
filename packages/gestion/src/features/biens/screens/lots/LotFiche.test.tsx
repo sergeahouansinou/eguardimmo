@@ -71,6 +71,13 @@ describe('LotFiche', () => {
     expect(screen.getByText('Historique d’occupation')).toBeTruthy();
   });
 
+  it('résume l’historique d’occupation et renvoie vers les locations plus anciennes', async () => {
+    renderBiens(<LotOverview id="studio-b3" />);
+    expect(await screen.findByText(/locataires? · .*Vacance cumulée/)).toBeTruthy();
+    const link = await screen.findByRole('link', { name: /^Voir les \d+ locations précédentes$/ });
+    expect(link.getAttribute('href')).toBe('/biens/studio-b3/locations');
+  });
+
   it('ne présente aucune violation d’accessibilité', async () => {
     const { container } = renderBiens(
       <LotFiche id="apt-a1">
