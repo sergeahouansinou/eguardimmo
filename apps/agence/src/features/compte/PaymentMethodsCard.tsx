@@ -1,4 +1,5 @@
-import { Button, Card, CardHeader, CardTitle } from "@eguardimmo/ui";
+import { Button, Card, CardHeader, CardTitle, Icon } from "@eguardimmo/ui";
+import { CreditCard } from "lucide-react";
 import { useState } from "react";
 import { ActionDialog, useNotify } from "@/features/kit";
 import { messageOf } from "@/features/shared/errors";
@@ -62,6 +63,7 @@ export function PaymentMethodsCard({ methods, onAdd }: { methods: readonly Payme
                     onAdd(item.kind);
                   }}
                 >
+                  {item.kind === "card" ? <Icon icon={CreditCard} /> : null}
                   {item.add}
                 </Button>
               )

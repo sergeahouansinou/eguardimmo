@@ -1,6 +1,7 @@
 "use client";
 
-import { Alert, Button, Card, CardHeader, CardTitle, TextField } from "@eguardimmo/ui";
+import { Alert, Button, Card, CardHeader, CardTitle, Icon, TextField } from "@eguardimmo/ui";
+import { Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useWatch } from "react-hook-form";
 import { useState } from "react";
@@ -139,6 +140,7 @@ export function InvitationPage() {
             Annuler
           </Button>
           <Button type="submit" loading={invite.isPending}>
+            <Icon icon={Send} />
             Envoyer l'invitation
           </Button>
         </div>

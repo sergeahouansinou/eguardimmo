@@ -1,7 +1,7 @@
 "use client";
 
-import { Alert, Badge, Button, Dialog, DialogClose, DialogContent } from "@eguardimmo/ui";
-import { CircleCheck } from "lucide-react";
+import { Alert, Badge, Button, Dialog, DialogClose, DialogContent, Icon } from "@eguardimmo/ui";
+import { CircleCheck, Download, Wallet } from "lucide-react";
 import { useState } from "react";
 import { ListRow } from "@/components/ui/ListRow";
 import { NotFoundState } from "@/components/ui/NotFoundState";
@@ -100,6 +100,7 @@ function Detail({ detail }: { detail: ReversementDetail }) {
   const lotAction =
     detail.status === "a_reverser" && !detail.inBatch ? (
       <Button loading={include.isPending} onClick={includeInLot}>
+        <Icon icon={Wallet} />
         Inclure dans le lot
       </Button>
     ) : detail.inBatch ? (
@@ -117,6 +118,7 @@ function Detail({ detail }: { detail: ReversementDetail }) {
       actions={
         <>
           <Button variant="secondary" onClick={exportStatement}>
+            <Icon icon={Download} />
             Télécharger le décompte
           </Button>
           {lotAction}

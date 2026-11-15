@@ -4,6 +4,7 @@ import {
   Avatar,
   Badge,
   Button,
+  Icon,
   StatCard,
   Tab,
   TabList,
@@ -17,7 +18,7 @@ import {
   Tabs,
   useToast,
 } from "@eguardimmo/ui";
-import { Wrench } from "lucide-react";
+import { Wrench, Pencil, MessageSquare, Banknote } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { z } from "zod";
@@ -148,13 +149,20 @@ function BienDetail({ index, id }: { index: Portefeuille; id: string }) {
         actions={
           <>
             <Button variant="secondary" onClick={() => { setEditing(true); }}>
+              <Icon icon={Pencil} />
               Modifier
             </Button>
             <Button variant="secondary" asChild>
-              <Link href={agenceRoutes.messageNew}>Écrire au locataire</Link>
+              <Link href={agenceRoutes.messageNew}>
+                <Icon icon={MessageSquare} />
+                Écrire au locataire
+              </Link>
             </Button>
             <Button asChild>
-              <Link href={agenceRoutes.encaissementNew}>Enregistrer un paiement</Link>
+              <Link href={agenceRoutes.encaissementNew}>
+                <Icon icon={Banknote} />
+                Enregistrer un paiement
+              </Link>
             </Button>
             <RowMenu
               label={`Autres actions pour le lot ${bien.name}`}

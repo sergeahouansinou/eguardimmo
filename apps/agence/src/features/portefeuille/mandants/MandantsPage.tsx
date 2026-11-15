@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, Chip, Select, StatCard, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
-import { Eye, Mail, Wallet } from "lucide-react";
+import { Button, Chip, Icon, Select, StatCard, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
+import { Eye, Mail, Wallet, Download, Plus } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ActionAlert } from "@/components/ui/ActionAlert";
@@ -154,10 +154,14 @@ function Mandants({ index }: { index: Portefeuille }) {
         actions={
           <>
             <Button variant="secondary" onClick={exportCsv}>
+              <Icon icon={Download} />
               Exporter
             </Button>
             <Button asChild>
-              <Link href={agenceRoutes.mandantNew}>Nouveau mandant</Link>
+              <Link href={agenceRoutes.mandantNew}>
+                <Icon icon={Plus} />
+                Nouveau mandant
+              </Link>
             </Button>
           </>
         }

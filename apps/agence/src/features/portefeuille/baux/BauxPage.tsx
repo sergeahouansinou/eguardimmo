@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, Chip, Select, StatCard, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
-import { Eye, FilePlus } from "lucide-react";
+import { Button, Chip, Icon, Select, StatCard, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
+import { Eye, FilePlus, Download, Plus } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -200,13 +200,17 @@ function Baux({ index }: { index: Portefeuille }) {
         actions={
           <>
             <Button variant="secondary" onClick={exportCsv}>
+              <Icon icon={Download} />
               Exporter
             </Button>
             <Button variant="secondary" asChild>
               <Link href={agenceRoutes.avisEcheance}>Avis d&apos;échéance</Link>
             </Button>
             <Button asChild>
-              <Link href={agenceRoutes.bailNew}>Nouveau bail</Link>
+              <Link href={agenceRoutes.bailNew}>
+                <Icon icon={Plus} />
+                Nouveau bail
+              </Link>
             </Button>
           </>
         }

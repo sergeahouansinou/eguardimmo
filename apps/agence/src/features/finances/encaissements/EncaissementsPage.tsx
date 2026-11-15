@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, Chip, EmptyState, Pagination, Select, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
-import { Inbox } from "lucide-react";
+import { Button, Chip, EmptyState, Icon, Pagination, Select, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
+import { Inbox, Download, Plus } from "lucide-react";
 import { useState } from "react";
 import { QueryState } from "@/components/ui/QueryState";
 import { SearchField } from "@/components/ui/SearchField";
@@ -125,9 +125,11 @@ function Encaissements({ data, period, onPeriodChange }: { data: Encaissements; 
       actions={
         <>
           <Button variant="secondary" onClick={exportCsv}>
+            <Icon icon={Download} />
             Exporter
           </Button>
           <LinkButton href="/finances/encaissements/nouveau" variant="primary">
+            <Icon icon={Plus} />
             Saisir un paiement
           </LinkButton>
         </>

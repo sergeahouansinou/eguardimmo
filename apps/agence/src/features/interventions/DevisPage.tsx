@@ -1,7 +1,7 @@
 "use client";
 
-import { Alert, Badge, Button, Card, CardHeader, CardTitle, EmptyState, Select, Textarea } from "@eguardimmo/ui";
-import { FileText } from "lucide-react";
+import { Alert, Badge, Button, Card, CardHeader, CardTitle, EmptyState, Icon, Select, Textarea } from "@eguardimmo/ui";
+import { FileText, Download, Send } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { NotFoundState } from "@/components/ui/NotFoundState";
@@ -95,6 +95,7 @@ function DevisView({ devis, all }: { devis: Devis; all: readonly Devis[] }) {
               window.print();
             }}
           >
+            <Icon icon={Download} />
             Télécharger le PDF
           </Button>
           {submitted ? null : (
@@ -105,6 +106,7 @@ function DevisView({ devis, all }: { devis: Devis; all: readonly Devis[] }) {
                 setOpen(true);
               }}
             >
+              <Icon icon={Send} />
               Soumettre au mandant
             </Button>
           )}

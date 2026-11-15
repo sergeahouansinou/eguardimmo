@@ -1,6 +1,7 @@
 "use client";
 
-import { Alert, Badge, Button, Card, CardHeader, CardTitle } from "@eguardimmo/ui";
+import { Alert, Badge, Button, Card, CardHeader, CardTitle, Icon } from "@eguardimmo/ui";
+import { ExternalLink, History } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useWatch } from "react-hook-form";
@@ -132,6 +133,7 @@ function SecurityForm({ overview }: { overview: SecurityOverview }) {
                   setPanel("password");
                 }}
               >
+                <Icon icon={ExternalLink} />
                 Gérer dans Mon compte
               </Button>
             </CardHeader>
@@ -183,6 +185,7 @@ function SecurityForm({ overview }: { overview: SecurityOverview }) {
                 setPanel("log");
               }}
             >
+              <Icon icon={History} />
               Voir le journal
             </Button>
           </Card>

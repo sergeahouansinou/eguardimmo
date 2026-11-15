@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, Chip, EmptyState, Pagination, Select, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
-import { Landmark } from "lucide-react";
+import { Button, Chip, EmptyState, Icon, Pagination, Select, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
+import { Landmark, Download, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ActionAlert } from "@/components/ui/ActionAlert";
@@ -144,9 +144,11 @@ function ReversementsContent({ data }: { data: Reversements }) {
       actions={
         <>
           <Button variant="secondary" onClick={exportCsv}>
+            <Icon icon={Download} />
             Exporter
           </Button>
           <Button loading={prepare.isPending} onClick={prepareLot}>
+            <Icon icon={Send} />
             {lotLabel}
           </Button>
         </>

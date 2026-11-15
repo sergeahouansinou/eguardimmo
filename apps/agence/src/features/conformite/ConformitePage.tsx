@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, EmptyState, Icon } from "@eguardimmo/ui";
-import { FileCheck, Pencil } from "lucide-react";
+import { FileCheck, Pencil, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { ActionAlert } from "@/components/ui/ActionAlert";
@@ -49,6 +49,7 @@ function Conformite({ data }: { data: ConformiteData }) {
             setAdding(true);
           }}
         >
+          <Icon icon={Plus} />
           Ajouter une pièce
         </Button>
       }

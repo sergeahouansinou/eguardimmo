@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge, Button } from "@eguardimmo/ui";
-import { CalendarClock, CircleAlert, CircleCheck, CircleX, FileText, Mail, MessageSquare, Phone, UserCheck } from "lucide-react";
+import { Badge, Button, Icon } from "@eguardimmo/ui";
+import { CalendarClock, CircleAlert, CircleCheck, CircleX, FileText, Mail, MessageSquare, Phone, UserCheck, BellRing, Banknote } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { ListRow } from "@/components/ui/ListRow";
@@ -106,16 +106,21 @@ function Detail({ detail }: { detail: ImpayeDetail }) {
       description={`${detail.tenantName} · ${detail.mandantName}, ${detail.mandantKind} · échéance du ${formatDate(detail.dueOn)} · ${formatMoney(detail.remainingMinor)} dus`}
       actions={
         <>
-          <LinkButton href={agenceRoutes.messageNew}>Écrire</LinkButton>
+          <LinkButton href={agenceRoutes.messageNew}>
+            <Icon icon={MessageSquare} />
+            Écrire
+          </LinkButton>
           <Button
             variant="secondary"
             onClick={() => {
               setDialog("reminder");
             }}
           >
+            <Icon icon={BellRing} />
             Envoyer une relance
           </Button>
           <LinkButton href={`/finances/encaissements/nouveau?lot=${detail.lotId}`} variant="primary">
+            <Icon icon={Banknote} />
             Saisir un paiement
           </LinkButton>
           <RowMenu

@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, Chip, Select, StatCard, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
-import { CreditCard, Eye, Mail } from "lucide-react";
+import { Button, Chip, Icon, Select, StatCard, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
+import { CreditCard, Eye, Mail, Download, Plus } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { DataList } from "@/components/ui/DataList";
@@ -180,10 +180,14 @@ function Biens({ index }: { index: Portefeuille }) {
         actions={
           <>
             <Button variant="secondary" onClick={exportCsv}>
+              <Icon icon={Download} />
               Exporter
             </Button>
             <Button asChild>
-              <Link href={agenceRoutes.bienNew}>Ajouter un bien</Link>
+              <Link href={agenceRoutes.bienNew}>
+                <Icon icon={Plus} />
+                Ajouter un bien
+              </Link>
             </Button>
           </>
         }

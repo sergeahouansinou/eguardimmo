@@ -1,6 +1,7 @@
 "use client";
 
-import { Alert, Card } from "@eguardimmo/ui";
+import { Alert, Card, Icon } from "@eguardimmo/ui";
+import { Users, UserPlus } from "lucide-react";
 import { DataTable, LinkButton, PageFrame } from "@/features/kit";
 import type { Column } from "@/features/kit";
 import { RightBadge } from "./RightBadge";
@@ -23,8 +24,12 @@ export function RolesPage() {
       description="Ce que chaque rôle peut faire dans l'espace de l'agence."
       actions={
         <>
-          <LinkButton href="/equipe">Voir l'équipe</LinkButton>
+          <LinkButton href="/equipe">
+            <Icon icon={Users} />
+            Voir l'équipe
+          </LinkButton>
           <LinkButton href="/equipe/invitation" variant="primary">
+            <Icon icon={UserPlus} />
             Inviter un collaborateur
           </LinkButton>
         </>

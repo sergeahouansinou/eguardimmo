@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge, Button, Card, CardHeader, CardTitle, IconButton } from "@eguardimmo/ui";
-import { ChevronLeft, ChevronRight, Minus, Plus, Printer } from "lucide-react";
+import { Badge, Button, Card, CardHeader, CardTitle, Icon, IconButton } from "@eguardimmo/ui";
+import { ChevronLeft, ChevronRight, Minus, Plus, Printer, Download, Send } from "lucide-react";
 import { useState } from "react";
 import { NotFoundState } from "@/components/ui/NotFoundState";
 import { QueryState } from "@/components/ui/QueryState";
@@ -126,6 +126,7 @@ function Apercu({ detail }: { detail: ReportDetail }) {
               window.print();
             }}
           >
+            <Icon icon={Download} />
             Télécharger le PDF
           </Button>
           {editable ? (
@@ -135,6 +136,7 @@ function Apercu({ detail }: { detail: ReportDetail }) {
                 setConfirming(true);
               }}
             >
+              <Icon icon={Send} />
               Publier le compte rendu
             </Button>
           ) : null}

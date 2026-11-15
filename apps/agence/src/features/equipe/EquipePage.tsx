@@ -1,7 +1,7 @@
 "use client";
 
-import { Alert, Button, Card, EmptyState, Pagination, Select, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
-import { UsersRound } from "lucide-react";
+import { Alert, Button, Card, EmptyState, Icon, Pagination, Select, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
+import { UsersRound, KeyRound, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { QueryState } from "@/components/ui/QueryState";
 import { SearchField } from "@/components/ui/SearchField";
@@ -90,9 +90,11 @@ function EquipeContent({ overview }: { overview: EquipeOverview }) {
       actions={
         <>
           <LinkButton href="/equipe/roles" variant="ghost">
+            <Icon icon={KeyRound} />
             Rôles et droits
           </LinkButton>
           <LinkButton href="/equipe/invitation" variant="primary">
+            <Icon icon={UserPlus} />
             Inviter un collaborateur
           </LinkButton>
         </>

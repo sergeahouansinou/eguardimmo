@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge, Button, EmptyState, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
-import { Receipt } from "lucide-react";
+import { Badge, Button, EmptyState, Icon, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
+import { Receipt, Download, Percent } from "lucide-react";
 import { useState } from "react";
 import { ActionAlert } from "@/components/ui/ActionAlert";
 import { QueryState } from "@/components/ui/QueryState";
@@ -89,9 +89,11 @@ function HonorairesContent({ data, period, onPeriodChange }: { data: Honoraires;
       actions={
         <>
           <Button variant="secondary" onClick={exportCsv}>
+            <Icon icon={Download} />
             Exporter
           </Button>
           <LinkButton href="/finances/honoraires/bareme" variant="primary">
+            <Icon icon={Percent} />
             Modifier le barème
           </LinkButton>
         </>

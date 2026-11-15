@@ -3,6 +3,7 @@
 import {
   Badge,
   Button,
+  Icon,
   StatCard,
   Tab,
   TabList,
@@ -16,7 +17,7 @@ import {
   Tabs,
   useToast,
 } from "@eguardimmo/ui";
-import { Home, MessageSquare } from "lucide-react";
+import { Home, MessageSquare, BellRing, Banknote } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { z } from "zod";
@@ -150,16 +151,25 @@ function LocataireDetail({ index, id }: { index: Portefeuille; id: string }) {
         actions={
           <>
             <Button variant="secondary" asChild>
-              <Link href={agenceRoutes.messageNew}>Écrire</Link>
+              <Link href={agenceRoutes.messageNew}>
+                <Icon icon={MessageSquare} />
+                Écrire
+              </Link>
             </Button>
             {balance < 0 ? (
               <Button variant="secondary" asChild>
-                <Link href={agenceRoutes.impayes}>Relancer</Link>
+                <Link href={agenceRoutes.impayes}>
+                  <Icon icon={BellRing} />
+                  Relancer
+                </Link>
               </Button>
             ) : null}
             {!tenant.archived && bail ? (
               <Button asChild>
-                <Link href={agenceRoutes.encaissementNew}>Enregistrer un paiement</Link>
+                <Link href={agenceRoutes.encaissementNew}>
+                  <Icon icon={Banknote} />
+                  Enregistrer un paiement
+                </Link>
               </Button>
             ) : null}
             <RowMenu

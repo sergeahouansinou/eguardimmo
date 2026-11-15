@@ -1,7 +1,7 @@
 "use client";
 
-import { Alert, Badge, Button, ConfirmDialog, StatCard, Tab, TabList, TabPanel, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow, Tabs, useToast } from "@eguardimmo/ui";
-import { ClipboardCheck } from "lucide-react";
+import { Alert, Badge, Button, ConfirmDialog, Icon, StatCard, Tab, TabList, TabPanel, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow, Tabs, useToast } from "@eguardimmo/ui";
+import { ClipboardCheck, Pencil, FilePlus, Banknote } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { z } from "zod";
@@ -95,6 +95,7 @@ function BailDetail({ index, id }: { index: Portefeuille; id: string }) {
         actions={
           <>
             <Button variant="secondary" onClick={() => { setEditing(true); }}>
+              <Icon icon={Pencil} />
               Modifier
             </Button>
             <Button variant="secondary" onClick={() => { download(`Bail ${bail.number}`); }}>
@@ -102,12 +103,18 @@ function BailDetail({ index, id }: { index: Portefeuille; id: string }) {
             </Button>
             {isCurrent ? (
               <Button asChild>
-                <Link href={avisEcheanceHref(bail.id)}>Émettre l&apos;avis d&apos;échéance</Link>
+                <Link href={avisEcheanceHref(bail.id)}>
+                  <Icon icon={FilePlus} />
+                  Émettre l&apos;avis d&apos;échéance
+                </Link>
               </Button>
             ) : null}
             {isCurrent ? (
               <Button variant="secondary" asChild>
-                <Link href={agenceRoutes.encaissementNew}>Enregistrer un paiement</Link>
+                <Link href={agenceRoutes.encaissementNew}>
+                  <Icon icon={Banknote} />
+                  Enregistrer un paiement
+                </Link>
               </Button>
             ) : null}
             <RowMenu

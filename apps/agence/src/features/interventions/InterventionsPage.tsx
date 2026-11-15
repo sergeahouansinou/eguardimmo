@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge, Button, Card, EmptyState, Pagination, Select, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
-import { Wrench } from "lucide-react";
+import { Badge, Button, Card, EmptyState, Icon, Pagination, Select, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
+import { Wrench, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { QueryState } from "@/components/ui/QueryState";
@@ -42,6 +42,7 @@ export function InterventionsPage() {
       description="Travaux et dépannages dans les biens sous mandat. Les urgences sont en tête."
       actions={
         <LinkButton href="/interventions/nouvelle" variant="primary">
+          <Icon icon={Plus} />
           Nouvelle intervention
         </LinkButton>
       }

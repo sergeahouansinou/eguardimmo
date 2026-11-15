@@ -1,7 +1,7 @@
 "use client";
 
-import { Alert, Badge, Button, EmptyState } from "@eguardimmo/ui";
-import { CircleCheck, Landmark, X } from "lucide-react";
+import { Alert, Badge, Button, EmptyState, Icon } from "@eguardimmo/ui";
+import { CircleCheck, Landmark, X, ArrowLeft, Send } from "lucide-react";
 import { IconButton } from "@eguardimmo/ui";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -120,7 +120,10 @@ function LotContent({ lot }: { lot: TransferLot }) {
       description={`${plural(count, "virement SEPA", "virements SEPA")} · ${formatMoneyExact(lot.totalMinor)} · exécution le ${formatDate(lot.executionOn)}, au prochain jour ouvré`}
       actions={
         <>
-          <LinkButton href="/finances/reversements">Retour aux reversements</LinkButton>
+          <LinkButton href="/finances/reversements">
+            <Icon icon={ArrowLeft} />
+            Retour aux reversements
+          </LinkButton>
           {draft ? (
             <Button
               disabled={count === 0}
@@ -128,6 +131,7 @@ function LotContent({ lot }: { lot: TransferLot }) {
                 setConfirming(true);
               }}
             >
+              <Icon icon={Send} />
               Valider et transmettre à la banque
             </Button>
           ) : null}

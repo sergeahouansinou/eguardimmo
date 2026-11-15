@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge, Button, StatCard, Tab, TabList, TabPanel, Tabs, useToast } from "@eguardimmo/ui";
-import { CircleAlert } from "lucide-react";
+import { Badge, Button, Icon, StatCard, Tab, TabList, TabPanel, Tabs, useToast } from "@eguardimmo/ui";
+import { CircleAlert, MessageSquare, Pencil, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { z } from "zod";
@@ -79,13 +79,20 @@ function MandantDetail({ index, id }: { index: Portefeuille; id: string }) {
         actions={
           <>
             <Button variant="secondary" asChild>
-              <Link href={agenceRoutes.messageNew}>Écrire</Link>
+              <Link href={agenceRoutes.messageNew}>
+                <Icon icon={MessageSquare} />
+                Écrire
+              </Link>
             </Button>
             <Button variant="secondary" onClick={() => { setEditing(true); }}>
+              <Icon icon={Pencil} />
               Modifier
             </Button>
             <Button asChild>
-              <Link href={agenceRoutes.reversementLot}>Préparer le reversement</Link>
+              <Link href={agenceRoutes.reversementLot}>
+                <Icon icon={Wallet} />
+                Préparer le reversement
+              </Link>
             </Button>
             <RowMenu
               label={`Autres actions pour ${mandant.name}`}

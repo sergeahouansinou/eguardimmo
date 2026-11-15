@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge, Button, Chip, ConfirmDialog, EmptyState, Pagination, Select, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
-import { FileSearch } from "lucide-react";
+import { Badge, Button, Chip, ConfirmDialog, EmptyState, Icon, Pagination, Select, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
+import { FileSearch, Upload } from "lucide-react";
 import { useState } from "react";
 import { QueryState } from "@/components/ui/QueryState";
 import { SearchField } from "@/components/ui/SearchField";
@@ -96,7 +96,12 @@ function Documents({ documents }: { documents: readonly DocumentRecord[] }) {
       crumbs={[{ label: "Suivi" }, { label: "Documents" }]}
       title="Documents"
       description="Chaque document est rattaché à un mandant, un bien ou à l’agence, avec son partage."
-      actions={<LinkButton href="/documents/ajout" variant="primary">Ajouter un document</LinkButton>}
+      actions={
+        <LinkButton href="/documents/ajout" variant="primary">
+          <Icon icon={Upload} />
+          Ajouter un document
+        </LinkButton>
+      }
     >
       <SectionCard title="Liste des documents">
         <Tabs

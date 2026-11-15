@@ -1,6 +1,7 @@
 "use client";
 
-import { Alert, Avatar, Badge, Button, StatCard, Tab, TabList, TabPanel, Tabs, useToast } from "@eguardimmo/ui";
+import { Alert, Avatar, Badge, Button, Icon, StatCard, Tab, TabList, TabPanel, Tabs, useToast } from "@eguardimmo/ui";
+import { Pencil, Download, FilePlus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { z } from "zod";
@@ -88,13 +89,18 @@ function MandatDetail({ index, id }: { index: Portefeuille; id: string }) {
         actions={
           <>
             <Button variant="secondary" onClick={() => { setEditing(true); }}>
+              <Icon icon={Pencil} />
               Modifier
             </Button>
             <Button variant="secondary" onClick={() => { download(`Mandat ${mandat.number}`); }}>
+              <Icon icon={Download} />
               Télécharger le mandat
             </Button>
             <Button asChild>
-              <Link href={mandatAvenantHref(mandat.id)}>Ajouter un avenant</Link>
+              <Link href={mandatAvenantHref(mandat.id)}>
+                <Icon icon={FilePlus} />
+                Ajouter un avenant
+              </Link>
             </Button>
             <RowMenu
               label={`Autres actions pour le mandat ${mandat.number}`}

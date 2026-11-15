@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge, Button, Icon } from "@eguardimmo/ui";
-import { CircleCheck, Circle, Clock, FileCheck, TriangleAlert } from "lucide-react";
+import { CircleCheck, Circle, Bell, FileCheck, TriangleAlert, Download, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { ListRow } from "@/components/ui/ListRow";
 import type { RowTone } from "@/components/ui/ListRow";
@@ -79,7 +79,7 @@ function PieceDetail({ piece, data }: { piece: Piece; data: ConformiteData }) {
               setReminding(true);
             }}
           >
-            <Icon icon={Clock} />
+            <Icon icon={Bell} />
             Programmer un rappel
           </Button>
           <Button
@@ -89,6 +89,7 @@ function PieceDetail({ piece, data }: { piece: Piece; data: ConformiteData }) {
               download(piece.fileName ?? piece.title);
             }}
           >
+            <Icon icon={Download} />
             Télécharger
           </Button>
         </>
@@ -150,6 +151,7 @@ function PieceDetail({ piece, data }: { piece: Piece; data: ConformiteData }) {
                     setRenewing(candidate);
                   }}
                 >
+                  <Icon icon={ShieldCheck} />
                   {candidate.renewalAction}
                 </Button>
               </div>

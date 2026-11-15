@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, Chip, Select, StatCard, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
-import { CreditCard, Eye, Mail } from "lucide-react";
+import { Button, Chip, Icon, Select, StatCard, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
+import { CreditCard, Eye, Mail, Download, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -200,10 +200,14 @@ function Locataires({ index }: { index: Portefeuille }) {
         actions={
           <>
             <Button variant="secondary" onClick={exportCsv}>
+              <Icon icon={Download} />
               Exporter
             </Button>
             <Button asChild>
-              <Link href={agenceRoutes.locataireInvitation}>Inviter un locataire</Link>
+              <Link href={agenceRoutes.locataireInvitation}>
+                <Icon icon={UserPlus} />
+                Inviter un locataire
+              </Link>
             </Button>
           </>
         }

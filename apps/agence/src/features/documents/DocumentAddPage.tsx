@@ -1,6 +1,7 @@
 "use client";
 
-import { Alert, Button, Select, TextField } from "@eguardimmo/ui";
+import { Alert, Button, Icon, Select, TextField } from "@eguardimmo/ui";
+import { Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useWatch } from "react-hook-form";
@@ -192,6 +193,7 @@ export function DocumentAddPage() {
             Annuler
           </Button>
           <Button type="submit" loading={add.isPending}>
+            <Icon icon={Upload} />
             Déposer le document
           </Button>
         </div>

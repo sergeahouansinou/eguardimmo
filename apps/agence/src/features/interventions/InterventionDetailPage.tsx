@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge, Button, Card, CardHeader, CardTitle } from "@eguardimmo/ui";
-import { Archive, CircleCheck, FileText, TriangleAlert, Wrench } from "lucide-react";
+import { Badge, Button, Card, CardHeader, CardTitle, Icon } from "@eguardimmo/ui";
+import { Archive, CircleCheck, FileText, TriangleAlert, Wrench, MessageSquare, Send } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { NotFoundState } from "@/components/ui/NotFoundState";
@@ -135,11 +135,13 @@ function InterventionDetail({ intervention, devis }: { intervention: Interventio
         <>
           {tenant ? (
             <LinkButton href="/messages/nouveau" variant="secondary">
+              <Icon icon={MessageSquare} />
               Écrire au locataire
             </LinkButton>
           ) : null}
           {devis?.state === "a_soumettre" ? (
             <LinkButton href={`/devis?devis=${devis.id}`} variant="primary">
+              <Icon icon={Send} />
               Soumettre le devis
             </LinkButton>
           ) : null}

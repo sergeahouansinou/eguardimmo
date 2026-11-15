@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge, Button, Chip, EmptyState, Pagination, Select, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
-import { CircleCheck } from "lucide-react";
+import { Badge, Button, Chip, EmptyState, Icon, Pagination, Select, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
+import { CircleCheck, Download, BellRing } from "lucide-react";
 import { useState } from "react";
 import { QueryState } from "@/components/ui/QueryState";
 import { SearchField } from "@/components/ui/SearchField";
@@ -119,9 +119,13 @@ function Impayes({ data }: { data: Impayes }) {
       actions={
         <>
           <Button variant="secondary" onClick={exportCsv}>
+            <Icon icon={Download} />
             Exporter
           </Button>
-          <Button onClick={relaunch}>Relancer la sélection</Button>
+          <Button onClick={relaunch}>
+            <Icon icon={BellRing} />
+            Relancer la sélection
+          </Button>
         </>
       }
     >

@@ -1,6 +1,7 @@
 "use client";
 
-import { Badge, Button, Card, CardHeader, CardTitle, TextField } from "@eguardimmo/ui";
+import { Badge, Button, Card, CardHeader, CardTitle, Icon, TextField } from "@eguardimmo/ui";
+import { Download, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { QueryState } from "@/components/ui/QueryState";
@@ -138,7 +139,10 @@ function ProfileForm({ profile }: { profile: Profile }) {
             </CardHeader>
             <p className="text-body text-fg-muted">Votre rôle détermine ce que vous voyez et modifiez dans l'espace de l'agence.</p>
             <Button asChild variant="secondary">
-              <Link href="/equipe/roles">Rôles et droits</Link>
+              <Link href="/equipe/roles">
+                <Icon icon={KeyRound} />
+                Rôles et droits
+              </Link>
             </Button>
           </Card>
           <Card role="region" aria-label="Mes données">
@@ -147,6 +151,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
             </CardHeader>
             <p className="text-body text-fg-muted">Identité, coordonnées et préférences de votre compte.</p>
             <Button variant="secondary" loading={exportData.isPending} onClick={() => void download()}>
+              <Icon icon={Download} />
               Exporter mes données
             </Button>
           </Card>

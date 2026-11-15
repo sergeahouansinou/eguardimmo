@@ -3,6 +3,7 @@
 import {
   Badge,
   Button,
+  Icon,
   StatCard,
   Table,
   TableBody,
@@ -11,7 +12,7 @@ import {
   TableHeaderCell,
   TableRow,
 } from "@eguardimmo/ui";
-import { BadgeCheck, CircleAlert, Handshake, Landmark, ShieldCheck } from "lucide-react";
+import { BadgeCheck, CircleAlert, Handshake, Landmark, ShieldCheck, ScrollText, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { ActionAlert } from "@/components/ui/ActionAlert";
@@ -80,10 +81,16 @@ function Accueil({ index }: { index: Portefeuille }) {
         actions={
           <>
             <Button variant="secondary" asChild>
-              <Link href="/comptes-rendus/nouveau">Générer les comptes rendus</Link>
+              <Link href="/comptes-rendus/nouveau">
+                <Icon icon={ScrollText} />
+                Générer les comptes rendus
+              </Link>
             </Button>
             <Button asChild>
-              <Link href={agenceRoutes.mandatNew}>Nouveau mandat</Link>
+              <Link href={agenceRoutes.mandatNew}>
+                <Icon icon={Plus} />
+                Nouveau mandat
+              </Link>
             </Button>
           </>
         }

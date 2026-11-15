@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge, Button, Card, Chip, EmptyState, Pagination, Select, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
-import { FileText } from "lucide-react";
+import { Badge, Button, Card, Chip, EmptyState, Icon, Pagination, Select, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
+import { FileText, ScrollText } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -44,6 +44,7 @@ export function ComptesRendusPage() {
       description="Un document par mandant : loyers encaissés, honoraires, reversement et impayés. Il est publié dans son espace propriétaire."
       actions={
         <LinkButton href="/comptes-rendus/nouveau" variant="primary">
+          <Icon icon={ScrollText} />
           Générer les comptes rendus
         </LinkButton>
       }

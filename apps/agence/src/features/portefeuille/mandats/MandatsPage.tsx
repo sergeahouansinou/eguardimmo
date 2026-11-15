@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, Chip, Select, StatCard, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
-import { Download, Eye, RefreshCw, Ban } from "lucide-react";
+import { Button, Chip, Icon, Select, StatCard, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
+import { Download, Eye, RefreshCw, Ban, Plus } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -184,10 +184,14 @@ function Mandats({ index }: { index: Portefeuille }) {
         actions={
           <>
             <Button variant="secondary" onClick={exportCsv}>
+              <Icon icon={Download} />
               Exporter
             </Button>
             <Button asChild>
-              <Link href={agenceRoutes.mandatNew}>Nouveau mandat</Link>
+              <Link href={agenceRoutes.mandatNew}>
+                <Icon icon={Plus} />
+                Nouveau mandat
+              </Link>
             </Button>
           </>
         }
