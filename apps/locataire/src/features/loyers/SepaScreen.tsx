@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Alert, Button, Card, CardHeader, CardTitle, Icon, TextField } from '@eguardimmo/ui';
-import { PenLine } from 'lucide-react';
+import { FilePenLine } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -201,7 +201,7 @@ function MandateForm({ mandate, profile }: { mandate: Mandate; profile: Profile 
           <Link href="/loyers">Annuler</Link>
         </Button>
         <Button type="submit" loading={sign.isPending}>
-          <Icon icon={PenLine} />
+          <Icon icon={FilePenLine} />
           Signer le mandat
         </Button>
       </div>

@@ -174,7 +174,7 @@ function PayerFlow({ items, mandate, today }: { items: Installment[]; mandate: M
           <>
             <Button variant="secondary" onClick={() => { setStep('moyen'); }}>Modifier le moyen</Button>
             <Button loading={start.isPending} onClick={pay}>
-              <Icon icon={CreditCard} />
+              <Icon icon={Lock} />
               Payer {formatMoney(amount, { fixed: true })}
             </Button>
           </>

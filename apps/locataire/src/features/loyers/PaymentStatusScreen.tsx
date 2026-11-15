@@ -1,7 +1,7 @@
 'use client';
 
 import { Alert, Button, Card, CardHeader, CardTitle, Icon } from '@eguardimmo/ui';
-import { CreditCard, Download, FileText, Mail, ReceiptText, ShieldCheck } from 'lucide-react';
+import { CreditCard, Download, FileText, Mail, Receipt, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { Async3, NotFoundState } from '@/components/ScreenState';
 import { PageHeader } from '@/components/PageHeader';
@@ -66,7 +66,7 @@ function PaymentStatus({ payment, installment, profile }: { payment: Payment; in
             ) : null}
             <Button asChild>
               <Link href="/loyers">
-                <Icon icon={ReceiptText} />
+                <Icon icon={Receipt} />
                 Voir mes loyers
               </Link>
             </Button>

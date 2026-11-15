@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Alert, Avatar, Button, Card, CardHeader, CardTitle, Icon, TextField } from '@eguardimmo/ui';
-import { Save } from 'lucide-react';
+import { Check } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -186,7 +186,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
           <Link href="/compte">Annuler</Link>
         </Button>
         <Button type="submit" loading={update.isPending && !pending}>
-          <Icon icon={Save} />
+          <Icon icon={Check} />
           Enregistrer
         </Button>
       </div>

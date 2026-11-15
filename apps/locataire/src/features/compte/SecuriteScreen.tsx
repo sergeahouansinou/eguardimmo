@@ -1,8 +1,8 @@
 'use client';
 
 import { authUrl } from '@eguardimmo/shell';
-import { Alert, Button } from '@eguardimmo/ui';
-import { KeyRound, Link2, ShieldCheck, Smartphone } from 'lucide-react';
+import { Alert, Button, Icon } from '@eguardimmo/ui';
+import { ExternalLink, KeyRound, Link2, ShieldCheck, Smartphone } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { ACCOUNT_TABS, RouteTabs } from '@/components/RouteTabs';
 import { Async } from '@/components/ScreenState';
@@ -23,7 +23,10 @@ export function SecuriteScreen() {
         subtitle="Résumé de la sécurité de votre compte, commun à tous vos espaces."
         actions={
           <Button asChild>
-            <a href={manageHref}>Gérer dans Mon compte</a>
+            <a href={manageHref}>
+              <Icon icon={ExternalLink} />
+              Gérer dans Mon compte
+            </a>
           </Button>
         }
       />
@@ -47,7 +50,10 @@ function SecurityList({ data }: { data: Security }) {
       title="Sécurité de votre compte"
       aside={
         <Button variant="secondary" size="sm" asChild>
-          <a href={manageHref}>Gérer dans Mon compte</a>
+          <a href={manageHref}>
+            <Icon icon={ExternalLink} />
+            Gérer dans Mon compte
+          </a>
         </Button>
       }
     >
