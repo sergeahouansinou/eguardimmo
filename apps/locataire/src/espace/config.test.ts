@@ -1,5 +1,7 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { accountMenu, bottomItems, buildNavigation, plannedScreens, searchPages } from './config';
+import { accountMenu, bottomItems, buildNavigation, notifications, searchPages } from './config';
 
 const navigation = buildNavigation({ loyers: 1, messages: 1, interventions: 1 });
 const entries = [...navigation.sections.flatMap((section) => section.entries), ...navigation.footer];
@@ -7,8 +9,6 @@ const linkedHrefs = [
   ...entries.map((entry) => entry.href),
   ...bottomItems.map((item) => item.href),
   ...accountMenu.groups.flatMap((group) => group.items.map((item) => item.href)),
-  ...(accountMenu.switchSpace ? [accountMenu.switchSpace.href] : []),
-  accountMenu.signOut.href,
   ...searchPages.map((page) => page.href),
 ];
 
@@ -30,15 +30,23 @@ const DELIVERED_ROUTES = new Set([
   '/compte/modifier',
   '/compte/securite',
   '/notifications',
+  '/notifications/toutes',
   '/messages',
   '/messages/nouveau',
   '/aide',
 ]);
 
 describe('navigation de l’espace locataire', () => {
-  it('chaque lien mène à un écran livré ou à un écran prévu', () => {
-    for (const href of linkedHrefs) {
-      expect(DELIVERED_ROUTES.has(href) || plannedScreens.has(href), href).toBe(true);
+  it('chaque écran livré a bien un fichier de route', () => {
+    for (const href of DELIVERED_ROUTES) {
+      const page = join(__dirname, '..', 'app', '(espace)', href === '/' ? '' : href, 'page.tsx');
+      expect(existsSync(page), href).toBe(true);
+    }
+  });
+
+  it('chaque lien interne mène à un écran livré', () => {
+    for (const href of [...linkedHrefs, notifications.allHref, notifications.settingsHref ?? '']) {
+      expect(DELIVERED_ROUTES.has(href), href).toBe(true);
     }
   });
 
@@ -47,19 +55,19 @@ describe('navigation de l’espace locataire', () => {
     for (const item of bottomItems) expect(ids.has(item.id), item.id).toBe(true);
   });
 
-  it('la messagerie et l’aide sont livrées, sans écran d’inscription prévu', () => {
-    for (const href of ['/messages', '/messages/nouveau', '/aide']) expect(plannedScreens.has(href), href).toBe(false);
-    expect([...plannedScreens.keys()].some((href) => href.includes('inscription') || href.startsWith('/messages'))).toBe(false);
+  it('la messagerie et l’aide sont livrées', () => {
+    for (const href of ['/messages', '/messages/nouveau', '/aide']) expect(DELIVERED_ROUTES.has(href), href).toBe(true);
   });
 
-  it('un écran livré ne figure pas dans les écrans prévus', () => {
-    for (const href of DELIVERED_ROUTES) expect(plannedScreens.has(href), href).toBe(false);
-  });
-
-  it('le menu du compte renvoie vers les écrans du compte et le choix du profil', () => {
+  it('le menu du compte renvoie vers les écrans du compte, et vers l’application d’authentification pour le profil et la déconnexion', () => {
     const hrefs = accountMenu.groups.flatMap((group) => group.items.map((item) => item.href));
     expect(hrefs).toEqual(['/compte', '/compte/securite', '/notifications']);
-    expect(accountMenu.switchSpace?.href).toBe('/choix-du-profil');
+    expect(accountMenu.switchSpace?.href).toBe('http://localhost:3040/profils');
+    expect(accountMenu.signOut.href).toBe('http://localhost:3040/deconnecte');
+  });
+
+  it('le centre de notifications est distinct des préférences', () => {
+    expect(notifications).toEqual({ allHref: '/notifications/toutes', settingsHref: '/notifications' });
   });
 
   it('affiche les compteurs fournis par la source', () => {

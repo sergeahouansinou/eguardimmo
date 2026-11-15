@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Wrench,
 } from "lucide-react";
+import { authUrl } from "@eguardimmo/shell";
 import type { AccountMenuConfig, BottomItem, NotificationsConfig, PageResult, ShellCounts, ShellNavigation } from "@eguardimmo/shell";
 
 export const SPACE_LABEL = "Espace locataire";
@@ -53,8 +54,8 @@ export const bottomItems: BottomItem[] = [
 
 export const accountMenu: AccountMenuConfig = {
   roleLabels: { locataire: "Locataire" },
-  switchSpace: { href: "/choix-du-profil" },
-  signOut: { href: "/deconnexion" },
+  switchSpace: { href: authUrl("/profils") },
+  signOut: { href: authUrl("/deconnecte") },
   groups: [
     {
       id: "compte",
@@ -68,13 +69,7 @@ export const accountMenu: AccountMenuConfig = {
   ],
 };
 
-export const notifications: NotificationsConfig = { allHref: "/notifications", settingsHref: "/notifications" };
-
-export const plannedScreens: ReadonlyMap<string, string> = new Map([
-  ["/compte/gestion", "Gérer mon compte"],
-  ["/choix-du-profil", "Choix du profil"],
-  ["/deconnexion", "Déconnexion"],
-]);
+export const notifications: NotificationsConfig = { allHref: "/notifications/toutes", settingsHref: "/notifications" };
 
 export const searchPages: PageResult[] = [
   { href: "/", label: "Accueil" },
@@ -92,7 +87,8 @@ export const searchPages: PageResult[] = [
   { href: "/assurance/deposer", label: "Déposer une attestation" },
   { href: "/compte", label: "Mes informations" },
   { href: "/compte/securite", label: "Sécurité" },
-  { href: "/notifications", label: "Notifications" },
+  { href: "/notifications", label: "Préférences de notifications" },
+  { href: "/notifications/toutes", label: "Toutes les notifications" },
   { href: "/messages", label: "Messages" },
   { href: "/aide", label: "Aide" },
 ];

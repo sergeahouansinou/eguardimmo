@@ -10,6 +10,7 @@ import type { AttestationInput, NoticeInput } from './schemas/logement';
 import type { MandateInput, PaymentOutcome, StartPaymentInput } from './schemas/loyers';
 
 export interface LocataireSource extends ShellSource {
+  markNotificationRead: (id: string) => Promise<void>;
   home: () => Promise<unknown>;
   lease: () => Promise<unknown>;
   installments: () => Promise<unknown>;

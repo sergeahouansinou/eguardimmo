@@ -37,6 +37,13 @@ export function compteOps(state: DemoState) {
       run(() => {
         state.notifications = state.notifications.map((item) => ({ ...item, unread: false }));
       }),
+    markNotificationRead: (id: string) =>
+      run(() => {
+        if (!state.notifications.some((item) => item.id === id)) {
+          throw new SourceError('introuvable', 'Notification inconnue.');
+        }
+        state.notifications = state.notifications.map((item) => (item.id === id ? { ...item, unread: false } : item));
+      }),
     updateProfile: (input: { values: ProfileInput; code?: string }) =>
       run(() => {
         const values = profileInputSchema.parse(input.values);

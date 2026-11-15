@@ -284,4 +284,16 @@ describe('source de démonstration : compte', () => {
     await source.markAllNotificationsRead();
     expect((shellSchema.parse(await source.shell())).notifications.every((item) => !item.unread)).toBe(true);
   });
+
+  it('marque une seule notification comme lue et refuse une notification inconnue', async () => {
+    const source = createDemoSource();
+    const before = shellSchema.parse(await source.shell()).notifications;
+    const target = before.find((item) => item.unread);
+    if (!target) throw new Error('aucune notification non lue');
+    await source.markNotificationRead(target.id);
+    const after = shellSchema.parse(await source.shell()).notifications;
+    expect(after.find((item) => item.id === target.id)?.unread).toBe(false);
+    expect(after.filter((item) => item.unread)).toHaveLength(before.filter((item) => item.unread).length - 1);
+    await expect(source.markNotificationRead('inconnue')).rejects.toThrow('inconnue');
+  });
 });

@@ -133,7 +133,7 @@ describe('Sécurité', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Sécurité' })).toBeTruthy();
     expect(await screen.findByText(/6 codes de secours restants sur 8/)).toBeTruthy();
     for (const link of screen.getAllByRole('link', { name: 'Gérer dans Mon compte' })) {
-      expect(link.getAttribute('href')).toBe('/compte/gestion');
+      expect(link.getAttribute('href')).toBe('http://localhost:3040/compte/securite');
     }
     await expectNoA11yViolations(container);
   });

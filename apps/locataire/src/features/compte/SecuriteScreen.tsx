@@ -1,8 +1,8 @@
 'use client';
 
+import { authUrl } from '@eguardimmo/shell';
 import { Alert, Button } from '@eguardimmo/ui';
 import { KeyRound, Link2, ShieldCheck, Smartphone } from 'lucide-react';
-import Link from 'next/link';
 import { PageHeader } from '@/components/PageHeader';
 import { ACCOUNT_TABS, RouteTabs } from '@/components/RouteTabs';
 import { Async } from '@/components/ScreenState';
@@ -12,10 +12,9 @@ import { useSecurity } from '@/data/queries';
 import type { Security } from '@/data/schemas/compte';
 import { formatDate } from '@/lib/dates';
 
-const MANAGE_HREF = '/compte/gestion';
-
 export function SecuriteScreen() {
   const security = useSecurity();
+  const manageHref = authUrl('/compte/securite');
   return (
     <>
       <PageHeader
@@ -24,7 +23,7 @@ export function SecuriteScreen() {
         subtitle="Résumé de la sécurité de votre compte, commun à tous vos espaces."
         actions={
           <Button asChild>
-            <Link href={MANAGE_HREF}>Gérer dans Mon compte</Link>
+            <a href={manageHref}>Gérer dans Mon compte</a>
           </Button>
         }
       />
@@ -40,6 +39,7 @@ export function SecuriteScreen() {
 }
 
 function SecurityList({ data }: { data: Security }) {
+  const manageHref = authUrl('/compte/securite');
   const linked = [data.google, data.apple].filter(Boolean).length;
   return (
     <SectionCard
@@ -47,7 +47,7 @@ function SecurityList({ data }: { data: Security }) {
       title="Sécurité de votre compte"
       aside={
         <Button variant="secondary" size="sm" asChild>
-          <Link href={MANAGE_HREF}>Gérer dans Mon compte</Link>
+          <a href={manageHref}>Gérer dans Mon compte</a>
         </Button>
       }
     >
