@@ -4,18 +4,18 @@ import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardTitle, IconButton, Select, TextField } from '@eguardimmo/ui';
 import { useState } from 'react';
 import { useCreateSignature } from './hooks';
+import { SignatureFilesField } from './SignatureFilesField';
 import { SignaturePlacement } from './SignaturePlacement';
 import { courriersPaths } from './paths';
 import { defaultSignatureFields, signatureInputSchema } from './schemas';
 import type { SignatureField } from './schemas';
 import { useTenants, useUnits } from '../locataires/hooks';
-import { DescriptionList, FileDrop, PageHeader, Steps, errorMessage, noticeAfterNavigation, useGestionNavigation, useNotify } from '../locataires/kit';
+import { DescriptionList, PageHeader, Steps, errorMessage, noticeAfterNavigation, useGestionNavigation, useNotify } from '../locataires/kit';
 import { links } from '../locataires/kit/links';
 import { useZodForm } from '../locataires/kit/useZodForm';
 import { tenantNameOf, unitFullLabel } from '../locataires/schemas';
 
 const STEPS = ['Document', 'Signataires', 'Placement'];
-const MAX_BYTES = 20 * 1_048_576;
 const NO_UNIT = 'aucun';
 const STEP_HINTS = ['le document à faire signer', 'les personnes qui signent', 'l’emplacement de chaque signature'];
 
@@ -25,19 +25,19 @@ export function SignatureNewPage() {
   const tenants = useTenants();
   const units = useUnits();
   const create = useCreateSignature();
-  const form = useZodForm(signatureInputSchema, { title: search.get('titre') ?? '', fileName: search.get('fichier') ?? '', unitId: '', signers: [{ name: '', email: '' }], fields: [] });
+  const form = useZodForm(signatureInputSchema, { title: search.get('titre') ?? '', files: search.has('fichier') ? [search.get('fichier') ?? ''] : [], unitId: '', signers: [{ name: '', email: '' }], fields: [] });
   const [step, setStep] = useState(0);
   const [active, setActive] = useState(0);
   const [page, setPage] = useState(3);
 
   const parsed = signatureInputSchema.safeParse(form.values);
   const issues = parsed.success ? [] : parsed.error.issues.map((issue) => String(issue.path[0]));
-  const stepFields: readonly (readonly string[])[] = [['title', 'fileName'], ['signers'], []];
+  const stepFields: readonly (readonly string[])[] = [['title', 'files'], ['signers'], []];
   const blocked = (index: number) => stepFields[index]?.some((field) => issues.includes(field)) ?? false;
 
   const next = () => {
     form.touch('title');
-    form.touch('fileName');
+    form.touch('files');
     form.touch('signers');
     if (blocked(step)) return;
     if (step === 1) {
@@ -93,16 +93,7 @@ export function SignatureNewPage() {
                 onChange={(event) => { form.setValue('title', event.target.value); }}
                 onBlur={() => { form.touch('title'); }}
               />
-              <FileDrop
-                title="Importer le PDF à signer"
-                hint="PDF uniquement, 20 Mo au maximum."
-                accept="application/pdf"
-                allowedTypes={['application/pdf']}
-                maxBytes={MAX_BYTES}
-                fileName={form.values.fileName}
-                error={form.error('fileName')}
-                onFile={(name) => { form.setValue('fileName', name); form.touch('fileName'); }}
-              />
+              <SignatureFilesField files={form.values.files ?? []} error={form.error('files')} onChange={(files) => { form.setValue('files', files); form.touch('files'); }} />
               <Select
                 label="Bien"
                 placeholder="Choisir un bien (facultatif)"
@@ -153,7 +144,7 @@ export function SignatureNewPage() {
               <DescriptionList
                 termWidth="130px"
                 items={[
-                  { term: 'Document', detail: `${form.values.title}, ${form.values.fileName}` },
+                  { term: 'Document', detail: `${form.values.title}, ${(form.values.files ?? []).join(', ')}` },
                   { term: 'Signataires', detail: form.values.signers.map((signer) => `${signer.name} (${signer.email})`).join(', ') },
                 ]}
               />

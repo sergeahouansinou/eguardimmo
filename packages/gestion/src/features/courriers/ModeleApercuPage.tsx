@@ -1,6 +1,7 @@
 'use client';
 
 import { DocumentViewer, Paper, PaperHeader } from './DocumentViewer';
+import { FormattedText } from './FormattedText';
 import { RecordGate } from './RecordGate';
 import { useTemplates } from './hooks';
 import { courriersPaths } from './paths';
@@ -39,7 +40,7 @@ export function ModeleApercuPage({ id }: { id: string }) {
             <Paper label={`Modèle ${template.name}`}>
               <PaperHeader right={<span className="text-body text-fg-muted">{`Paris, le ${longDateFr(todayIso())}`}</span>} />
               <p className="text-body-strong">{`Objet : ${renderTemplate(template.subject, SAMPLE)}`}</p>
-              <p className="text-body whitespace-pre-line">{renderTemplate(template.body, SAMPLE)}</p>
+              <p className="text-body whitespace-pre-line"><FormattedText text={renderTemplate(template.body, SAMPLE)} /></p>
             </Paper>
           </DocumentViewer>
         </>

@@ -1,11 +1,10 @@
 'use client';
 
-import { CreditCard, Download, Eye, Mail, Receipt as ReceiptIcon } from 'lucide-react';
+import { Ban, CreditCard, Download, Eye, Mail, Receipt as ReceiptIcon } from 'lucide-react';
 import {
   Badge,
   Button,
   Card,
-  CardTitle,
   ConfirmDialog,
   EmptyState,
   Pagination,
@@ -24,13 +23,15 @@ import {
 import { useState } from 'react';
 import { useLeaseLookups } from '../baux/BauxParts';
 import { bauxPaths } from '../baux/paths';
-import { useEmitReceipts, useMarkReceiptSent, useReceipts } from './hooks';
+import { CancelReceiptDialog } from './CancelReceiptDialog';
+import { ReceiptDetailCard } from './ReceiptDetailCard';
+import { useCancelReceipt, useEmitReceipts, useMarkReceiptSent, useReceipts } from './hooks';
 import { courriersPaths } from './paths';
 import type { Receipt } from './schemas';
-import { ActionMenu, DescriptionList, LinkButton, ListLoading, LoadError, PageHeader, SearchInput, errorMessage, useGestionNavigation, useNotify } from '../locataires/kit';
+import { ActionMenu, LinkButton, ListLoading, LoadError, PageHeader, SearchInput, errorMessage, useGestionNavigation, useNotify } from '../locataires/kit';
 import type { ActionItem } from '../locataires/kit';
 import { downloadCsv, toCsv } from '../locataires/kit/csv';
-import { formatDateFr, monthLabel } from '../locataires/kit/dates';
+import { monthLabel } from '../locataires/kit/dates';
 import { links } from '../locataires/kit/links';
 import { money } from '../locataires/kit/money';
 import { useListView } from '../locataires/kit/useListView';
@@ -45,10 +46,12 @@ const tabs: ListTab<Receipt>[] = [
   { id: 'toutes', label: 'Toutes', match: () => true },
   { id: 'a_solder', label: 'À solder', match: isToSettle },
   { id: 'a_emettre', label: 'À émettre', match: isToEmit },
-  { id: 'envoyees', label: 'Envoyées', match: (item) => item.sentOn !== null },
+  { id: 'envoyees', label: 'Envoyées', match: (item) => item.sentOn !== null && item.cancellation === null },
+  { id: 'annulees', label: 'Annulées', match: (item) => item.cancellation !== null },
 ];
 
-function receiptState(item: Receipt): { label: string; tone: 'success' | 'info' | 'warning' } {
+function receiptState(item: Receipt): { label: string; tone: 'success' | 'info' | 'warning' | 'danger' } {
+  if (item.cancellation) return { label: 'Annulée', tone: 'danger' };
   if (item.sentOn) return { label: 'Envoyée', tone: 'success' };
   if (item.number) return { label: 'Émise', tone: 'info' };
   if (item.outstanding > 0) return { label: `Reste dû ${money(item.outstanding)}`, tone: 'warning' };
@@ -62,10 +65,12 @@ export function QuittancesPage() {
   const { push } = useGestionNavigation();
   const emit = useEmitReceipts();
   const send = useMarkReceiptSent();
+  const cancel = useCancelReceipt();
   const [month, setMonth] = useState(ALL);
   const [unitId, setUnitId] = useState(ALL);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [cancelling, setCancelling] = useState<Receipt | null>(null);
 
   const items = receipts.data ?? [];
   const months = [...new Set(items.map((item) => item.month))].sort().reverse();
@@ -98,18 +103,30 @@ export function QuittancesPage() {
     }
   };
 
+  const cancelReceipt = async (item: Receipt, reason: string) => {
+    try {
+      await cancel.mutateAsync({ id: item.id, input: { reason } });
+      setCancelling(null);
+      setSelectedId(item.id);
+      notify({ title: 'Quittance annulée', description: `${item.number ?? ''}, l’échéance de ${monthLabel(item.month)} redevient à émettre.` });
+    } catch (error) {
+      notify({ tone: 'danger', title: 'Annulation impossible', description: errorMessage(error) });
+    }
+  };
+
   const actionsFor = (item: Receipt): ActionItem[] => [
     { id: 'detail', label: 'Voir le détail', icon: Eye, onSelect: () => { setSelectedId(item.id); } },
     { id: 'pdf', label: 'Télécharger le PDF', icon: Download, disabled: item.number === null, onSelect: () => { push(courriersPaths.quittance(item.id)); } },
-    { id: 'mail', label: 'Envoyer par e-mail', icon: Mail, disabled: item.number === null, onSelect: () => { void sendReceipt(item); } },
+    { id: 'mail', label: 'Envoyer par e-mail', icon: Mail, disabled: item.number === null || item.cancellation !== null, onSelect: () => { void sendReceipt(item); } },
     { id: 'payment', label: 'Voir le paiement', icon: CreditCard, onSelect: () => { push(links.ledger(item.tenantId)); } },
+    { id: 'cancel', label: 'Annuler la quittance', icon: Ban, tone: 'danger', separatorBefore: true, disabled: item.number === null || item.cancellation !== null, onSelect: () => { setCancelling(item); } },
   ];
 
   const exportCsv = () => {
     const rows = items.filter((item) => item.number !== null && (month === ALL || item.month === month));
     downloadCsv(
       'quittances.csv',
-      toCsv(['Numéro', 'Mois', 'Locataire', 'Bien', 'Loyer', 'Charges', 'Total'], rows.map((item) => [item.number ?? '', monthLabel(item.month), lookups.tenantName(item.tenantId), lookups.unitLabel(item.unitId), money(item.rent), money(item.charges), money(item.rent + item.charges)])),
+      toCsv(['Numéro', 'Mois', 'Locataire', 'Bien', 'Loyer', 'Charges', 'Total', 'État'], rows.map((item) => [item.number ?? '', monthLabel(item.month), lookups.tenantName(item.tenantId), lookups.unitLabel(item.unitId), money(item.rent), money(item.charges), money(item.rent + item.charges), receiptState(item).label])),
     );
     notify({ title: 'Export prêt', description: `${String(rows.length)} quittances exportées.` });
   };
@@ -204,34 +221,15 @@ export function QuittancesPage() {
           </Tabs>
         </Card>
         {selected ? (
-          <Card role="region" aria-label="Détail de la quittance" className="gap-3">
-            <CardTitle as="h2">{selected.number ?? 'Brouillon de quittance'}</CardTitle>
-            <Badge tone={selected.number ? 'success' : 'warning'}>{selected.number ? 'Scellée' : receiptState(selected).label}</Badge>
-            <DescriptionList
-              termWidth="100px"
-              items={[
-                { term: 'Locataire', detail: lookups.tenantName(selected.tenantId) },
-                { term: 'Bien', detail: lookups.unitLabel(selected.unitId) },
-                { term: 'Période', detail: monthLabel(selected.month) },
-                { term: 'Loyer', detail: money(selected.rent) },
-                { term: 'Charges', detail: money(selected.charges) },
-                { term: 'Total', detail: money(selected.rent + selected.charges) },
-                ...(selected.outstanding > 0 ? [{ term: 'Reste dû', detail: money(selected.outstanding) }] : []),
-                { term: 'Émise le', detail: formatDateFr(selected.issuedOn) },
-                { term: 'Envoyée le', detail: formatDateFr(selected.sentOn) },
-              ]}
-            />
-            <div className="flex flex-wrap gap-2">
-              {selected.number ? (
-                <>
-                  <LinkButton href={courriersPaths.quittance(selected.id)} variant="primary" icon={Download}>Ouvrir le PDF</LinkButton>
-                  <Button variant="secondary" loading={send.isPending} onClick={() => { void sendReceipt(selected); }}>Envoyer par e-mail</Button>
-                </>
-              ) : (
-                <p className="text-caption text-fg-subtle">{selected.outstanding > 0 ? 'La quittance sera émise une fois l’échéance intégralement soldée.' : 'Émettez les quittances soldées pour la générer.'}</p>
-              )}
-            </div>
-          </Card>
+          <ReceiptDetailCard
+            receipt={selected}
+            tenantName={lookups.tenantName(selected.tenantId)}
+            unitLabel={lookups.unitLabel(selected.unitId)}
+            stateLabel={receiptState(selected).label}
+            sending={send.isPending}
+            onSend={() => { void sendReceipt(selected); }}
+            onCancel={() => { setCancelling(selected); }}
+          />
         ) : null}
       </div>
       <ConfirmDialog
@@ -241,6 +239,13 @@ export function QuittancesPage() {
         description={`${String(toEmit.length)} quittances ${emitMonth ? `de ${monthLabel(emitMonth)} ` : ''}seront numérotées puis envoyées aux locataires. Les numéros attribués ne peuvent plus être modifiés.`}
         confirmLabel="Émettre les quittances"
         onConfirm={() => { void emitAll(); }}
+      />
+      <CancelReceiptDialog
+        receipt={cancelling}
+        tenantName={cancelling ? lookups.tenantName(cancelling.tenantId) : ''}
+        pending={cancel.isPending}
+        onClose={() => { setCancelling(null); }}
+        onConfirm={(item, reason) => { void cancelReceipt(item, reason); }}
       />
     </>
   );

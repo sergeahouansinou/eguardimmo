@@ -1,8 +1,9 @@
-import { formatDateFr, monthLabel, todayIso } from '../locataires/kit/dates';
+import { addDays, formatDateFr, monthLabel, todayIso } from '../locataires/kit/dates';
 import { money } from '../locataires/kit/money';
 import { tenantNameOf, unitFullLabel } from '../locataires/schemas';
 import type { Tenant, Unit } from '../locataires/schemas';
 import type { Lease } from '../baux/schemas';
+import { DEFAULT_DUE_DELAY_DAYS } from './courrierVariables';
 import { BAILLEUR } from './DocumentViewer';
 
 export function templateValues({ tenant, unit, lease }: { tenant: Tenant | undefined; unit: Unit | undefined; lease: Lease | undefined }): Record<string, string> {
@@ -20,6 +21,7 @@ export function templateValues({ tenant, unit, lease }: { tenant: Tenant | undef
     montant_impaye: lease ? money(lease.balance < 0 ? -lease.balance : 0) : '',
     mois: monthLabel(today.slice(0, 7)),
     echeance: formatDateFr(next),
+    date_limite: formatDateFr(addDays(today, DEFAULT_DUE_DELAY_DAYS)),
     date: formatDateFr(today),
     bailleur: BAILLEUR.name,
   };

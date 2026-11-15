@@ -4,8 +4,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useClientQuery } from '../locataires/kit/query';
 import { courrierSchema, noticeSchema, receiptSchema, signatureSchema, templateSchema } from './schemas';
-import type { CourrierInput, CourrierStatus, SignatureInput, TemplateInput } from './schemas';
+import type { CourrierInput, CourrierStatus, ReceiptCancelInput, SignatureInput, TemplateInput } from './schemas';
 import { useCourriersSource } from './source';
+import type { TemplateMode } from './source';
 
 export const courriersKeys = {
   all: ['gestion', 'courriers'] as const,
@@ -49,13 +50,25 @@ function useInvalidate() {
 export function useCreateTemplate() {
   const source = useCourriersSource();
   const invalidate = useInvalidate();
-  return useMutation({ mutationFn: async (input: TemplateInput) => templateSchema.parse(await source.createTemplate(input)), onSuccess: invalidate });
+  return useMutation({
+    mutationFn: async ({ input, mode = 'actif' }: { input: TemplateInput; mode?: TemplateMode }) => templateSchema.parse(await source.createTemplate(input, mode)),
+    onSuccess: invalidate,
+  });
 }
 
 export function useUpdateTemplate(id: string) {
   const source = useCourriersSource();
   const invalidate = useInvalidate();
-  return useMutation({ mutationFn: async (input: TemplateInput) => templateSchema.parse(await source.updateTemplate(id, input)), onSuccess: invalidate });
+  return useMutation({
+    mutationFn: async ({ input, mode = 'actif' }: { input: TemplateInput; mode?: TemplateMode }) => templateSchema.parse(await source.updateTemplate(id, input, mode)),
+    onSuccess: invalidate,
+  });
+}
+
+export function useRestoreTemplate() {
+  const source = useCourriersSource();
+  const invalidate = useInvalidate();
+  return useMutation({ mutationFn: async (id: string) => templateSchema.parse(await source.restoreTemplate(id)), onSuccess: invalidate });
 }
 
 export function useDuplicateTemplate() {
@@ -93,6 +106,21 @@ export function useMarkCourrierSent() {
   const source = useCourriersSource();
   const invalidate = useInvalidate();
   return useMutation({ mutationFn: async (id: string) => courrierSchema.parse(await source.markCourrierSent(id)), onSuccess: invalidate });
+}
+
+export function useResendCourrier() {
+  const source = useCourriersSource();
+  const invalidate = useInvalidate();
+  return useMutation({ mutationFn: async (id: string) => courrierSchema.parse(await source.resendCourrier(id)), onSuccess: invalidate });
+}
+
+export function useArchiveCourrier() {
+  const source = useCourriersSource();
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async ({ id, archived }: { id: string; archived: boolean }) => courrierSchema.parse(await source.setCourrierArchived(id, archived)),
+    onSuccess: invalidate,
+  });
 }
 
 export function useDeleteCourrier() {
@@ -135,6 +163,15 @@ export function useMarkReceiptSent() {
   const source = useCourriersSource();
   const invalidate = useInvalidate();
   return useMutation({ mutationFn: async (id: string) => receiptSchema.parse(await source.markReceiptSent(id)), onSuccess: invalidate });
+}
+
+export function useCancelReceipt() {
+  const source = useCourriersSource();
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async ({ id, input }: { id: string; input: ReceiptCancelInput }) => receiptSchema.parse(await source.cancelReceipt(id, input)),
+    onSuccess: invalidate,
+  });
 }
 
 export function useSendNotice() {

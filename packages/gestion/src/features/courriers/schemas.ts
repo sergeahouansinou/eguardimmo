@@ -22,6 +22,16 @@ export const templateCategoryLabel: Record<TemplateCategory, string> = {
   general: 'Général',
 };
 
+export const LEGAL_FRAMES = ['loi_1989', 'meuble', 'commercial', 'autre'] as const;
+export const legalFrameSchema = z.enum(LEGAL_FRAMES);
+export type LegalFrame = z.infer<typeof legalFrameSchema>;
+export const legalFrameLabel: Record<LegalFrame, string> = {
+  loi_1989: 'Loi du 6 juillet 1989',
+  meuble: 'Bail meublé',
+  commercial: 'Bail commercial',
+  autre: 'Autre',
+};
+
 export const TEMPLATE_FIELDS = [
   { key: 'locataire', label: 'Nom du locataire', sample: 'Koffi Adjovi' },
   { key: 'civilite', label: 'Civilité', sample: 'M.' },
@@ -34,6 +44,7 @@ export const TEMPLATE_FIELDS = [
   { key: 'montant_impaye', label: 'Montant impayé', sample: '850,00 €' },
   { key: 'mois', label: 'Mois concerné', sample: 'Novembre 2026' },
   { key: 'echeance', label: 'Date d’échéance', sample: '01/12/2026' },
+  { key: 'date_limite', label: 'Date limite de paiement', sample: '20/11/2026' },
   { key: 'date', label: 'Date du jour', sample: '13/11/2026' },
   { key: 'bailleur', label: 'Nom du bailleur', sample: 'SCI Les Tilleuls' },
 ] as const;
@@ -49,32 +60,48 @@ export const templateSchema = z.object({
   id: slug,
   name: z.string().min(1),
   category: templateCategorySchema,
+  legalFrame: legalFrameSchema,
+  unitId: slug.nullable(),
+  sourceId: slug.nullable(),
   description: z.string(),
   subject: z.string(),
   body: z.string(),
   suggestRegistered: z.boolean(),
   builtIn: z.boolean(),
   archived: z.boolean(),
+  draft: z.boolean(),
   updatedOn: isoDate,
 });
 export type Template = z.infer<typeof templateSchema>;
 
+const templateCommon = {
+  name: required('Donnez un nom au modèle'),
+  category: templateCategorySchema,
+  legalFrame: legalFrameSchema,
+  unitId: z.string(),
+  description: text,
+  suggestRegistered: z.boolean(),
+};
+
+function addUnknownFieldIssue(body: string, context: { addIssue: (issue: { code: 'custom'; path: string[]; message: string }) => void }) {
+  const unknown = [...body.matchAll(TEMPLATE_TOKEN)].map((match) => match[1] ?? '').filter((key) => !TEMPLATE_FIELD_KEYS.includes(key));
+  if (unknown.length > 0) {
+    context.addIssue({ code: 'custom', path: ['body'], message: `Champ inconnu : {${unknown[0] ?? ''}}. Utilisez la liste des champs.` });
+  }
+}
+
 export const templateInputSchema = z
   .object({
-    name: required('Donnez un nom au modèle'),
-    category: templateCategorySchema,
-    description: text,
+    ...templateCommon,
     subject: required('Renseignez l’objet du courrier'),
     body: text.min(20, 'Le contenu est trop court, 20 caractères au minimum'),
-    suggestRegistered: z.boolean(),
   })
-  .superRefine((value, context) => {
-    const unknown = [...value.body.matchAll(TEMPLATE_TOKEN)].map((match) => match[1] ?? '').filter((key) => !TEMPLATE_FIELD_KEYS.includes(key));
-    if (unknown.length > 0) {
-      context.addIssue({ code: 'custom', path: ['body'], message: `Champ inconnu : {${unknown[0] ?? ''}}. Utilisez la liste des champs.` });
-    }
-  });
+  .superRefine((value, context) => { addUnknownFieldIssue(value.body, context); });
 export type TemplateInput = z.infer<typeof templateInputSchema>;
+
+export const templateDraftInputSchema = z
+  .object({ ...templateCommon, subject: text, body: text })
+  .superRefine((value, context) => { addUnknownFieldIssue(value.body, context); });
 
 export const COURRIER_STATUSES = ['brouillon', 'genere', 'envoye'] as const;
 export const courrierStatusSchema = z.enum(COURRIER_STATUSES);
@@ -83,6 +110,9 @@ export const CHANNELS = ['email', 'courrier', 'lrar'] as const;
 export const channelSchema = z.enum(CHANNELS);
 export type Channel = z.infer<typeof channelSchema>;
 export const channelLabel: Record<Channel, string> = { email: 'E-mail', courrier: 'Courrier simple', lrar: 'Lettre recommandée' };
+
+export const sendingSchema = z.object({ on: isoDate, channel: channelSchema, resend: z.boolean() });
+export type Sending = z.infer<typeof sendingSchema>;
 
 export const courrierSchema = z.object({
   id: slug,
@@ -96,6 +126,9 @@ export const courrierSchema = z.object({
   channel: channelSchema,
   createdOn: isoDate,
   sentOn: isoDate.nullable(),
+  updatedOn: isoDate,
+  archived: z.boolean(),
+  sendings: z.array(sendingSchema),
 });
 export type Courrier = z.infer<typeof courrierSchema>;
 
@@ -126,30 +159,52 @@ export function defaultSignatureFields(count: number): SignatureField[] {
   return Array.from({ length: count }, (_, signer) => ({ signer, page: SIGNATURE_PAGES, x: count === 1 ? 70 : 20 + (60 * signer) / Math.max(1, count - 1), y: 85 }));
 }
 
-export const signatureSchema = z.object({
-  id: slug,
-  reference: z.string().min(1),
-  title: z.string().min(1),
-  fileName: z.string().min(1),
-  unitId: slug.nullable(),
-  signers: z.array(signerSchema).min(1),
-  status: signatureStatusSchema,
-  createdOn: isoDate,
-  completedOn: isoDate.nullable(),
-  reminderSentOn: isoDate.nullable(),
-  fields: z.array(signatureFieldSchema),
-});
-export type Signature = z.infer<typeof signatureSchema>;
+export const MAX_SIGNATURE_FILES = 10;
+
+function withFiles(raw: unknown): unknown {
+  if (typeof raw !== 'object' || raw === null || 'files' in raw || !('fileName' in raw) || typeof raw.fileName !== 'string') return raw;
+  return { ...raw, files: [raw.fileName] };
+}
+
+export const signatureSchema = z.preprocess(
+  withFiles,
+  z.object({
+    id: slug,
+    reference: z.string().min(1),
+    title: z.string().min(1),
+    // fileName reste le premier document : le module baux le lit encore.
+    fileName: z.string().min(1),
+    files: z.array(z.string().min(1)).min(1),
+    unitId: slug.nullable(),
+    signers: z.array(signerSchema).min(1),
+    status: signatureStatusSchema,
+    createdOn: isoDate,
+    completedOn: isoDate.nullable(),
+    reminderSentOn: isoDate.nullable(),
+    fields: z.array(signatureFieldSchema),
+  }),
+);
+export type Signature = z.output<typeof signatureSchema>;
+
+export function signatureFileNames(value: { files?: readonly string[] | undefined; fileName?: string | undefined }): string[] {
+  if (value.files && value.files.length > 0) return [...value.files];
+  return value.fileName ? [value.fileName] : [];
+}
 
 export const signatureInputSchema = z
   .object({
     title: required('Donnez un titre au document'),
-    fileName: required('Joignez le PDF à signer'),
+    files: z.array(required('Nom de fichier vide')).optional(),
+    fileName: text.optional(),
     unitId: z.string().optional(),
     signers: z.array(z.object({ name: z.string(), email: z.string() })),
     fields: z.array(signatureFieldSchema).optional(),
   })
   .superRefine((value, context) => {
+    const files = signatureFileNames(value);
+    if (files.length === 0) context.addIssue({ code: 'custom', path: ['files'], message: 'Joignez le PDF à signer' });
+    if (files.length > MAX_SIGNATURE_FILES) context.addIssue({ code: 'custom', path: ['files'], message: `${String(MAX_SIGNATURE_FILES)} documents au maximum par demande` });
+    if (new Set(files).size !== files.length) context.addIssue({ code: 'custom', path: ['files'], message: 'Un même fichier ne peut pas être joint deux fois' });
     if (value.signers.length === 0) {
       context.addIssue({ code: 'custom', path: ['signers'], message: 'Ajoutez au moins un signataire' });
       return;
@@ -161,6 +216,21 @@ export const signatureInputSchema = z
     }
   });
 export type SignatureInput = z.input<typeof signatureInputSchema>;
+
+export const RECEIPT_EVENT_TYPES = ['emise', 'envoyee', 'annulee'] as const;
+export const receiptEventSchema = z.object({
+  type: z.enum(RECEIPT_EVENT_TYPES),
+  on: isoDate,
+  by: z.string().min(1),
+  note: z.string().nullable(),
+});
+export type ReceiptEvent = z.infer<typeof receiptEventSchema>;
+export const receiptCancellationSchema = z.object({ on: isoDate, by: z.string().min(1), reason: z.string().min(1) });
+
+export const receiptCancelInputSchema = z.object({
+  reason: z.string({ error: 'Indiquez le motif de l’annulation' }).trim().min(1, 'Indiquez le motif de l’annulation').max(300, 'Le motif est limité à 300 caractères'),
+});
+export type ReceiptCancelInput = z.infer<typeof receiptCancelInputSchema>;
 
 export const receiptSchema = z.object({
   id: slug,
@@ -174,6 +244,9 @@ export const receiptSchema = z.object({
   outstanding: minor,
   issuedOn: isoDate.nullable(),
   sentOn: isoDate.nullable(),
+  fingerprint: z.string().regex(/^[0-9a-f]{64}$/).nullable(),
+  cancellation: receiptCancellationSchema.nullable(),
+  history: z.array(receiptEventSchema),
 });
 export type Receipt = z.infer<typeof receiptSchema>;
 

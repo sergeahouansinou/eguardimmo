@@ -53,6 +53,8 @@ const tabs: ListTab<Signature>[] = [
   { id: 'annules', label: 'Annulées', match: (item) => item.status === 'annule' },
 ];
 
+const filesLabel = (item: Signature) => `${String(item.files.length)} fichier${item.files.length > 1 ? 's' : ''}`;
+
 const signedCount = (item: Signature) => item.signers.filter((signer) => signer.status === 'signe').length;
 
 function stateLabel(item: Signature): string {
@@ -102,7 +104,7 @@ export function SignaturesPage() {
   };
 
   const download = (target: Signature, kind: 'documents' | 'certificat') => {
-    const text = kind === 'documents' ? `Document : ${target.title}\nFichier : ${target.fileName}\n` : `Certificat de signature ${target.reference}\n${target.signers.map((signer) => `${signer.name} <${signer.email}> : ${signer.status === 'signe' ? 'a signé' : signer.status === 'refuse' ? 'a refusé' : 'en attente'}`).join('\n')}\n`;
+    const text = kind === 'documents' ? `Document : ${target.title}\n${target.files.map((file) => `Fichier : ${file}`).join('\n')}\n` : `Certificat de signature ${target.reference}\n${target.signers.map((signer) => `${signer.name} <${signer.email}> : ${signer.status === 'signe' ? 'a signé' : signer.status === 'refuse' ? 'a refusé' : 'en attente'}`).join('\n')}\n`;
     const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url;
@@ -169,6 +171,7 @@ export function SignaturesPage() {
                 <TableHead>
                   <TableRow>
                     <TableHeaderCell>Description</TableHeaderCell>
+                    <TableHeaderCell>Documents</TableHeaderCell>
                     <TableHeaderCell>Signataires</TableHeaderCell>
                     <TableHeaderCell>Date</TableHeaderCell>
                     <TableHeaderCell>État</TableHeaderCell>
@@ -180,9 +183,10 @@ export function SignaturesPage() {
                     <TableRow key={item.id}>
                       <TableCell strong>
                         {item.title}
-                        <span className="block text-caption font-normal text-fg-subtle">{`${item.reference}, ${item.fileName}`}</span>
+                        <span className="block text-caption font-normal text-fg-subtle">{item.reference}</span>
                         {item.reminderSentOn ? <span className="block text-caption font-normal text-fg-subtle">{`Relancé le ${formatDateFr(item.reminderSentOn)}`}</span> : null}
                       </TableCell>
+                      <TableCell>{filesLabel(item)}</TableCell>
                       <TableCell>{item.signers.map((signer) => signer.name).join(', ')}</TableCell>
                       <TableCell>{formatDateFr(item.createdOn)}</TableCell>
                       <TableCell><Badge tone={statusBadge[item.status].tone}>{stateLabel(item)}</Badge></TableCell>
@@ -207,7 +211,7 @@ export function SignaturesPage() {
       </Card>
 
       <Dialog open={detail !== null} onOpenChange={(open) => { if (!open) setDetail(null); }}>
-        <DialogContent title={detail?.title ?? 'Signataires'} description={detail ? `${detail.reference}, ${detail.fileName}` : undefined}>
+        <DialogContent title={detail?.title ?? 'Signataires'} description={detail ? `${detail.reference}, ${detail.files.join(', ')}` : undefined}>
           <div className="flex flex-col gap-3 p-4">
             <ul>
               {detail?.signers.map((signer) => (

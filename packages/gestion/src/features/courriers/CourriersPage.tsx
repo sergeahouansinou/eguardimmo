@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, FileText, Mail, PenLine, SquarePen, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, Copy, FileText, Mail, PenLine, Send, SquarePen, Trash2 } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -23,7 +23,7 @@ import {
 import type { BadgeTone } from '@eguardimmo/ui';
 import { useState } from 'react';
 import { useLeaseLookups } from '../baux/BauxParts';
-import { useCourriers, useDeleteCourrier, useMarkCourrierSent, useTemplates } from './hooks';
+import { useArchiveCourrier, useCourriers, useDeleteCourrier, useMarkCourrierSent, useResendCourrier, useTemplates } from './hooks';
 import { courriersPaths } from './paths';
 import { channelLabel } from './schemas';
 import type { Courrier, CourrierStatus } from './schemas';
@@ -44,10 +44,11 @@ const statusBadge: Record<CourrierStatus, { label: string; tone: BadgeTone }> = 
 };
 
 const tabs: ListTab<Courrier>[] = [
-  { id: 'tous', label: 'Tous', match: () => true },
-  { id: 'brouillons', label: 'Brouillons', match: (item) => item.status === 'brouillon' },
-  { id: 'a_envoyer', label: 'À envoyer', match: (item) => item.status === 'genere' },
-  { id: 'envoyes', label: 'Envoyés', match: (item) => item.status === 'envoye' },
+  { id: 'tous', label: 'Tous', match: (item) => !item.archived },
+  { id: 'brouillons', label: 'Brouillons', match: (item) => !item.archived && item.status === 'brouillon' },
+  { id: 'a_envoyer', label: 'À envoyer', match: (item) => !item.archived && item.status === 'genere' },
+  { id: 'envoyes', label: 'Envoyés', match: (item) => !item.archived && item.status === 'envoye' },
+  { id: 'archives', label: 'Archivés', match: (item) => item.archived },
 ];
 
 export function CourriersPage() {
@@ -58,9 +59,12 @@ export function CourriersPage() {
   const notify = useNotify();
   const send = useMarkCourrierSent();
   const remove = useDeleteCourrier();
+  const resend = useResendCourrier();
+  const archive = useArchiveCourrier();
   const [templateId, setTemplateId] = useState(ALL);
   const [period, setPeriod] = useState(ALL);
   const [pendingDelete, setPendingDelete] = useState<Courrier | null>(null);
+  const [pendingResend, setPendingResend] = useState<Courrier | null>(null);
 
   const items = courriers.data ?? [];
   const searchText = (item: Courrier) => `${item.reference} ${item.subject} ${lookups.tenantName(item.tenantId)}`;
@@ -77,14 +81,15 @@ export function CourriersPage() {
 
   const actionsFor = (item: Courrier): ActionItem[] => [
     { id: 'open', label: 'Aperçu du PDF', icon: FileText, onSelect: () => { push(courriersPaths.courrier(item.id)); } },
-    { id: 'edit', label: 'Modifier', icon: SquarePen, disabled: item.status === 'envoye', onSelect: () => { push(courriersPaths.editCourrier(item.id)); } },
+    { id: 'edit', label: 'Modifier', icon: SquarePen, disabled: item.status === 'envoye' || item.archived, onSelect: () => { push(courriersPaths.editCourrier(item.id)); } },
     {
       id: 'send',
       label: 'Marquer comme envoyé',
       icon: Mail,
-      disabled: item.status === 'envoye',
+      disabled: item.status === 'envoye' || item.archived,
       onSelect: () => { void run(() => send.mutateAsync(item.id), { title: 'Courrier envoyé', description: `${item.reference}, ${lookups.tenantName(item.tenantId)}` }); },
     },
+    { id: 'resend', label: 'Renvoyer', icon: Send, disabled: item.status !== 'envoye' || item.archived, onSelect: () => { setPendingResend(item); } },
     { id: 'sign', label: 'Envoyer en signature', icon: PenLine, onSelect: () => { push(courriersPaths.signatureFor(item.subject, `${item.reference}.pdf`)); } },
     {
       id: 'reuse',
@@ -92,13 +97,22 @@ export function CourriersPage() {
       icon: Copy,
       onSelect: () => { push(links.newCourrier({ modele: item.templateId ?? undefined, locataire: item.tenantId, bien: item.unitId ?? undefined })); },
     },
-    { id: 'delete', label: 'Supprimer', icon: Trash2, tone: 'danger', separatorBefore: true, disabled: item.status === 'envoye', onSelect: () => { setPendingDelete(item); } },
+    item.archived
+      ? { id: 'unarchive', label: 'Désarchiver', icon: ArchiveRestore, separatorBefore: true, onSelect: () => { void run(() => archive.mutateAsync({ id: item.id, archived: false }), { title: 'Courrier désarchivé', description: item.reference }); } }
+      : { id: 'archive', label: 'Archiver', icon: Archive, separatorBefore: true, onSelect: () => { void run(() => archive.mutateAsync({ id: item.id, archived: true }), { title: 'Courrier archivé', description: item.reference }); } },
+    { id: 'delete', label: 'Supprimer', icon: Trash2, tone: 'danger', disabled: item.status === 'envoye', onSelect: () => { setPendingDelete(item); } },
   ];
 
   const confirmDelete = async () => {
     const target = pendingDelete;
     setPendingDelete(null);
     if (target) await run(() => remove.mutateAsync(target.id), { title: 'Courrier supprimé', description: target.reference });
+  };
+
+  const confirmResend = async () => {
+    const target = pendingResend;
+    setPendingResend(null);
+    if (target) await run(() => resend.mutateAsync(target.id), { title: 'Courrier renvoyé', description: `${target.reference}, ${lookups.tenantName(target.tenantId)}` });
   };
 
   return (
@@ -158,7 +172,7 @@ export function CourriersPage() {
                     <TableHeaderCell>À</TableHeaderCell>
                     <TableHeaderCell>Canal</TableHeaderCell>
                     <TableHeaderCell>Date</TableHeaderCell>
-                    <TableHeaderCell>Créé le</TableHeaderCell>
+                    <TableHeaderCell>Mis à jour</TableHeaderCell>
                     <TableHeaderCell>État</TableHeaderCell>
                     <TableHeaderCell><span className="sr-only">Actions</span></TableHeaderCell>
                   </TableRow>
@@ -173,7 +187,7 @@ export function CourriersPage() {
                       <TableCell>{lookups.tenantName(item.tenantId)}</TableCell>
                       <TableCell>{channelLabel[item.channel]}</TableCell>
                       <TableCell>{item.sentOn ? formatDateFr(item.sentOn) : '—'}</TableCell>
-                      <TableCell>{formatDateFr(item.createdOn)}</TableCell>
+                      <TableCell>{formatDateFr(item.updatedOn)}</TableCell>
                       <TableCell><Badge tone={statusBadge[item.status].tone}>{statusBadge[item.status].label}</Badge></TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
@@ -198,6 +212,15 @@ export function CourriersPage() {
         confirmLabel="Supprimer"
         tone="danger"
         onConfirm={() => { void confirmDelete(); }}
+      />
+      <ConfirmDialog
+        open={pendingResend !== null}
+        onOpenChange={(open) => { if (!open) setPendingResend(null); }}
+        title="Renvoyer ce courrier ?"
+        description={pendingResend ? `« ${pendingResend.subject} » sera envoyé de nouveau à ${lookups.tenantName(pendingResend.tenantId)} (${channelLabel[pendingResend.channel]}). Le nouvel envoi sera daté et ajouté à l’historique.` : ''}
+        confirmLabel="Renvoyer le courrier"
+        loading={resend.isPending}
+        onConfirm={() => { void confirmResend(); }}
       />
     </>
   );

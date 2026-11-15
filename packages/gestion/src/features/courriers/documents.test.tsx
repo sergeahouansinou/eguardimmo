@@ -285,6 +285,7 @@ describe('SignatureNewPage', () => {
     expect((await signaturesOf(sources.courriers)).find((item) => item.id === 'sg-2026-0013')).toMatchObject({
       title: 'Avenant Apt A2',
       fileName: 'avenant.pdf',
+      files: ['avenant.pdf'],
       unitId: 'apt-a2',
       status: 'en_cours',
       signers: [{ name: 'Nadège Sossou', email: 'nadege.sossou@example.com', status: 'attente' }],
