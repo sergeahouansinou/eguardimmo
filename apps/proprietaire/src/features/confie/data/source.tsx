@@ -6,6 +6,7 @@ import { createContext, use } from "react";
 import type { ReactNode } from "react";
 
 export interface ConfieSource extends ShellSource {
+  markNotificationRead: (id: string) => Promise<void>;
   snapshot: () => Promise<unknown>;
   decideQuote: (input: unknown) => Promise<void>;
   requestMandateEnd: (input: unknown) => Promise<void>;

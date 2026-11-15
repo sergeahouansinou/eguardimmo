@@ -6,8 +6,10 @@ import {
   AnalytiqueRentaPage,
   AnalytiqueRevDepPage,
   AnalytiqueVuePage,
+  ApercuReportPage,
   ApercuRapportPage,
   RapportLoyersPage,
+  RapportPage,
   RapportsPage,
 } from "@eguardimmo/gestion";
 import { useSearchParams } from "next/navigation";
@@ -29,4 +31,15 @@ export function RapportLoyersScreen() {
 
 export function ApercuRapportScreen() {
   return <ApercuRapport search={useSearchParams().toString()} />;
+}
+
+const Rapport = bindScreen<{ slug: string; search: string }>(RapportPage);
+const ApercuReport = bindScreen<{ slug: string; search: string }>(ApercuReportPage);
+
+export function RapportScreen({ slug }: { slug: string }) {
+  return <Rapport slug={slug} search={useSearchParams().toString()} />;
+}
+
+export function ApercuReportScreen({ slug }: { slug: string }) {
+  return <ApercuReport slug={slug} search={useSearchParams().toString()} />;
 }

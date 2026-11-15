@@ -1,9 +1,8 @@
 import { RAPPORT_LOYERS_SLUG, RAPPORT_TYPES, findRapport } from "@eguardimmo/gestion";
-import { PlannedScreen } from "@eguardimmo/shell";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { RapportLoyersScreen } from "@/features/outils/screensOutils";
+import { RapportLoyersScreen, RapportScreen } from "@/features/outils/screensOutils";
 
 export function generateStaticParams() {
   return RAPPORT_TYPES.map(({ slug }) => ({ slug }));
@@ -27,5 +26,5 @@ async function Rapport({ params }: Pick<PageProps<"/rapports/[slug]">, "params">
   const rapport = findRapport(slug);
   if (!rapport) notFound();
   if (rapport.slug === RAPPORT_LOYERS_SLUG) return <RapportLoyersScreen />;
-  return <PlannedScreen title={rapport.label} />;
+  return <RapportScreen slug={rapport.slug} />;
 }

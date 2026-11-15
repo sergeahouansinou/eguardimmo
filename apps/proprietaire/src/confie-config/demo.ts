@@ -61,6 +61,7 @@ export function createConfieSource(initial: ConfieData = createDemoData()): Conf
     shell: () => run(() => toShellData(store.snapshot())),
     snapshot: () => run(() => store.snapshot()),
     markAllNotificationsRead: () => run(() => { store.markAllNotificationsRead(); }),
+    markNotificationRead: (id) => run(() => { store.markNotificationRead(id); }),
     decideQuote: (input) => run(() => { store.decideQuote(input); }),
     requestMandateEnd: (input) => run(() => { store.requestMandateEnd(input); }),
     cancelMandateEnd: () => run(() => { store.cancelMandateEnd(); }),

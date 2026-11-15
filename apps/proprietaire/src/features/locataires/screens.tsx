@@ -26,6 +26,8 @@ import {
   ModelesPage,
   QuittanceApercuPage,
   QuittancesPage,
+  ReservationContratPage,
+  ReservationFormPage,
   ReservationsPage,
   SignatureNewPage,
   SignaturesPage,
@@ -48,6 +50,8 @@ export const EtatsLieuxScreen = bindLot(EtatsLieuxPage);
 export const EtatLieuxScreen = bindLot(EtatLieuxPage);
 export const EtatLieuxFormScreen = bindLot(EtatLieuxFormPage);
 export const ReservationsScreen = bindLot(ReservationsPage);
+export const ReservationFormScreen = bindLot(ReservationFormPage);
+export const ReservationContratScreen = bindLot(ReservationContratPage);
 
 export const CourriersScreen = bindLot(CourriersPage);
 export const CourrierFormScreen = bindLot(CourrierFormPage);

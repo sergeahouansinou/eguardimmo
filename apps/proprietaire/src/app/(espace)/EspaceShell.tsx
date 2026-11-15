@@ -1,26 +1,34 @@
 "use client";
 
 import { GestionShell } from "@eguardimmo/gestion";
-import { SupportWidget } from "@eguardimmo/messagerie";
+import { SupportWidget, useInboxStats } from "@eguardimmo/messagerie";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { MessagerieSpaceProvider } from "@/features/messagerie/SpaceProvider";
 
-export function EspaceShell({ children }: { children: ReactNode }) {
+function BailleurShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const unread = useInboxStats().data?.unread;
+  return (
+    <GestionShell
+      spaceLabel="Espace bailleur"
+      logoSrc="/logo.png"
+      currentPath={pathname}
+      linkComponent={Link}
+      onNavigate={(href) => { router.push(href); }}
+      unreadMessages={unread}
+    >
+      {children}
+    </GestionShell>
+  );
+}
+
+export function EspaceShell({ children }: { children: ReactNode }) {
   return (
     <MessagerieSpaceProvider space="bailleur">
-      <GestionShell
-        spaceLabel="Espace bailleur"
-        logoSrc="/logo.png"
-        currentPath={pathname}
-        linkComponent={Link}
-        onNavigate={(href) => { router.push(href); }}
-      >
-        {children}
-      </GestionShell>
+      <BailleurShell>{children}</BailleurShell>
       <SupportWidget />
     </MessagerieSpaceProvider>
   );

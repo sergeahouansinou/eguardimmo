@@ -5,6 +5,7 @@ import {
   ComptePage,
   EquipeInvitePage,
   EquipePage,
+  ExportPage,
   JournalPage,
   ReglagesDocumentsPage,
   ReglagesMenuPage,
@@ -22,3 +23,4 @@ export const EquipeScreen = bindScreen(EquipePage);
 export const EquipeInviteScreen = bindScreen(EquipeInvitePage);
 export const CompteScreen = bindScreen(ComptePage);
 export const AbonnementScreen = bindScreen(AbonnementPage);
+export const ExportScreen = bindScreen(ExportPage);

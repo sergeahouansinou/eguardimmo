@@ -1,8 +1,8 @@
 "use client";
 
+import { authUrl } from "@eguardimmo/shell";
 import { Alert, Badge, Button, Icon } from "@eguardimmo/ui";
 import { ExternalLink, KeyRound, Link2, ShieldCheck, Smartphone } from "lucide-react";
-import { ACCOUNT_SECURITY_HREF } from "@/confie-config/links";
 import { formatDate } from "../data/dates";
 import { useConfie } from "../data/queries";
 import type { ConfieData } from "../data/schemas";
@@ -20,7 +20,7 @@ export function SecuriteScreen() {
 function ManageLink({ variant }: { variant: "primary" | "secondary" }) {
   return (
     <Button variant={variant} size={variant === "secondary" ? "sm" : "md"} asChild>
-      <a href={ACCOUNT_SECURITY_HREF} target="_blank" rel="noopener noreferrer">
+      <a href={authUrl("/compte/securite")} target="_blank" rel="noopener noreferrer">
         Gérer dans Mon compte
         <Icon icon={ExternalLink} />
         <span className="sr-only">, s&apos;ouvre dans un nouvel onglet</span>

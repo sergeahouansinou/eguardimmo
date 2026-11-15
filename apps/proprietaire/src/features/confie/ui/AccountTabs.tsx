@@ -10,7 +10,7 @@ const TABS = [
 
 export function AccountTabs({ current }: { current: (typeof TABS)[number]["id"] }) {
   return (
-    <nav aria-label="Mon compte" className="flex gap-1 overflow-x-auto border-b border-line">
+    <nav aria-label="Mon compte" className="relative flex gap-1 overflow-x-auto border-b border-line">
       {TABS.map((tab) => (
         <Link
           key={tab.id}

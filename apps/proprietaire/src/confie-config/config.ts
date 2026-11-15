@@ -14,6 +14,7 @@ import {
   Wallet,
   Wrench,
 } from "lucide-react";
+import { authUrl } from "@eguardimmo/shell";
 import type {
   AccountMenuConfig,
   BottomItem,
@@ -74,8 +75,8 @@ export const bottomItems: BottomItem[] = [
 
 export const accountMenu: AccountMenuConfig = {
   roleLabels: { mandant: "Propriétaire mandant" },
-  switchSpace: { href: href(confieRoutes.choixProfil) },
-  signOut: { href: href(confieRoutes.deconnexion) },
+  switchSpace: { href: authUrl("/profils") },
+  signOut: { href: authUrl("/deconnecte") },
   groups: [
     {
       id: "compte",
@@ -116,6 +117,7 @@ export const searchPages: PageResult[] = [
   { href: href(confieRoutes.informations), label: "Mes informations" },
   { href: href(confieRoutes.securite), label: "Sécurité du compte" },
   { href: href(confieRoutes.notifications), label: "Notifications, préférences" },
+  { href: href(confieRoutes.notificationsToutes), label: "Toutes les notifications" },
   { href: href(confieRoutes.messages), label: "Messages" },
   { href: href(confieRoutes.aide), label: "Aide" },
   { href: href(confieRoutes.gestionDirecte), label: "Mes biens en gestion directe" },

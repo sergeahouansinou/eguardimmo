@@ -46,6 +46,7 @@ export interface ConfieStore {
   savePreferences: (input: unknown) => void;
   markReportViewed: (reportId: string) => void;
   markAllNotificationsRead: () => void;
+  markNotificationRead: (id: string) => void;
 }
 
 export function createConfieStore(initial: ConfieData): ConfieStore {
@@ -164,6 +165,11 @@ export function createConfieStore(initial: ConfieData): ConfieStore {
 
     markAllNotificationsRead() {
       state.readNotificationIds = deriveNotifications(state).map((item) => item.id);
+    },
+
+    markNotificationRead(id) {
+      if (!deriveNotifications(state).some((item) => item.id === id)) throw new ConfieError("Notification introuvable.");
+      if (!state.readNotificationIds.includes(id)) state.readNotificationIds.push(id);
     },
   };
 }

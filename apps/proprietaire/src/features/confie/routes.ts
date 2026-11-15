@@ -27,10 +27,4 @@ export const confieRoutes = {
   messageNouveau: `${CONFIE_BASE}/messages/nouveau`,
   aide: `${CONFIE_BASE}/aide`,
   gestionDirecte: "/",
-  choixProfil: "/choix-du-profil",
-  deconnexion: "/deconnexion",
 } as const;
-
-export const plannedConfieScreens: ReadonlyMap<string, string> = new Map([
-  [confieRoutes.notificationsToutes, "Toutes les notifications"],
-]);

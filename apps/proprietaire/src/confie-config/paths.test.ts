@@ -13,6 +13,12 @@ describe("chemins de la coquille propriétaire", () => {
     expect(toRealHref(shell)).toBe(real);
   });
 
+  it("laisse intactes les adresses d'une autre application", () => {
+    const url = "http://localhost:3040/profils";
+    expect(toShellHref(url)).toBe(url);
+    expect(toRealHref(url)).toBe(url);
+  });
+
   it("n'active l'accueil que sur /confie exactement", () => {
     expect(toShellPath("/confie")).toBe("/");
     expect(toShellPath("/confie/biens/apt-12")).toBe("/biens/apt-12");

@@ -3,8 +3,6 @@
 import { SupportWidget, useInboxStats } from "@eguardimmo/messagerie";
 import { SpaceShell } from "@eguardimmo/shell";
 import type { ShellCounts } from "@eguardimmo/shell";
-import type { LinkComponent } from "@eguardimmo/ui";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import {
@@ -18,9 +16,8 @@ import {
   notifications,
   searchPages,
 } from "./config";
+import { ConfieLink } from "./ConfieLink";
 import { toRealHref, toShellPath } from "./paths";
-
-const ConfieLink: LinkComponent = ({ href, ...props }) => <Link {...props} href={toRealHref(href)} />;
 
 export function ConfieShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();

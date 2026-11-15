@@ -1,9 +1,8 @@
 import { RAPPORT_LOYERS_SLUG, RAPPORT_TYPES, findRapport } from "@eguardimmo/gestion";
-import { PlannedScreen } from "@eguardimmo/shell";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ApercuRapportScreen } from "@/features/outils/screensOutils";
+import { ApercuReportScreen, ApercuRapportScreen } from "@/features/outils/screensOutils";
 
 export function generateStaticParams() {
   return RAPPORT_TYPES.map(({ slug }) => ({ slug }));
@@ -34,5 +33,9 @@ async function Apercu({ params }: Pick<PageProps<"/rapports/[slug]/apercu">, "pa
       </Suspense>
     );
   }
-  return <PlannedScreen title={`${rapport.label}, aperçu PDF`} />;
+  return (
+    <Suspense fallback={<div aria-hidden="true" className="h-7 w-48 animate-pulse rounded-sm bg-muted" />}>
+      <ApercuReportScreen slug={rapport.slug} />
+    </Suspense>
+  );
 }

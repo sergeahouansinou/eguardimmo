@@ -161,6 +161,19 @@ describe("préférences, comptes rendus et notifications", () => {
     expect(deriveNotifications(s.snapshot()).every((item) => !item.unread)).toBe(true);
   });
 
+  it("marque une notification comme lue sans toucher aux autres, et refuse un identifiant inconnu", () => {
+    const s = store();
+    const unread = deriveNotifications(s.snapshot()).filter((item) => item.unread);
+    const [first] = unread;
+    if (!first) throw new Error("aucune notification non lue");
+    s.markNotificationRead(first.id);
+    const after = deriveNotifications(s.snapshot());
+    expect(after.find((item) => item.id === first.id)?.unread).toBe(false);
+    expect(after.filter((item) => item.unread)).toHaveLength(unread.length - 1);
+    s.markNotificationRead(first.id);
+    expect(() => { s.markNotificationRead("inconnue"); }).toThrow("introuvable");
+  });
+
   it("le snapshot est une copie isolée de l'état", () => {
     const s = store();
     const copy = s.snapshot();
