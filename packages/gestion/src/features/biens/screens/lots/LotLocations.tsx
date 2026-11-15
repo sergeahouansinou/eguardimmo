@@ -52,7 +52,7 @@ export function LotLocations({ id }: { id: string }) {
               title="Baux et périodes de vacance"
               action={
                 <Button variant="secondary" size="sm" asChild>
-                  <Link href={externalPaths.newLease}>Nouveau bail</Link>
+                  <Link href={externalPaths.newLease(id)}>Nouveau bail</Link>
                 </Button>
               }
             >

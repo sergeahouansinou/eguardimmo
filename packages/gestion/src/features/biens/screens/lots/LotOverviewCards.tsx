@@ -80,7 +80,7 @@ export function LeaseCard({ id }: { id: string }) {
             <>
               <p className="text-body text-fg-muted">Ce bien n’a pas de bail en cours.</p>
               <Button variant="secondary" className="self-start" asChild>
-                <Link href={externalPaths.newLease}>Créer un bail</Link>
+                <Link href={externalPaths.newLease(id)}>Créer un bail</Link>
               </Button>
             </>
           ) : (

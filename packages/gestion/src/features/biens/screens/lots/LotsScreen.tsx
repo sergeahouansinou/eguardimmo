@@ -39,7 +39,7 @@ function availabilityOf(lot: LotRow): Availability {
 
 function primaryAction(lot: LotRow): { label: string; href: string } {
   if (lot.status === 'travaux') return { label: 'Suivre', href: externalPaths.interventions };
-  if (!lot.tenant) return { label: 'Créer un bail', href: externalPaths.newLease };
+  if (!lot.tenant) return { label: 'Créer un bail', href: externalPaths.newLease(lot.id) };
   return { label: 'Ouvrir', href: biensPaths.lot(lot.id) };
 }
 
@@ -143,7 +143,7 @@ export function LotsScreen() {
               : [
                   { id: 'edit', label: 'Modifier le lot', icon: Pencil, href: biensPaths.editLot(row.id) },
                   { id: 'open', label: 'Fiche du lot', icon: Home, href: biensPaths.lot(row.id) },
-                  ...(row.tenant ? [] : [{ id: 'lease', label: 'Créer un bail', icon: FilePlus, href: externalPaths.newLease }]),
+                  ...(row.tenant ? [] : [{ id: 'lease', label: 'Créer un bail', icon: FilePlus, href: externalPaths.newLease(row.id) }]),
                   {
                     id: 'listing',
                     label: row.listing === 'en_ligne' ? 'Retirer l’annonce' : 'Publier l’annonce',

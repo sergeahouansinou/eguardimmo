@@ -32,6 +32,19 @@ describe('LotFiche', () => {
     expect(screen.getByRole('link', { name: 'Modifier le lot' }).getAttribute('href')).toBe('/biens/apt-a1/modifier');
   });
 
+  it('pré-remplit le bien dans le lien de création de bail d’un lot vacant', async () => {
+    renderBiens(
+      <LotFiche id="apt-b3">
+        <LotOverview id="apt-b3" />
+      </LotFiche>,
+      { pathname: '/biens/apt-b3' },
+    );
+    expect(await screen.findByRole('heading', { level: 1, name: 'Apt B3' })).toBeTruthy();
+    const links = screen.getAllByRole('link', { name: 'Créer un bail' });
+    expect(links.length).toBeGreaterThan(0);
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(links.map(() => '/baux/nouveau?bien=apt-b3'));
+  });
+
   it('navigue vers l’onglet choisi', async () => {
     const { push } = renderBiens(<LotFiche id="apt-a1"><p>contenu</p></LotFiche>, { pathname: '/biens/apt-a1' });
     await userEvent.click(await screen.findByRole('tab', { name: /Diagnostics/ }));

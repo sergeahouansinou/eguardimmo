@@ -37,7 +37,7 @@ export function LotFiche({ id, children }: { id: string; children: ReactNode }) 
         actions={
           <>
             <Button variant="secondary" asChild>
-              <Link href={lot.lot.tenant ? externalPaths.leases : externalPaths.newLease}>{lot.lot.tenant ? 'Voir le bail' : 'Créer un bail'}</Link>
+              <Link href={lot.lot.tenant ? externalPaths.leases : externalPaths.newLease(lot.lot.id)}>{lot.lot.tenant ? 'Voir le bail' : 'Créer un bail'}</Link>
             </Button>
             <Button variant="secondary" asChild>
               <Link href={externalPaths.newIntervention}>Créer une intervention</Link>
