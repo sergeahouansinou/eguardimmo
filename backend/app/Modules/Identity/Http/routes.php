@@ -15,11 +15,14 @@ use App\Modules\Identity\Http\Controllers\RevokeCurrentTokenController;
 use App\Modules\Identity\Http\Controllers\RevokeDeviceController;
 use App\Modules\Identity\Http\Controllers\ShowConsoleMeController;
 use App\Modules\Identity\Http\Controllers\ShowMeController;
+use App\Modules\Identity\Http\Controllers\ShowPasswordResetStatusController;
+use App\Modules\Identity\Http\Controllers\ShowSecurityController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/me', ShowMeController::class)->name('identity.me');
     Route::delete('/me', DeleteAccountController::class)->middleware('throttle:reauth')->name('identity.me.destroy');
+    Route::get('/me/security', ShowSecurityController::class)->name('identity.security');
     Route::get('/me/profiles', ListProfilesController::class)->name('identity.profiles');
     Route::get('/me/devices', ListDevicesController::class)->name('identity.devices.index');
     Route::delete('/me/devices/{device}', RevokeDeviceController::class)->whereUuid('device')->name('identity.devices.destroy');
@@ -27,6 +30,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 });
 
 Route::middleware('throttle:auth')->group(function (): void {
+    Route::post('/auth/password-reset/status', ShowPasswordResetStatusController::class)->name('identity.password-reset.status');
     Route::post('/auth/token', IssueMobileTokenController::class)->name('identity.token.store');
     Route::post('/auth/token/two-factor', CompleteMobileTwoFactorController::class)->name('identity.token.two-factor');
     Route::post('/auth/social/{provider}/token', IssueSocialMobileTokenController::class)

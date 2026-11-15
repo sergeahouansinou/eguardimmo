@@ -1,6 +1,6 @@
 # ADR 0019 — Parties
 
-Statut : proposé (2026-11-15). Amende l'ADR 0005 (nouveau module Parties). Personnalisation : ADR 0018.
+Statut : accepté (2026-11-15). Amende l'ADR 0005 (nouveau module Parties). Personnalisation : ADR 0018.
 
 ## Contexte
 

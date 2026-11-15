@@ -95,7 +95,10 @@ export const backupCodeFormSchema = z.object({
   code: z
     .string()
     .trim()
-    .regex(/^[A-Za-z0-9]{5}-?[A-Za-z0-9]{5}$/, "Un code de secours comporte 10 caractères, par exemple a7k2m-9xq4d."),
+    .regex(
+      /^(?:[A-Za-z0-9]{10}-[A-Za-z0-9]{10}|[A-Za-z0-9]{5}-?[A-Za-z0-9]{5})$/,
+      "Un code de secours comporte deux blocs de 10 caractères séparés par un tiret, par exemple k3Jx9aQw2L-p0Zr7Tm4Vn.",
+    ),
 });
 export type BackupCodeValues = z.infer<typeof backupCodeFormSchema>;
 
@@ -118,10 +121,10 @@ export type RegisterProfile = z.infer<typeof registerProfileSchema>;
 export const sessionSchema = z.object({
   userId: z.string().min(1),
   firstName: z.string().min(1),
-  lastName: z.string().min(1),
+  lastName: z.string(),
   email: z.email(),
-  hasPassword: z.boolean(),
-  twoFactorEnabled: z.boolean(),
+  hasPassword: z.boolean().optional(),
+  twoFactorEnabled: z.boolean().optional(),
 });
 export type Session = z.infer<typeof sessionSchema>;
 

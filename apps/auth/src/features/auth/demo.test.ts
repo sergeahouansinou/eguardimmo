@@ -92,9 +92,9 @@ describe("démo : mots de passe et inscription", () => {
   it("réinitialise le mot de passe avec un jeton valide et refuse l’ancien mot de passe", async () => {
     const { source, store } = createTestEnvironment("marc");
     await source.requestPasswordReset(MARC);
-    expect(await source.resetPassword({ token: "expire", password: "Nouveau-Mot-2026" })).toEqual({ status: "expired" });
-    expect(await source.resetPassword({ token: "valide", password: DEMO_PASSWORD })).toEqual({ status: "reused" });
-    expect(await source.resetPassword({ token: "valide", password: "Nouveau-Mot-2026" })).toEqual({ status: "ok" });
+    expect(await source.resetPassword({ token: "expire", email: "", password: "Nouveau-Mot-2026" })).toEqual({ status: "expired" });
+    expect(await source.resetPassword({ token: "valide", email: "", password: DEMO_PASSWORD })).toEqual({ status: "reused" });
+    expect(await source.resetPassword({ token: "valide", email: "", password: "Nouveau-Mot-2026" })).toEqual({ status: "ok" });
     expect(store.read()).toBeNull();
     expect(await source.signIn({ email: MARC, password: "Nouveau-Mot-2026" })).toEqual({ status: "authenticated" });
   });

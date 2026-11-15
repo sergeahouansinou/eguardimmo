@@ -1,10 +1,11 @@
 import { z } from 'zod';
-import { expenseTypeSchema, paymentModeSchema, paymentNatureSchema } from './schemas';
+import { emailSchema, expenseTypeSchema, paymentModeSchema, paymentNatureSchema } from './schemas';
 
 const id = z.string().min(1);
 const isoDate = z.iso.date();
 const positiveMinor = z.number().int().positive();
 const key = z.string().min(8);
+const creanceRef = z.object({ kind: z.enum(['echeance', 'facture']), refId: id });
 
 export const financesCommandSchema = z.discriminatedUnion('type', [
   z.object({
@@ -72,7 +73,23 @@ export const financesCommandSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('markInvoicePaid'), requestKey: key, factureId: id, date: isoDate, mode: paymentModeSchema }),
   z.object({ type: z.literal('sendInvoice'), requestKey: key, factureId: id }),
   z.object({ type: z.literal('sendReceipt'), requestKey: key, recuId: id }),
-  z.object({ type: z.literal('openDossier'), requestKey: key, echeanceId: id }),
+  z.object({ type: z.literal('openDossier'), requestKey: key, bailId: id, creances: z.array(creanceRef).min(1, 'Sélectionnez au moins une créance.') }),
+  z.object({ type: z.literal('addCreances'), requestKey: key, dossierId: id, creances: z.array(creanceRef).min(1, 'Sélectionnez au moins une créance.') }),
+  z.object({ type: z.literal('removeCreance'), requestKey: key, dossierId: id, creanceId: id }),
+  z.object({ type: z.literal('generateLiasse'), requestKey: key, dossierId: id, exclues: z.array(id) }),
+  z.object({
+    type: z.literal('transmitLiasse'),
+    requestKey: key,
+    dossierId: id,
+    liasseId: id,
+    destinataireId: id,
+    destinataire: z.string().trim().min(1).max(120),
+    email: emailSchema,
+    dureeJours: z.number().int().min(1).max(30),
+    message: z.string().trim().max(500),
+  }),
+  z.object({ type: z.literal('revokeTransmission'), requestKey: key, dossierId: id, transmissionId: id }),
+  z.object({ type: z.literal('resendTransmission'), requestKey: key, dossierId: id, transmissionId: id }),
   z.object({
     type: z.literal('addDiligence'),
     requestKey: key,
@@ -84,7 +101,7 @@ export const financesCommandSchema = z.discriminatedUnion('type', [
     cout: z.number().int().nonnegative(),
   }),
   z.object({ type: z.literal('billDossierFees'), requestKey: key, dossierId: id, echeance: isoDate }),
-  z.object({ type: z.literal('proposePlan'), requestKey: key, echeanceId: id, count: z.number().int().min(2).max(12), premiere: isoDate }),
+  z.object({ type: z.literal('proposePlan'), requestKey: key, dossierId: id.nullable(), echeanceId: id.nullable(), count: z.number().int().min(2).max(12), premiere: isoDate }),
   z.object({
     type: z.literal('saveRegularisation'),
     requestKey: key,

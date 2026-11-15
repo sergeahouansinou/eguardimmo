@@ -1,6 +1,6 @@
 import { Badge } from '@eguardimmo/ui';
 import { formatDate, formatDateTime } from '../dates';
-import { dossierTotals } from '../derive';
+import { creancesActives, dossierTotals, resteCreance } from '../derive';
 import { formatDecimal } from '../money';
 import type { Facture, FinancesData } from '../schemas';
 import { DataRow, InfoGrid, Legal, Note, SectionRow, SheetHeader, SheetTable, Signature, Strip, Summary, TotalRow } from './Sheet';
@@ -15,7 +15,7 @@ export function statutBadge(facture: Facture): ReactNode {
 export function FactureSheet({ data, facture }: { data: FinancesData; facture: Facture }) {
   const bail = data.baux.find((item) => item.id === facture.bailId);
   const dossier = data.dossiers.find((item) => item.id === facture.dossierId);
-  const echeance = dossier ? data.echeances.find((item) => item.id === dossier.echeanceId) : undefined;
+  const creances = dossier ? creancesActives(dossier) : [];
   const totals = dossier ? dossierTotals(data, dossier) : null;
   const isAvoir = facture.type === 'avoir';
   const kind = isAvoir ? 'AVOIR' : 'FACTURE';
@@ -52,12 +52,15 @@ export function FactureSheet({ data, facture }: { data: FinancesData; facture: F
         ))}
         <TotalRow span={4} label="Total hors TVA" value={formatDecimal(facture.montantHt)} />
         {facture.tvaPct > 0 ? <TotalRow span={4} label={`TVA ${String(facture.tvaPct)} %`} value={formatDecimal(tva)} /> : null}
-        {dossier && echeance && totals ? (
+        {dossier && creances.length > 0 && totals ? (
           <>
             <SectionRow span={5} tag="Non comprises dans cette facture" tone="danger">
               2 · Autres sommes dues sur le compte
             </SectionRow>
-            <DataRow cells={[{ value: `${echeance.libelle}, reste dû` }, { value: '—', dim: true }, { value: '1', numeric: true }, { value: formatDecimal(totals.dette), numeric: true }, { value: formatDecimal(totals.dette), numeric: true }]} />
+            {creances.map((creance) => {
+              const reste = resteCreance(data, creance);
+              return <DataRow key={creance.id} cells={[{ value: `${creance.libelle}, reste dû` }, { value: '—', dim: true }, { value: '1', numeric: true }, { value: formatDecimal(reste), numeric: true }, { value: formatDecimal(reste), numeric: true }]} />;
+            })}
             {otherInvoices.map((other) => (
               <DataRow
                 key={other.id}

@@ -44,6 +44,6 @@ it('pointe le lien de l\'e-mail vers le hub', function (): void {
     Notification::assertSentTo($user, VerifyEmailNotification::class, function (VerifyEmailNotification $n) use ($user): bool {
         $url = (string) $n->toMail($user)->actionUrl;
 
-        return str_starts_with($url, 'https://auth.eguardimmo.test/verification-email?url=');
+        return str_starts_with($url, 'https://auth.eguardimmo.test/verification-email/confirmer?jeton=https%3A%2F%2F');
     });
 });

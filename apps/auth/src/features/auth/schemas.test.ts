@@ -44,7 +44,11 @@ describe("schémas de formulaire", () => {
   it("valide le format d’un code de secours", () => {
     expect(backupCodeFormSchema.safeParse({ code: "r5n7v-4bj2e" }).success).toBe(true);
     expect(backupCodeFormSchema.safeParse({ code: "r5n7v4bj2e" }).success).toBe(true);
-    expect(backupCodeFormSchema.safeParse({ code: "court" }).success).toBe(false);
+    expect(backupCodeFormSchema.safeParse({ code: "k3Jx9aQw2L-p0Zr7Tm4Vn" }).success).toBe(true);
+    expect(backupCodeFormSchema.safeParse({ code: "  k3Jx9aQw2L-p0Zr7Tm4Vn " }).success).toBe(true);
+    for (const invalid of ["court", "k3Jx9aQw2Lp0Zr7Tm4Vn", "k3Jx9aQw2L-p0Zr7Tm4V", "k3Jx9aQw2L_p0Zr7Tm4Vn"]) {
+      expect(backupCodeFormSchema.safeParse({ code: invalid }).success).toBe(false);
+    }
   });
 
   it("exige le mot SUPPRIMER exact", () => {

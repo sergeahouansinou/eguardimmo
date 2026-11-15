@@ -122,7 +122,7 @@ describe('RelancePage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Envoyer la relance' }));
     await waitFor(() => { expect(navigate).toHaveBeenCalledWith(`/finances/impayes/${IBRAHIM}`); });
     const data = await snapshotOf(source);
-    const dossier = data.dossiers.find((item) => item.echeanceId === IBRAHIM);
+    const dossier = data.dossiers.find((item) => item.creances.some((creance) => creance.refId === IBRAHIM));
     expect(dossier?.actes).toHaveLength(1);
     expect(dossier?.actes[0]?.libelle).toContain('Relance amiable de loyer par e-mail, grand livre joint');
     expect(data.relances.filter((relance) => relance.echeanceId === IBRAHIM)).toHaveLength(2);

@@ -9,6 +9,7 @@ export { DepenseFormPage } from './DepenseFormPage';
 export type { DepenseSuggestion } from './DepenseFormPage';
 export { ImpayesPage } from './ImpayesPage';
 export { RecouvrementPage } from './RecouvrementPage';
+export { ImpayeDossierPage } from './ImpayeDossierPage';
 export { FacturesPage } from './FacturesPage';
 export { FactureFormPage } from './FactureFormPage';
 export { FactureDocumentPage } from './FactureDocumentPage';

@@ -55,6 +55,8 @@ export const demoContacts: readonly Contact[] = [
   make('Fabrice Sossou', 'Garant de Nadège Sossou', 'garant', '', '+33 6 38 16 04 77', 'fabrice.sossou@example.com', ['les-tilleuls']),
   make('Odile Agbo', 'Garante de Yann Le Gall', 'garant', '', '+33 6 60 71 29 54', 'odile.agbo@example.com', ['les-tilleuls']),
   make('Cyrille Zinsou', 'Garant de Moussa Diallo', 'garant', '', '+33 6 25 93 60 18', 'cyrille.zinsou@example.com', ['residence-du-parc']),
+  make('SCP Agbodjo', 'Maître Agbodjo, commissaire de justice', 'commissaire', '', '+33 1 45 22 18 60', 'etude@scp-agbodjo.example', []),
+  make('Étude Kpadonou', 'Maître Kpadonou, commissaire de justice', 'commissaire', '', '+33 4 78 52 31 07', '', []),
   make('Peinture Azonhou', 'Ancien prestataire', 'artisan', 'peintre', '+33 6 11 22 33 44', 'contact@peinture-azonhou.example', [], false, true),
   make('Assurances Bocco', 'Ancien contrat PNO', 'assureur', '', '+33 5 55 20 14 90', 'accueil@assurances-bocco.example', [], false, true),
 ];

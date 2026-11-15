@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Identity\Http\Middleware;
 
 use App\Modules\Identity\Enums\ErrorCode;
+use Carbon\CarbonImmutable;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -34,9 +35,24 @@ final class EnsureRecentReauthentication
 
     public static function confirmedRecently(Request $request, string $cle): bool
     {
-        $minutes = config('identity.reauthentication_minutes');
-        $limite = now()->subMinutes(is_int($minutes) ? $minutes : 10)->getTimestamp();
+        $limite = now()->subMinutes(self::fenetreMinutes())->getTimestamp();
 
         return $request->hasSession() && (int) $request->session()->get($cle, 0) >= $limite;
+    }
+
+    public static function confirmedUntil(Request $request, string $cle): ?CarbonImmutable
+    {
+        if (! self::confirmedRecently($request, $cle)) {
+            return null;
+        }
+
+        return CarbonImmutable::createFromTimestamp((int) $request->session()->get($cle))->addMinutes(self::fenetreMinutes());
+    }
+
+    private static function fenetreMinutes(): int
+    {
+        $minutes = config('identity.reauthentication_minutes');
+
+        return is_int($minutes) ? $minutes : 10;
     }
 }

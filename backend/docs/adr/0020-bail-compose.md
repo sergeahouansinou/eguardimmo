@@ -1,6 +1,6 @@
 # ADR 0020 — Bail composé et échéances en lignes
 
-Statut : proposé (2026-11-15). Amende l'ADR 0007 (échéancier) et l'ADR 0008 (données de juridiction). Parties : ADR 0019. Référentiels : ADR 0018. Invariants sous verrou : ADR 0017.
+Statut : accepté (2026-11-15). Amende l'ADR 0007 (échéancier) et l'ADR 0008 (données de juridiction). Parties : ADR 0019. Référentiels : ADR 0018. Invariants sous verrou : ADR 0017.
 
 ## Contexte
 

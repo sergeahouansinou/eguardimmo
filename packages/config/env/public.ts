@@ -4,6 +4,7 @@ import { z } from 'zod';
 export const publicEnvSchema = z.object({
   NEXT_PUBLIC_API_URL: z.url(),
   NEXT_PUBLIC_DATA_SOURCE: z.enum(['demo', 'api']).default('demo'),
+  NEXT_PUBLIC_AUTH_URL: z.url().optional(),
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;

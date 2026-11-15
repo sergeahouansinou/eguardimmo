@@ -16,7 +16,7 @@ export const authKeys = {
   verification: ["auth", "verification"] as const,
   setup: ["auth", "setup"] as const,
   invitation: (token: string) => ["auth", "invitation", token] as const,
-  resetToken: (token: string) => ["auth", "reset-token", token] as const,
+  resetToken: (token: string, email: string) => ["auth", "reset-token", token, email] as const,
 };
 
 const subscribeNothing = () => () => undefined;
@@ -88,12 +88,12 @@ export function useTwoFactorSetup(enabled: boolean) {
     : { data: undefined, isError: false, isPending: true, refetch: () => undefined };
 }
 
-export function useResetTokenCheck(token: string) {
+export function useResetTokenCheck(token: string, email: string) {
   const source = useAuthSource();
   const hydrated = useHydrated();
   const query = useQuery({
-    queryKey: authKeys.resetToken(token),
-    queryFn: () => source.checkResetToken(token),
+    queryKey: authKeys.resetToken(token, email),
+    queryFn: () => source.checkResetToken({ token, email }),
     retry: false,
   });
   return hydrated ? query : { ...query, data: undefined, isPending: true };
@@ -118,7 +118,7 @@ export const useResendVerification = () => useAuthMutation((s) => s.resendVerifi
 export const useVerifyEmail = () => useAuthMutation((s, token: string) => s.verifyEmail(token));
 export const useRequestPasswordReset = () => useAuthMutation((s, email: string) => s.requestPasswordReset(email));
 export const useResetPassword = () =>
-  useAuthMutation((s, input: { token: string; password: string }) => s.resetPassword(input));
+  useAuthMutation((s, input: { token: string; email: string; password: string }) => s.resetPassword(input));
 export const useRequestPasswordDefinition = () => useAuthMutation((s) => s.requestPasswordDefinition());
 export const useAcceptInvitation = () =>
   useAuthMutation((s, input: { token: string; password: string }) => s.acceptInvitation(input));

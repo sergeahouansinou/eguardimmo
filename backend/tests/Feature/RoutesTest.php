@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route as Routes;
 // Toute route publique est une décision explicite : elle doit figurer ici.
 const ROUTES_PUBLIQUES = [
     'api/v1/auth/token',
+    'api/v1/auth/password-reset/status',
     'api/v1/auth/token/two-factor',
     'api/v1/auth/social/{provider}/token',
     'api/v1/console/auth/token',

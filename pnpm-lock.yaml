@@ -125,6 +125,9 @@ importers:
 
   apps/agence:
     dependencies:
+      '@eguardimmo/api':
+        specifier: workspace:*
+        version: link:../../packages/api
       '@eguardimmo/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -210,6 +213,9 @@ importers:
 
   apps/auth:
     dependencies:
+      '@eguardimmo/api':
+        specifier: workspace:*
+        version: link:../../packages/api
       '@eguardimmo/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -295,6 +301,9 @@ importers:
 
   apps/console:
     dependencies:
+      '@eguardimmo/api':
+        specifier: workspace:*
+        version: link:../../packages/api
       '@eguardimmo/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -383,6 +392,9 @@ importers:
 
   apps/locataire:
     dependencies:
+      '@eguardimmo/api':
+        specifier: workspace:*
+        version: link:../../packages/api
       '@eguardimmo/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -471,6 +483,9 @@ importers:
 
   apps/proprietaire:
     dependencies:
+      '@eguardimmo/api':
+        specifier: workspace:*
+        version: link:../../packages/api
       '@eguardimmo/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -743,6 +758,9 @@ importers:
 
   packages/shell:
     dependencies:
+      '@eguardimmo/api':
+        specifier: workspace:*
+        version: link:../api
       '@eguardimmo/ui':
         specifier: workspace:*
         version: link:../ui

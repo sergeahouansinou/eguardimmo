@@ -1,8 +1,25 @@
 import { addMonths, daysBetween, monthOf } from './dates';
 import { divRound, percentOf, splitEvenly, sum } from './money';
-import type { Bail, Bilan, BilanLigne, Dossier, Echeance, FinancesData, Pret } from './schemas';
+import type { Bail, Bilan, BilanLigne, Creance, Dossier, Echeance, Facture, FinancesData, Pret } from './schemas';
 
 export const resteDu = (echeance: Echeance): number => echeance.montant - echeance.paye;
+
+export function resteFacture(data: FinancesData, facture: Facture): number {
+  if (facture.type !== 'facture' || facture.statut !== 'attente') return 0;
+  const avoirs = sum(data.factures.filter((item) => item.type === 'avoir' && item.factureOrigineId === facture.id).map((item) => item.montantTtc));
+  return Math.max(0, facture.montantTtc + avoirs);
+}
+
+export function resteCreance(data: FinancesData, creance: Creance): number {
+  if (creance.kind === 'echeance') {
+    const echeance = data.echeances.find((item) => item.id === creance.refId);
+    return echeance?.statut === 'active' ? Math.max(0, resteDu(echeance)) : 0;
+  }
+  const facture = data.factures.find((item) => item.id === creance.refId);
+  return facture ? resteFacture(data, facture) : 0;
+}
+
+export const creancesActives = (dossier: Dossier): Creance[] => dossier.creances.filter((creance) => creance.retireLe === null);
 
 export const slugify = (text: string): string =>
   text
@@ -92,10 +109,11 @@ export interface DossierTotals {
   totalARecouvrer: number;
   jours: number;
   nonRefactures: number;
+  creances: number;
 }
 
 export function dossierTotals(data: FinancesData, dossier: Dossier): DossierTotals {
-  const echeance = data.echeances.find((item) => item.id === dossier.echeanceId);
+  const actives = creancesActives(dossier);
   const factureOf = (id: string | null) => data.factures.find((facture) => facture.id === id);
   const frais = sum(dossier.actes.map((acte) => acte.cout));
   const fraisRegles = sum(dossier.actes.filter((acte) => factureOf(acte.factureId)?.statut === 'payee').map((acte) => acte.cout));
@@ -103,7 +121,7 @@ export function dossierTotals(data: FinancesData, dossier: Dossier): DossierTota
   const facturesEnAttente = sum(
     [...enAttente].map((id) => factureOf(id)).filter((facture) => facture?.statut === 'attente').map((facture) => facture?.montantTtc ?? 0),
   );
-  const dette = echeance ? Math.max(0, resteDu(echeance)) : 0;
+  const dette = sum(actives.map((creance) => resteCreance(data, creance)));
   return {
     dette,
     frais,
@@ -112,6 +130,7 @@ export function dossierTotals(data: FinancesData, dossier: Dossier): DossierTota
     totalARecouvrer: dette + facturesEnAttente,
     jours: daysBetween(dossier.ouvertLe, data.today),
     nonRefactures: sum(dossier.actes.filter((acte) => acte.cout > 0 && acte.factureId === null).map((acte) => acte.cout)),
+    creances: actives.length,
   };
 }
 

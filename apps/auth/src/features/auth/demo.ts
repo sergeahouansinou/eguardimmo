@@ -338,7 +338,7 @@ export function createDemoAuthSource(options: DemoOptions = {}): AuthSource {
       resetAccountId = findByEmail(email)?.id ?? null;
       return Promise.resolve({ status: "sent" });
     },
-    checkResetToken: (token) => Promise.resolve({ status: token === DEMO_RESET_TOKEN ? "valid" : "expired" }),
+    checkResetToken: ({ token }) => Promise.resolve({ status: token === DEMO_RESET_TOKEN ? "valid" : "expired" }),
     resetPassword: ({ token, password }) => {
       if (token !== DEMO_RESET_TOKEN) return Promise.resolve({ status: "expired" });
       const account = getAccounts().find((candidate) => candidate.id === resetAccountId) ?? currentAccount();

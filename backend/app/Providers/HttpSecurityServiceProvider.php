@@ -28,6 +28,10 @@ final class HttpSecurityServiceProvider extends ServiceProvider
 
     public const LIMITE_REAUTHENTIFICATION_PAR_MINUTE = 5;
 
+    public const ENTETE_CLE_RELAIS_CONSOLE = 'X-Console-Relay-Key';
+
+    public const ENTETE_IP_CLIENT_CONSOLE = 'X-Console-Client-Ip';
+
     public function boot(): void
     {
         $this->configurerProxies();
@@ -58,8 +62,8 @@ final class HttpSecurityServiceProvider extends ServiceProvider
             $email = Str::lower(trim((string) $request->string('email')));
 
             return [
-                Limit::perMinute(self::LIMITE_AUTH_PAR_COMPTE_PAR_MINUTE)->by('auth-compte:'.$email.'|'.$request->ip()),
-                Limit::perMinute(self::LIMITE_AUTH_PAR_IP_PAR_MINUTE)->by('auth-ip:'.$request->ip()),
+                Limit::perMinute(self::LIMITE_AUTH_PAR_COMPTE_PAR_MINUTE)->by('auth-compte:'.$email.'|'.self::ipCliente($request)),
+                Limit::perMinute(self::LIMITE_AUTH_PAR_IP_PAR_MINUTE)->by('auth-ip:'.self::ipCliente($request)),
             ];
         });
 
@@ -80,5 +84,20 @@ final class HttpSecurityServiceProvider extends ServiceProvider
                 Limit::perMinute(self::LIMITE_AUTH_PAR_IP_PAR_MINUTE)->by('two-factor-ip:'.$request->ip()),
             ];
         });
+    }
+
+    // Derrière la console, toutes les connexions partagent l'IP de son serveur : sans l'IP relayée, un attaquant bloquerait tous les opérateurs.
+    public static function ipCliente(Request $request): string
+    {
+        $cle = config('identity.console_relay_key');
+        $presentee = $request->header(self::ENTETE_CLE_RELAIS_CONSOLE);
+        $ip = $request->header(self::ENTETE_IP_CLIENT_CONSOLE);
+
+        if (is_string($cle) && $cle !== '' && is_string($presentee) && hash_equals($cle, $presentee)
+            && is_string($ip) && filter_var($ip, FILTER_VALIDATE_IP) !== false) {
+            return 'console:'.$ip;
+        }
+
+        return (string) $request->ip();
     }
 }

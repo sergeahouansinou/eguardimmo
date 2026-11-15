@@ -100,8 +100,8 @@ export interface AuthSource {
   resendVerification: () => Promise<RequestResult>;
   verifyEmail: (token: string) => Promise<{ status: "verified" } | { status: "expired" }>;
   requestPasswordReset: (email: string) => Promise<RequestResult>;
-  checkResetToken: (token: string) => Promise<{ status: "valid" } | { status: "expired" }>;
-  resetPassword: (input: { token: string; password: string }) => Promise<
+  checkResetToken: (input: { token: string; email: string }) => Promise<{ status: "valid" } | { status: "expired" }>;
+  resetPassword: (input: { token: string; email: string; password: string }) => Promise<
     { status: "ok" } | { status: "expired" } | { status: "reused" }
   >;
   requestPasswordDefinition: () => Promise<RequestResult>;

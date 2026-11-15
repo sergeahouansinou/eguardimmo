@@ -19,3 +19,4 @@ export * from './features/finances';
 export * from './features/locataires';
 export * from './features/baux';
 export * from './features/courriers';
+export { EquipeApiProvider } from './api/EquipeApiProvider';

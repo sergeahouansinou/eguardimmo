@@ -195,10 +195,11 @@ describe('recouvrement', () => {
 
   it('ouvre un dossier avec une numérotation propre et propose un échéancier', async () => {
     const source = createDemoFinancesSource();
-    const opened = await send(source, { type: 'openDossier', echeanceId: 'ech-2026-11-clarisse-hounkpatin' });
-    const again = await send(source, { type: 'openDossier', echeanceId: 'ech-2026-11-clarisse-hounkpatin' });
-    expect(again.id).toBe(opened.id);
-    await send(source, { type: 'proposePlan', echeanceId: 'ech-2026-11-clarisse-hounkpatin', count: 3, premiere: '2026-11-20' });
+    const CLARISSE = 'ech-2026-11-clarisse-hounkpatin';
+    const bailId = echeanceOf(await read(source), CLARISSE).bailId;
+    const opened = await send(source, { type: 'openDossier', bailId, creances: [{ kind: 'echeance', refId: CLARISSE }] });
+    await expect(send(source, { type: 'openDossier', bailId, creances: [{ kind: 'echeance', refId: CLARISSE }] })).rejects.toThrow('déjà ouvert');
+    await send(source, { type: 'proposePlan', dossierId: null, echeanceId: CLARISSE, count: 3, premiere: '2026-11-20' });
     const data = await read(source);
     const dossier = data.dossiers.find((item) => item.id === opened.id);
     expect(dossier?.numero).toBe('RC-2026-0012');
@@ -318,7 +319,7 @@ describe('relance', () => {
     const after = await read(source);
     expect(result.message).toContain('Relance amiable envoyée');
     expect(after.relances).toHaveLength(before.relances.length + 1);
-    const dossier = after.dossiers.find((item) => item.echeanceId === 'ech-2026-11-ibrahim-yao');
+    const dossier = after.dossiers.find((item) => item.creances.some((creance) => creance.refId === 'ech-2026-11-ibrahim-yao'));
     expect(dossier?.actes).toHaveLength(1);
     expect(dossier?.actes[0]).toMatchObject({ kind: 'relance', cout: 0, intervenant: 'Gestion Les Tilleuls' });
     expect(dossier?.actes[0]?.libelle).toContain('grand livre joint');
@@ -328,7 +329,7 @@ describe('relance', () => {
     const source = createDemoFinancesSource();
     await send(source, relance({ echeanceId: 'ech-2026-11-koffi-adjovi', niveau: 'mise_en_demeure', canal: 'recommande' }));
     const data = await read(source);
-    const dossier = data.dossiers.find((item) => item.echeanceId === 'ech-2026-11-koffi-adjovi');
+    const dossier = data.dossiers.find((item) => item.creances.some((creance) => creance.refId === 'ech-2026-11-koffi-adjovi'));
     expect(dossier?.actes.at(-1)).toMatchObject({ kind: 'mise_en_demeure', cout: 620 });
     expect(data.relances.at(-1)).toMatchObject({ canal: 'recommande', amiable: false });
   });
@@ -345,7 +346,7 @@ describe('relance', () => {
     const source = createDemoFinancesSource();
     await send(source, relance(), 'cle-relance-identique');
     await send(source, relance(), 'cle-relance-identique');
-    expect((await read(source)).dossiers.find((item) => item.echeanceId === 'ech-2026-11-ibrahim-yao')?.actes).toHaveLength(1);
+    expect((await read(source)).dossiers.find((item) => item.creances.some((creance) => creance.refId === 'ech-2026-11-ibrahim-yao'))?.actes).toHaveLength(1);
   });
 });
 

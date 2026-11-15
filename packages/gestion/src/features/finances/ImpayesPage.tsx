@@ -12,6 +12,8 @@ import { useFinances } from './queries';
 import { financesPaths } from './paths';
 import { RowMenu } from './RowMenu';
 import type { FinancesData } from './schemas';
+import { creanceKey } from './recouvrement/creances';
+import { OpenDossierFlow } from './recouvrement/OpenDossierFlow';
 import { PlanDialog } from './impayes/PlanDialog';
 import { AGE_MONTH, AGE_TWO_MONTHS, ALL, allImpayeRows, defaultImpayeFilters, filterImpayes, matchesAge, remindersOfMonth } from './impayes/rows';
 import type { ImpayeFilters, ImpayeRow } from './impayes/rows';
@@ -41,6 +43,7 @@ function ImpayesContent({ data, navigate }: Pick<ScreenProps, 'navigate'> & { da
   const [page, setPage] = useState(1);
   const [planFor, setPlanFor] = useState<ImpayeRow | null>(null);
   const [writeOff, setWriteOff] = useState<ImpayeRow | null>(null);
+  const [openFor, setOpenFor] = useState<ImpayeRow | null>(null);
 
   const all = allImpayeRows(data, formatDate);
   const rows = filterImpayes(all, filters);
@@ -60,6 +63,10 @@ function ImpayesContent({ data, navigate }: Pick<ScreenProps, 'navigate'> & { da
   };
   const remind = (targets: readonly ImpayeRow[], canal: 'email' | 'courrier', onDone?: () => void) => {
     exec.run({ type: 'sendReminders', echeanceIds: targets.map((row) => row.echeance.id), canal }, { onDone });
+  };
+  const openDossier = (row: ImpayeRow) => {
+    if (row.dossierId) navigate(financesPaths.dossier(row.dossierId));
+    else setOpenFor(row);
   };
   const exportRows = (targets: readonly ImpayeRow[]) => {
     downloadCsv('impayes.csv', [
@@ -177,8 +184,8 @@ function ImpayesContent({ data, navigate }: Pick<ScreenProps, 'navigate'> & { da
                     <TableCell>{row.etape}</TableCell>
                     <TableCell>
                       <span className="flex items-center gap-1">
-                        <Button variant="link" size="sm" onClick={() => { navigate(financesPaths.impaye(id)); }}>
-                          Ouvrir
+                        <Button variant="link" size="sm" onClick={() => { openDossier(row); }}>
+                          {row.dossierId ? 'Ouvrir le dossier' : 'Ouvrir un dossier'}
                         </Button>
                         <RowMenu>
                           <MenuItem icon={Send} onSelect={() => { remind([row], 'email'); }}>Relancer par e-mail</MenuItem>
@@ -189,7 +196,7 @@ function ImpayesContent({ data, navigate }: Pick<ScreenProps, 'navigate'> & { da
                           <MenuItem icon={FileText} onSelect={() => { setPlanFor(row); }}>Proposer un échéancier</MenuItem>
                           <MenuItem icon={BookOpen} onSelect={() => { navigate(financesPaths.grandLivre(id)); }}>Grand livre du locataire</MenuItem>
                           <MenuItem icon={Gavel} onSelect={() => { navigate(financesPaths.relance(id, 'mise_en_demeure')); }}>Mise en demeure</MenuItem>
-                          <MenuItem icon={FolderOpen} onSelect={() => { navigate(financesPaths.impaye(id)); }}>Dossier de recouvrement</MenuItem>
+                          <MenuItem icon={FolderOpen} onSelect={() => { openDossier(row); }}>Dossier de recouvrement</MenuItem>
                           <MenuSeparator />
                           <MenuItem icon={TriangleAlert} tone="danger" onSelect={() => { setWriteOff(row); }}>Passer en irrécouvrable</MenuItem>
                         </RowMenu>
@@ -208,14 +215,25 @@ function ImpayesContent({ data, navigate }: Pick<ScreenProps, 'navigate'> & { da
 
       <PlanDialog
         open={planFor !== null}
-        reste={planFor?.reste ?? 0}
+        reste={planFor?.resteAEtaler ?? 0}
         today={data.today}
         money={money}
         pending={exec.pending}
         error={exec.error}
         onClose={() => { setPlanFor(null); exec.reset(); }}
-        onSubmit={(values) => { if (planFor) exec.run({ type: 'proposePlan', echeanceId: planFor.echeance.id, ...values }, { onDone: () => { setPlanFor(null); } }); }}
+        onSubmit={(values) => { if (planFor) exec.run({ type: 'proposePlan', dossierId: null, echeanceId: planFor.echeance.id, ...values }, { onDone: () => { setPlanFor(null); } }); }}
       />
+      {openFor ? (
+        <OpenDossierFlow
+          data={data}
+          bailId={openFor.bail.id}
+          initial={[creanceKey({ kind: 'echeance', refId: openFor.echeance.id })]}
+          exec={exec}
+          navigate={navigate}
+          money={money}
+          onClose={() => { setOpenFor(null); }}
+        />
+      ) : null}
       <ConfirmDialog
         open={writeOff !== null}
         onOpenChange={(open) => { if (!open) setWriteOff(null); }}

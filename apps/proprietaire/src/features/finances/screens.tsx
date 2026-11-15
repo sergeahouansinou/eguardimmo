@@ -10,6 +10,7 @@ import {
   FinancesPage,
   GrandLivrePage,
   ImportBancairePage,
+  ImpayeDossierPage,
   ImpayesPage,
   PaiementFormPage,
   PretsPage,
@@ -24,7 +25,8 @@ import { bindFinances } from "./bind";
 
 export const FinancesScreen = bindFinances(FinancesPage);
 export const ImpayesScreen = bindFinances(ImpayesPage);
-export const RecouvrementScreen = bindFinances<{ echeanceId: string }>(RecouvrementPage);
+export const RecouvrementScreen = bindFinances<{ dossierId: string }>(RecouvrementPage);
+export const ImpayeDossierScreen = bindFinances<{ echeanceId: string }>(ImpayeDossierPage);
 export const GrandLivreScreen = bindFinances<{ echeanceId: string }>(GrandLivrePage);
 export const FacturesScreen = bindFinances(FacturesPage);
 export const FactureFormScreen = bindFinances(FactureFormPage);

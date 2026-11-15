@@ -9,6 +9,7 @@ export interface NavLink {
   href: string;
   icon?: LucideIcon;
   count?: number;
+  activeFor?: string[];
 }
 
 export interface NavEntry extends NavLink {
@@ -27,13 +28,18 @@ export function isActiveHref(href: string, currentPath: string): boolean {
   return currentPath === href || currentPath.startsWith(`${href}/`);
 }
 
+function matchLength(link: NavLink, currentPath: string): number {
+  return [link.href, ...(link.activeFor ?? [])].filter((href) => isActiveHref(href, currentPath)).reduce((best, href) => Math.max(best, href.length), -1);
+}
+
 export function activeChildHref(children: NavLink[], currentPath: string): string | undefined {
   return children
-    .filter((child) => isActiveHref(child.href, currentPath))
-    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+    .map((child) => ({ href: child.href, length: matchLength(child, currentPath) }))
+    .filter((match) => match.length >= 0)
+    .sort((a, b) => b.length - a.length)[0]?.href;
 }
 
 export function isEntryActive(entry: NavEntry, currentPath: string): boolean {
-  if (entry.children?.length) return entry.children.some((child) => isActiveHref(child.href, currentPath));
+  if (entry.children?.length) return entry.children.some((child) => matchLength(child, currentPath) >= 0);
   return isActiveHref(entry.href, currentPath);
 }

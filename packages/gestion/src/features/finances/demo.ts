@@ -294,10 +294,13 @@ export function createDemoFinances(): FinancesData {
       {
         id: 'dos-rc-2026-0011',
         numero: 'RC-2026-0011',
-        echeanceId: 'ech-2026-11-koffi-adjovi',
+        bailId: slugify('BL-2023-0007'),
         ouvertLe: '2026-11-02',
         delaiJusquau: '2026-11-21',
         plan: null,
+        creances: [{ id: 'cre-1', kind: 'echeance', refId: 'ech-2026-11-koffi-adjovi', libelle: 'Loyer novembre 2026', montantInitial: euros(850), inclusLe: '2026-11-02', retireLe: null }],
+        liasses: [],
+        transmissions: [],
         actes: [
           { id: 'acte-1', date: '2026-11-02', kind: 'relance', libelle: 'Relance amiable par courrier', intervenant: 'Gestion Les Tilleuls', cout: 1500, factureId: 'fa-2026-0023' },
           { id: 'acte-2', date: '2026-11-08', kind: 'relance', libelle: 'Relance par e-mail, grand livre joint', intervenant: 'Gestion Les Tilleuls', cout: 0, factureId: null },

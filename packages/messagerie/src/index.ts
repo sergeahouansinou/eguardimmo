@@ -12,6 +12,8 @@ export type { InboxTabConfig, MessagerieProfile } from './profiles';
 
 export { createDemoMessagerieSource, demoSeeds } from './data/demo';
 export type { DemoMessagerieSource, DemoSourceOptions, MessagerieSpace } from './data/demo';
+export { createApiMessagerieSource } from './data/api';
+export type { ApiMessagerieSourceDependencies, ApiMessagerieSourceOptions } from './data/api';
 export { MessagerieSourceProvider, useMessagerieSource } from './data/source';
 export type { MessagerieSource } from './data/source';
 export {

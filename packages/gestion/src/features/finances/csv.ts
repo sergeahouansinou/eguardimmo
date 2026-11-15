@@ -11,7 +11,14 @@ export function toCsv(rows: readonly (readonly CsvCell[])[]): string {
 }
 
 export function downloadCsv(filename: string, rows: readonly (readonly CsvCell[])[]): void {
-  const blob = new Blob([`﻿${toCsv(rows)}`], { type: 'text/csv;charset=utf-8' });
+  saveBlob(filename, new Blob([`﻿${toCsv(rows)}`], { type: 'text/csv;charset=utf-8' }));
+}
+
+export function downloadText(filename: string, text: string): void {
+  saveBlob(filename, new Blob([text], { type: 'text/plain;charset=utf-8' }));
+}
+
+function saveBlob(filename: string, blob: Blob): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

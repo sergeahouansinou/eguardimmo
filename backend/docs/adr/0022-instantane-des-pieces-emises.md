@@ -1,6 +1,6 @@
 # ADR 0022 — Instantané des pièces émises
 
-Statut : proposé (2026-11-15). Amende l'ADR 0011 (pièces probantes). Parties : ADR 0019.
+Statut : accepté (2026-11-15). Amende l'ADR 0011 (pièces probantes). Parties : ADR 0019.
 
 ## Contexte
 

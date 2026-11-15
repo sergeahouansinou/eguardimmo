@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestEnvironment, renderWithAuth } from "../../../test/render";
 import { expectNoA11yViolations } from "../../../test/axe";
 import { resetNavigation, router, setLocation } from "../../../test/navigation";
@@ -64,6 +64,21 @@ describe("MotDePasseNouveauScreen", () => {
     await user.click(screen.getByRole("button", { name: "Enregistrer le mot de passe" }));
     await waitFor(() => { expect(router.push).toHaveBeenCalledWith("/mot-de-passe/modifie"); });
     expect(environment.store.read()).toBeNull();
+  });
+
+  it("transmet le jeton et l’e-mail du lien à la vérification puis à la réinitialisation", async () => {
+    setLocation("/mot-de-passe/nouveau?jeton=valide&email=marc.chevalier%40example.com");
+    const environment = createTestEnvironment("marc");
+    const checkResetToken = vi.fn(environment.source.checkResetToken);
+    const resetPassword = vi.fn(environment.source.resetPassword);
+    renderWithAuth(<MotDePasseNouveauScreen />, { ...environment, source: { ...environment.source, checkResetToken, resetPassword } });
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText(/Nouveau mot de passe \*/), "Nouveau-Mot-2026");
+    await user.type(screen.getByLabelText(/Confirmation \*/), "Nouveau-Mot-2026");
+    await user.click(screen.getByRole("button", { name: "Enregistrer le mot de passe" }));
+    await waitFor(() => { expect(router.push).toHaveBeenCalledWith("/mot-de-passe/modifie"); });
+    expect(checkResetToken).toHaveBeenCalledWith({ token: "valide", email: "marc.chevalier@example.com" });
+    expect(resetPassword).toHaveBeenCalledWith({ token: "valide", email: "marc.chevalier@example.com", password: "Nouveau-Mot-2026" });
   });
 
   it("refuse une confirmation différente", async () => {

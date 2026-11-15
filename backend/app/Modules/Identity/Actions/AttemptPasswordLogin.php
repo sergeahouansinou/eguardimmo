@@ -14,7 +14,7 @@ use SensitiveParameter;
 
 final readonly class AttemptPasswordLogin
 {
-    private const HASH_FACTICE = '$2y$12$rpDCcXmU72aSgWHt59Stm.CLyJqnCJwIAVgCyQJsyjqWEO5PSfd7y';
+    public const HASH_FACTICE = '$2y$12$rpDCcXmU72aSgWHt59Stm.CLyJqnCJwIAVgCyQJsyjqWEO5PSfd7y';
 
     public function __construct(
         private AccountLockout $lockout,

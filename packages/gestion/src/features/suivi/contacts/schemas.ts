@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { BIEN_IDS } from '../shared/biens';
 
-export const CATEGORIES = ['artisan', 'syndic', 'assureur', 'garant'] as const;
+export const CATEGORIES = ['artisan', 'syndic', 'assureur', 'garant', 'commissaire'] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 export const categoryLabels: Record<Category, string> = {
@@ -9,6 +9,7 @@ export const categoryLabels: Record<Category, string> = {
   syndic: 'Syndic',
   assureur: 'Assureur',
   garant: 'Garant',
+  commissaire: 'Commissaire de justice',
 };
 
 export const categoryTabLabels: Record<Category, string> = {
@@ -16,6 +17,7 @@ export const categoryTabLabels: Record<Category, string> = {
   syndic: 'Syndics',
   assureur: 'Assureurs',
   garant: 'Garants',
+  commissaire: 'Commissaires de justice',
 };
 
 export const REACH_MESSAGE = 'Indiquez au moins un téléphone ou une adresse e-mail.';

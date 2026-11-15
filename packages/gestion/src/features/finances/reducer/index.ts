@@ -20,7 +20,8 @@ import {
   updateEcheance,
 } from './ledger';
 import { deletePret, importEcheancier, prepayPret, savePret, saveRegularisation, setPretStatut } from './patrimoine';
-import { addDiligence, billDossierFees, openDossier, proposePlan, sendRelance } from './recouvrement';
+import { addCreances, addDiligence, billDossierFees, openDossier, proposePlan, removeCreance, sendRelance } from './recouvrement';
+import { generateLiasse, resendTransmission, revokeTransmission, transmitLiasse } from './transmission';
 
 export { FinancesCommandError } from './context';
 export type { Outcome, ReducerContext } from './context';
@@ -51,6 +52,12 @@ function run(data: FinancesData, ctx: ReducerContext, cmd: FinancesCommand): Out
     case 'sendInvoice': return sendInvoice(data, ctx, cmd);
     case 'sendReceipt': return sendReceipt(data, ctx, cmd);
     case 'openDossier': return openDossier(data, ctx, cmd);
+    case 'addCreances': return addCreances(data, ctx, cmd);
+    case 'removeCreance': return removeCreance(data, ctx, cmd);
+    case 'generateLiasse': return generateLiasse(data, ctx, cmd);
+    case 'transmitLiasse': return transmitLiasse(data, ctx, cmd);
+    case 'revokeTransmission': return revokeTransmission(data, ctx, cmd);
+    case 'resendTransmission': return resendTransmission(data, ctx, cmd);
     case 'addDiligence': return addDiligence(data, ctx, cmd);
     case 'billDossierFees': return billDossierFees(data, ctx, cmd);
     case 'proposePlan': return proposePlan(data, ctx, cmd);

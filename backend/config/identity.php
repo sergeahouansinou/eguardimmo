@@ -13,5 +13,7 @@ return [
 
     'console_token_ttl_minutes' => (int) env('CONSOLE_TOKEN_TTL_MINUTES', 240),
 
+    'console_relay_key' => env('CONSOLE_RELAY_KEY'),
+
     'reauthentication_minutes' => (int) env('REAUTHENTICATION_MINUTES', 10),
 ];

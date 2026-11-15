@@ -1,10 +1,12 @@
-import type { Facture, FinancesData, Recu } from './schemas';
+import type { Facture, FinancesData, Liasse, Recu } from './schemas';
 
 export const canonicalFacture = (facture: Facture): string =>
   JSON.stringify([facture.numero, facture.type, facture.date, facture.destinataire, facture.objet, facture.montantHt, facture.tvaPct, facture.montantTtc, facture.lignes]);
 
 export const canonicalRecu = (recu: Recu): string =>
   JSON.stringify([recu.numero, recu.date, recu.bailId, recu.nature, recu.montant, recu.mode, recu.reference, recu.appele, recu.recuSurEcheance, recu.resteDu]);
+
+export const canonicalLiasse = (liasse: Liasse): string => JSON.stringify([liasse.genereLe, liasse.pieces.map((piece) => [piece.id, piece.libelle, piece.octets])]);
 
 export async function sha256Hex(text: string): Promise<string> {
   const subtle = globalThis.crypto.subtle as SubtleCrypto | undefined;
@@ -16,6 +18,7 @@ export async function sha256Hex(text: string): Promise<string> {
 export async function sealMissing(data: FinancesData): Promise<void> {
   for (const facture of data.factures) if (facture.empreinte === '') facture.empreinte = await sha256Hex(canonicalFacture(facture));
   for (const recu of data.recus) if (recu.empreinte === '') recu.empreinte = await sha256Hex(canonicalRecu(recu));
+  for (const dossier of data.dossiers) for (const liasse of dossier.liasses) if (liasse.empreinte === '') liasse.empreinte = await sha256Hex(canonicalLiasse(liasse));
 }
 
 export async function verifySeal(data: FinancesData, kind: 'facture' | 'recu', id: string): Promise<boolean> {

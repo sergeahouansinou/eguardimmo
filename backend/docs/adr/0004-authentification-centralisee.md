@@ -49,6 +49,13 @@ Statut : accepté (2026-11-13), révisé le même jour : la console sort du hub 
   - jetons, sessions, liens de réinitialisation et rôle opérateur sont révoqués, puis `Identity\Events\AccountDeleted` est émis : chaque module décide d'anonymiser ou de conserver selon ses obligations ;
   - la révocation Apple ne bloque jamais la suppression (décision du 2026-11-15) : en cas d'échec (Apple injoignable, refus, configuration `.p8` cassée), le compte est quand même supprimé, l'échec est signalé (`report`, audit `identity.apple.revocation_deferred`) et le jeton reste chiffré sur l'identité. La commande `identity:revoke-deferred-apple-tokens`, planifiée toutes les heures, retente ; elle sort en échec tant qu'il reste un jeton non révoqué.
 
+- Contrat web avec le hub (décision du 2026-11-15) :
+  - les e-mails pointent vers les pages du hub : `/mot-de-passe/nouveau?jeton=…&email=…` pour la réinitialisation, `/verification-email/confirmer?jeton=<lien signé de l'API>` pour la vérification. Le hub n'appelle que le lien signé de son propre domaine d'API ;
+  - `POST /api/v1/auth/password-reset/status` (`throttle:auth`, public) répond `valid` ou `expired` sans consommer le jeton. Il répond pareil, au même coût de calcul, pour un compte inconnu, un mauvais jeton et un jeton expiré ;
+  - `GET /api/v1/me/security` (session requise) donne la 2FA (activée, codes de secours restants sur 8), la présence d'un mot de passe, les comptes Google et Apple liés, les appareils mobiles et la fin de la confirmation récente. Les secrets ne sortent jamais ;
+  - l'inscription n'ouvre pas de session : elle répond pareil que l'adresse existe ou non, une session ouverte révélerait l'existence du compte. Le renvoi du lien de vérification et le clic sur ce lien demandent donc une connexion préalable ;
+  - Fortify ne distingue pas un défi 2FA expiré d'un code faux : les deux répondent 422.
+
 ## Options écartées
 
 - **Keycloak** : un service Java de plus à opérer, thémer et synchroniser, et il remplace Sanctum. Ses avantages (fonctionnement entre domaines différents) ne servent pas tant que tout reste sous un domaine parent.

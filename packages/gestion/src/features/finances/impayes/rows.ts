@@ -1,5 +1,6 @@
 import { addDays, monthOf } from '../dates';
-import { bailOf, impayes, joursRetard, resteDu } from '../derive';
+import { bailOf, dossierTotals, impayes, joursRetard, resteDu } from '../derive';
+import { dossierOfEcheance } from '../recouvrement/creances';
 import type { Bail, Echeance, FinancesData } from '../schemas';
 
 export const ALL = 'tous';
@@ -16,6 +17,7 @@ export interface ImpayeRow {
   etape: string;
   miseEnDemeureDue: boolean;
   dossierId: string | null;
+  resteAEtaler: number;
 }
 
 const fold = (text: string) => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -49,6 +51,7 @@ export function allImpayeRows(data: FinancesData, formatDate: (iso: string) => s
     if (!bail) continue;
     const relances = data.relances.filter((relance) => relance.echeanceId === echeance.id && relance.amiable).map((relance) => relance.date).sort();
     const etape = prochaineEtape(data, echeance, formatDate);
+    const dossier = dossierOfEcheance(data, echeance.id);
     rows.push({
       echeance,
       bail,
@@ -57,7 +60,8 @@ export function allImpayeRows(data: FinancesData, formatDate: (iso: string) => s
       derniere: relances[relances.length - 1] ?? null,
       etape: etape.label,
       miseEnDemeureDue: etape.miseEnDemeureDue,
-      dossierId: data.dossiers.find((dossier) => dossier.echeanceId === echeance.id)?.id ?? null,
+      dossierId: dossier?.id ?? null,
+      resteAEtaler: dossier ? dossierTotals(data, dossier).dette : resteDu(echeance),
     });
   }
   return rows;

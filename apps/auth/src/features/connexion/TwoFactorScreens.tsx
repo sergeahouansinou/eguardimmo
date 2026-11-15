@@ -186,7 +186,7 @@ export function BackupCodeScreen() {
       <form noValidate onSubmit={(event) => { void submit(event); }} className="flex flex-col gap-4">
         <TextField
           label="Code de secours *"
-          placeholder="a7k2m-9xq4d"
+          placeholder="k3Jx9aQw2L-p0Zr7Tm4Vn"
           autoComplete="one-time-code"
           autoCapitalize="none"
           spellCheck={false}

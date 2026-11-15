@@ -1,6 +1,6 @@
 # ADR 0018 — Données personnalisables
 
-Statut : proposé (2026-11-15). Amende l'ADR 0001 et l'ADR 0005 (nouveau module Catalog, clé étrangère admise vers ses référentiels) et l'ADR 0013 (droits des plans). Moteur : ADR 0017.
+Statut : accepté (2026-11-15). Amende l'ADR 0001 et l'ADR 0005 (nouveau module Catalog, clé étrangère admise vers ses référentiels) et l'ADR 0013 (droits des plans). Moteur : ADR 0017.
 
 ## Contexte
 

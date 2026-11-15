@@ -71,7 +71,7 @@ export function buildNavigation(counts?: ShellCounts): Navigation {
             icon: Wallet,
             children: [
               { id: 'operations', label: 'Opérations', href: '/finances' },
-              { id: 'impayes', label: 'Impayés', href: '/finances/impayes' },
+              { id: 'impayes', label: 'Impayés', href: '/finances/impayes', activeFor: ['/finances/recouvrement'] },
               { id: 'factures', label: 'Factures', href: '/finances/factures' },
               { id: 'regularisation', label: 'Régularisation', href: '/finances/regularisation' },
               { id: 'bilan', label: 'Bilan', href: '/finances/bilan' },

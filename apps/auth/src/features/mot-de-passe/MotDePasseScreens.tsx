@@ -103,7 +103,7 @@ export function MotDePasseEnvoyeScreen() {
   );
 }
 
-function ResetPasswordForm({ token }: { token: string }) {
+function ResetPasswordForm({ token, email }: { token: string; email: string }) {
   const router = useRouter();
   const reset = useResetPassword();
   const [problem, setProblem] = useState(false);
@@ -120,7 +120,7 @@ function ResetPasswordForm({ token }: { token: string }) {
   const submit = form.handleSubmit(async (values) => {
     setProblem(false);
     try {
-      const result = await reset.mutateAsync({ token, password: values.password });
+      const result = await reset.mutateAsync({ token, email, password: values.password });
       if (result.status === "ok") router.push("/mot-de-passe/modifie");
       else if (result.status === "expired") router.replace(`${ROUTES.lienExpire}?type=reinitialisation`);
       else setError("password", { message: "Choisissez un mot de passe différent de l’ancien." }, { shouldFocus: true });
@@ -164,8 +164,10 @@ function ResetPasswordForm({ token }: { token: string }) {
 
 export function MotDePasseNouveauScreen() {
   const router = useRouter();
-  const token = useSearchParams().get("jeton") ?? "";
-  const check = useResetTokenCheck(token);
+  const params = useSearchParams();
+  const token = params.get("jeton") ?? "";
+  const email = params.get("email") ?? "";
+  const check = useResetTokenCheck(token, email);
   const expired = token === "" || check.data?.status === "expired";
 
   useEffect(() => {
@@ -186,7 +188,7 @@ export function MotDePasseNouveauScreen() {
       </div>
     );
   }
-  return <ResetPasswordForm token={token} />;
+  return <ResetPasswordForm token={token} email={email} />;
 }
 
 export function DefinirMotDePasseScreen() {

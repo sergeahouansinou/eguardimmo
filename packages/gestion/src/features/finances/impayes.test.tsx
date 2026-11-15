@@ -4,11 +4,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { expectNoA11yViolations } from '../../../test/axe';
 import { dismissFlash } from './flash';
 import { ImpayesPage } from './ImpayesPage';
+import { ImpayeDossierPage } from './ImpayeDossierPage';
 import { RecouvrementPage } from './RecouvrementPage';
 import { createDemoFinancesSource } from './source';
 import { norm, renderFinances, rowAt, snapshotOf } from './testing/render';
 
 const KOFFI = 'ech-2026-11-koffi-adjovi';
+const DOSSIER_KOFFI = 'dos-rc-2026-0011';
 
 afterEach(dismissFlash);
 
@@ -110,11 +112,11 @@ describe('ImpayesPage', () => {
     expect(await screen.findByText('2 relances envoyées.')).toBeTruthy();
   });
 
-  it('ouvre le dossier de recouvrement d’une ligne', async () => {
+  it('ouvre le dossier existant d’une ligne', async () => {
     const { navigate } = renderFinances((props) => <ImpayesPage {...props} />);
     const table = await screen.findByRole('table', { name: 'Impayés' });
-    await userEvent.click(within(rowAt(table, 1)).getByRole('button', { name: 'Ouvrir' }));
-    expect(navigate).toHaveBeenCalledWith(`/finances/impayes/${KOFFI}`);
+    await userEvent.click(within(rowAt(table, 1)).getByRole('button', { name: 'Ouvrir le dossier' }));
+    expect(navigate).toHaveBeenCalledWith(`/finances/recouvrement/${DOSSIER_KOFFI}`);
   });
 
   it('propose un échéancier avec aperçu, puis l’enregistre', async () => {
@@ -167,7 +169,7 @@ describe('ImpayesPage', () => {
     await open('Enregistrer un acompte');
     expect(navigate).toHaveBeenLastCalledWith('/finances/encaissements/acompte?bail=bl-2023-0007');
     await open('Dossier de recouvrement');
-    expect(navigate).toHaveBeenLastCalledWith(`/finances/impayes/${KOFFI}`);
+    expect(navigate).toHaveBeenLastCalledWith(`/finances/recouvrement/${DOSSIER_KOFFI}`);
   });
 
   it('affiche une erreur de chargement avec un bouton Réessayer', async () => {
@@ -180,7 +182,7 @@ describe('ImpayesPage', () => {
 
 describe('RecouvrementPage', () => {
   it('reprend le dossier : chiffres, étapes, carnet et facture des frais', async () => {
-    const { container } = renderFinances((props) => <RecouvrementPage {...props} echeanceId={KOFFI} />);
+    const { container } = renderFinances((props) => <RecouvrementPage {...props} dossierId={DOSSIER_KOFFI} />);
     expect(await screen.findByRole('heading', { name: 'Recouvrement, Koffi Adjovi' })).toBeTruthy();
     const kpis = screen.getByRole('region', { name: 'Chiffres du dossier' });
     const text = norm(kpis.textContent);
@@ -200,7 +202,7 @@ describe('RecouvrementPage', () => {
   });
 
   it('ajoute une diligence au carnet, avec validation des champs', async () => {
-    const { source } = renderFinances((props) => <RecouvrementPage {...props} echeanceId={KOFFI} />);
+    const { source } = renderFinances((props) => <RecouvrementPage {...props} dossierId={DOSSIER_KOFFI} />);
     await screen.findByRole('heading', { name: 'Recouvrement, Koffi Adjovi' });
     await userEvent.click(screen.getByRole('button', { name: 'Ajouter une diligence' }));
     const dialog = await screen.findByRole('dialog', { name: 'Ajouter une diligence' });
@@ -222,7 +224,7 @@ describe('RecouvrementPage', () => {
   it('facture ensuite les frais restants', async () => {
     const source = createDemoFinancesSource();
     await source.dispatch({ type: 'addDiligence', requestKey: 'cle-diligence-1', dossierId: 'dos-rc-2026-0011', date: '2026-11-13', kind: 'autre', libelle: 'Signification', intervenant: 'SCP Agbodjo', cout: 4500 });
-    renderFinances((props) => <RecouvrementPage {...props} echeanceId={KOFFI} />, source);
+    renderFinances((props) => <RecouvrementPage {...props} dossierId={DOSSIER_KOFFI} />, source);
     await screen.findByRole('heading', { name: 'Recouvrement, Koffi Adjovi' });
     await userEvent.click(screen.getByRole('button', { name: 'Facturer les frais' }));
     const dialog = await screen.findByRole('dialog', { name: 'Facturer les frais au locataire' });
@@ -234,7 +236,7 @@ describe('RecouvrementPage', () => {
   });
 
   it('propose un échéancier depuis la page', async () => {
-    renderFinances((props) => <RecouvrementPage {...props} echeanceId={KOFFI} />);
+    renderFinances((props) => <RecouvrementPage {...props} dossierId={DOSSIER_KOFFI} />);
     await screen.findByRole('heading', { name: 'Recouvrement, Koffi Adjovi' });
     await userEvent.click(screen.getByRole('button', { name: 'Proposer un échéancier' }));
     const dialog = await screen.findByRole('dialog', { name: 'Proposer un échéancier' });
@@ -242,28 +244,24 @@ describe('RecouvrementPage', () => {
     expect(await screen.findByRole('list', { name: 'Échéancier proposé' })).toBeTruthy();
   });
 
-  it('propose d’ouvrir un dossier quand il n’y en a pas', async () => {
-    const { source } = renderFinances((props) => <RecouvrementPage {...props} echeanceId="ech-2026-11-clarisse-hounkpatin" />);
-    expect(await screen.findByText('Aucun dossier de recouvrement')).toBeTruthy();
-    await userEvent.click(screen.getByRole('button', { name: 'Ouvrir le dossier' }));
-    await waitFor(async () => {
-      expect((await snapshotOf(source)).dossiers).toHaveLength(2);
-    });
-    expect(await screen.findByRole('heading', { name: 'Recouvrement, Clarisse Hounkpatin' })).toBeTruthy();
-    expect(await screen.findByText('Aucun acte au carnet')).toBeTruthy();
-    const current = screen.getAllByRole('listitem').filter((item) => item.getAttribute('aria-current') === 'step');
-    expect(current).toHaveLength(1);
-    expect(norm(current[0]?.textContent ?? '')).toContain('Relance amiable');
-    expect(norm(current[0]?.textContent ?? '')).toContain('À envoyer');
-    expect(screen.getByRole('heading', { name: 'Étapes de la procédure' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Facture des frais' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Prochaine étape' })).toBeTruthy();
-    expect(norm(screen.getByRole('region', { name: 'Chiffres du dossier' }).textContent)).toContain('210 €');
-    expect(screen.getByRole('button', { name: 'Ajouter une diligence' })).toBeTruthy();
+  it('signale un dossier introuvable', async () => {
+    renderFinances((props) => <RecouvrementPage {...props} dossierId="inconnu" />);
+    expect(await screen.findByText('Dossier introuvable')).toBeTruthy();
   });
 
-  it('signale un impayé introuvable', async () => {
-    renderFinances((props) => <RecouvrementPage {...props} echeanceId="inconnue" />);
-    expect(await screen.findByText('Impayé introuvable')).toBeTruthy();
+  it('l’ancienne route par échéance redirige vers le dossier existant', async () => {
+    const { navigate } = renderFinances((props) => <ImpayeDossierPage {...props} echeanceId={KOFFI} />);
+    await waitFor(() => { expect(navigate).toHaveBeenCalledWith(`/finances/recouvrement/${DOSSIER_KOFFI}`); });
+  });
+
+  it('l’ancienne route propose d’ouvrir un dossier quand il n’y en a pas', async () => {
+    const { navigate, source } = renderFinances((props) => <ImpayeDossierPage {...props} echeanceId="ech-2026-11-clarisse-hounkpatin" />);
+    expect(await screen.findByText('Aucun dossier de recouvrement')).toBeTruthy();
+    expect(navigate).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Ouvrir un dossier' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Ouvrir un dossier de recouvrement' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Ouvrir le dossier' }));
+    await waitFor(async () => { expect((await snapshotOf(source)).dossiers).toHaveLength(2); });
+    await waitFor(() => { expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/^\/finances\/recouvrement\/dos-rc-2026-0012/)); });
   });
 });

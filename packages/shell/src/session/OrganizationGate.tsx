@@ -2,12 +2,10 @@
 
 import { ApiError, createApiClient, findOrganization } from '@eguardimmo/api';
 import type { ApiClient, OrganizationProfile } from '@eguardimmo/api';
-import { Alert, Button } from '@eguardimmo/ui';
+import { Alert, Button, Spinner } from '@eguardimmo/ui';
 import { useQuery } from '@tanstack/react-query';
 import { createContext, use, useMemo } from 'react';
 import type { ReactNode } from 'react';
-import { LoadingBlock } from '../features/outils/kit';
-import { EquipeSourceProvider, createApiEquipeSource } from '../features/compte';
 
 export interface OrganizationSession {
   client: ApiClient;
@@ -37,12 +35,12 @@ function signInHref(authUrl: string | undefined): string | null {
 export function OrganizationGate({ apiUrl, authUrl, kind, children }: OrganizationGateProps) {
   const client = useMemo(() => createApiClient({ baseUrl: apiUrl }), [apiUrl]);
   const query = useQuery({ queryKey: ['api', 'organization', kind], queryFn: () => findOrganization(client, kind), retry: false, staleTime: Infinity });
-  const equipe = useMemo(() => (query.data ? createApiEquipeSource(client, query.data.organization) : null), [client, query.data]);
+  const session = useMemo(() => (query.data ? { client, organization: query.data } : null), [client, query.data]);
 
   if (query.isPending) {
     return (
-      <div className="p-4">
-        <LoadingBlock label="Ouverture de votre espace" />
+      <div className="flex justify-center p-8">
+        <Spinner size={32} label="Ouverture de votre espace" />
       </div>
     );
   }
@@ -70,7 +68,7 @@ export function OrganizationGate({ apiUrl, authUrl, kind, children }: Organizati
     );
   }
 
-  if (query.data === null || equipe === null) {
+  if (session === null) {
     return (
       <div className="p-4">
         <Alert tone="warning" title="Aucune organisation">
@@ -83,8 +81,6 @@ export function OrganizationGate({ apiUrl, authUrl, kind, children }: Organizati
   }
 
   return (
-    <SessionContext value={{ client, organization: query.data }}>
-      <EquipeSourceProvider source={equipe}>{children}</EquipeSourceProvider>
-    </SessionContext>
+    <SessionContext value={session}>{children}</SessionContext>
   );
 }

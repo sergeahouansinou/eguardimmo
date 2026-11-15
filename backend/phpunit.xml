@@ -36,6 +36,7 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="AUDIT_HMAC_KEY" value="cle-hmac-de-test"/>
+        <env name="PARTIES_HMAC_KEY" value="cle-hmac-parties-de-test"/>
         <env name="AUTH_HUB_URL" value="https://auth.eguardimmo.test"/>
         <env name="AUTH_RETURN_TO_ALLOWED_HOSTS" value="auth.eguardimmo.test,agence.eguardimmo.test,proprietaire.eguardimmo.test"/>
         <env name="APP_URL" value="https://api.eguardimmo.test"/>

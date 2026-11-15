@@ -46,6 +46,6 @@ final class VerifyEmailNotification extends Notification implements ShouldQueue
             'hash' => hash('sha1', $email),
         ]);
 
-        return Hub::url('/verification-email').'?'.http_build_query(['url' => $lienApi]);
+        return Hub::url('/verification-email/confirmer').'?'.http_build_query(['jeton' => $lienApi]);
     }
 }

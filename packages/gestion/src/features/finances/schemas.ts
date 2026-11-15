@@ -143,7 +143,7 @@ export type Recu = z.infer<typeof recuSchema>;
 export const acteSchema = z.object({
   id,
   date: isoDate,
-  kind: z.enum(['relance', 'mise_en_demeure', 'commandement', 'autre']),
+  kind: z.enum(['relance', 'mise_en_demeure', 'commandement', 'transmission', 'revocation', 'autre']),
   libelle: z.string().min(1),
   intervenant: z.string().min(1),
   cout: z.number().int().nonnegative(),
@@ -156,14 +156,66 @@ export const planSchema = z.object({
   propositionLe: isoDate,
 });
 
+export const creanceSchema = z.object({
+  id,
+  kind: z.enum(['echeance', 'facture']),
+  refId: id,
+  libelle: z.string().min(1),
+  montantInitial: minor,
+  inclusLe: isoDate,
+  retireLe: isoDate.nullable(),
+});
+export type Creance = z.infer<typeof creanceSchema>;
+
+export const PIECE_KINDS = ['decompte', 'avis_echeance', 'facture', 'relance', 'mise_en_demeure', 'bail', 'grand_livre'] as const;
+
+export const pieceSchema = z.object({
+  id,
+  kind: z.enum(PIECE_KINDS),
+  libelle: z.string().min(1),
+  octets: positiveMinor,
+  facultative: z.boolean(),
+});
+export type Piece = z.infer<typeof pieceSchema>;
+
+export const liasseSchema = z.object({
+  id,
+  genereLe: isoDate,
+  pieces: z.array(pieceSchema).min(1),
+  octets: positiveMinor,
+  empreinte: z.string(),
+});
+export type Liasse = z.infer<typeof liasseSchema>;
+
+export const TRANSMISSION_DUREES = [3, 7, 14, 30] as const;
+export const emailSchema = z.string().trim().min(1, 'Le contact n’a pas d’adresse e-mail.').pipe(z.email('Adresse e-mail invalide.'));
+
+export const transmissionSchema = z.object({
+  id,
+  liasseId: id,
+  destinataireId: id,
+  destinataire: z.string().min(1),
+  email: emailSchema,
+  envoyeLe: isoDate,
+  dureeJours: z.number().int().min(1).max(30),
+  expireLe: isoDate,
+  message: z.string(),
+  revoqueLe: isoDate.nullable(),
+  telechargements: z.number().int().nonnegative(),
+});
+export type Transmission = z.infer<typeof transmissionSchema>;
+
 export const dossierSchema = z.object({
   id,
   numero: z.string().min(1),
-  echeanceId: id,
+  bailId: id,
   ouvertLe: isoDate,
   delaiJusquau: isoDate.nullable(),
+  creances: z.array(creanceSchema).min(1),
   actes: z.array(acteSchema),
   plan: planSchema.nullable(),
+  liasses: z.array(liasseSchema),
+  transmissions: z.array(transmissionSchema),
 });
 export type Dossier = z.infer<typeof dossierSchema>;
 

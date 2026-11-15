@@ -40,3 +40,5 @@ export { PlannedScreen } from './planned/PlannedScreen';
 export type { PlannedScreenProps } from './planned/PlannedScreen';
 export { plannedStaticParams, resolvePlanned } from './planned/planned';
 export type { PlannedScreens } from './planned/planned';
+export { OrganizationGate, useOrganizationSession } from './session/OrganizationGate';
+export type { OrganizationGateProps, OrganizationSession } from './session/OrganizationGate';

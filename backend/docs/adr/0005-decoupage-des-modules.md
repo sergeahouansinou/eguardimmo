@@ -1,7 +1,7 @@
 # ADR 0005 — Découpage des modules métier
 
 Statut : accepté (2026-11-13). Complète l'ADR 0001. Cloisonnement : ADR 0006. Flux financiers : ADR 0007.
-Amendements proposés (2026-11-15) : module Catalog et clé étrangère vers ses référentiels (ADR 0018), module Parties et ses dépendances (ADR 0019).
+Amendements acceptés (2026-11-15) : module Catalog et clé étrangère vers ses référentiels (ADR 0018), module Parties et ses dépendances (ADR 0019).
 Amendements acceptés (2026-11-15) : Messaging → Identity (annuaire des opérateurs) et Messaging → Organizations (appartenance, équipe) ; Recovery → Accounting, Documents, Parties, Leases et Recovery ⇢ RecoveryBundleSent ⇢ Notifications (ADR 0023). Les demandes d'assistance (support) sont des données de plateforme, hors organisation, rattachées au besoin à l'organisation du demandeur.
 
 ## Contexte
@@ -12,12 +12,14 @@ Règle de découpe : on sépare quand le **cycle de vie** ou l'**obligation lég
 
 ## Décision
 
-21 modules, plus `app/Shared` (technique, sans métier).
+23 modules, plus `app/Shared` (technique, sans métier).
 
 | Famille | Module | Responsabilité | Reprend de l'ancienne API |
 |---|---|---|---|
 | Socle | Identity | comptes, connexion, 2FA, profils, opérateurs | Users, Roles, Privileges |
 | Socle | Organizations | agences et bailleurs autonomes, membres, rôles, invitations, carte professionnelle et garantie financière | Agencies, AgencyUsers, Collaborators |
+| Socle | Catalog | référentiels et surcharges par organisation, définitions de champs personnalisés, étiquettes (ADR 0018) | nouveau |
+| Socle | Parties | personnes et sociétés connues d'une organisation (locataires, mandants, garants, prestataires, signataires), coordonnées, identifiants, comptes bancaires, effacement RGPD (ADR 0019) | Tenants, Principals, Guarantors, Suppliers, Candidates |
 | Socle | Geography | pays, départements, communes, adresses | Countries, Departments, Cities, Communes, Addresses |
 | Socle | Documents | stockage probant, parcours de signature et journal de preuve (ADR 0011), scellement PAdES, horodatage qualifié, chaîne de hash | Signatures, Seals |
 | Gestion | Properties | biens, unités, inventaire, médias | Properties, Inventory, Videos |
@@ -46,6 +48,9 @@ Règle de découpe : on sépare quand le **cycle de vie** ou l'**obligation lég
 Notation : `A → B` = A appelle la PublicApi de B ; `A ⇢ évt ⇢ B` = B écoute un événement de A.
 
 - Organizations → Identity ; Subscriptions → Organizations
+- Tout module → Catalog (référentiels, validation des champs personnalisés, étiquettes) ; Catalog n'appelle aucun autre module
+- Properties, Mandates, Leases, Maintenance, Payments, Invoicing, Recovery, Accounting, Documents → Parties (ADR 0019) ; Parties → Catalog seulement
+- Identity ⇢ AccountDeleted ⇢ Parties
 - Properties → Geography ; Mandates → Properties ; Leases → Properties, Mandates
 - Rent, Invoicing → Accounting (même transaction, ADR 0007)
 - Tax → Accounting ; Bookings → Listings

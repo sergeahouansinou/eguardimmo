@@ -30,7 +30,7 @@ final class ResetPasswordNotification extends Notification implements ShouldQueu
     {
         $email = $notifiable instanceof CanResetPassword ? $notifiable->getEmailForPasswordReset() : '';
 
-        $url = Hub::url('/reinitialiser').'?'.http_build_query(['token' => $this->token, 'email' => $email]);
+        $url = Hub::url('/mot-de-passe/nouveau').'?'.http_build_query(['jeton' => $this->token, 'email' => $email]);
 
         return (new MailMessage)
             ->subject('Définir ou réinitialiser votre mot de passe')

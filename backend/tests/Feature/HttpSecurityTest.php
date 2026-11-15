@@ -86,3 +86,34 @@ it('lit l\'IP client derrière un proxy déclaré dans TRUSTED_PROXIES', functio
 it('expire les jetons personnels après 30 jours par défaut', function (): void {
     expect(config('sanctum.expiration'))->toBe(60 * 24 * 30);
 });
+
+it('compte les tentatives console par IP du client quand la console présente sa clé de relais', function (): void {
+    config(['identity.console_relay_key' => 'cle-de-relais-de-test']);
+    $relais = fn (string $ip): array => ['X-Console-Relay-Key' => 'cle-de-relais-de-test', 'X-Console-Client-Ip' => $ip];
+
+    for ($i = 0; $i < HttpSecurityServiceProvider::LIMITE_AUTH_PAR_IP_PAR_MINUTE; $i++) {
+        $this->postJson('/api/v1/console/auth/token', ['email' => "attaque{$i}@exemple.fr", 'password' => 'faux', 'code' => '000000'], $relais('203.0.113.7'))
+            ->assertUnprocessable();
+    }
+
+    $this->postJson('/api/v1/console/auth/token', ['email' => 'encore@exemple.fr', 'password' => 'faux', 'code' => '000000'], $relais('203.0.113.7'))
+        ->assertTooManyRequests();
+    $this->postJson('/api/v1/console/auth/token', ['email' => 'operateur@exemple.fr', 'password' => 'faux', 'code' => '000000'], $relais('198.51.100.4'))
+        ->assertUnprocessable();
+});
+
+it('ignore l\'IP annoncée sans la bonne clé de relais', function (): void {
+    config(['identity.console_relay_key' => 'cle-de-relais-de-test']);
+
+    $sansCle = Request::create('/', server: ['REMOTE_ADDR' => '10.0.0.1', 'HTTP_X_CONSOLE_CLIENT_IP' => '203.0.113.7']);
+    $mauvaiseCle = Request::create('/', server: ['REMOTE_ADDR' => '10.0.0.1', 'HTTP_X_CONSOLE_CLIENT_IP' => '203.0.113.7', 'HTTP_X_CONSOLE_RELAY_KEY' => 'autre']);
+    $ipInvalide = Request::create('/', server: ['REMOTE_ADDR' => '10.0.0.1', 'HTTP_X_CONSOLE_CLIENT_IP' => 'pas-une-ip', 'HTTP_X_CONSOLE_RELAY_KEY' => 'cle-de-relais-de-test']);
+
+    expect(HttpSecurityServiceProvider::ipCliente($sansCle))->toBe('10.0.0.1')
+        ->and(HttpSecurityServiceProvider::ipCliente($mauvaiseCle))->toBe('10.0.0.1')
+        ->and(HttpSecurityServiceProvider::ipCliente($ipInvalide))->toBe('10.0.0.1');
+
+    config(['identity.console_relay_key' => null]);
+    $cleVide = Request::create('/', server: ['REMOTE_ADDR' => '10.0.0.1', 'HTTP_X_CONSOLE_CLIENT_IP' => '203.0.113.7', 'HTTP_X_CONSOLE_RELAY_KEY' => '']);
+    expect(HttpSecurityServiceProvider::ipCliente($cleVide))->toBe('10.0.0.1');
+});

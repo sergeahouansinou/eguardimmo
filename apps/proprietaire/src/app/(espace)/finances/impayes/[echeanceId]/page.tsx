@@ -1,7 +1,7 @@
 import { financesStaticIds } from "@eguardimmo/gestion/finances";
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { RecouvrementScreen } from "@/features/finances/screens";
+import { ImpayeDossierScreen } from "@/features/finances/screens";
 
 export const metadata: Metadata = { title: "Recouvrement" };
 
@@ -19,5 +19,5 @@ export default function Page({ params }: PageProps<"/finances/impayes/[echeanceI
 
 async function Detail({ params }: Pick<PageProps<"/finances/impayes/[echeanceId]">, "params">) {
   const { echeanceId } = await params;
-  return <RecouvrementScreen echeanceId={echeanceId} />;
+  return <ImpayeDossierScreen echeanceId={echeanceId} />;
 }

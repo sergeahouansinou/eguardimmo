@@ -13,6 +13,7 @@
     "check": "pnpm lint && pnpm typecheck && pnpm test"
   },
   "dependencies": {
+    "@eguardimmo/api": "workspace:*",
     "@eguardimmo/config": "workspace:*",
     "@eguardimmo/shell": "workspace:*",
     "@eguardimmo/tokens": "workspace:*",

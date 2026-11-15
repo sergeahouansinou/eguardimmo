@@ -1,12 +1,17 @@
 "use client";
 
-import { MessagerieProvider, bailleurProfile, createDemoMessagerieSource, proprietaireProfile } from "@eguardimmo/messagerie";
+import { createApiClient } from "@eguardimmo/api";
+import { useOrganizationSession } from "@eguardimmo/shell";
+import type { OrganizationSession } from "@eguardimmo/shell";
+import { MessagerieProvider, bailleurProfile, createApiMessagerieSource, createDemoMessagerieSource, proprietaireProfile } from "@eguardimmo/messagerie";
+import type { MessagerieSource } from "@eguardimmo/messagerie";
 import type { MessagerieRoutes } from "@eguardimmo/messagerie";
 import type { LinkComponent } from "@eguardimmo/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { ReactNode } from "react";
+import { apiEnv, dataSource } from "@/lib/env";
 import { bailleurMessagerieRoutes, confieHref, confieMessagerieRoutes } from "./routes";
 
 const ConfieLink: LinkComponent = ({ href, ...props }) => <Link {...props} href={confieHref(href)} />;
@@ -18,9 +23,16 @@ const SPACES = {
 
 export type MessagerieSpaceName = keyof typeof SPACES;
 
+function createSource(space: MessagerieSpaceName, session: OrganizationSession | null): MessagerieSource {
+  if (dataSource === "demo") return createDemoMessagerieSource({ space });
+  const client = session?.client ?? createApiClient({ baseUrl: apiEnv().NEXT_PUBLIC_API_URL });
+  return createApiMessagerieSource({ client, organizationId: session?.organization.organization ?? null, space });
+}
+
 export function MessagerieSpaceProvider({ space, children }: { space: MessagerieSpaceName; children: ReactNode }) {
   const router = useRouter();
-  const [source] = useState(() => createDemoMessagerieSource({ space }));
+  const session = useOrganizationSession();
+  const [source] = useState(() => createSource(space, session));
   const { profile, routes, Link: SpaceLink } = SPACES[space];
   return (
     <MessagerieProvider

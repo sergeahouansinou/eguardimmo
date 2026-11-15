@@ -43,7 +43,7 @@ it('envoie un lien vers le hub, pas vers l\'API', function (): void {
     Notification::assertSentTo($user, ResetPasswordNotification::class, function (ResetPasswordNotification $n) use ($user): bool {
         $url = $n->toMail($user)->actionUrl;
 
-        return str_starts_with($url, 'https://auth.eguardimmo.test/reinitialiser?token=');
+        return str_starts_with($url, 'https://auth.eguardimmo.test/mot-de-passe/nouveau?jeton=') && str_contains($url, '&email=jeanne%40exemple.fr');
     });
 });
 

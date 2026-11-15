@@ -1,6 +1,6 @@
 # ADR 0021 — Pièces à échéance et procédures configurables
 
-Statut : proposé (2026-11-15). Référentiels : ADR 0018. Historique : ADR 0016.
+Statut : accepté (2026-11-15). Référentiels : ADR 0018. Historique : ADR 0016.
 
 ## Contexte
 

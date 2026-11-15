@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { expectNoA11yViolations } from '../../../test/axe';
 import { BottomNav } from './BottomNav';
 import { SideNav } from './SideNav';
+import { activeChildHref } from './types';
 import type { NavSection } from './types';
 
 const sections: NavSection[] = [
@@ -104,5 +105,21 @@ describe('BottomNav', () => {
     expect(screen.getByRole('link', { name: 'Accueil' }).getAttribute('aria-current')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Plus' }));
     expect(opened).toBe(true);
+  });
+});
+
+describe('activeChildHref', () => {
+  const finances = [
+    { id: 'operations', label: 'Opérations', href: '/finances' },
+    { id: 'impayes', label: 'Impayés', href: '/finances/impayes', activeFor: ['/finances/recouvrement'] },
+  ];
+
+  it('rattache une page sans entrée propre au lien qui la déclare', () => {
+    expect(activeChildHref(finances, '/finances/recouvrement/dos-1')).toBe('/finances/impayes');
+  });
+
+  it('garde le lien le plus précis par défaut', () => {
+    expect(activeChildHref(finances, '/finances/impayes')).toBe('/finances/impayes');
+    expect(activeChildHref(finances, '/finances/factures')).toBe('/finances');
   });
 });

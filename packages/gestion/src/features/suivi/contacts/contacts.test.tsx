@@ -43,9 +43,9 @@ describe('ContactsPage', () => {
     expect(row.textContent).toContain('Partagé');
     expect(screen.getByRole('row', { name: /Peinture Dupont/ }).textContent).toContain('Résidence du Parc');
     expect(screen.getByRole('row', { name: /Cabinet Lefèvre/ }).textContent).toContain('Privé');
-    expect(screen.getByText('1 à 5 sur 24')).toBeTruthy();
-    const counts = ['Tous', 'Artisans', 'Syndics', 'Assureurs', 'Garants'].map((label) => screen.getByRole('tab', { name: new RegExp(label) }).textContent);
-    expect(counts).toEqual(['Tous24', 'Artisans9', 'Syndics3', 'Assureurs4', 'Garants8']);
+    expect(screen.getByText('1 à 5 sur 26')).toBeTruthy();
+    const counts = ['Tous', 'Artisans', 'Syndics', 'Assureurs', 'Garants', 'Commissaires de justice'].map((label) => screen.getByRole('tab', { name: new RegExp(label) }).textContent);
+    expect(counts).toEqual(['Tous26', 'Artisans9', 'Syndics3', 'Assureurs4', 'Garants8', 'Commissaires de justice2']);
     expect(screen.getByRole('link', { name: 'Nouveau contact' }).getAttribute('href')).toBe('/contacts/nouveau');
     expect(screen.getByRole('link', { name: 'Ouvrir Plomberie Sanvi' }).getAttribute('href')).toBe('/contacts/plomberie-sanvi');
   });
@@ -58,7 +58,7 @@ describe('ContactsPage', () => {
     expect(names()).toEqual(['Cabinet Lefèvre', 'Syndic Horizon', 'Gestion Immo Plus']);
     await user.click(screen.getByRole('tab', { name: /Tous/ }));
     await user.click(screen.getByRole('button', { name: 'Suivant' }));
-    expect(screen.getByText('6 à 10 sur 24')).toBeTruthy();
+    expect(screen.getByText('6 à 10 sur 26')).toBeTruthy();
     await user.type(screen.getByRole('searchbox', { name: 'Rechercher' }), '43 55 20');
     expect(names()).toEqual(['Cabinet Lefèvre']);
     await user.clear(screen.getByRole('searchbox', { name: 'Rechercher' }));
@@ -196,7 +196,7 @@ describe('ContactFormPage', () => {
       </ContactsSourceProvider>,
     );
     await screen.findByRole('table');
-    expect(screen.getByRole('tab', { name: /Tous/ }).textContent).toContain('25');
+    expect(screen.getByRole('tab', { name: /Tous/ }).textContent).toContain('27');
     expect(screen.getByRole('status').textContent).toContain('Contact « Électricité Zinsou » ajouté au carnet.');
   });
 

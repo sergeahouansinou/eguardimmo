@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Catalog\Models\Term;
 use App\Modules\Identity\Models\Operator;
 use App\Modules\Identity\Models\PersonalAccessToken;
 use App\Modules\Identity\Models\SocialIdentity;
@@ -26,7 +27,8 @@ use Illuminate\Support\ServiceProvider;
 
 // Modèles qui n'appartiennent à aucune organisation ; toute autre entrée est une décision d'architecture.
 $horsOrganisation = [User::class, Operator::class, SocialIdentity::class, UserDevice::class, PersonalAccessToken::class, Organization::class,
-    SupportTicket::class, SupportTicketMessage::class, SupportAttachment::class, SupportAccessGrant::class];
+    SupportTicket::class, SupportTicketMessage::class, SupportAttachment::class, SupportAccessGrant::class,
+    Term::class];
 
 $modules = array_map('basename', glob(__DIR__.'/../../app/Modules/*', GLOB_ONLYDIR) ?: []);
 
