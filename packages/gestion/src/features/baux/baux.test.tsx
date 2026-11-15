@@ -101,7 +101,7 @@ describe('BailFormPage', () => {
   it('crée un bail en quatre étapes et rattache le locataire au bien', async () => {
     const { sources, push } = renderLot(<BailFormPage />);
     await fillUntilConditions(/Apt B3/, 'Mariam Sy (invité)');
-    await userEvent.type(await screen.findByLabelText('Début du bail *'), '2027-01-01');
+    await userEvent.type(await screen.findByLabelText('Début du bail *'), '2027-12-01');
     await userEvent.type(screen.getByLabelText('Loyer hors charges (€) *'), '780');
     await userEvent.type(screen.getByLabelText('Charges (€) *'), '70');
     await userEvent.type(screen.getByLabelText('Dépôt de garantie (€) *'), '780');
@@ -111,7 +111,7 @@ describe('BailFormPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Créer le bail' }));
     await waitFor(() => { expect(push).toHaveBeenCalledWith('/baux/apt-b3-2'); });
     const created = (await leasesOf(sources.baux)).find((lease) => lease.id === 'apt-b3-2');
-    expect(created).toMatchObject({ rent: 78000, charges: 7000, deposit: 78000, status: 'a_venir', end: '2029-12-31', tenantIds: ['mariam-sy'] });
+    expect(created).toMatchObject({ rent: 78000, charges: 7000, deposit: 78000, status: 'a_venir', end: '2030-11-30', tenantIds: ['mariam-sy'] });
     const tenants = (await sources.tenants.tenants()) as { id: string; unitId: string | null; status: string }[];
     expect(tenants.find((tenant) => tenant.id === 'mariam-sy')).toMatchObject({ unitId: 'apt-b3', status: 'actif' });
   });
@@ -140,6 +140,20 @@ describe('BailFormPage', () => {
     expect(await screen.findByText(/déjà loué sur cette période \(bail BL-2023-0007\)/)).toBeTruthy();
     expect(push).not.toHaveBeenCalled();
     expect((await leasesOf(sources.baux)).filter((lease) => lease.unitId === 'apt-a1')).toHaveLength(2);
+  });
+
+  it('refuse un bail qui chevauche un bail à venir', async () => {
+    const { sources, push } = renderLot(<BailFormPage />);
+    await fillUntilConditions(/Apt B3/, 'Mariam Sy (invité)');
+    await userEvent.type(await screen.findByLabelText('Début du bail *'), '2026-12-01');
+    await userEvent.type(screen.getByLabelText('Loyer hors charges (€) *'), '780');
+    await userEvent.type(screen.getByLabelText('Charges (€) *'), '70');
+    await userEvent.type(screen.getByLabelText('Dépôt de garantie (€) *'), '780');
+    await userEvent.click(screen.getByRole('button', { name: 'Suivant' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Créer le bail' }));
+    expect(await screen.findByText(/déjà loué sur cette période \(bail BL-2026-0017\)/)).toBeTruthy();
+    expect(push).not.toHaveBeenCalled();
+    expect((await leasesOf(sources.baux)).filter((lease) => lease.unitId === 'apt-b3')).toHaveLength(1);
   });
 
   it('enregistre un brouillon avec le seul bien', async () => {

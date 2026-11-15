@@ -84,7 +84,7 @@ function fingerprint(seed: string): string {
 function findOverlap(all: readonly Lease[], fields: Pick<Lease, 'unitId' | 'start' | 'end' | 'status'>, selfId?: string): Lease | undefined {
   if (fields.status === 'brouillon') return undefined;
   return all.find(
-    (other) => other.id !== selfId && other.unitId === fields.unitId && (other.status === 'en_cours' || other.status === 'preavis') && other.end >= fields.start && other.start <= fields.end,
+    (other) => other.id !== selfId && other.unitId === fields.unitId && (other.status === 'en_cours' || other.status === 'preavis' || other.status === 'a_venir') && other.end >= fields.start && other.start <= fields.end,
   );
 }
 
