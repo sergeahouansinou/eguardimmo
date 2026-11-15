@@ -86,6 +86,13 @@ export function createDemoSource({ clock = createDemoClock() }: DemoSourceOption
       for (const item of shellNotifications(state)) state.readNotifications.add(item.id);
       return Promise.resolve();
     },
+    markNotificationRead: (id) => {
+      if (!shellNotifications(state).some((item) => item.id === id)) {
+        return Promise.reject(new Error('Notification inconnue.'));
+      }
+      state.readNotifications.add(id);
+      return Promise.resolve();
+    },
     auth,
     overview: () => Promise.resolve(overview(ctx)),
     organisations: organisationsApi(ctx),

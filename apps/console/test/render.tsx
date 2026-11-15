@@ -14,7 +14,10 @@ export interface ConsoleRender extends RenderResult {
 
 export function renderWithConsole(ui: ReactElement): ConsoleRender {
   const fixed = new Date(DEMO_NOW);
-  const source = createDemoSource({ clock: () => fixed });
+  return renderWithSource(ui, createDemoSource({ clock: () => fixed }));
+}
+
+export function renderWithSource(ui: ReactElement, source: ConsoleSource): ConsoleRender {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } } });
   const result = render(
     <QueryClientProvider client={client}>

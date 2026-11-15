@@ -84,7 +84,7 @@ export const accountMenu: AccountMenuConfig = {
 export const helpMenu: HelpMenuItem[] = [{ id: 'aide', label: 'Centre d’aide', href: '/aide', icon: CircleHelp }];
 
 export const notifications: NotificationsConfig = {
-  allHref: '/parametres/notifications',
+  allHref: '/notifications',
   settingsHref: '/parametres/notifications',
 };
 
@@ -104,7 +104,8 @@ export const searchPages: PageResult[] = [
   { href: '/sauvegardes/restauration', label: 'Restauration' },
   { href: '/parametres', label: 'Paramètres généraux' },
   { href: '/parametres/securite', label: 'Paramètres de sécurité' },
-  { href: '/parametres/notifications', label: 'Notifications' },
+  { href: '/notifications', label: 'Toutes les notifications' },
+  { href: '/parametres/notifications', label: 'Préférences de notifications' },
   { href: '/parametres/informations', label: 'Informations de l’opérateur' },
   { href: '/equipe', label: 'Équipe opérateur' },
   { href: '/equipe/inviter', label: 'Inviter un opérateur' },

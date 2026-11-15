@@ -125,6 +125,7 @@ export interface EquipeApi {
 }
 
 export interface ConsoleSource extends ShellSource {
+  markNotificationRead: (id: string) => Promise<void>;
   auth: AuthApi;
   overview: () => Promise<unknown>;
   organisations: OrganisationsApi;

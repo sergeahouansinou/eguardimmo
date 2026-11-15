@@ -1,3 +1,4 @@
+import { shellSchema } from '@eguardimmo/shell';
 import { describe, expect, it } from 'vitest';
 import {
   ConsoleError,
@@ -194,5 +195,21 @@ describe('sauvegardes : restauration', () => {
     const source = newSource();
     const { input } = await context(source);
     expect(() => source.sauvegardes.requestRestore({ ...input, validatorId: 'lucas-bernard' })).toThrow(/autre opérateur/);
+  });
+});
+
+describe('notifications de la console', () => {
+  it('marque une notification comme lue, puis toutes, et refuse une notification inconnue', async () => {
+    const source = newSource();
+    const unread = async () => shellSchema.parse(await source.shell()).notifications.filter((item) => item.unread);
+    const before = await unread();
+    expect(before.length).toBeGreaterThan(1);
+    const [first] = before;
+    if (!first) throw new Error('aucune notification non lue');
+    await source.markNotificationRead(first.id);
+    expect(await unread()).toHaveLength(before.length - 1);
+    await source.markAllNotificationsRead();
+    expect(await unread()).toHaveLength(0);
+    await expect(source.markNotificationRead('inconnue')).rejects.toThrow('inconnue');
   });
 });
