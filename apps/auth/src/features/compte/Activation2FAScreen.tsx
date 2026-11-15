@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { DemoNotice } from "@/components/DemoNotice";
 import { FormAlert } from "@/components/FormAlert";
-import { QrPlaceholder } from "@/components/QrPlaceholder";
+import { QrCode } from "@/components/QrCode";
 import { Stepper } from "@/components/Stepper";
 import { TextLink } from "@/components/TextLink";
 import { useCodesStore } from "@/features/auth/codesStore";
@@ -90,7 +90,7 @@ export function Activation2FAScreen() {
                   <li>Saisissez le code à 6 chiffres affiché pour confirmer.</li>
                 </ol>
                 <div className="flex flex-wrap items-start gap-4">
-                  <QrPlaceholder />
+                  {setup.data ? <QrCode value={setup.data.otpauthUri} label="QR code de configuration de l’authentification en deux étapes" /> : null}
                   <div className="flex min-w-0 flex-1 basis-56 flex-col gap-3">
                     <span className="text-caption text-fg-subtle">Clé de configuration</span>
                     <code className="w-fit max-w-full rounded-sm border border-line bg-muted px-2.5 py-1.5 text-body-strong tracking-wider break-all text-fg">
@@ -135,7 +135,7 @@ export function Activation2FAScreen() {
                     Confirmer et activer
                   </Button>
                 </div>
-                <DemoNotice>Code de démonstration : 481305. Le QR code est un visuel fictif.</DemoNotice>
+                <DemoNotice>Code de démonstration : 481305.</DemoNotice>
               </Section>
             </QueryState>
           </>
