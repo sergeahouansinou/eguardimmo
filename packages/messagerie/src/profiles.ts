@@ -42,6 +42,12 @@ export interface MessagerieProfile {
     audienceNoun: string;
     senderName: string;
     mergeTags: string[];
+    testSend: boolean;
+    filters: { building: boolean; period: boolean };
+    sendLabels: {
+      now: { name: string; detail: (count: number) => string };
+      scheduled: (count: number) => string;
+    } | null;
   } | null;
   help: {
     title: string;
@@ -181,6 +187,9 @@ export const agenceProfile: MessagerieProfile = {
     audienceNoun: 'personnes',
     senderName: 'Cabinet Delmas Immobilier',
     mergeTags: ['Prénom', 'Mandat', 'Mois'],
+    testSend: false,
+    filters: { building: false, period: false },
+    sendLabels: null,
   },
   help: {
     title: 'Aide',
@@ -232,6 +241,12 @@ export const bailleurProfile: MessagerieProfile = {
     audienceNoun: 'locataires',
     senderName: 'Gestion Les Tilleuls',
     mergeTags: ['Prénom', 'Bien', 'Loyer', 'Échéance'],
+    testSend: true,
+    filters: { building: true, period: true },
+    sendLabels: {
+      now: { name: 'Envoyer', detail: (count) => ` à ${String(count)} locataire${count > 1 ? 's' : ''}` },
+      scheduled: (count) => `Programmer pour ${String(count)} locataire${count > 1 ? 's' : ''}`,
+    },
   },
   help: {
     title: 'Aide',

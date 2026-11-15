@@ -7,7 +7,7 @@ import { createDemoMessagerieSource } from '../data/demo';
 import { campaignListSchema } from '../data/schemas';
 import { CampaignsPage, NewCampaignPage } from './CampaignPages';
 
-const allCampaigns = { tab: 'all' as const, search: '', page: 1, pageSize: 50 };
+const allCampaigns = { tab: 'all' as const, search: '', building: 'all', period: 'all' as const, page: 1, pageSize: 50 };
 
 describe('CampaignsPage', () => {
   it('affiche indicateurs, campagnes et actions adaptées au statut', async () => {
@@ -199,8 +199,10 @@ describe('NewCampaignPage', () => {
   it('n’affiche pas d’alerte quand tous les destinataires ont un e-mail', async () => {
     renderMessagerie(<NewCampaignPage />, { space: 'bailleur' });
     await userEvent.click(await screen.findByRole('radio', { name: /Un ou plusieurs immeubles/ }));
+    await userEvent.click(screen.getByRole('combobox', { name: /Immeubles à ajouter/ }));
+    await userEvent.click(await screen.findByRole('option', { name: /Résidence du Parc/ }));
     expect(screen.queryByText(/sans e-mail valide/)).toBeNull();
-    expect(within(screen.getByRole('region', { name: 'Récapitulatif' })).getByText('6 sur 6')).toBeTruthy();
+    expect(within(screen.getByRole('region', { name: 'Récapitulatif' })).getByText('3 sur 3')).toBeTruthy();
   });
 
   it('Annuler revient à la liste des campagnes', async () => {

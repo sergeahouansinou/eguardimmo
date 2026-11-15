@@ -111,11 +111,15 @@ export type InboxStats = z.infer<typeof inboxStatsSchema>;
 export const campaignStatusSchema = z.enum(['envoyee', 'programmee', 'brouillon']);
 export type CampaignStatus = z.infer<typeof campaignStatusSchema>;
 
+export const campaignPeriodSchema = z.enum(['all', 'month', 'quarter', 'year']);
+export type CampaignPeriod = z.infer<typeof campaignPeriodSchema>;
+
 export const campaignSchema = z.object({
   id,
   title: z.string().min(1),
   audienceId: id,
   audienceLabel: z.string().min(1),
+  buildingIds: z.array(id),
   recipientCount: count,
   status: campaignStatusSchema,
   sentAt: isoDateTime.nullable(),
@@ -144,14 +148,31 @@ export const campaignListSchema = z.object({
 });
 export type CampaignListResult = z.infer<typeof campaignListSchema>;
 
+export const campaignBuildingSchema = z.object({
+  id,
+  name: z.string().min(1),
+  count,
+  withoutEmail: count,
+});
+export type CampaignBuilding = z.infer<typeof campaignBuildingSchema>;
+
 export const campaignAudienceSchema = z.object({
   id,
   label: z.string().min(1),
   detail: z.string().min(1),
   count,
   withoutEmail: count,
+  buildingIds: z.array(id).optional(),
+  buildings: z.array(campaignBuildingSchema).optional(),
 });
 export type CampaignAudience = z.infer<typeof campaignAudienceSchema>;
+
+export const campaignTestResultSchema = z.object({
+  sentTo: z.email(),
+  subject: z.string().min(1),
+  sentAt: isoDateTime,
+});
+export type CampaignTestResult = z.infer<typeof campaignTestResultSchema>;
 
 export const ticketStatusSchema = z.enum(['ouvert', 'en_attente', 'resolu']);
 export type TicketStatus = z.infer<typeof ticketStatusSchema>;

@@ -2,9 +2,15 @@ import type { MessagerieSeed } from '../seed';
 import { conversation, msg, person } from './builders';
 import { pastSupportTicket, standardSupport, standardTicketBaseline, supportAgent } from './clientTickets';
 import { agenceSeed } from './agence';
-import type { Campaign } from '../schemas';
+import type { Campaign, CampaignBuilding } from '../schemas';
 
 const me = person('u-marc-b', 'Marc Chevalier', 'bailleur', 'Gestion Les Tilleuls');
+const buildings: CampaignBuilding[] = [
+  { id: 'b-tilleuls', name: 'Les Tilleuls', count: 6, withoutEmail: 1 },
+  { id: 'b-parc', name: 'Résidence du Parc', count: 3, withoutEmail: 0 },
+  { id: 'b-riviere', name: 'Maison Rivière', count: 1, withoutEmail: 0 },
+];
+const allBuildingIds = buildings.map((building) => building.id);
 const koffi = person('t-koffi', 'Koffi Adjovi', 'locataire', 'Apt A1');
 const ibrahim = person('t-ibrahim', 'Ibrahim Yao', 'locataire', 'Studio 2e');
 const dossou = person('t-dossou', 'Marc Dossou', 'locataire', 'Villa RDC');
@@ -13,6 +19,7 @@ function campaign(
   id: string,
   title: string,
   audience: { id: string; label: string },
+  buildingIds: string[],
   recipientCount: number,
   status: Campaign['status'],
   extra: Partial<Campaign> = {},
@@ -22,6 +29,7 @@ function campaign(
     title,
     audienceId: audience.id,
     audienceLabel: audience.label,
+    buildingIds,
     recipientCount,
     status,
     sentAt: null,
@@ -39,6 +47,7 @@ export function bailleurSeed(): MessagerieSeed {
   const locataires = { id: 'aud-locataires', label: 'Tous les locataires' };
   return {
     me,
+    meEmail: 'marc.chevalier@example.com',
     conversations: [
       conversation({
         id: 'c-koffi',
@@ -87,16 +96,16 @@ export function bailleurSeed(): MessagerieSeed {
       { ...dossou, linkOptions: [{ id: 'bail-villa-rdc', label: 'Bail de la Villa RDC' }] },
     ],
     audiences: [
-      { id: 'aud-locataires', label: 'Tous les locataires', detail: 'Baux en cours', count: 10, withoutEmail: 1 },
-      { id: 'aud-tilleuls', label: 'Un ou plusieurs immeubles', detail: 'Les Tilleuls', count: 6, withoutEmail: 0 },
-      { id: 'aud-impayes', label: 'Locataires avec un impayé', detail: 'Solde négatif au 13/11/2026', count: 3, withoutEmail: 0 },
+      { id: 'aud-locataires', label: 'Tous les locataires', detail: 'Baux en cours', count: 10, withoutEmail: 1, buildingIds: allBuildingIds },
+      { id: 'aud-immeubles', label: 'Un ou plusieurs immeubles', detail: 'Composez la liste immeuble par immeuble', count: 0, withoutEmail: 0, buildings },
+      { id: 'aud-impayes', label: 'Locataires avec un impayé', detail: 'Solde négatif au 13/11/2026', count: 3, withoutEmail: 0, buildingIds: ['b-tilleuls', 'b-parc'] },
     ],
     campaigns: [
-      campaign('camp-eau', 'Coupure d’eau, lundi 16 novembre', { id: 'aud-tilleuls', label: 'Les Tilleuls' }, 6, 'envoyee', { sentAt: '2026-11-13T09:10:00+01:00', readCount: 5 }),
-      campaign('camp-revision', 'Révision des loyers au 1er décembre', locataires, 10, 'programmee', { scheduledAt: '2026-11-25T08:00:00+01:00' }),
-      campaign('camp-assurance', 'Attestation d’assurance à renouveler', { id: 'aud-impayes', label: 'Locataires concernés' }, 2, 'envoyee', { sentAt: '2026-11-05T10:30:00+01:00', readCount: 2 }),
-      campaign('camp-adresse', 'Nouvelle adresse de paiement', locataires, 10, 'envoyee', { sentAt: '2026-10-02T09:00:00+02:00', readCount: 8, failedCount: 1 }),
-      campaign('camp-fermeture', 'Fermeture du bureau en décembre', locataires, 10, 'brouillon'),
+      campaign('camp-eau', 'Coupure d’eau, lundi 16 novembre', { id: 'aud-immeubles', label: 'Les Tilleuls' }, ['b-tilleuls'], 6, 'envoyee', { sentAt: '2026-11-13T09:10:00+01:00', readCount: 5 }),
+      campaign('camp-revision', 'Révision des loyers au 1er décembre', locataires, allBuildingIds, 10, 'programmee', { scheduledAt: '2026-11-25T08:00:00+01:00' }),
+      campaign('camp-assurance', 'Attestation d’assurance à renouveler', { id: 'aud-impayes', label: 'Locataires concernés' }, ['b-tilleuls', 'b-parc'], 2, 'envoyee', { sentAt: '2026-11-05T10:30:00+01:00', readCount: 2 }),
+      campaign('camp-adresse', 'Nouvelle adresse de paiement', locataires, allBuildingIds, 10, 'envoyee', { sentAt: '2026-10-02T09:00:00+02:00', readCount: 8, failedCount: 1 }),
+      campaign('camp-fermeture', 'Fermeture du bureau en décembre', locataires, allBuildingIds, 10, 'brouillon'),
     ],
     tickets: [pastSupportTicket(me, 'Espace bailleur')],
     staff: [{ id: supportAgent.id, name: supportAgent.name }],

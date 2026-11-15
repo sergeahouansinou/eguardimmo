@@ -2,10 +2,19 @@ import { MAX_ATTACHMENTS, validateAttachment } from './inputs';
 import type { Attachment, ConversationDetail, ConversationSummary, Message, TicketDetail, TicketSummary } from './schemas';
 import type { MessagerieSeed } from './seed';
 
+export interface SentCampaignTest {
+  to: string;
+  subject: string;
+  body: string;
+  attachmentNames: string[];
+  sentAt: string;
+}
+
 export interface DemoContext {
   state: MessagerieSeed;
   now: () => Date;
   nextId: (prefix: string) => string;
+  sentTests: SentCampaignTest[];
 }
 
 export function createContext(seed: MessagerieSeed, now: () => Date): DemoContext {
@@ -13,6 +22,7 @@ export function createContext(seed: MessagerieSeed, now: () => Date): DemoContex
   return {
     state: structuredClone(seed),
     now,
+    sentTests: [],
     nextId: (prefix) => {
       counter += 1;
       return `${prefix}-${String(counter)}`;

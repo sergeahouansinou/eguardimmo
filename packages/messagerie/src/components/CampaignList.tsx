@@ -12,15 +12,16 @@ import {
   TabList,
   TabPanel,
   Tabs,
-  TextField,
   cx,
 } from '@eguardimmo/ui';
 import type { BadgeTone } from '@eguardimmo/ui';
 import { useMessagerieConfig } from '../config';
+import { ALL_BUILDINGS } from '../data/inputs';
 import type { CampaignQuery } from '../data/inputs';
 import { useCampaigns } from '../data/queries';
-import type { Campaign, CampaignStatus } from '../data/schemas';
+import type { Campaign, CampaignPeriod, CampaignStatus } from '../data/schemas';
 import { formatDateTime } from '../lib/dates';
+import { CampaignFilters } from './CampaignFilters';
 import { CampaignTracking } from './CampaignTracking';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from './parts';
 
@@ -48,9 +49,13 @@ const statusTones: Record<CampaignStatus, BadgeTone> = {
 export interface CampaignListProps {
   tab: CampaignTab;
   search: string;
+  building: string;
+  period: CampaignPeriod;
   page: number;
   onTabChange: (tab: CampaignTab) => void;
   onSearchChange: (search: string) => void;
+  onBuildingChange: (building: string) => void;
+  onPeriodChange: (period: CampaignPeriod) => void;
   onPageChange: (page: number) => void;
 }
 
@@ -112,10 +117,30 @@ function CampaignRow({ campaign }: { campaign: Campaign }) {
   );
 }
 
-export function CampaignList({ tab, search, page, onTabChange, onSearchChange, onPageChange }: CampaignListProps) {
+export function CampaignList({
+  tab,
+  search,
+  building,
+  period,
+  page,
+  onTabChange,
+  onSearchChange,
+  onBuildingChange,
+  onPeriodChange,
+  onPageChange,
+}: CampaignListProps) {
   const { profile } = useMessagerieConfig();
+  const filters = profile.campaigns?.filters ?? { building: false, period: false };
+  const filtered = (filters.building && building !== ALL_BUILDINGS) || (filters.period && period !== 'all');
   const [pageSize, setPageSize] = useState(10);
-  const query = useCampaigns({ tab, search, page, pageSize });
+  const query = useCampaigns({
+    tab,
+    search,
+    building: filters.building ? building : ALL_BUILDINGS,
+    period: filters.period ? period : 'all',
+    page,
+    pageSize,
+  });
   const data = query.data;
 
   const handleTab = (value: string) => {
@@ -131,10 +156,23 @@ export function CampaignList({ tab, search, page, onTabChange, onSearchChange, o
       <LoadingBlock label="Chargement des campagnes" />
     );
   } else if (data.items.length === 0) {
+    const narrowed = search !== '' || filtered;
     content = (
       <EmptyBlock
-        title={search ? 'Aucune campagne ne correspond à votre recherche' : 'Aucune campagne ici'}
-        hint={search ? 'Essayez un autre mot-clé.' : 'Créez une campagne pour écrire à plusieurs personnes à la fois.'}
+        title={
+          filtered
+            ? 'Aucune campagne ne correspond à ces filtres'
+            : search
+              ? 'Aucune campagne ne correspond à votre recherche'
+              : 'Aucune campagne ici'
+        }
+        hint={
+          filtered
+            ? 'Modifiez l’immeuble ou la période.'
+            : narrowed
+              ? 'Essayez un autre mot-clé.'
+              : 'Créez une campagne pour écrire à plusieurs personnes à la fois.'
+        }
       />
     );
   } else {
@@ -206,16 +244,17 @@ export function CampaignList({ tab, search, page, onTabChange, onSearchChange, o
             </Tab>
           ))}
         </TabList>
-        <div className="max-w-md">
-          <TextField
-            label="Rechercher une campagne"
-            hideLabel
-            type="search"
-            placeholder={profile.campaigns?.searchPlaceholder ?? 'Ex. Coupure d’eau'}
-            value={search}
-            onChange={(event) => { onSearchChange(event.target.value); }}
-          />
-        </div>
+        <CampaignFilters
+          search={search}
+          searchPlaceholder={profile.campaigns?.searchPlaceholder ?? 'Ex. Coupure d’eau'}
+          building={building}
+          period={period}
+          showBuilding={filters.building}
+          showPeriod={filters.period}
+          onSearchChange={onSearchChange}
+          onBuildingChange={onBuildingChange}
+          onPeriodChange={onPeriodChange}
+        />
         <TabPanel value={tab} className="flex min-w-0 flex-col gap-3">
           {content}
         </TabPanel>

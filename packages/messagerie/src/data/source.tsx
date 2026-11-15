@@ -9,6 +9,7 @@ import type {
   NewConversationInput,
   ReplyInput,
   SaveCampaignInput,
+  SendCampaignTestInput,
   TicketPatch,
   TicketQuery,
 } from './inputs';
@@ -27,6 +28,7 @@ export interface MessagerieSource {
   getCampaign: (id: string) => Promise<unknown>;
   listCampaignAudiences: () => Promise<unknown>;
   saveCampaign: (input: SaveCampaignInput) => Promise<unknown>;
+  sendCampaignTest: (input: SendCampaignTestInput) => Promise<unknown>;
 
   listTickets: (query: TicketQuery) => Promise<unknown>;
   ticketStats: () => Promise<unknown>;

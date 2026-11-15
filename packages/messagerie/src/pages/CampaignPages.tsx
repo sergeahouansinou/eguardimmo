@@ -7,6 +7,7 @@ import { CampaignForm } from '../components/CampaignForm';
 import { CampaignList } from '../components/CampaignList';
 import { EmptyBlock, PageHeader } from '../components/parts';
 import { useMessagerieConfig } from '../config';
+import { ALL_BUILDINGS } from '../data/inputs';
 import type { CampaignQuery } from '../data/inputs';
 
 function Unavailable() {
@@ -17,6 +18,8 @@ export function CampaignsPage() {
   const { profile, routes, Link } = useMessagerieConfig();
   const [tab, setTab] = useState<CampaignQuery['tab']>('all');
   const [search, setSearch] = useState('');
+  const [building, setBuilding] = useState(ALL_BUILDINGS);
+  const [period, setPeriod] = useState<CampaignQuery['period']>('all');
   const [page, setPage] = useState(1);
 
   if (!profile.campaigns) return <Unavailable />;
@@ -39,6 +42,8 @@ export function CampaignsPage() {
       <CampaignList
         tab={tab}
         search={search}
+        building={building}
+        period={period}
         page={page}
         onTabChange={(next) => {
           setTab(next);
@@ -46,6 +51,14 @@ export function CampaignsPage() {
         }}
         onSearchChange={(next) => {
           setSearch(next);
+          setPage(1);
+        }}
+        onBuildingChange={(next) => {
+          setBuilding(next);
+          setPage(1);
+        }}
+        onPeriodChange={(next) => {
+          setPeriod(next);
           setPage(1);
         }}
         onPageChange={setPage}

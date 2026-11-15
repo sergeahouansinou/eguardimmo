@@ -20,7 +20,7 @@ import { z } from 'zod';
 
 const spaces: MessagerieSpace[] = ['locataire', 'proprietaire', 'agence', 'bailleur', 'console'];
 const create = (space: MessagerieSpace, now = FIXED_NOW) => createDemoMessagerieSource({ space, now: () => now });
-const query = { tab: 'all' as const, search: '', page: 1, pageSize: 50 };
+const query = { tab: 'all' as const, search: '', building: 'all', period: 'all', page: 1, pageSize: 50 };
 const png = (size = 100) => new File([new Uint8Array(size)], 'photo.png', { type: 'image/png' });
 
 describe('fixtures de démonstration', () => {
@@ -41,7 +41,7 @@ describe('fixtures de démonstration', () => {
     z.array(recipientSchema).parse(await source.listRecipients());
     inboxStatsSchema.parse(await source.inboxStats());
     if (space === 'agence' || space === 'bailleur') {
-      campaignListSchema.parse(await source.listCampaigns({ tab: 'all', search: '', page: 1, pageSize: 50 }));
+      campaignListSchema.parse(await source.listCampaigns({ tab: 'all', search: '', building: 'all', period: 'all', page: 1, pageSize: 50 }));
       z.array(campaignAudienceSchema).parse(await source.listCampaignAudiences());
     }
   });
@@ -137,18 +137,18 @@ describe('conversations', () => {
 });
 
 describe('campagnes', () => {
-  const base = { id: null, audienceId: 'aud-locataires', subject: 'Coupure d’eau', body: 'Bonjour {{Prénom}}', copyToHistory: true, attachments: [] };
+  const base = { id: null, audienceId: 'aud-locataires', buildingIds: [], subject: 'Coupure d’eau', body: 'Bonjour {{Prénom}}', copyToHistory: true, attachments: [] };
 
   it('envoie, programme et enregistre un brouillon en modifiant la liste', async () => {
     const source = create('agence');
-    const before = campaignListSchema.parse(await source.listCampaigns({ tab: 'all', search: '', page: 1, pageSize: 50 }));
+    const before = campaignListSchema.parse(await source.listCampaigns({ tab: 'all', search: '', building: 'all', period: 'all', page: 1, pageSize: 50 }));
     const sent = await source.saveCampaign({ ...base, mode: 'now', scheduledAt: null });
     expect(sent).toMatchObject({ status: 'envoyee', recipientCount: 12, failedCount: 1 });
     const scheduled = await source.saveCampaign({ ...base, subject: 'Rappel', mode: 'scheduled', scheduledAt: '2026-11-20T09:00:00+01:00' });
     expect(scheduled).toMatchObject({ status: 'programmee' });
     const draft = await source.saveCampaign({ ...base, subject: 'Brouillon', body: '', mode: 'draft', scheduledAt: null });
     expect(draft).toMatchObject({ status: 'brouillon' });
-    const after = campaignListSchema.parse(await source.listCampaigns({ tab: 'all', search: '', page: 1, pageSize: 50 }));
+    const after = campaignListSchema.parse(await source.listCampaigns({ tab: 'all', search: '', building: 'all', period: 'all', page: 1, pageSize: 50 }));
     expect(after.total).toBe(before.total + 3);
     expect(after.counts.brouillon).toBe(before.counts.brouillon + 1);
   });
@@ -165,7 +165,7 @@ describe('campagnes', () => {
     const draft = z.object({ id: z.string() }).parse(await source.saveCampaign({ ...base, mode: 'draft', scheduledAt: null }));
     const sent = await source.saveCampaign({ ...base, id: draft.id, subject: 'Final', mode: 'now', scheduledAt: null });
     expect(sent).toMatchObject({ id: draft.id, status: 'envoyee', title: 'Final' });
-    const list = campaignListSchema.parse(await source.listCampaigns({ tab: 'brouillon', search: '', page: 1, pageSize: 50 }));
+    const list = campaignListSchema.parse(await source.listCampaigns({ tab: 'brouillon', search: '', building: 'all', period: 'all', page: 1, pageSize: 50 }));
     expect(list.items.some((item) => item.id === draft.id)).toBe(false);
   });
 });

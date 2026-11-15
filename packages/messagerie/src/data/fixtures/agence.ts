@@ -29,6 +29,7 @@ function campaign(
     title,
     audienceId: audience.id,
     audienceLabel: audience.label,
+    buildingIds: [],
     recipientCount,
     status,
     sentAt: null,

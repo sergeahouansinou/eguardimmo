@@ -11,7 +11,7 @@ export {
 export type { InboxTabConfig, MessagerieProfile } from './profiles';
 
 export { createDemoMessagerieSource, demoSeeds } from './data/demo';
-export type { DemoSourceOptions, MessagerieSpace } from './data/demo';
+export type { DemoMessagerieSource, DemoSourceOptions, MessagerieSpace } from './data/demo';
 export { MessagerieSourceProvider, useMessagerieSource } from './data/source';
 export type { MessagerieSource } from './data/source';
 export {
@@ -19,9 +19,11 @@ export {
   ACCEPTED_ATTACHMENT_TYPES,
   MAX_ATTACHMENTS,
   MAX_ATTACHMENT_BYTES,
+  ALL_BUILDINGS,
   accessReasonSchema,
   campaignDraftInputSchema,
   campaignInputSchema,
+  campaignTestInputSchema,
   newMessageInputSchema,
   replyInputSchema,
   supportTicketInputSchema,
@@ -34,6 +36,7 @@ export type {
   NewConversationInput,
   ReplyInput,
   SaveCampaignInput,
+  SendCampaignTestInput,
   TicketPatch,
   TicketQuery,
 } from './data/inputs';
@@ -42,6 +45,7 @@ export {
   messagerieKeys,
   useCampaign,
   useCampaignAudiences,
+  useCampaignBuildings,
   useCampaigns,
   useConversation,
   useConversations,
@@ -57,6 +61,7 @@ export {
   useReplyToTicket,
   useRequestTicketAccess,
   useSaveCampaign,
+  useSendCampaignTest,
   useSetConversationArchived,
   useSetConversationRead,
   useStaff,

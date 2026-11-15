@@ -3,14 +3,20 @@
 import { FormatToolbar } from './FormatToolbar';
 import { CircleCheck, Save, Send } from 'lucide-react';
 import { useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Alert, Button, Checkbox, Icon, RadioGroup, TextField, Textarea } from '@eguardimmo/ui';
 import { useMessagerieConfig } from '../config';
-import { campaignDraftInputSchema, campaignInputSchema } from '../data/inputs';
-import { useCampaign, useCampaignAudiences, useSaveCampaign } from '../data/queries';
+import { resolveAudience } from '../data/audience';
+import { campaignBuildingsSchema, campaignDraftInputSchema, campaignInputSchema, campaignTestInputSchema } from '../data/inputs';
+import { useCampaign, useCampaignAudiences, useSaveCampaign, useSendCampaignTest } from '../data/queries';
 import type { Campaign, CampaignAudience } from '../data/schemas';
 import { formatDateTime, localValueToIso, toDateTimeLocalValue } from '../lib/dates';
 import { errorMessage } from '../lib/errors';
 import { AttachmentList, AttachmentPicker, useAttachments } from './attachments';
+import { CampaignAudienceFieldset } from './CampaignAudienceFieldset';
+import { CampaignSummary } from './CampaignSummary';
+import { CampaignTestButton, CampaignTestFeedback } from './CampaignTestSend';
+import type { CampaignTestFeedbackState } from './CampaignTestSend';
 import { fieldErrors } from './formErrors';
 import type { FieldErrors } from './formErrors';
 import { ErrorBlock, LoadingBlock } from './parts';
@@ -30,9 +36,11 @@ function CampaignFormBody({ audiences, existing }: { audiences: CampaignAudience
   const { profile, routes, Link, navigate } = useMessagerieConfig();
   const config = profile.campaigns;
   const save = useSaveCampaign();
+  const sendTest = useSendCampaignTest();
   const attachments = useAttachments();
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const [audienceId, setAudienceId] = useState(existing?.audienceId ?? '');
+  const [buildingIds, setBuildingIds] = useState<string[]>(existing?.buildingIds ?? []);
   const [subject, setSubject] = useState(existing?.subject ?? '');
   const [body, setBody] = useState(existing?.body ?? '');
   const [mode, setMode] = useState<'now' | 'scheduled'>(existing?.status === 'programmee' ? 'scheduled' : 'now');
@@ -43,7 +51,13 @@ function CampaignFormBody({ audiences, existing }: { audiences: CampaignAudience
   const [outcome, setOutcome] = useState<Outcome | null>(null);
 
   const audience = audiences.find((candidate) => candidate.id === audienceId);
-  const noEmail = audience?.withoutEmail ?? 0;
+  const resolved = audience ? resolveAudience(audience, buildingIds) : null;
+  const reached = resolved ? resolved.count - resolved.withoutEmail : 0;
+  const testFeedback: CampaignTestFeedbackState = sendTest.isSuccess
+    ? { kind: 'success', to: sendTest.data.sentTo }
+    : sendTest.isError
+      ? { kind: 'error', message: errorMessage(sendTest.error) }
+      : null;
   const clearError = (key: string) => {
     if (errors[key]) setErrors({ ...errors, [key]: undefined });
   };
@@ -61,13 +75,26 @@ function CampaignFormBody({ audiences, existing }: { audiences: CampaignAudience
     });
   };
 
+  const requestTest = () => {
+    const parsed = campaignTestInputSchema.safeParse({ subject, body });
+    if (!parsed.success) {
+      setErrors(fieldErrors(parsed.error));
+      return;
+    }
+    setErrors({});
+    sendTest.mutate({ subject: parsed.data.subject, body: parsed.data.body, attachments: attachments.files });
+  };
+
   const submit = (target: 'send' | 'draft') => {
     const parsed =
       target === 'draft'
         ? campaignDraftInputSchema.safeParse({ audienceId, subject })
         : campaignInputSchema.safeParse({ audienceId, subject, body, mode, scheduledAt, copyToHistory });
-    if (!parsed.success) {
-      setErrors(fieldErrors(parsed.error));
+    const found = parsed.success ? {} : fieldErrors(parsed.error);
+    const selection = target === 'send' && audience?.buildings ? campaignBuildingsSchema.safeParse(buildingIds) : null;
+    if (selection && !selection.success) found.buildingIds = selection.error.issues[0]?.message ?? 'Ajoutez au moins un immeuble';
+    if (!parsed.success || Object.keys(found).length > 0) {
+      setErrors(found);
       return;
     }
     setErrors({});
@@ -77,6 +104,7 @@ function CampaignFormBody({ audiences, existing }: { audiences: CampaignAudience
       {
         id: existing?.id ?? null,
         audienceId,
+        buildingIds: audience?.buildings ? (resolved?.buildingIds ?? []) : [],
         subject: subject.trim(),
         body: body.trim(),
         mode: sendMode,
@@ -114,7 +142,17 @@ function CampaignFormBody({ audiences, existing }: { audiences: CampaignAudience
     );
   }
 
-  const sendLabel = mode === 'scheduled' ? 'Programmer l’envoi' : 'Envoyer';
+  const counted = config?.sendLabels && reached > 0 ? config.sendLabels : null;
+  let sendLabel: ReactNode = mode === 'scheduled' ? 'Programmer l’envoi' : 'Envoyer';
+  if (counted && mode === 'scheduled') sendLabel = counted.scheduled(reached);
+  if (counted && mode === 'now') {
+    sendLabel = (
+      <>
+        {counted.now.name}
+        <span aria-hidden="true">{counted.now.detail(reached)}</span>
+      </>
+    );
+  }
 
   return (
     <form
@@ -126,35 +164,22 @@ function CampaignFormBody({ audiences, existing }: { audiences: CampaignAudience
         submit('send');
       }}
     >
-      <fieldset className="flex min-w-0 flex-col gap-2">
-        <legend className="mb-1 text-caption text-fg-muted">Destinataires</legend>
-        {audiences.map((item) => (
-          <label
-            key={item.id}
-            className="grid cursor-pointer grid-cols-[auto_1fr] gap-x-2 rounded-md border border-line px-3 py-2 text-body has-[:checked]:border-action has-[:checked]:bg-action-subtle"
-          >
-            <input
-              type="radio"
-              name="audience"
-              value={item.id}
-              checked={audienceId === item.id}
-              className="row-span-2 mt-1"
-              onChange={() => {
-                setAudienceId(item.id);
-                clearError('audienceId');
-              }}
-            />
-            <span className="font-medium text-fg">{`${item.label} (${String(item.count)})`}</span>
-            <span className="text-caption text-fg-muted">{item.detail}</span>
-          </label>
-        ))}
-        {errors.audienceId ? <p className="text-caption text-fg-danger">{errors.audienceId}</p> : null}
-        {noEmail > 0 ? (
-          <Alert tone="warning" title={`${String(noEmail)} destinataire${noEmail > 1 ? 's' : ''} sans e-mail valide ne recevr${noEmail > 1 ? 'ont' : 'a'} pas ce message.`}>
-            {noEmail > 1 ? 'Ils sont exclus' : 'Il est exclu'} de l’envoi. Ajoutez {noEmail > 1 ? 'leur adresse sur leur fiche' : 'son adresse sur sa fiche'} pour {noEmail > 1 ? 'les' : 'l’'}inclure.
-          </Alert>
-        ) : null}
-      </fieldset>
+      <CampaignAudienceFieldset
+        audiences={audiences}
+        audienceId={audienceId}
+        buildingIds={buildingIds}
+        resolved={resolved}
+        noun={config?.audienceNoun ?? 'destinataires'}
+        errors={errors}
+        onAudienceChange={(id) => {
+          setAudienceId(id);
+          clearError('audienceId');
+        }}
+        onBuildingsChange={(ids) => {
+          setBuildingIds(ids);
+          clearError('buildingIds');
+        }}
+      />
 
       {config ? (
         <div className="flex min-w-0 flex-col gap-0.5 rounded-md border border-line px-3 py-2">
@@ -239,29 +264,24 @@ function CampaignFormBody({ audiences, existing }: { audiences: CampaignAudience
         />
       </div>
 
-      <section aria-label="Récapitulatif" className="flex flex-col gap-2 rounded-md bg-muted px-3 py-2 text-body text-fg-muted">
-        <p>
-          {audience
-            ? `${String(audience.count)} ${config?.audienceNoun ?? 'destinataires'} · ${audience.label}`
-            : 'Aucun destinataire choisi'}
-          {config ? ` · Expéditeur : ${config.senderName}` : ''}
-        </p>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 text-caption">
-          <dt className="text-fg-subtle">Canal</dt>
-          <dd className="text-fg">E-mail</dd>
-          <dt className="text-fg-subtle">Destinataires</dt>
-          <dd className="text-fg">{audience ? `${String(audience.count - noEmail)} sur ${String(audience.count)}` : '—'}</dd>
-          <dt className="text-fg-subtle">Envoi</dt>
-          <dd className="text-fg">{mode === 'scheduled' ? (scheduledAt ? formatDateTime(localValueToIso(scheduledAt)) : 'À programmer') : 'Tout de suite'}</dd>
-        </dl>
-      </section>
+      <CampaignSummary
+        resolved={resolved}
+        noun={config?.audienceNoun ?? 'destinataires'}
+        senderName={config?.senderName ?? null}
+        mode={mode}
+        scheduledAt={scheduledAt}
+      />
 
+      <CampaignTestFeedback state={testFeedback} />
       {failure ? <Alert tone="danger" title="Enregistrement impossible">{failure}</Alert> : null}
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Button variant="ghost" disabled={save.isPending} onClick={() => { navigate(routes.campaigns); }}>
-          Annuler
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="ghost" disabled={save.isPending} onClick={() => { navigate(routes.campaigns); }}>
+            Annuler
+          </Button>
+          {config?.testSend ? <CampaignTestButton pending={sendTest.isPending} disabled={save.isPending} onClick={requestTest} /> : null}
+        </div>
         <div className="flex flex-wrap justify-end gap-2">
           <Button variant="secondary" disabled={save.isPending} onClick={() => { submit('draft'); }}>
             <Icon icon={Save} />

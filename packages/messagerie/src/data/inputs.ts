@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ticketCategorySchema } from './schemas';
-import type { ConversationTab, TicketCategory, TicketPriority, TicketStatus, TicketTab } from './schemas';
+import type { CampaignPeriod, ConversationTab, TicketCategory, TicketPriority, TicketStatus, TicketTab } from './schemas';
 
 export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 export const MAX_ATTACHMENTS = 5;
@@ -32,6 +32,10 @@ export const newMessageInputSchema = z.object({
 const audienceId = z.string().min(1, 'Choisissez les destinataires');
 
 export const campaignDraftInputSchema = z.object({ audienceId, subject });
+
+export const campaignBuildingsSchema = z.array(z.string().min(1)).min(1, 'Ajoutez au moins un immeuble');
+
+export const campaignTestInputSchema = z.object({ subject, body });
 
 export const campaignInputSchema = z
   .object({
@@ -78,9 +82,13 @@ export interface NewConversationInput {
   attachments: File[];
 }
 
+export const ALL_BUILDINGS = 'all';
+
 export interface CampaignQuery {
   tab: 'all' | 'envoyee' | 'programmee' | 'brouillon';
   search: string;
+  building: string;
+  period: CampaignPeriod;
   page: number;
   pageSize: number;
 }
@@ -88,11 +96,18 @@ export interface CampaignQuery {
 export interface SaveCampaignInput {
   id: string | null;
   audienceId: string;
+  buildingIds: string[];
   subject: string;
   body: string;
   mode: 'now' | 'scheduled' | 'draft';
   scheduledAt: string | null;
   copyToHistory: boolean;
+  attachments: File[];
+}
+
+export interface SendCampaignTestInput {
+  subject: string;
+  body: string;
   attachments: File[];
 }
 

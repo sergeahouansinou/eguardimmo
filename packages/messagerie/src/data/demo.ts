@@ -7,6 +7,7 @@ import { campaignHandlers } from './demoCampaigns';
 import { conversationHandlers } from './demoConversations';
 import { createContext, run } from './demoState';
 import { ticketHandlers } from './demoTickets';
+import type { SentCampaignTest } from './demoState';
 import type { MessagerieSeed } from './seed';
 import type { MessagerieSource } from './source';
 
@@ -25,12 +26,17 @@ export interface DemoSourceOptions {
   now?: () => Date;
 }
 
-export function createDemoMessagerieSource({ space, now = () => new Date() }: DemoSourceOptions): MessagerieSource {
+export interface DemoMessagerieSource extends MessagerieSource {
+  sentCampaignTests: () => readonly SentCampaignTest[];
+}
+
+export function createDemoMessagerieSource({ space, now = () => new Date() }: DemoSourceOptions): DemoMessagerieSource {
   const context = createContext(demoSeeds[space](), now);
   return {
     ...conversationHandlers(context),
     ...campaignHandlers(context),
     ...ticketHandlers(context),
     helpCenter: () => run(() => context.state.help),
+    sentCampaignTests: () => [...context.sentTests],
   };
 }

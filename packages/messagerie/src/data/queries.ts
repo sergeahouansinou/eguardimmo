@@ -11,6 +11,7 @@ import type {
   NewConversationInput,
   ReplyInput,
   SaveCampaignInput,
+  SendCampaignTestInput,
   TicketPatch,
   TicketQuery,
 } from './inputs';
@@ -18,6 +19,7 @@ import {
   campaignAudienceSchema,
   campaignListSchema,
   campaignSchema,
+  campaignTestResultSchema,
   conversationDetailSchema,
   conversationListSchema,
   helpCenterSchema,
@@ -33,7 +35,9 @@ import {
 import type {
   Campaign,
   CampaignAudience,
+  CampaignBuilding,
   CampaignListResult,
+  CampaignTestResult,
   ConversationDetail,
   ConversationList,
   HelpCenterData,
@@ -203,6 +207,21 @@ export function useCampaignAudiences(): ClientQuery<CampaignAudience[]> {
       queryFn: async () => z.array(campaignAudienceSchema).parse(await source.listCampaignAudiences()),
     }),
   );
+}
+
+export function useCampaignBuildings(): ClientQuery<CampaignBuilding[]> {
+  const audiences = useCampaignAudiences();
+  if (audiences.data === undefined) return { ...audiences, data: undefined };
+  const buildings = new Map(audiences.data.flatMap((audience) => audience.buildings ?? []).map((building) => [building.id, building]));
+  return { ...audiences, data: [...buildings.values()] };
+}
+
+export function useSendCampaignTest() {
+  const source = useMessagerieSource();
+  return useMutation({
+    mutationFn: async (input: SendCampaignTestInput): Promise<CampaignTestResult> =>
+      campaignTestResultSchema.parse(await source.sendCampaignTest(input)),
+  });
 }
 
 export function useSaveCampaign() {

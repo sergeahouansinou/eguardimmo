@@ -11,6 +11,7 @@ import type {
 
 export interface MessagerieSeed {
   me: Participant;
+  meEmail?: string;
   conversations: ConversationDetail[];
   recipients: Recipient[];
   audiences: CampaignAudience[];
