@@ -1,6 +1,6 @@
 'use client';
 
-import { Banknote, CalendarClock, ClipboardCheck, Copy, FilePen, FilePlus, FileText, LogOut, Pencil, Receipt, RefreshCw, Trash2, TrendingUp } from 'lucide-react';
+import { Archive, ArchiveRestore, Banknote, CalendarClock, ClipboardCheck, Copy, FilePen, FilePlus, FileText, LogOut, Pencil, Receipt, RefreshCw, Trash2, TrendingUp } from 'lucide-react';
 import {
   Alert,
   Button,
@@ -25,8 +25,10 @@ import { FileStack } from 'lucide-react';
 import { useState } from 'react';
 import { ReviseRentDialog } from './ReviseRentDialog';
 import { useLeaseLookups } from './BauxParts';
+import { LeaseImportDialog } from './LeaseImportDialog';
 import { LeaseRow } from './LeaseRow';
-import { useDeleteLease, useDuplicateLease, useExits, useLeases } from './hooks';
+import { useArchiveLease, useDeleteLease, useDuplicateLease, useExits, useLeases } from './hooks';
+import { isArchivable, isRunningLease } from './leaseRules';
 import { bauxPaths } from './paths';
 import type { Lease } from './schemas';
 import { LinkButton, ListLoading, LoadError, PageHeader, SearchInput, errorMessage, useGestionNavigation, useNotify } from '../locataires/kit';
@@ -39,10 +41,11 @@ import { useListView } from '../locataires/kit/useListView';
 import type { ListTab } from '../locataires/kit/useListView';
 
 const tabs: ListTab<Lease>[] = [
-  { id: 'actifs', label: 'Actifs', match: (lease) => lease.status === 'en_cours' || lease.status === 'preavis' },
-  { id: 'a_venir', label: 'À venir', match: (lease) => lease.status === 'a_venir' },
-  { id: 'termines', label: 'Terminés', match: (lease) => lease.status === 'termine' },
-  { id: 'brouillons', label: 'Brouillons', match: (lease) => lease.status === 'brouillon' },
+  { id: 'actifs', label: 'Actifs', match: isRunningLease },
+  { id: 'a_venir', label: 'À venir', match: (lease) => !lease.archived && lease.status === 'a_venir' },
+  { id: 'termines', label: 'Terminés', match: (lease) => !lease.archived && lease.status === 'termine' },
+  { id: 'brouillons', label: 'Brouillons', match: (lease) => !lease.archived && lease.status === 'brouillon' },
+  { id: 'archives', label: 'Archivés', match: (lease) => lease.archived },
 ];
 
 const SORTS = [
@@ -72,6 +75,7 @@ export function BauxPage() {
   const notify = useNotify();
   const duplicate = useDuplicateLease();
   const remove = useDeleteLease();
+  const archive = useArchiveLease();
   const exits = useExits();
 
   const [building, setBuilding] = useState(ALL);
@@ -82,6 +86,8 @@ export function BauxPage() {
   const [selected, setSelected] = useState<readonly string[]>([]);
   const [pendingDelete, setPendingDelete] = useState<readonly Lease[]>([]);
   const [revising, setRevising] = useState<Lease | null>(null);
+  const [pendingArchive, setPendingArchive] = useState<Lease | null>(null);
+  const [importing, setImporting] = useState(false);
 
   const items = leases.data ?? [];
   const today = todayIso();
@@ -107,11 +113,11 @@ export function BauxPage() {
     return a.end.localeCompare(b.end);
   });
 
-  const active = items.filter((lease) => lease.status === 'en_cours' || lease.status === 'preavis');
+  const active = items.filter(isRunningLease);
   const monthlyRent = active.reduce((sum, lease) => sum + lease.rent + lease.charges, 0);
   const endingSoon = active.filter((lease) => endingWithin(lease, SOON_DAYS)).length;
   const departureOf = (lease: Lease) => exits.data?.find((entry) => entry.leaseId === lease.id)?.departure ?? lease.end;
-  const notices = items.filter((lease) => lease.status === 'preavis').sort((a, b) => departureOf(a).localeCompare(departureOf(b)));
+  const notices = items.filter((lease) => !lease.archived && lease.status === 'preavis').sort((a, b) => departureOf(a).localeCompare(departureOf(b)));
   const nextNotice = notices[0];
   const visibleSelected = selected.filter((id) => sorted.some((lease) => lease.id === id));
   const selectedLeases = items.filter((lease) => visibleSelected.includes(lease.id));
@@ -129,6 +135,26 @@ export function BauxPage() {
       ),
     );
     notify({ title: 'Export prêt', description: `${String(rows.length)} baux exportés dans baux.csv.` });
+  };
+
+  const confirmArchive = async () => {
+    const target = pendingArchive;
+    setPendingArchive(null);
+    if (!target) return;
+    try {
+      await archive.mutateAsync({ id: target.id, archived: true });
+      setSelected((current) => current.filter((id) => id !== target.id));
+      notify({ title: 'Bail archivé', description: `${target.reference} reste consultable dans l’onglet Archivés.` });
+    } catch (error) {
+      notify({ tone: 'danger', title: 'Archivage impossible', description: errorMessage(error) });
+    }
+  };
+
+  const restore = (lease: Lease) => {
+    void archive.mutateAsync({ id: lease.id, archived: false }).then(
+      () => { notify({ title: 'Bail désarchivé', description: lease.reference }); },
+      (error: unknown) => { notify({ tone: 'danger', title: 'Désarchivage impossible', description: errorMessage(error) }); },
+    );
   };
 
   const confirmDelete = async () => {
@@ -174,7 +200,17 @@ export function BauxPage() {
         },
       },
       { id: 'exit', label: 'Préavis et sortie', icon: LogOut, separatorBefore: true, disabled: lease.status === 'brouillon' || lease.status === 'a_venir', onSelect: () => { push(bauxPaths.exit(lease.id)); } },
-      { id: 'delete', label: 'Supprimer le brouillon', icon: Trash2, tone: 'danger', disabled: lease.status !== 'brouillon', onSelect: () => { setPendingDelete([lease]); } },
+      lease.archived
+        ? { id: 'archive', label: 'Désarchiver', icon: ArchiveRestore, separatorBefore: true, onSelect: () => { restore(lease); } }
+        : {
+            id: 'archive',
+            label: isArchivable(lease) ? 'Archiver' : 'Archiver (bail terminé ou brouillon uniquement)',
+            icon: Archive,
+            separatorBefore: true,
+            disabled: !isArchivable(lease),
+            onSelect: () => { setPendingArchive(lease); },
+          },
+      { id: 'delete', label: 'Supprimer le brouillon', icon: Trash2, tone: 'danger', disabled: lease.status !== 'brouillon' || lease.archived, onSelect: () => { setPendingDelete([lease]); } },
     ];
   };
 
@@ -190,6 +226,7 @@ export function BauxPage() {
         }
         actions={
           <>
+            <Button variant="secondary" onClick={() => { setImporting(true); }}>Importer</Button>
             <Button variant="secondary" onClick={() => { exportCsv(items); }} disabled={!leases.data}>Exporter</Button>
             <LinkButton href={bauxPaths.edls}>États des lieux</LinkButton>
             <LinkButton href={links.newLease()} variant="primary" icon={FilePlus}>Nouveau bail</LinkButton>
@@ -252,7 +289,7 @@ export function BauxPage() {
                   <Button
                     variant="danger"
                     size="sm"
-                    disabled={!selectedLeases.every((lease) => lease.status === 'brouillon')}
+                    disabled={!selectedLeases.every((lease) => lease.status === 'brouillon' && !lease.archived)}
                     onClick={() => { setPendingDelete(selectedLeases); }}
                   >
                     Supprimer les brouillons
@@ -318,7 +355,16 @@ export function BauxPage() {
         tone="danger"
         onConfirm={() => { void confirmDelete(); }}
       />
+      <ConfirmDialog
+        open={pendingArchive !== null}
+        onOpenChange={(open) => { if (!open) setPendingArchive(null); }}
+        title="Archiver ce bail ?"
+        description={pendingArchive ? `Le bail ${pendingArchive.reference} sort des onglets courants. Rien n’est supprimé : il reste consultable dans l’onglet Archivés et peut être désarchivé.` : ''}
+        confirmLabel="Archiver"
+        onConfirm={() => { void confirmArchive(); }}
+      />
       <ReviseRentDialog lease={revising} onClose={() => { setRevising(null); }} />
+      <LeaseImportDialog open={importing} onOpenChange={setImporting} />
     </>
   );
 }

@@ -3,6 +3,7 @@
 import { Alert, Button, Card, EmptyState, Pagination, Select, StatCard, Tab, TabList, TabPanel, Table, TableBody, TableHead, TableHeaderCell, TableRow, Tabs } from '@eguardimmo/ui';
 import { CalendarX } from 'lucide-react';
 import { useState } from 'react';
+import { AcomptesList, AvailableAcomptesCard, useLeaseAcomptes } from './AcomptesParts';
 import { useLeaseLookups } from './BauxParts';
 import { AllocationOrder, InstallmentRow, ScheduleDocuments, arrearsByInstallment, stateBadge } from './EcheancierParts';
 import { LeaseGate } from './LeaseGate';
@@ -24,6 +25,7 @@ export function BailEcheancierPage({ id }: { id: string }) {
 
 function Schedule({ lease }: { lease: Lease }) {
   const installments = useInstallments(lease.id);
+  const acomptes = useLeaseAcomptes(lease.reference);
   const lookups = useLeaseLookups();
   const notify = useNotify();
   const [year, setYear] = useState(ALL);
@@ -74,7 +76,7 @@ function Schedule({ lease }: { lease: Lease }) {
           </>
         }
       />
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <StatCard label="Total appelé" value={money(called)} />
         <StatCard label="Total reçu" value={money(received)} />
         <StatCard label="Reste à percevoir" value={money(unpaid)} tone={unpaid > 0 ? 'danger' : 'default'} />
@@ -83,6 +85,7 @@ function Schedule({ lease }: { lease: Lease }) {
             {priorDebt === 0 ? 'Aucune dette antérieure' : nextNotice ? `Reportées sur l’avis de ${monthLabel(nextNotice.month).toLowerCase()}` : 'À régulariser'}
           </span>
         </StatCard>
+        <AvailableAcomptesCard query={acomptes} />
         <StatCard label="Dépôt de garantie" value={money(lease.deposit)}>
           <span className="text-caption text-fg-subtle">{lease.depositReceivedOn ? 'Détenu, restitué à la sortie' : 'Non reçu'}</span>
         </StatCard>
@@ -142,7 +145,10 @@ function Schedule({ lease }: { lease: Lease }) {
       </Card>
       <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
         <AllocationOrder />
-        <ScheduleDocuments rows={rows} priorDebt={priorDebt} />
+        <ScheduleDocuments rows={rows} priorDebt={priorDebt} acomptes={acomptes.data} />
+        <div className="lg:col-span-2">
+          <AcomptesList query={acomptes} />
+        </div>
       </div>
     </>
   );

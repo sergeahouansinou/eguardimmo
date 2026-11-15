@@ -15,6 +15,8 @@ import {
   demoLeases,
   demoReservations,
 } from './demo';
+import { MAX_LEASE_IMPORT_ROWS, importedLeaseFields, leaseImportRowSchema } from './leaseImportSchema';
+import { findImportClash, findOverlap, isArchivable } from './leaseRules';
 import { edlInputSchema, emptySurvey, leaseInputSchema, noticeInputSchema, reservationInputSchema, surveyInputSchema } from './schemas';
 import type { Attestation, EdlStatus, ExitStep, Lease, LeaseExit, LeaseStatus, Reservation, ReservationInput } from './schemas';
 
@@ -32,6 +34,8 @@ export interface BauxSource {
   updateLease: (id: string, input: unknown) => Promise<unknown>;
   duplicateLease: (id: string) => Promise<unknown>;
   deleteLease: (id: string) => Promise<void>;
+  setLeaseArchived: (id: string, archived: boolean) => Promise<unknown>;
+  importLeases: (inputs: unknown) => Promise<unknown>;
   recordNotice: (leaseId: string, input: unknown) => Promise<unknown>;
   setExitStep: (leaseId: string, stepId: string, status: ExitStep['status']) => Promise<unknown>;
   markReturned: (leaseId: string, context: ReturnContext) => Promise<unknown>;
@@ -79,13 +83,6 @@ function fingerprint(seed: string): string {
   for (const char of seed) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
   const hex = hash.toString(16).padStart(8, '0');
   return `${hex.slice(0, 4)}…${hex.slice(4)}`;
-}
-
-function findOverlap(all: readonly Lease[], fields: Pick<Lease, 'unitId' | 'start' | 'end' | 'status'>, selfId?: string): Lease | undefined {
-  if (fields.status === 'brouillon') return undefined;
-  return all.find(
-    (other) => other.id !== selfId && other.unitId === fields.unitId && (other.status === 'en_cours' || other.status === 'preavis' || other.status === 'a_venir') && other.end >= fields.start && other.start <= fields.end,
-  );
 }
 
 function reservationFields(values: ReservationInput): Pick<Reservation, 'unitId' | 'guest' | 'arrival' | 'departure' | 'amount' | 'deposit' | 'paid' | 'status' | 'optionUntil'> {
@@ -217,8 +214,51 @@ export function createDemoBauxSource(): BauxSource {
       if (lease.status !== 'brouillon') {
         return Promise.reject(new Error('Seul un brouillon peut être supprimé. Un bail émis se résilie.'));
       }
+      if (lease.archived) return Promise.reject(new Error('Un bail archivé ne se supprime pas : désarchivez-le d’abord.'));
       leases.remove(id);
       return Promise.resolve();
+    },
+    setLeaseArchived: (id, archived) => {
+      const lease = requireLease(id);
+      if (lease.archived === archived) return Promise.reject(new Error(archived ? 'Ce bail est déjà archivé.' : 'Ce bail n’est pas archivé.'));
+      if (archived && !isArchivable(lease)) {
+        return Promise.reject(new Error('Seul un bail terminé ou un brouillon peut être archivé. Un bail en cours, en préavis ou à venir se résilie d’abord.'));
+      }
+      return Promise.resolve(leases.patch(id, { archived }));
+    },
+    importLeases: (raw) => {
+      const parsed = leaseImportRowSchema.array().min(1, 'Aucun bail à importer.').max(MAX_LEASE_IMPORT_ROWS, `Le fichier dépasse ${String(MAX_LEASE_IMPORT_ROWS)} baux.`).safeParse(raw);
+      if (!parsed.success) {
+        const issue = parsed.error.issues[0];
+        const row = typeof issue?.path[0] === 'number' ? `Ligne ${String(issue.path[0] + 1)} : ` : '';
+        return Promise.reject(new Error(`${row}${issue?.message ?? 'Import invalide.'}`));
+      }
+      const today = todayIso();
+      const year = Number(today.slice(0, 4));
+      const existing = leases.all();
+      const created: Lease[] = [];
+      for (const [index, row] of parsed.data.entries()) {
+        const fields = importedLeaseFields(row, today);
+        const clash = findImportClash(existing, created, fields);
+        if (clash) {
+          const owner = clash.reference ? `bail ${clash.reference}` : 'ligne précédente';
+          return Promise.reject(new Error(`Ligne ${String(index + 1)} : ce bien est déjà loué sur cette période (${owner}).`));
+        }
+        const taken = [...existing, ...created];
+        created.push({
+          id: uniqueSlug(fields.unitId, taken.map((lease) => lease.id)),
+          reference: nextSequence(taken.map((lease) => lease.reference), 'BL', year, 4),
+          depositReceivedOn: null,
+          revisionIndex: 'IRL',
+          revisionNote: 'Indice IRL, à la date anniversaire',
+          rentControl: '',
+          guarantor: null,
+          balance: 0,
+          archived: false,
+          ...fields,
+        });
+      }
+      return Promise.resolve(created.map((lease) => leases.add(lease)));
     },
     recordNotice: (leaseId, raw) => {
       const lease = requireLease(leaseId);

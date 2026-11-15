@@ -16,6 +16,7 @@ import {
   reservationSchema,
 } from './schemas';
 import type { EdlInput, EdlStatus, ExitStep, LeaseInput, NoticeInput, ReservationInput, SurveyRoom } from './schemas';
+import type { LeaseImportRow } from './leaseImportSchema';
 import { useBauxSource } from './source';
 import type { ReturnContext } from './source';
 
@@ -125,6 +126,35 @@ export function useDeleteLease() {
   const source = useBauxSource();
   const invalidate = useInvalidate();
   return useMutation({ mutationFn: (id: string) => source.deleteLease(id), onSuccess: invalidate });
+}
+
+export function useArchiveLease() {
+  const source = useBauxSource();
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async ({ id, archived }: { id: string; archived: boolean }) => leaseSchema.parse(await source.setLeaseArchived(id, archived)),
+    onSuccess: invalidate,
+  });
+}
+
+export function useImportLeases() {
+  const source = useBauxSource();
+  const tenants = useLocatairesSource();
+  const client = useQueryClient();
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async (inputs: readonly LeaseImportRow[]) => {
+      const created = z.array(leaseSchema).parse(await source.importLeases(inputs));
+      for (const lease of created) {
+        if (lease.status === 'en_cours' || lease.status === 'a_venir') await tenants.assignTenantUnit(lease.tenantIds, lease.unitId);
+      }
+      return created;
+    },
+    onSuccess: async () => {
+      await invalidate();
+      await client.invalidateQueries({ queryKey: locatairesKeys.all });
+    },
+  });
 }
 
 export function useRecordNotice(leaseId: string) {

@@ -50,7 +50,7 @@ export const leaseSchema = z.object({
 });
 export type Lease = z.infer<typeof leaseSchema>;
 
-const EURO_INPUT = /^\d+([.,]\d{1,2})?$/;
+export const EURO_INPUT = /^\d+([.,]\d{1,2})?$/;
 
 export const leaseInputSchema = z
   .object({

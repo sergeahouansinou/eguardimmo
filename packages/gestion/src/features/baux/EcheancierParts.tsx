@@ -2,7 +2,9 @@
 
 import { Badge, TableCell, TableRow } from '@eguardimmo/ui';
 import type { BadgeTone } from '@eguardimmo/ui';
-import { FileText, Receipt } from 'lucide-react';
+import { FileText, HandCoins, Receipt } from 'lucide-react';
+import { pendingReceiptsDetail } from './AcomptesParts';
+import type { LeaseAcomptes } from './acomptes';
 import type { Installment, Lease } from './schemas';
 import { courriersPaths, noticeIdOf, receiptIdOf } from '../courriers/paths';
 import { ItemRow, LinkButton, SectionCard, useGestionNavigation } from '../locataires/kit';
@@ -94,7 +96,7 @@ export function AllocationOrder() {
   );
 }
 
-export function ScheduleDocuments({ rows, priorDebt }: { rows: readonly Installment[]; priorDebt: number }) {
+export function ScheduleDocuments({ rows, priorDebt, acomptes }: { rows: readonly Installment[]; priorDebt: number; acomptes: LeaseAcomptes | undefined }) {
   const next = rows.find((row) => row.state === 'a_emettre');
   const emitted = rows.filter((row) => row.state !== 'a_emettre');
   const receipts = emitted.filter((row) => row.state === 'paye').sort((a, b) => b.month.localeCompare(a.month));
@@ -116,6 +118,7 @@ export function ScheduleDocuments({ rows, priorDebt }: { rows: readonly Installm
           detail={`${String(receipts.length)} sur ${String(emitted.length)}${lastReceipt ? `, la dernière en ${monthLabel(lastReceipt.month).toLowerCase()}` : ''}`}
           trailing={<LinkButton href={courriersPaths.quittances} size="sm">Tout voir</LinkButton>}
         />
+        {acomptes ? <ItemRow icon={HandCoins} title="Reçus d’acompte" detail={pendingReceiptsDetail(acomptes)} badge={acomptes.pending > 0 ? { label: 'À solder', tone: 'warning' } : undefined} /> : null}
       </ul>
     </SectionCard>
   );
