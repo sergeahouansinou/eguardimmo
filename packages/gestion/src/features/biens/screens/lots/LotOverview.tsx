@@ -3,7 +3,6 @@
 import { useCommand } from '../../hooks/useCommand';
 import { FactList, Panel } from '../../components/Panels';
 import { PhotosPanel } from '../../components/PhotosPanel';
-import { TwoColumns } from '../../components/FicheHeader';
 import { QueryBoundary, SkeletonCard } from '../../components/QueryState';
 import { formatArea } from '../../lib/amount';
 import { useLot } from '../../queries';
@@ -26,8 +25,8 @@ export function LotOverview({ id }: { id: string }) {
       {(lot) =>
         lot === null ? null : (
           <>
-            <PhotosPanel photos={lot.photos} count={lot.photoCount} pending={addPhotos.isPending} onAdd={(names) => { addPhotos.execute({ names }); }} />
-            <TwoColumns>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+              <PhotosPanel photos={lot.photos} count={lot.photoCount} pending={addPhotos.isPending} onAdd={(names) => { addPhotos.execute({ names }); }} />
               <Panel title="En bref">
                 <FactList
                   rows={[
@@ -45,10 +44,12 @@ export function LotOverview({ id }: { id: string }) {
               </Panel>
               <OccupationCard id={id} />
               <LeaseCard id={id} />
+            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               <DiagnosticsCard id={id} />
               <EquipementsCard id={id} />
               <SuiviCard id={id} />
-            </TwoColumns>
+            </div>
           </>
         )
       }
