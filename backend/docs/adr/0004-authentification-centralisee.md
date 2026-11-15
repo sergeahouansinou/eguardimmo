@@ -47,7 +47,7 @@ Statut : accepté (2026-11-13), révisé le même jour : la console sort du hub 
   - le compte n'est **jamais effacé** : il est marqué supprimé (`deleted_at`). Son e-mail et le `subject` de ses identités sociales reçoivent le suffixe `-deleted-{id}`, ce qui permet de se réinscrire plus tard avec la même adresse ou le même compte Google ou Apple ;
   - les données du compte sont conservées telles quelles (nom, adresse d'origine lisible avant le suffixe, empreinte du mot de passe, secret 2FA, appareils), par décision du 2026-11-14. La durée de conservation et la réponse à une demande d'effacement RGPD restent à définir ;
   - jetons, sessions, liens de réinitialisation et rôle opérateur sont révoqués, puis `Identity\Events\AccountDeleted` est émis : chaque module décide d'anonymiser ou de conserver selon ses obligations ;
-  - la révocation Apple a lieu avant toute écriture. Si Apple est injoignable, la réponse est 503 et le compte reste intact.
+  - la révocation Apple ne bloque jamais la suppression (décision du 2026-11-15) : en cas d'échec (Apple injoignable, refus, configuration `.p8` cassée), le compte est quand même supprimé, l'échec est signalé (`report`, audit `identity.apple.revocation_deferred`) et le jeton reste chiffré sur l'identité. La commande `identity:revoke-deferred-apple-tokens`, planifiée toutes les heures, retente ; elle sort en échec tant qu'il reste un jeton non révoqué.
 
 ## Options écartées
 

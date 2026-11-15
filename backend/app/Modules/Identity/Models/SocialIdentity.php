@@ -40,11 +40,7 @@ final class SocialIdentity extends Model
 
     public function releaseForDeletedAccount(): void
     {
-        $this->forceFill([
-            'subject' => User::withDeletedMarker($this->subject, $this->id),
-            'apple_refresh_token' => null,
-            'apple_client_id' => null,
-        ])->save();
+        $this->forceFill(['subject' => User::withDeletedMarker($this->subject, $this->id)])->save();
     }
 
     protected function casts(): array

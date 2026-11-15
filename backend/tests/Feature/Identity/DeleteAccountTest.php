@@ -18,6 +18,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request as RequeteHttp;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 
@@ -201,19 +202,53 @@ describe('comptes liés à Google ou Apple', function (): void {
         supprimer($this, ['password' => MDP_COMPTE])->assertNoContent();
     });
 
-    it('laisse le compte intact si Apple est injoignable', function (Closure $reponse): void {
+    it('supprime quand même le compte si la révocation Apple échoue, et garde le jeton pour la retenter', function (Closure $reponse): void {
+        Exceptions::fake();
         Http::fake([RevokeAppleToken::URL => $reponse]);
 
-        supprimer($this, ['password' => MDP_COMPTE])->assertServiceUnavailable()->assertJsonPath('code', 'provider_unavailable');
+        supprimer($this, ['password' => MDP_COMPTE])->assertNoContent();
 
-        expect($this->user->fresh()?->email)->toBe('jean@exemple.fr')
-            ->and($this->apple->fresh()?->apple_refresh_token)->toBe('rt-apple-secret')
-            ->and(PersonalAccessToken::query()->where('tokenable_id', $this->user->id)->count())->toBe(1);
+        Exceptions::assertReported(RuntimeException::class);
+        $identite = SocialIdentity::query()->findOrFail($this->apple->id);
+        expect(User::withTrashed()->find($this->user->id)?->deleted_at)->not->toBeNull()
+            ->and($identite->subject)->toBe('a-001-deleted-'.$this->apple->id)
+            ->and($identite->apple_refresh_token)->toBe('rt-apple-secret')
+            ->and(AuditLog::query()->where('action', 'identity.apple.revocation_deferred')->count())->toBe(1);
     })->with([
         'erreur serveur' => [fn () => fn () => Http::response([], 500)],
         'client refusé' => [fn () => fn () => Http::response(['error' => 'invalid_client'], 400)],
         'connexion' => [fn () => fn () => throw new ConnectionException('injoignable')],
     ]);
+
+    it('supprime quand même le compte si la configuration Apple manque', function (): void {
+        Exceptions::fake();
+        config(['services.apple.private_key_path' => null]);
+
+        supprimer($this, ['password' => MDP_COMPTE])->assertNoContent();
+
+        Exceptions::assertReported(RuntimeException::class);
+        Http::assertNothingSent();
+        expect(SocialIdentity::query()->findOrFail($this->apple->id)->apple_refresh_token)->toBe('rt-apple-secret');
+    });
+
+    it('retente plus tard les révocations Apple en échec, sans toucher aux comptes actifs', function (): void {
+        Exceptions::fake();
+        $actif = User::factory()->create();
+        $identiteActive = $actif->socialIdentities()->create(['provider' => SocialProvider::Apple, 'subject' => 'a-actif']);
+        $identiteActive->forceFill(['apple_refresh_token' => 'rt-actif', 'apple_client_id' => 'fr.eguardimmo.app'])->save();
+
+        Http::fake([RevokeAppleToken::URL => Http::sequence()->push([], 503)->push([], 503)->push()]);
+        supprimer($this, ['password' => MDP_COMPTE])->assertNoContent();
+
+        $this->artisan('identity:revoke-deferred-apple-tokens')->assertFailed();
+        expect($this->apple->fresh()?->apple_refresh_token)->toBe('rt-apple-secret');
+
+        $this->artisan('identity:revoke-deferred-apple-tokens')->assertSuccessful();
+        expect($this->apple->fresh()?->apple_refresh_token)->toBeNull()
+            ->and($identiteActive->fresh()?->apple_refresh_token)->toBe('rt-actif')
+            ->and(AuditLog::query()->where('action', 'identity.apple.revoked')->count())->toBe(1);
+        Http::assertSentCount(3);
+    });
 
     it('accepte un id_token frais du fournisseur lié', function (): void {
         Http::fake([

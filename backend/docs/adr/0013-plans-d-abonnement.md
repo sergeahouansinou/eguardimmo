@@ -1,6 +1,7 @@
 # ADR 0013 — Plans d'abonnement
 
 Statut : accepté (2026-11-13). Module Subscriptions (ADR 0005). Encaissement : Payments (ADR 0007).
+Amendement proposé (2026-11-15) : quotas et fonctions en lignes `plan_entitlements` plutôt qu'en colonnes (ADR 0018).
 
 ## Contexte
 

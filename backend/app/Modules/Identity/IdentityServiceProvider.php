@@ -6,6 +6,7 @@ namespace App\Modules\Identity;
 
 use App\Modules\Identity\Actions\CheckAccountPassword;
 use App\Modules\Identity\Console\GrantOperatorCommand;
+use App\Modules\Identity\Console\RevokeDeferredAppleTokensCommand;
 use App\Modules\Identity\Console\RevokeOperatorCommand;
 use App\Modules\Identity\Data\ProfileData;
 use App\Modules\Identity\Enums\Space;
@@ -71,7 +72,7 @@ final class IdentityServiceProvider extends ServiceProvider
         Event::listen(SocialiteWasCalled::class, [AppleExtendSocialite::class, 'handle']);
 
         if ($this->app->runningInConsole()) {
-            $this->commands([GrantOperatorCommand::class, RevokeOperatorCommand::class]);
+            $this->commands([GrantOperatorCommand::class, RevokeOperatorCommand::class, RevokeDeferredAppleTokensCommand::class]);
         }
     }
 

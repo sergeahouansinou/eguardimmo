@@ -1,6 +1,7 @@
 # ADR 0015 — Identifiants UUID v7
 
 Statut : accepté (2026-11-13). S'applique à toutes les tables applicatives (modules et `app/Shared`).
+Amendements (2026-11-15) : sous MySQL, colonne `char(36)` en `ascii_bin` (ADR 0017). Proposé : la reprise ne garde que la table `legacy_mappings` de l'ADR 0009, la colonne `legacy_id` est abandonnée.
 
 ## Contexte
 

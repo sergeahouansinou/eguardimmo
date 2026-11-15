@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarPlus, Check, LogOut, MailCheck } from 'lucide-react';
+import { CalendarPlus, Calculator, Check, LogOut, MailCheck } from 'lucide-react';
 import { Alert, Badge, Button, ConfirmDialog, EmptyState, Icon, StatCard, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@eguardimmo/ui';
 import type { BadgeTone } from '@eguardimmo/ui';
 import { useState } from 'react';
@@ -55,6 +55,7 @@ function Exit({ lease }: { lease: Lease }) {
               <>
                 <LinkButton href={`${bauxPaths.newEdl}?bien=${lease.unitId}`} icon={CalendarPlus}>Planifier la visite</LinkButton>
                 <LinkButton href={links.newCourrier({ modele: 'accuse-de-reception-du-preavis', locataire: lease.tenantIds[0], bien: lease.unitId })} icon={MailCheck}>Accusé de réception</LinkButton>
+                <LinkButton href="#sortie-depot" variant="primary" icon={Calculator}>Préparer le décompte</LinkButton>
               </>
             ) : null}
             {canRecord ? (

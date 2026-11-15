@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 final readonly class DeleteAccount
 {
     public function __construct(
-        private RevokeAppleToken $revocationApple,
+        private AttemptAppleRevocation $revocationApple,
         private RevokeUserCredentials $identifiants,
         private RevokeOperator $operateur,
     ) {}
@@ -21,7 +21,8 @@ final readonly class DeleteAccount
     /**
      * Aucun effacement : le compte est marqué supprimé (deleted_at), son e-mail et ses identités sociales reçoivent
      * un suffixe qui libère une réinscription. Tout se passe sous verrou de la ligne users : une liaison sociale
-     * concurrente attend, et une seconde suppression simultanée ne fait rien. Une panne d'Apple annule tout.
+     * concurrente attend, et une seconde suppression simultanée ne fait rien. Une révocation Apple en échec ne bloque
+     * pas : le jeton reste chiffré et la commande identity:revoke-deferred-apple-tokens la retente.
      */
     public function handle(User $user): void
     {
@@ -35,8 +36,8 @@ final readonly class DeleteAccount
             $identites = $compte->socialIdentities()->lockForUpdate()->get();
 
             $identites
-                ->filter(fn (SocialIdentity $i): bool => $i->provider === SocialProvider::Apple && $i->apple_refresh_token !== null && $i->apple_client_id !== null)
-                ->each(fn (SocialIdentity $i) => $this->revocationApple->handle((string) $i->apple_refresh_token, (string) $i->apple_client_id));
+                ->filter(fn (SocialIdentity $i): bool => $i->provider === SocialProvider::Apple)
+                ->each(fn (SocialIdentity $i): bool => $this->revocationApple->handle($i));
 
             $emailOrigine = $compte->email;
 

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Identity\Actions;
 
-use App\Modules\Identity\Enums\ErrorCode;
 use App\Modules\Identity\Social\AppleClientSecret;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 use SensitiveParameter;
 
 final readonly class RevokeAppleToken
@@ -18,6 +18,8 @@ final readonly class RevokeAppleToken
 
     /**
      * Apple répond invalid_grant pour un jeton déjà révoqué ou expiré : il n'y a plus rien à révoquer.
+     *
+     * @throws RuntimeException révocation non confirmée (réseau, configuration, refus d'Apple)
      */
     public function handle(#[SensitiveParameter] string $refreshToken, string $clientId): void
     {
@@ -28,14 +30,16 @@ final readonly class RevokeAppleToken
                 'token' => $refreshToken,
                 'token_type_hint' => 'refresh_token',
             ]);
-        } catch (ConnectionException) {
-            throw ErrorCode::ProviderUnavailable->problem();
+        } catch (ConnectionException $e) {
+            throw new RuntimeException('Révocation Apple : service injoignable.', previous: $e);
         }
 
-        if ($reponse->successful() || $reponse->json('error') === 'invalid_grant') {
+        $erreur = $reponse->json('error');
+
+        if ($reponse->successful() || $erreur === 'invalid_grant') {
             return;
         }
 
-        throw ErrorCode::ProviderUnavailable->problem();
+        throw new RuntimeException(sprintf('Révocation Apple refusée : HTTP %d (%s).', $reponse->status(), is_string($erreur) ? $erreur : 'sans code'));
     }
 }
