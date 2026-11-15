@@ -10,7 +10,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { useInspections, useLease } from '@/data/queries';
 import type { Inspection } from '@/data/schemas/logement';
 import { formatDate } from '@/lib/dates';
-import { downloadDemoPdf } from '@/lib/demoPdf';
+import { downloadDemoPdf } from '@eguardimmo/shell';
 
 const STATUS: Record<Inspection['status'], { label: string; tone: 'success' | 'warning' | 'info' }> = {
   signe: { label: 'Signé', tone: 'success' },

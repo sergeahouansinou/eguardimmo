@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Archive, ArchiveRestore, Download, Eye, EyeOff, FolderInput, Pencil, PenLine, Share2, Trash2 } from 'lucide-react';
+import { downloadDemoPdf } from '@eguardimmo/shell';
 import { Button, Card, Checkbox, Tab, TabList, TabPanel, Tabs, TextField } from '@eguardimmo/ui';
 import {
   ConfirmDialog,
@@ -42,8 +43,6 @@ const SHARE_OPTIONS = [
   { value: 'prive', label: 'Privé' },
 ] as const;
 
-const DOWNLOAD_NOTICE = 'Le téléchargement sera disponible avec le stockage des fichiers : en démonstration, seules les informations des documents sont conservées.';
-
 export function DocumentsPage({ Link, navigate }: ScreenProps) {
   const query = useDocuments();
   const source = useDocumentsSource();
@@ -57,7 +56,6 @@ export function DocumentsPage({ Link, navigate }: ScreenProps) {
   const [detail, setDetail] = useState<DocumentRecord | null>(null);
   const [editing, setEditing] = useState<{ document: DocumentRecord; mode: EditMode } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   const invalidate = [DOCUMENTS_KEY] as const;
   const setShared = useSourceMutation((input: { ids: readonly string[]; shared: boolean }) => source.setShared(input.ids, input.shared), invalidate);
@@ -100,6 +98,12 @@ export function DocumentsPage({ Link, navigate }: ScreenProps) {
       },
     );
   };
+  const downloadDocuments = (docs: readonly DocumentRecord[]) => {
+    for (const item of docs) {
+      downloadDemoPdf(`${item.fileName.replace(/\.[^.]+$/, '')}.pdf`, item.fileName, [item.description, `Taille : ${formatSize(item.sizeBytes)}`, `Date : ${formatFrDate(item.date)}`].filter((line) => line.length > 0));
+    }
+    pushFlash(`${String(docs.length)} document${plural(docs.length)} téléchargé${plural(docs.length)}, fichier de démonstration.`);
+  };
   const archive = (docs: readonly DocumentRecord[], archived: boolean) => {
     setArchived.mutate(
       { ids: docs.map((item) => item.id), archived },
@@ -132,7 +136,7 @@ export function DocumentsPage({ Link, navigate }: ScreenProps) {
 
   const actionsFor = (item: DocumentRecord): RowAction[] => [
     { id: 'open', label: 'Ouvrir', icon: Eye, onSelect: () => { setDetail(item); } },
-    { id: 'download', label: 'Télécharger', icon: Download, onSelect: () => { setNotice(DOWNLOAD_NOTICE); } },
+    { id: 'download', label: 'Télécharger', icon: Download, onSelect: () => { downloadDocuments([item]); } },
     {
       id: 'share',
       label: item.shared ? 'Rendre privé' : 'Partager avec le locataire',
@@ -176,7 +180,6 @@ export function DocumentsPage({ Link, navigate }: ScreenProps) {
         }
       />
       <Notice tone="danger" message={error} onDismiss={() => { setError(null); }} />
-      <Notice message={notice} onDismiss={() => { setNotice(null); }} />
       <Card role="region" aria-label="Liste des documents">
         <Tabs
           value={tab}
@@ -221,7 +224,7 @@ export function DocumentsPage({ Link, navigate }: ScreenProps) {
               <BulkBar summary={selectionLabel(selectedDocs.length, 'document')}>
                 <Button variant="secondary" size="sm" loading={setShared.isPending} onClick={() => { shareDocs(selectedDocs, true); }}>Partager</Button>
                 <Button variant="ghost" size="sm" loading={setShared.isPending} onClick={() => { shareDocs(selectedDocs, false); }}>Rendre privé</Button>
-                <Button variant="ghost" size="sm" onClick={() => { setNotice(DOWNLOAD_NOTICE); }}>Télécharger</Button>
+                <Button variant="ghost" size="sm" onClick={() => { downloadDocuments(selectedDocs); }}>Télécharger</Button>
                 <Button variant="ghost" size="sm" loading={setArchived.isPending} onClick={() => { archive(selectedDocs, tab === 'actifs'); }}>
                   {tab === 'actifs' ? 'Archiver' : 'Désarchiver'}
                 </Button>

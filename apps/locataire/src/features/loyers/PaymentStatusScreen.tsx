@@ -11,7 +11,7 @@ import { useInstallments, usePayment, useProfile, useSettlePayment } from '@/dat
 import type { Installment, Payment } from '@/data/schemas/loyers';
 import type { Profile } from '@/data/schemas/compte';
 import { daysBetween, formatDate, formatDateTime, monthOf, plural } from '@/lib/dates';
-import { downloadDemoPdf } from '@/lib/demoPdf';
+import { downloadDemoPdf } from '@eguardimmo/shell';
 import { formatMoney } from '@/lib/money';
 import { METHOD_LABELS, paymentStatus } from '../shared/status';
 

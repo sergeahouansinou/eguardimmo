@@ -127,8 +127,13 @@ describe('DocumentsPage', () => {
     await user.click(within(detail).getAllByRole('button', { name: 'Fermer' }).at(-1) ?? detail);
 
     await user.click(screen.getByRole('button', { name: 'Plus d’actions, Bail signé, Apt A1.pdf' }));
+    const createObjectURL = vi.fn<(blob: Blob) => string>(() => 'blob:demo');
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL, revokeObjectURL }));
     await user.click(await screen.findByRole('menuitem', { name: 'Télécharger' }));
-    expect(screen.getByText(/Le téléchargement sera disponible/)).toBeTruthy();
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    expect(createObjectURL.mock.calls.at(0)?.at(0)?.type).toBe('application/pdf');
+    expect(await screen.findByText(/téléchargé, fichier de démonstration/)).toBeTruthy();
   });
 
   it('propose un nouveau modèle et envoie un document en signature', async () => {

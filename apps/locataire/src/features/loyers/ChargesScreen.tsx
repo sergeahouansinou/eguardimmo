@@ -10,7 +10,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { useCharges } from '@/data/queries';
 import type { ChargesStatement } from '@/data/schemas/loyers';
 import { formatDate } from '@/lib/dates';
-import { downloadDemoPdf } from '@/lib/demoPdf';
+import { downloadDemoPdf } from '@eguardimmo/shell';
 import { formatAmount, formatMoney } from '@/lib/money';
 
 const STATUS: Record<ChargesStatement['status'], { label: string; tone: 'success' | 'warning' | 'info' }> = {

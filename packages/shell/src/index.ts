@@ -29,6 +29,7 @@ export {
 export type { ClientQuery } from './data/queries';
 export { NotificationsPage } from './notifications/NotificationsPage';
 export type { NotificationsPageProps } from './notifications/NotificationsPage';
+export { buildDemoPdf, downloadDemoPdf } from './lib/demoPdf';
 export { authUrl, isExternalHref, spaceUrl } from './lib/spaceUrls';
 export type { SpaceName } from './lib/spaceUrls';
 export { useStoredValue } from './lib/storedValue';

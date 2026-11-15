@@ -10,7 +10,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { useAttestations, useHome } from '@/data/queries';
 import type { Attestation } from '@/data/schemas/logement';
 import { addDays, formatDate, plural } from '@/lib/dates';
-import { downloadDemoPdf } from '@/lib/demoPdf';
+import { downloadDemoPdf } from '@eguardimmo/shell';
 import { insuranceView, periodStatus } from './insurance';
 import type { InsuranceView } from './insurance';
 

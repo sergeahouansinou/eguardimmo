@@ -10,7 +10,7 @@ import { Async } from '@/components/ScreenState';
 import { useDocuments } from '@/data/queries';
 import type { DemoDocument } from '@/data/schemas/logement';
 import { formatDate } from '@/lib/dates';
-import { downloadDemoPdf } from '@/lib/demoPdf';
+import { downloadDemoPdf } from '@eguardimmo/shell';
 import { formatFileSize } from '@/lib/money';
 
 const PAGE_SIZE = 10;

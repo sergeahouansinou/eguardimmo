@@ -10,7 +10,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { useReceipt } from '@/data/queries';
 import type { Receipt } from '@/data/schemas/loyers';
 import { formatDate, formatDateTime, monthOf, yearOf } from '@/lib/dates';
-import { downloadDemoPdf } from '@/lib/demoPdf';
+import { downloadDemoPdf } from '@eguardimmo/shell';
 import { formatMoney } from '@/lib/money';
 import { ReceiptDocument } from './ReceiptDocument';
 

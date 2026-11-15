@@ -12,7 +12,7 @@ import { useAttestations, useDocuments, useHome, useInstallments, useInterventio
 import type { DemoDocument } from '@/data/schemas/logement';
 import type { Installment } from '@/data/schemas/loyers';
 import { daysBetween, formatDate, monthName, monthOf, plural } from '@/lib/dates';
-import { downloadDemoPdf } from '@/lib/demoPdf';
+import { downloadDemoPdf } from '@eguardimmo/shell';
 import { formatMoney } from '@/lib/money';
 import { insuranceView } from '../assurance/insurance';
 import { installmentStatus, interventionStatus } from '../shared/status';

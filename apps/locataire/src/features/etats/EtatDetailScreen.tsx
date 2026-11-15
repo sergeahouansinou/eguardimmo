@@ -11,7 +11,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { useInspections } from '@/data/queries';
 import type { Inspection } from '@/data/schemas/logement';
 import { formatDate, formatDateTime } from '@/lib/dates';
-import { downloadDemoPdf } from '@/lib/demoPdf';
+import { downloadDemoPdf } from '@eguardimmo/shell';
 
 export function EtatDetailScreen({ inspectionId }: { inspectionId: string }) {
   const inspections = useInspections();

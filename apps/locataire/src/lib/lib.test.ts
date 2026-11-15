@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { addDays, addMonths, daysBetween, formatDate, formatMonthYear, formatWeekdayDate, monthOf, plural } from './dates';
-import { buildDemoPdf } from './demoPdf';
 import { ATTESTATION_RULES, AVATAR_RULES, PHOTO_RULES, checkFile } from './files';
 import { ibanLast4, isValidIban, maskIban, normalizeIban } from './iban';
 import { formatAmount, formatFileSize, formatMoney } from './money';
@@ -105,14 +104,5 @@ describe('files', () => {
     expect(checkFile({ name: 'script.exe', size: 10, type: 'application/x-msdownload' }, ATTESTATION_RULES).ok).toBe(false);
     expect(checkFile({ name: 'faux.pdf', size: 10, type: 'image/jpeg' }, ATTESTATION_RULES).ok).toBe(true);
     expect(checkFile({ name: 'doc.pdf', size: 10, type: 'application/pdf' }, PHOTO_RULES).ok).toBe(false);
-  });
-});
-
-describe('demoPdf', () => {
-  it('produit un PDF structuré avec le titre', () => {
-    const pdf = buildDemoPdf('Quittance de loyer', ['Octobre 2026']);
-    expect(pdf.startsWith('%PDF-1.4')).toBe(true);
-    expect(pdf.trimEnd().endsWith('%%EOF')).toBe(true);
-    expect(pdf).toContain('Quittance de loyer');
   });
 });

@@ -12,7 +12,7 @@ import { useDocuments, useInstallments, useLease } from '@/data/queries';
 import type { DemoDocument, Lease } from '@/data/schemas/logement';
 import type { Installment } from '@/data/schemas/loyers';
 import { formatDate } from '@/lib/dates';
-import { downloadDemoPdf } from '@/lib/demoPdf';
+import { downloadDemoPdf } from '@eguardimmo/shell';
 import { formatMoney } from '@/lib/money';
 import { installmentStatus } from '../shared/status';
 
