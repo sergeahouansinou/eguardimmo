@@ -231,7 +231,7 @@ export const bailleurProfile: MessagerieProfile = {
     searchPlaceholder: 'Ex. Coupure d’eau, assurance',
     audienceNoun: 'locataires',
     senderName: 'Gestion Les Tilleuls',
-    mergeTags: ['Prénom', 'Bail', 'Mois'],
+    mergeTags: ['Prénom', 'Bien', 'Loyer', 'Échéance'],
   },
   help: {
     title: 'Aide',

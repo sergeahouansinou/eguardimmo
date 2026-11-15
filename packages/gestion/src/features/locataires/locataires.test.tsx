@@ -79,6 +79,26 @@ describe('LocatairesPage', () => {
   });
 });
 
+describe('LocatairesPage, tableau', () => {
+  it('affiche les en-têtes de colonnes en vue liste et les masque en vue cartes', async () => {
+    const { container } = renderLot(<LocatairesPage />);
+    await screen.findByRole('link', { name: 'Koffi Adjovi' });
+    const header = () => container.querySelector('div[aria-hidden="true"].border-b')?.textContent ?? null;
+    expect(header()).toBe('LocataireBienSoldeÉtat');
+    await userEvent.click(screen.getByRole('radio', { name: 'Cartes' }));
+    expect(header()).toBeNull();
+  });
+
+  it('change le nombre de lignes par page', async () => {
+    renderLot(<LocatairesPage />);
+    await userEvent.click(await screen.findByRole('tab', { name: /Tous/ }));
+    expect(screen.getAllByRole('listitem').length).toBeGreaterThan(5);
+    await userEvent.click(screen.getByRole('combobox', { name: /Lignes par page/ }));
+    await userEvent.click(await screen.findByRole('option', { name: '5' }));
+    await waitFor(() => { expect(screen.getByText('1 à 5 sur 10')).toBeTruthy(); });
+  });
+});
+
 describe('LocataireFormPage', () => {
   it('affiche les erreurs sans créer de locataire', async () => {
     const { sources, push } = renderLot(<LocataireFormPage />);
@@ -124,6 +144,13 @@ describe('LocataireDetailPage', () => {
     await userEvent.click(screen.getByRole('tab', { name: /Paiements/ }));
     expect(screen.getByRole('tab', { name: /Paiements/ }).getAttribute('aria-selected')).toBe('true');
     await expectNoA11yViolations(container);
+  });
+
+  it('déduit l’impayé d’un locataire sans fiche détaillée', async () => {
+    renderLot(<LocataireDetailPage id="clarisse-hounkpatin" />);
+    expect(await screen.findByText('Échéance de novembre non réglée')).toBeTruthy();
+    expect(screen.getByText(/210 € dus depuis le 01\/11\/2026/)).toBeTruthy();
+    expect(screen.getByText('1 impayée, 210 €')).toBeTruthy();
   });
 
   it('signale un locataire introuvable avec un retour', async () => {

@@ -54,6 +54,9 @@ const tabs: ListTab<Tenant>[] = [
   { id: 'archives', label: 'Archivés', match: (tenant) => tenant.status === 'archive' },
 ];
 
+const PAGE_SIZES = ['5', '10', '25'].map((size) => ({ value: size, label: size }));
+const ROW_GRID = 'md:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_88px_150px_160px]';
+
 const typeOptions = [
   { value: ALL, label: 'Type : Tous' },
   { value: 'particulier', label: 'Particuliers' },
@@ -80,6 +83,7 @@ export function LocatairesPage() {
   const [type, setType] = useState(ALL);
   const [unitId, setUnitId] = useState(ALL);
   const [balance, setBalance] = useState(ALL);
+  const [pageSize, setPageSize] = useState(10);
   const [showOthers, setShowOthers] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [confirmation, setConfirmation] = useState<Confirmation>(null);
@@ -93,7 +97,7 @@ export function LocatairesPage() {
     (unitId === ALL || tenant.unitId === unitId) &&
     (balance === ALL || (balance === 'du' ? tenant.balance < 0 : tenant.balance === 0));
 
-  const view = useListView({ items, tabs, searchText, predicate: filter });
+  const view = useListView({ items, tabs, searchText, predicate: filter, pageSize });
   const active = items.filter((tenant) => tenant.status !== 'archive');
   const toFollow = items.filter(tabs[0]?.match ?? (() => false));
   const worst = [...toFollow].filter((tenant) => tenant.state === 'retard').sort((a, b) => a.balance - b.balance)[0];
@@ -236,6 +240,15 @@ export function LocatairesPage() {
                 description={view.query !== '' || type !== ALL || unitId !== ALL || balance !== ALL ? 'Aucun locataire ne correspond à ces filtres.' : 'Rien à afficher dans cette rubrique pour le moment.'}
               />
             ) : null}
+            {view.rows.length > 0 && layout === 'liste' ? (
+              <div aria-hidden="true" className={cx('hidden gap-x-3 border-b border-line pb-1 text-caption text-fg-subtle md:grid', ROW_GRID)}>
+                <span>Locataire</span>
+                <span>Bien</span>
+                <span className="text-right">Solde</span>
+                <span>État</span>
+                <span />
+              </div>
+            ) : null}
             {view.rows.length > 0 ? (
               <ul className={cx(layout === 'cartes' ? 'grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3' : 'flex flex-col')}>{view.rows.map(renderRow)}</ul>
             ) : null}
@@ -256,7 +269,17 @@ export function LocatairesPage() {
               </div>
             ) : null}
 
-            <Pagination page={view.page} pageSize={view.pageSize} total={view.total} onPageChange={view.setPage} label="Pagination des locataires" />
+            <div className="flex flex-wrap items-end justify-between gap-3 border-t border-line pt-2">
+              <Select
+                label="Lignes par page"
+                placeholder="10"
+                value={String(pageSize)}
+                onValueChange={(value) => { setPageSize(Number(value)); view.resetPage(); }}
+                options={PAGE_SIZES}
+                className="w-36"
+              />
+              <Pagination page={view.page} pageSize={view.pageSize} total={view.total} onPageChange={view.setPage} label="Pagination des locataires" className="min-w-full flex-1 border-t-0 pt-0 sm:min-w-0" />
+            </div>
           </TabPanel>
         </Tabs>
       </Card>
@@ -289,7 +312,8 @@ function TenantRow({ tenant, unit, actions, card }: { tenant: Tenant; unit: Unit
         'min-w-0',
         card
           ? 'flex flex-col gap-2 rounded-lg border border-line p-3'
-          : 'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 border-t border-line py-2 first:border-t-0 md:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_88px_150px_auto]',
+          : 'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 border-t border-line py-2 first:border-t-0',
+        !card && ROW_GRID,
       )}
     >
       <div className="flex min-w-0 items-center gap-2.5">

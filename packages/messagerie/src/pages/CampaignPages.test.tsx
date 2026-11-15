@@ -48,6 +48,30 @@ describe('CampaignsPage', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it('présente la liste en colonnes avec lus, envoi, état et échecs', async () => {
+    const { container } = renderMessagerie(<CampaignsPage />, { space: 'bailleur' });
+    const list = await screen.findByRole('list', { name: 'Campagnes' });
+    expect(container.querySelector('div[aria-hidden="true"].bg-muted')?.textContent).toBe('CampagneDestinatairesEnvoiLusÉtat');
+    const water = within(list).getByText('Coupure d’eau, lundi 16 novembre').closest('li');
+    expect(water?.textContent).toContain('6 locataires');
+    expect(water?.textContent).toContain('13/11/2026, 09:10');
+    expect(water?.textContent).toContain('5 sur 6');
+    const address = within(list).getByText('Nouvelle adresse de paiement').closest('li');
+    expect(address?.textContent).toContain('Envoyée, 1 échec');
+    expect(within(list).getByText('Fermeture du bureau en décembre').closest('li')?.textContent).toContain('Brouillon');
+    await expectNoA11yViolations(container);
+  });
+
+  it('propose le nombre de lignes par page', async () => {
+    renderMessagerie(<CampaignsPage />, { space: 'bailleur' });
+    await screen.findByRole('list', { name: 'Campagnes' });
+    expect(screen.getByRole('combobox', { name: /Lignes par page/ }).textContent).toContain('10');
+    await userEvent.click(screen.getByRole('combobox', { name: /Lignes par page/ }));
+    await userEvent.click(await screen.findByRole('option', { name: '5' }));
+    await waitFor(() => { expect(screen.getByRole('combobox', { name: /Lignes par page/ }).textContent).toContain('5'); });
+    expect(within(screen.getByRole('list', { name: 'Campagnes' })).getAllByRole('listitem')).toHaveLength(5);
+  });
+
   it('affiche l’erreur de chargement', async () => {
     const base = createDemoMessagerieSource({ space: 'agence', now: () => FIXED_NOW });
     renderMessagerie(<CampaignsPage />, { space: 'agence', source: brokenSource(base, ['listCampaigns']) });
@@ -153,6 +177,30 @@ describe('NewCampaignPage', () => {
   it('signale une campagne introuvable', async () => {
     renderMessagerie(<NewCampaignPage campaignId="inconnue" />, { space: 'agence' });
     expect((await screen.findByRole('alert')).textContent).toContain('Impossible de charger la campagne.');
+  });
+
+  it('affiche l’expéditeur, l’alerte des destinataires exclus et le récapitulatif du bailleur', async () => {
+    renderMessagerie(<NewCampaignPage />, { space: 'bailleur' });
+    expect(await screen.findByText('Expéditeur')).toBeTruthy();
+    expect(screen.getByText('Réponses reçues dans Messages')).toBeTruthy();
+    const recap = screen.getByRole('region', { name: 'Récapitulatif' });
+    expect(within(recap).getByText(/Aucun destinataire choisi/)).toBeTruthy();
+    await userEvent.click(screen.getByRole('radio', { name: /Tous les locataires/ }));
+    expect(screen.getByText('1 destinataire sans e-mail valide ne recevra pas ce message.')).toBeTruthy();
+    expect(screen.getByText(/Il est exclu de l’envoi/)).toBeTruthy();
+    expect(within(recap).getByText('9 sur 10')).toBeTruthy();
+    expect(within(recap).getByText('Tout de suite')).toBeTruthy();
+    await userEvent.click(screen.getByRole('radio', { name: 'Programmer l’envoi' }));
+    expect(within(recap).getByText('À programmer')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Date et heure d’envoi'), { target: { value: '2026-12-23T09:00' } });
+    expect(within(recap).getByText('23/12/2026, 09:00')).toBeTruthy();
+  });
+
+  it('n’affiche pas d’alerte quand tous les destinataires ont un e-mail', async () => {
+    renderMessagerie(<NewCampaignPage />, { space: 'bailleur' });
+    await userEvent.click(await screen.findByRole('radio', { name: /Un ou plusieurs immeubles/ }));
+    expect(screen.queryByText(/sans e-mail valide/)).toBeNull();
+    expect(within(screen.getByRole('region', { name: 'Récapitulatif' })).getByText('6 sur 6')).toBeTruthy();
   });
 
   it('Annuler revient à la liste des campagnes', async () => {

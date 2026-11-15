@@ -1,7 +1,8 @@
 'use client';
 
 import { createCollection, NotFoundError } from './kit/collection';
-import { todayIso } from './kit/dates';
+import { formatDateFr, todayIso } from './kit/dates';
+import { money } from './kit/money';
 import { uniqueSlug } from './kit/ids';
 import { createSourceContext } from './kit/sourceContext';
 import { demoCandidates, demoLeaseTerms, demoTenantDetails, demoTenants, demoUnits } from './demo';
@@ -27,26 +28,34 @@ export interface LocatairesSource {
 }
 
 
+const monthOfDue = (iso: string): string => new Intl.DateTimeFormat('fr-FR', { month: 'long', timeZone: 'UTC' }).format(new Date(`${iso}T12:00:00Z`));
+
 function genericDetail(tenant: Tenant): TenantDetail {
   const terms = tenant.unitId ? demoLeaseTerms[tenant.unitId] : undefined;
   const rent = terms ? terms.rent + terms.charges : 0;
+  const overdueSince = tenant.balance < 0 ? tenant.lateSince : null;
+  const dueMonth = overdueSince ? monthOfDue(overdueSince) : '';
+  const dueLabel = overdueSince ? `Échéance ${/^[aeiouéû]/.test(dueMonth) ? 'd’' : 'de '}${dueMonth}` : '';
   return {
     tenantId: tenant.id,
     rent,
     nextNoticeOn: terms ? '2026-11-25' : null,
     leaseEnd: terms?.end ?? null,
     onTime: { onTime: 0, total: 0 },
-    dueSince: null,
+    dueSince: overdueSince,
     lateSettled: 0,
     payments: terms
       ? [
+          ...(overdueSince ? [{ id: 'echeance-impayee', date: overdueSince, label: dueLabel, amount: null, status: 'impaye' as const }] : []),
           { id: 'echeance-2026-10', date: '2026-10-03', label: 'Échéance d’octobre', amount: rent, status: 'paye' },
           { id: 'echeance-2026-09', date: '2026-09-02', label: 'Échéance de septembre', amount: rent, status: 'paye' },
         ]
       : [],
     paymentsCount: terms ? 2 : 0,
-    activities: [],
-    activitiesCount: 0,
+    activities: overdueSince
+      ? [{ id: 'echeance-impayee', tone: 'danger', title: `${dueLabel} non réglée`, detail: `${money(-tenant.balance)} dus depuis le ${formatDateFr(overdueSince)}`, badge: { label: 'Impayé', tone: 'danger' } }]
+      : [],
+    activitiesCount: overdueSince ? 1 : 0,
     documents: [],
     documentsCount: 0,
     leases: tenant.unitId && terms

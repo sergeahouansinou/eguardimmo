@@ -43,6 +43,7 @@ function CampaignFormBody({ audiences, existing }: { audiences: CampaignAudience
   const [outcome, setOutcome] = useState<Outcome | null>(null);
 
   const audience = audiences.find((candidate) => candidate.id === audienceId);
+  const noEmail = audience?.withoutEmail ?? 0;
   const clearError = (key: string) => {
     if (errors[key]) setErrors({ ...errors, [key]: undefined });
   };
@@ -113,7 +114,6 @@ function CampaignFormBody({ audiences, existing }: { audiences: CampaignAudience
     );
   }
 
-  const noEmail = audience?.withoutEmail ?? 0;
   const sendLabel = mode === 'scheduled' ? 'Programmer l’envoi' : 'Envoyer';
 
   return (
@@ -149,7 +149,20 @@ function CampaignFormBody({ audiences, existing }: { audiences: CampaignAudience
           </label>
         ))}
         {errors.audienceId ? <p className="text-caption text-fg-danger">{errors.audienceId}</p> : null}
+        {noEmail > 0 ? (
+          <Alert tone="warning" title={`${String(noEmail)} destinataire${noEmail > 1 ? 's' : ''} sans e-mail valide ne recevr${noEmail > 1 ? 'ont' : 'a'} pas ce message.`}>
+            {noEmail > 1 ? 'Ils sont exclus' : 'Il est exclu'} de l’envoi. Ajoutez {noEmail > 1 ? 'leur adresse sur leur fiche' : 'son adresse sur sa fiche'} pour {noEmail > 1 ? 'les' : 'l’'}inclure.
+          </Alert>
+        ) : null}
       </fieldset>
+
+      {config ? (
+        <div className="flex min-w-0 flex-col gap-0.5 rounded-md border border-line px-3 py-2">
+          <span className="text-caption text-fg-subtle">Expéditeur</span>
+          <span className="text-body font-medium text-fg">{config.senderName}</span>
+          <span className="text-caption text-fg-muted">{`Réponses reçues dans ${profile.inbox.title}`}</span>
+        </div>
+      ) : null}
 
       <TextField
         label="Objet"
@@ -226,18 +239,21 @@ function CampaignFormBody({ audiences, existing }: { audiences: CampaignAudience
         />
       </div>
 
-      <section aria-label="Récapitulatif" className="flex flex-col gap-1 rounded-md bg-muted px-3 py-2 text-body text-fg-muted">
+      <section aria-label="Récapitulatif" className="flex flex-col gap-2 rounded-md bg-muted px-3 py-2 text-body text-fg-muted">
         <p>
           {audience
             ? `${String(audience.count)} ${config?.audienceNoun ?? 'destinataires'} · ${audience.label}`
             : 'Aucun destinataire choisi'}
           {config ? ` · Expéditeur : ${config.senderName}` : ''}
         </p>
-        {noEmail > 0 ? (
-          <p className="text-fg-danger">
-            {noEmail} destinataire{noEmail > 1 ? 's' : ''} sans e-mail valide ne recevr{noEmail > 1 ? 'ont' : 'a'} pas ce message.
-          </p>
-        ) : null}
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 text-caption">
+          <dt className="text-fg-subtle">Canal</dt>
+          <dd className="text-fg">E-mail</dd>
+          <dt className="text-fg-subtle">Destinataires</dt>
+          <dd className="text-fg">{audience ? `${String(audience.count - noEmail)} sur ${String(audience.count)}` : '—'}</dd>
+          <dt className="text-fg-subtle">Envoi</dt>
+          <dd className="text-fg">{mode === 'scheduled' ? (scheduledAt ? formatDateTime(localValueToIso(scheduledAt)) : 'À programmer') : 'Tout de suite'}</dd>
+        </dl>
       </section>
 
       {failure ? <Alert tone="danger" title="Enregistrement impossible">{failure}</Alert> : null}
