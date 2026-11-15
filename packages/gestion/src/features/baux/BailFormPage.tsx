@@ -2,21 +2,23 @@
 
 import { Alert, Button, Card, CardTitle, Checkbox, RadioGroup, Select, Textarea, TextField } from '@eguardimmo/ui';
 import { useState } from 'react';
-import type { z } from 'zod';
+import { z } from 'zod';
 import { LeaseGate } from './LeaseGate';
 import { useCreateLease, useLeases, useUpdateLease } from './hooks';
 import { bauxPaths } from './paths';
 import { PAYMENT_METHODS, leaseInputSchema, paymentMethodLabel } from './schemas';
 import type { Lease } from './schemas';
 import { useTenants, useUnits } from '../locataires/hooks';
-import { DescriptionList, LinkButton, ListLoading, LoadError, PageHeader, Steps, errorMessage, noticeAfterNavigation, useGestionNavigation, useNotify } from '../locataires/kit';
+import { DescriptionList, LinkButton, ListLoading, LoadError, PageHeader, SearchInput, Steps, errorMessage, noticeAfterNavigation, useGestionNavigation, useNotify } from '../locataires/kit';
 import { addDays, addMonths, formatDateFr, todayIso } from '../locataires/kit/dates';
 import { links } from '../locataires/kit/links';
 import { euroInput, money, parseEuros } from '../locataires/kit/money';
+import { fold } from '../locataires/kit/useListView';
 import { useZodForm } from '../locataires/kit/useZodForm';
 import { locatairesPaths } from '../locataires/paths';
 import { tenantNameOf, unitFullLabel } from '../locataires/schemas';
 
+const isoDate = z.iso.date();
 type Values = z.input<typeof leaseInputSchema>;
 type Field = keyof Values;
 
@@ -34,10 +36,10 @@ const DURATIONS = [
   { value: '72', label: '72 mois, 6 ans' },
 ];
 
-const empty = (unitId: string, tenantId: string): Values => ({
+const empty = (unitId: string, tenantId: string, start: string): Values => ({
   unitId,
   furnished: false,
-  start: '',
+  start,
   durationMonths: '36',
   tenantIds: tenantId === '' ? [] : [tenantId],
   paymentMethod: 'virement',
@@ -66,7 +68,10 @@ const fromLease = (lease: Lease): Values => ({
 
 export function BailFormPage({ id }: { id?: string }) {
   const { search } = useGestionNavigation();
-  if (id === undefined) return <LeaseForm initial={empty(search.get('bien') ?? '', search.get('locataire') ?? '')} />;
+  if (id === undefined) {
+    const requested = search.get('debut') ?? '';
+    return <LeaseForm initial={empty(search.get('bien') ?? '', search.get('locataire') ?? '', isoDate.safeParse(requested).success ? requested : '')} />;
+  }
   return <LeaseGate id={id} title="Modifier le bail">{(lease) => (lease.status === 'termine' ? <Closed lease={lease} /> : <LeaseForm lease={lease} initial={fromLease(lease)} />)}</LeaseGate>;
 }
 
@@ -91,12 +96,15 @@ function LeaseForm({ lease, initial }: { lease?: Lease; initial: Values }) {
   const update = useUpdateLease(lease?.id ?? '');
   const form = useZodForm(leaseInputSchema, initial);
   const [step, setStep] = useState(0);
+  const [tenantQuery, setTenantQuery] = useState('');
   const editing = lease !== undefined;
   const pending = create.isPending || update.isPending;
 
   const unitList = units.data ?? [];
   const tenantList = (tenants.data ?? []).filter((tenant) => tenant.status !== 'archive');
   const unit = unitList.find((entry) => entry.id === form.values.unitId);
+  const visibleTenants = tenantList.filter((tenant) => fold(tenantNameOf(tenant)).includes(fold(tenantQuery.trim())));
+  const selectedNames = form.values.tenantIds.map((tenantId) => { const tenant = tenantList.find((entry) => entry.id === tenantId); return tenant ? tenantNameOf(tenant) : tenantId; });
   const parsed = leaseInputSchema.safeParse(form.values);
   const issues = parsed.success ? [] : parsed.error.issues.map((issue) => String(issue.path[0]));
   const blocked = (index: number) => STEP_FIELDS[index]?.some((field) => issues.includes(field)) ?? false;
@@ -185,9 +193,14 @@ function LeaseForm({ lease, initial }: { lease?: Lease; initial: Values }) {
             {step === 1 ? (
               <fieldset className="flex flex-col gap-2">
                 <legend className="text-body-strong text-fg">Locataires du bail *</legend>
+                <SearchInput label="Rechercher un locataire" placeholder="Nom du locataire" value={tenantQuery} onValueChange={setTenantQuery} />
+                <p className="text-caption text-fg-subtle">
+                  {`${String(form.values.tenantIds.length)} sélectionné${form.values.tenantIds.length > 1 ? 's' : ''}. Recherchez un locataire existant ou invitez-en un nouveau.`}
+                </p>
                 {tenantList.length === 0 ? <p className="text-body text-fg-subtle">Aucun locataire disponible.</p> : null}
+                {tenantList.length > 0 && visibleTenants.length === 0 ? <p className="text-body text-fg-subtle">Aucun locataire ne correspond à cette recherche.</p> : null}
                 <ul className="flex flex-col gap-1.5">
-                  {tenantList.map((tenant) => (
+                  {visibleTenants.map((tenant) => (
                     <li key={tenant.id}>
                       <Checkbox label={`${tenantNameOf(tenant)}${tenant.status === 'invite' ? ' (invité)' : ''}`} checked={form.values.tenantIds.includes(tenant.id)} onChange={() => { toggleTenant(tenant.id); }} />
                     </li>
@@ -234,7 +247,7 @@ function LeaseForm({ lease, initial }: { lease?: Lease; initial: Values }) {
                 items={[
                   { term: 'Bien', detail: unit ? unitFullLabel(unit) : '—' },
                   { term: 'Type', detail: form.values.furnished ? 'Location meublée' : 'Location vide' },
-                  { term: 'Locataires', detail: form.values.tenantIds.map((tenantId) => { const tenant = tenantList.find((entry) => entry.id === tenantId); return tenant ? tenantNameOf(tenant) : tenantId; }).join(', ') || '—' },
+                  { term: 'Locataires', detail: selectedNames.join(', ') || '—' },
                   { term: 'Période', detail: end ? `${formatDateFr(start)} → ${formatDateFr(end)}` : '—' },
                   { term: 'Loyer', detail: `${money(rentMinor)} + ${money(chargesMinor)} de charges` },
                   { term: 'Dépôt de garantie', detail: money(/^\d+([.,]\d{1,2})?$/.test(form.values.deposit.trim()) ? parseEuros(form.values.deposit) : 0) },
@@ -250,6 +263,20 @@ function LeaseForm({ lease, initial }: { lease?: Lease; initial: Values }) {
             ) : null}
           </Card>
           <aside className="flex min-w-0 flex-col gap-3">
+            <Card className="gap-2" role="group" aria-labelledby="bf-recap">
+              <CardTitle as="h2" id="bf-recap">Récapitulatif</CardTitle>
+              <DescriptionList
+                termWidth="90px"
+                items={[
+                  { term: 'Bien', detail: unit ? unit.label : '—' },
+                  { term: 'Locataire', detail: selectedNames.join(', ') || '—' },
+                  { term: 'Début', detail: start === '' ? '—' : formatDateFr(start) },
+                  { term: 'Loyer', detail: rentMinor > 0 ? money(rentMinor) : '—' },
+                  { term: 'Charges', detail: chargesMinor > 0 ? money(chargesMinor) : '—' },
+                ]}
+              />
+              {step < 2 ? <p className="text-caption text-fg-subtle">Les conditions se règlent à l’étape suivante.</p> : null}
+            </Card>
             <Card className="gap-2" role="group" aria-labelledby="bf-aide">
               <CardTitle as="h2" id="bf-aide">À savoir</CardTitle>
               <p className="text-body text-fg-muted">Le locataire est ajouté à l’échéancier dès la création. Les avis d’échéance sont préparés le mois précédent.</p>

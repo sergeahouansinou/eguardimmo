@@ -2,9 +2,9 @@
 
 import { Ban, BellRing, CalendarCheck, CalendarRange, Copy, FileText, Mail, Pencil, Wallet } from 'lucide-react';
 import {
-  Badge,
   Button,
   Card,
+  Chip,
   ConfirmDialog,
   EmptyState,
   Pagination,
@@ -14,25 +14,24 @@ import {
   TabPanel,
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeaderCell,
   TableRow,
   Tabs,
 } from '@eguardimmo/ui';
-import type { BadgeTone } from '@eguardimmo/ui';
 import { useState } from 'react';
 import { useLeaseLookups } from './BauxParts';
 import { useReservationAction, useReservationMail, useReservations } from './hooks';
 import { bauxPaths } from './paths';
 import { ReservationCalendarDialog } from './ReservationCalendarDialog';
 import { ReservationImportDialog } from './ReservationImportDialog';
+import { ReservationRow, reservationStatusBadge } from './ReservationRow';
 import type { Reservation, ReservationStatus } from './schemas';
-import { ActionMenu, LinkButton, ListLoading, LoadError, PageHeader, SearchInput, errorMessage, useGestionNavigation, useNotify } from '../locataires/kit';
+import { LinkButton, ListLoading, LoadError, PageHeader, SearchInput, errorMessage, useGestionNavigation, useNotify } from '../locataires/kit';
 import type { ActionItem } from '../locataires/kit';
 import { useUnits } from '../locataires/hooks';
 import { downloadCsv, toCsv } from '../locataires/kit/csv';
-import { daysBetween, formatDateFr } from '../locataires/kit/dates';
+import { formatDateFr, monthLabel, todayIso } from '../locataires/kit/dates';
 import { links } from '../locataires/kit/links';
 import { money } from '../locataires/kit/money';
 import { useListView } from '../locataires/kit/useListView';
@@ -40,20 +39,16 @@ import type { ListTab } from '../locataires/kit/useListView';
 
 const ALL = 'tous';
 
-const statusBadge: Record<ReservationStatus, { label: string; tone: BadgeTone }> = {
-  option: { label: 'Option', tone: 'warning' },
-  confirmee: { label: 'Confirmée', tone: 'success' },
-  acompte_recu: { label: 'Acompte reçu', tone: 'info' },
-  solde_a_percevoir: { label: 'Solde à percevoir', tone: 'warning' },
-  annulee: { label: 'Annulée', tone: 'neutral' },
-};
+const STATUS_FILTERS: readonly ReservationStatus[] = ['acompte_recu', 'solde_a_percevoir', 'option'];
 
-const tabs: ListTab<Reservation>[] = [
-  { id: 'toutes', label: 'Toutes', match: (item) => item.status !== 'annulee' },
-  { id: 'options', label: 'Options', match: (item) => item.status === 'option' },
-  { id: 'solde', label: 'Solde à percevoir', match: (item) => item.status === 'solde_a_percevoir' || item.status === 'acompte_recu' },
-  { id: 'annulees', label: 'Annulées', match: (item) => item.status === 'annulee' },
-];
+function buildTabs(today: string): ListTab<Reservation>[] {
+  return [
+    { id: 'a_venir', label: 'À venir', match: (item) => item.status !== 'annulee' && item.arrival > today },
+    { id: 'en_cours', label: 'En cours', match: (item) => item.status !== 'annulee' && item.arrival <= today && item.departure > today },
+    { id: 'passees', label: 'Passées', match: (item) => item.status !== 'annulee' && item.departure <= today },
+    { id: 'annulees', label: 'Annulées', match: (item) => item.status === 'annulee' },
+  ];
+}
 
 export function ReservationsPage() {
   const reservations = useReservations();
@@ -64,14 +59,27 @@ export function ReservationsPage() {
   const mail = useReservationMail();
   const units = useUnits();
   const [unitId, setUnitId] = useState(ALL);
+  const [period, setPeriod] = useState(ALL);
+  const [statusFilter, setStatusFilter] = useState<ReservationStatus | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [pendingCancel, setPendingCancel] = useState<Reservation | null>(null);
 
   const items = reservations.data ?? [];
   const searchText = (item: Reservation) => `${item.reference} ${item.guest} ${lookups.unitLabel(item.unitId)}`;
-  const view = useListView({ items, tabs, searchText, predicate: (item) => unitId === ALL || item.unitId === unitId });
+  const tabs = buildTabs(todayIso());
+  const view = useListView({
+    items,
+    tabs,
+    searchText,
+    predicate: (item) =>
+      (unitId === ALL || item.unitId === unitId) &&
+      (period === ALL || (item.arrival.slice(0, 7) <= period && item.departure.slice(0, 7) >= period)) &&
+      (statusFilter === null || item.status === statusFilter),
+  });
   const unitIds = [...new Set(items.map((item) => item.unitId))];
+  const periods = [...new Set(items.flatMap((item) => [item.arrival.slice(0, 7), item.departure.slice(0, 7)]))].sort().reverse();
+  const filtered = unitId !== ALL || period !== ALL || statusFilter !== null;
 
   const run = async (id: string, action: 'confirm' | 'cancel' | 'duplicate', success: string) => {
     try {
@@ -107,7 +115,7 @@ export function ReservationsPage() {
       'reservations.csv',
       toCsv(
         ['Référence', 'Bien', 'Voyageur', 'Arrivée', 'Départ', 'Montant', 'Payé', 'Statut'],
-        items.map((item) => [item.reference, lookups.unitLabel(item.unitId), item.guest, formatDateFr(item.arrival), formatDateFr(item.departure), money(item.amount), money(item.paid), statusBadge[item.status].label]),
+        items.map((item) => [item.reference, lookups.unitLabel(item.unitId), item.guest, formatDateFr(item.arrival), formatDateFr(item.departure), money(item.amount), money(item.paid), reservationStatusBadge[item.status].label]),
       ),
     );
     notify({ title: 'Export prêt', description: `${String(items.length)} réservations exportées.` });
@@ -119,14 +127,13 @@ export function ReservationsPage() {
     if (target) await run(target.id, 'cancel', 'Réservation annulée');
   };
 
-  const expected = items.filter((item) => item.status !== 'annulee').reduce((sum, item) => sum + item.amount, 0);
 
   return (
     <>
       <PageHeader
         crumbs={[{ label: 'Accueil', href: links.home }, { label: 'Baux', href: bauxPaths.list }, { label: 'Réservations' }]}
         title="Réservations"
-        subtitle={reservations.data ? `${String(view.counts.toutes ?? 0)} réservations actives, ${money(expected)} de chiffre d’affaires attendu.` : ' '}
+        subtitle="Séjours de courte durée en location meublée. Chaque réservation porte un acompte et un dépôt de garantie."
         actions={
           <>
             <Button variant="secondary" onClick={exportCsv} disabled={!reservations.data}>Exporter</Button>
@@ -138,7 +145,7 @@ export function ReservationsPage() {
       />
       {reservations.isError ? <LoadError title="Les réservations n’ont pas pu être chargées" /> : null}
       <Card role="region" aria-label="Liste des réservations" className="gap-3">
-        <Tabs value={view.tab} onValueChange={view.setTab} defaultValue="toutes">
+        <Tabs value={view.tab} onValueChange={view.setTab} defaultValue="a_venir">
           <TabList aria-label="Filtrer les réservations">
             {tabs.map((tab) => (
               <Tab key={tab.id} value={tab.id} count={view.counts[tab.id] ?? 0}>{tab.label}</Tab>
@@ -156,10 +163,26 @@ export function ReservationsPage() {
                 options={[{ value: ALL, label: 'Bien : Tous' }, ...unitIds.map((entry) => ({ value: entry, label: lookups.unitShort(entry) }))]}
                 className="w-48"
               />
+              <Select
+                label="Période"
+                hideLabel
+                placeholder="Période : Toutes"
+                value={period}
+                onValueChange={(value) => { setPeriod(value); view.resetPage(); }}
+                options={[{ value: ALL, label: 'Période : Toutes' }, ...periods.map((entry) => ({ value: entry, label: monthLabel(entry) }))]}
+                className="w-56"
+              />
+              <div role="group" aria-label="Statut" className="flex flex-wrap items-center gap-1.5">
+                {STATUS_FILTERS.map((status) => (
+                  <Chip key={status} pressed={statusFilter === status} onClick={() => { setStatusFilter(statusFilter === status ? null : status); view.resetPage(); }}>
+                    {reservationStatusBadge[status].label}
+                  </Chip>
+                ))}
+              </div>
             </div>
             {reservations.isPending ? <ListLoading label="Chargement des réservations" /> : null}
             {reservations.data && view.rows.length === 0 ? (
-              <EmptyState icon={CalendarRange} title="Aucune réservation" description={view.query !== '' || unitId !== ALL ? 'Aucune réservation ne correspond à ces filtres.' : 'Rien à afficher dans cette rubrique pour le moment.'} />
+              <EmptyState icon={CalendarRange} title="Aucune réservation" description={view.query !== '' || filtered ? 'Aucune réservation ne correspond à ces filtres.' : 'Rien à afficher dans cette rubrique pour le moment.'} />
             ) : null}
             {view.rows.length > 0 ? (
               <Table aria-label="Réservations">
@@ -168,31 +191,25 @@ export function ReservationsPage() {
                     <TableHeaderCell>Référence</TableHeaderCell>
                     <TableHeaderCell>Bien</TableHeaderCell>
                     <TableHeaderCell>Voyageur</TableHeaderCell>
-                    <TableHeaderCell>Séjour</TableHeaderCell>
+                    <TableHeaderCell>Arrivée</TableHeaderCell>
+                    <TableHeaderCell>Départ</TableHeaderCell>
+                    <TableHeaderCell numeric>Nuits</TableHeaderCell>
                     <TableHeaderCell numeric>Montant</TableHeaderCell>
-                    <TableHeaderCell numeric>Payé</TableHeaderCell>
-                    <TableHeaderCell>Statut</TableHeaderCell>
+                    <TableHeaderCell numeric>Dépôt</TableHeaderCell>
+                    <TableHeaderCell>État</TableHeaderCell>
                     <TableHeaderCell><span className="sr-only">Actions</span></TableHeaderCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {view.rows.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell strong>{item.reference}</TableCell>
-                      <TableCell>{lookups.unitShort(item.unitId)}</TableCell>
-                      <TableCell>{item.guest}</TableCell>
-                      <TableCell>
-                        {`${formatDateFr(item.arrival)} → ${formatDateFr(item.departure)}`}
-                        <span className="block text-caption text-fg-subtle">{`${String(daysBetween(item.arrival, item.departure))} nuits`}</span>
-                      </TableCell>
-                      <TableCell numeric>{money(item.amount)}</TableCell>
-                      <TableCell numeric>{money(item.paid)}</TableCell>
-                      <TableCell>
-                        <Badge tone={statusBadge[item.status].tone}>{statusBadge[item.status].label}</Badge>
-                        {item.optionUntil ? <span className="block text-caption text-fg-subtle">{`Jusqu’au ${formatDateFr(item.optionUntil)}`}</span> : null}
-                      </TableCell>
-                      <TableCell><ActionMenu label={`Plus d’actions, ${item.reference}`} items={actionsFor(item)} /></TableCell>
-                    </TableRow>
+                    <ReservationRow
+                      key={item.id}
+                      item={item}
+                      unit={lookups.unitShort(item.unitId)}
+                      actions={actionsFor(item)}
+                      onConfirm={() => { void run(item.id, 'confirm', 'Réservation confirmée'); }}
+                      onRemind={() => { void send(item.id, 'rappel'); }}
+                    />
                   ))}
                 </TableBody>
               </Table>

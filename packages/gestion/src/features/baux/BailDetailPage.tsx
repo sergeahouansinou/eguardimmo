@@ -1,14 +1,16 @@
 'use client';
 
-import { CalendarClock, CircleAlert, FileText, LogOut, Pencil } from 'lucide-react';
-import { Alert, Card, StatCard, Tab, TabList, TabPanel, Tabs } from '@eguardimmo/ui';
+import { CalendarClock, CircleAlert, FilePlus, FileText, LogOut, Pencil } from 'lucide-react';
+import { Alert, Badge, Card, StatCard, Tab, TabList, TabPanel, Tabs } from '@eguardimmo/ui';
 import { useState } from 'react';
+import { LatestInstallments, LeaseParties, LeasePreview } from './BailResume';
 import { LeaseStatusBadge, leasePeriod, useLeaseLookups } from './BauxParts';
 import { LeaseGate } from './LeaseGate';
 import { useEdls, useExits, useInstallments, useLeaseExtras } from './hooks';
 import { bauxPaths } from './paths';
 import { edlTypeLabel, paymentMethodLabel } from './schemas';
 import type { Lease } from './schemas';
+import { courriersPaths, noticeIdOf } from '../courriers/paths';
 import { DescriptionList, ItemRow, LinkButton, ListLoading, LoadError, NoRows, PageHeader, SectionCard, useGestionNavigation } from '../locataires/kit';
 import { daysBetween, formatDateFr, todayIso } from '../locataires/kit/dates';
 import { links } from '../locataires/kit/links';
@@ -33,18 +35,25 @@ function LeaseSheet({ lease }: { lease: Lease }) {
   const nextNotice = installments.data?.find((row) => row.state === 'a_emettre');
   const remaining = daysBetween(todayIso(), lease.end);
   const canExit = lease.status === 'en_cours' || lease.status === 'preavis';
+  const unpaidCount = (installments.data ?? []).filter((row) => row.state === 'impaye' || row.state === 'partiel').length;
 
   return (
     <>
       <PageHeader
         crumbs={[{ label: 'Accueil', href: links.home }, { label: 'Baux', href: bauxPaths.list }, { label: lease.reference }]}
         title={`Bail ${lease.reference}`}
-        badges={<LeaseStatusBadge status={lease.status} />}
+        badges={
+          <>
+            <LeaseStatusBadge status={lease.status} />
+            {unpaidCount > 0 ? <Badge tone="danger">{`${String(unpaidCount)} échéance${unpaidCount > 1 ? 's' : ''} impayée${unpaidCount > 1 ? 's' : ''}`}</Badge> : null}
+          </>
+        }
         subtitle={`${lookups.unitLabel(lease.unitId)}, ${lookups.tenantsOf(lease)}`}
         actions={
           <>
             {lease.status !== 'termine' ? <LinkButton href={bauxPaths.edit(lease.id)} icon={Pencil}>Modifier</LinkButton> : null}
             {lease.status !== 'brouillon' ? <LinkButton href={bauxPaths.schedule(lease.id)} icon={CalendarClock}>Échéancier</LinkButton> : null}
+            {canExit ? <LinkButton href={nextNotice ? courriersPaths.notice(noticeIdOf(lease.id, nextNotice.month)) : courriersPaths.notices} icon={FilePlus}>Émettre l’avis d’échéance</LinkButton> : null}
             {canExit || lease.status === 'termine' ? <LinkButton href={bauxPaths.exit(lease.id)} icon={LogOut}>{lease.status === 'termine' ? 'Voir la sortie' : 'Préavis et sortie'}</LinkButton> : null}
           </>
         }
@@ -64,12 +73,15 @@ function LeaseSheet({ lease }: { lease: Lease }) {
         </Alert>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Loyer charges comprises" value={money(lease.rent + lease.charges)}>
           <span className="text-caption text-fg-subtle">{`${money(lease.rent)} + ${money(lease.charges)} de charges`}</span>
         </StatCard>
         <StatCard label="Solde du compte" value={money(lease.balance)} tone={lease.balance < 0 ? 'danger' : 'default'}>
           <span className="text-caption text-fg-subtle">{lease.balance < 0 ? 'Loyer en retard' : 'À jour'}</span>
+        </StatCard>
+        <StatCard label="Prochaine révision" value={lease.nextRevision ? formatDateFr(lease.nextRevision) : '—'}>
+          <span className="text-caption text-fg-subtle">{lease.nextRevision ? lease.revisionNote || `Indice ${lease.revisionIndex}` : 'Aucune révision prévue'}</span>
         </StatCard>
         <StatCard label="Fin du bail" value={formatDateFr(lease.end)}>
           <span className="text-caption text-fg-subtle">
@@ -139,6 +151,10 @@ function LeaseSheet({ lease }: { lease: Lease }) {
                     </ul>
                   )}
                 </SectionCard>
+                <LeaseParties lease={lease} />
+                {installments.data ? <LatestInstallments lease={lease} installments={installments.data} /> : null}
+                <LeasePreview id="bail-apercu-documents" title="Documents du bail" icon={FileText} entries={extras.data.documents} onSeeAll={() => { setTab('documents'); }} />
+                <LeasePreview id="bail-apercu-historique" title="Historique du bail" icon={CalendarClock} entries={extras.data.history} onSeeAll={() => { setTab('historique'); }} />
                 {lease.note === '' ? null : (
                   <SectionCard id="bail-note" title="Note">
                     <p className="text-body text-fg-muted">{lease.note}</p>

@@ -31,6 +31,16 @@ describe('EtatsLieuxPage', () => {
     await expectNoA11yViolations(container);
   });
 
+  it('affiche la création, le modèle et le bien complet de chaque état des lieux', async () => {
+    renderLot(<EtatsLieuxPage />);
+    const table = await screen.findByRole('table', { name: 'États des lieux' });
+    expect(within(table).getAllByRole('columnheader').map((cell) => norm(cell.textContent))).toEqual(['Référence', 'Type', 'Bien', 'Locataire', 'Date', 'Créé le', 'Modèle', 'Statut', 'Actions']);
+    const row = at(dataRows(table).filter((entry) => entry.textContent.includes('EDL-2026-006')), 0);
+    expect(norm(row.textContent)).toContain('Villa RDC');
+    expect(norm(row.textContent)).toContain('05/10/2026');
+    expect(norm(row.textContent)).toContain('Maison, avec jardin');
+  });
+
   it('filtre par type et par recherche', async () => {
     renderLot(<EtatsLieuxPage />);
     await screen.findByRole('table', { name: 'États des lieux' });
@@ -139,21 +149,59 @@ describe('EtatLieuxPage', () => {
 });
 
 describe('ReservationsPage', () => {
-  it('liste les réservations actives et filtre les options', async () => {
+  it('liste les séjours à venir avec nuits, dépôt et filtre par statut', async () => {
     const { container } = renderLot(<ReservationsPage />);
     const table = await screen.findByRole('table', { name: 'Réservations' });
-    expect(dataRows(table)).toHaveLength(7);
-    await userEvent.click(screen.getByRole('tab', { name: /Options/ }));
+    expect(screen.getByRole('tab', { name: /À venir/ }).textContent).toContain('3');
+    expect(screen.getByRole('tab', { name: /En cours/ }).textContent).toContain('1');
+    expect(screen.getByRole('tab', { name: /Passées/ }).textContent).toContain('3');
+    expect(screen.getByRole('tab', { name: /Annulées/ }).textContent).toContain('1');
+    expect(within(table).getAllByRole('columnheader').map((cell) => norm(cell.textContent))).toEqual(['Référence', 'Bien', 'Voyageur', 'Arrivée', 'Départ', 'Nuits', 'Montant', 'Dépôt', 'État', 'Actions']);
+    const rows = dataRows(table);
+    expect(rows).toHaveLength(3);
+    expect(norm(at(rows, 0).textContent)).toContain('Anna Kowalski');
+    expect(norm(at(rows, 0).textContent)).toContain('18/11/202625/11/20267630 €300 €');
+    await userEvent.click(screen.getByRole('button', { name: 'Option' }));
+    const options = dataRows(screen.getByRole('table', { name: 'Réservations' }));
+    expect(options).toHaveLength(1);
+    expect(norm(at(options, 0).textContent)).toContain('Julien Morel');
+    expect(norm(at(options, 0).textContent)).toContain('Jusqu’au 16/11/2026');
+    await expectNoA11yViolations(container);
+  });
+
+  it('filtre par période et classe les séjours passés', async () => {
+    renderLot(<ReservationsPage />);
+    await userEvent.click(await screen.findByRole('tab', { name: /Passées/ }));
+    expect(dataRows(screen.getByRole('table', { name: 'Réservations' }))).toHaveLength(3);
+    await userEvent.click(screen.getByRole('combobox', { name: /^Période/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Octobre 2026' }));
     const rows = dataRows(screen.getByRole('table', { name: 'Réservations' }));
     expect(rows).toHaveLength(1);
-    expect(norm(at(rows, 0).textContent)).toContain('Julien Morel');
-    expect(norm(at(rows, 0).textContent)).toContain('Jusqu’au 16/11/2026');
-    await expectNoA11yViolations(container);
+    expect(norm(at(rows, 0).textContent)).toContain('Sophie Aubry');
+  });
+
+  it('confirme une option depuis le bouton de la ligne', async () => {
+    const { sources } = renderLot(<ReservationsPage />);
+    await screen.findByRole('table', { name: 'Réservations' });
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmer' }));
+    await waitFor(async () => {
+      expect((await reservationsOf(sources.baux)).find((item) => item.id === 'rs-2026-033')?.status).toBe('confirmee');
+    });
+  });
+
+  it('relance le solde depuis le bouton de la ligne', async () => {
+    const { sources } = renderLot(<ReservationsPage />);
+    await screen.findByRole('table', { name: 'Réservations' });
+    const row = at(dataRows(screen.getByRole('table', { name: 'Réservations' })).filter((entry) => entry.textContent.includes('RS-2026-032')), 0);
+    await userEvent.click(within(row).getByRole('button', { name: 'Relancer' }));
+    await waitFor(async () => {
+      expect((await reservationsOf(sources.baux)).find((item) => item.id === 'rs-2026-032')?.reminderSentOn).toBe('2026-11-13');
+    });
   });
 
   it('confirme une option', async () => {
     const { sources } = renderLot(<ReservationsPage />);
-    await userEvent.click(await screen.findByRole('tab', { name: /Options/ }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Option' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Plus d’actions, RS-2026-033' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Confirmer l’option' }));
     await waitFor(async () => {
@@ -174,8 +222,8 @@ describe('ReservationsPage', () => {
 
   it('duplique une réservation en option', async () => {
     const { sources } = renderLot(<ReservationsPage />);
-    await screen.findByRole('table', { name: 'Réservations' });
-    await userEvent.click(screen.getByRole('button', { name: 'Plus d’actions, RS-2026-029' }));
+    await userEvent.click(await screen.findByRole('tab', { name: /En cours/ }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Plus d’actions, RS-2026-029' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Dupliquer en option' }));
     await waitFor(async () => {
       expect((await reservationsOf(sources.baux)).find((item) => item.id === 'rs-2026-034')).toMatchObject({ status: 'option', paid: 0, optionUntil: '2026-11-20' });

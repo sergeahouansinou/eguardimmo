@@ -225,8 +225,8 @@ describe('Actions du menu des réservations', () => {
 
   it('bloque la confirmation d’une option et la relance d’une réservation soldée', async () => {
     renderLot(<ReservationsPage />);
-    await screen.findByRole('table', { name: 'Réservations' });
-    await userEvent.click(screen.getByRole('button', { name: 'Plus d’actions, RS-2026-029' }));
+    await userEvent.click(await screen.findByRole('tab', { name: /En cours/ }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Plus d’actions, RS-2026-029' }));
     expect((await screen.findByRole('menuitem', { name: 'Relancer le solde' })).getAttribute('aria-disabled')).toBe('true');
   });
 

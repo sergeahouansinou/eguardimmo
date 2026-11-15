@@ -21,7 +21,7 @@ import {
 import { useState } from 'react';
 import { useLeaseLookups } from './BauxParts';
 import { EdlStatusBadge } from './EdlParts';
-import { useArchiveEdl, useDeleteEdl, useEdls, useSetEdlStatus } from './hooks';
+import { useArchiveEdl, useDeleteEdl, useEdlTemplates, useEdls, useSetEdlStatus } from './hooks';
 import { bauxPaths } from './paths';
 import { useEdlActions } from './useEdlActions';
 import { EDL_TYPES, edlTypeLabel } from './schemas';
@@ -44,6 +44,7 @@ const tabs: ListTab<Edl>[] = [
 
 export function EtatsLieuxPage() {
   const edls = useEdls();
+  const templates = useEdlTemplates();
   const lookups = useLeaseLookups();
   const { push, Link } = useGestionNavigation();
   const notify = useNotify();
@@ -139,6 +140,8 @@ export function EtatsLieuxPage() {
                     <TableHeaderCell>Bien</TableHeaderCell>
                     <TableHeaderCell>Locataire</TableHeaderCell>
                     <TableHeaderCell>Date</TableHeaderCell>
+                    <TableHeaderCell>Créé le</TableHeaderCell>
+                    <TableHeaderCell>Modèle</TableHeaderCell>
                     <TableHeaderCell>Statut</TableHeaderCell>
                     <TableHeaderCell><span className="sr-only">Actions</span></TableHeaderCell>
                   </TableRow>
@@ -150,9 +153,11 @@ export function EtatsLieuxPage() {
                         <Link href={bauxPaths.edl(edl.id)} className="text-fg hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">{edl.reference}</Link>
                       </TableCell>
                       <TableCell>{edlTypeLabel[edl.type]}</TableCell>
-                      <TableCell>{lookups.unitShort(edl.unitId)}</TableCell>
+                      <TableCell>{lookups.unitLabel(edl.unitId)}</TableCell>
                       <TableCell>{edl.tenantId ? lookups.tenantName(edl.tenantId) : '—'}</TableCell>
                       <TableCell>{edl.date ? formatDateFr(edl.date) : 'À planifier'}</TableCell>
+                      <TableCell>{edl.createdOn ? formatDateFr(edl.createdOn) : '—'}</TableCell>
+                      <TableCell>{templates.data?.find((entry) => entry.id === edl.templateId)?.label ?? '—'}</TableCell>
                       <TableCell><EdlStatusBadge status={edl.status} /></TableCell>
                       <TableCell><ActionMenu label={`Plus d’actions, ${edl.reference}`} items={actionsFor(edl)} /></TableCell>
                     </TableRow>

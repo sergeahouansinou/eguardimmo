@@ -1,7 +1,8 @@
 'use client';
 
-import { Banknote, CalendarClock, ClipboardCheck, Copy, FilePen, FilePlus, FileText, LogOut, Pencil, Receipt, Trash2, TrendingUp } from 'lucide-react';
+import { Banknote, CalendarClock, ClipboardCheck, Copy, FilePen, FilePlus, FileText, LogOut, Pencil, Receipt, RefreshCw, Trash2, TrendingUp } from 'lucide-react';
 import {
+  Alert,
   Button,
   Card,
   Checkbox,
@@ -15,7 +16,6 @@ import {
   TabPanel,
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeaderCell,
   TableRow,
@@ -24,14 +24,15 @@ import {
 import { FileStack } from 'lucide-react';
 import { useState } from 'react';
 import { ReviseRentDialog } from './ReviseRentDialog';
-import { LeaseStatusBadge, leasePeriod, useLeaseLookups } from './BauxParts';
-import { useDeleteLease, useDuplicateLease, useLeases } from './hooks';
+import { useLeaseLookups } from './BauxParts';
+import { LeaseRow } from './LeaseRow';
+import { useDeleteLease, useDuplicateLease, useExits, useLeases } from './hooks';
 import { bauxPaths } from './paths';
 import type { Lease } from './schemas';
-import { ActionMenu, LinkButton, ListLoading, LoadError, PageHeader, SearchInput, errorMessage, useGestionNavigation, useNotify } from '../locataires/kit';
+import { LinkButton, ListLoading, LoadError, PageHeader, SearchInput, errorMessage, useGestionNavigation, useNotify } from '../locataires/kit';
 import type { ActionItem } from '../locataires/kit';
 import { downloadCsv, toCsv } from '../locataires/kit/csv';
-import { daysBetween, formatDateFr, todayIso } from '../locataires/kit/dates';
+import { addDays, daysBetween, formatDateFr, todayIso } from '../locataires/kit/dates';
 import { links } from '../locataires/kit/links';
 import { money } from '../locataires/kit/money';
 import { useListView } from '../locataires/kit/useListView';
@@ -51,6 +52,18 @@ const SORTS = [
   { value: 'bien', label: 'Tri : bien (A à Z)' },
 ];
 const WINDOWS = [30, 60, 90] as const;
+const ALL = 'tous';
+const TYPES = [
+  { value: ALL, label: 'Type : Tous' },
+  { value: 'vide', label: 'Vide' },
+  { value: 'meuble', label: 'Meublé' },
+];
+const BALANCES = [
+  { value: ALL, label: 'Solde : Tous' },
+  { value: 'impayes', label: 'Impayés' },
+  { value: 'a_jour', label: 'À jour' },
+];
+const SOON_DAYS = 60;
 
 export function BauxPage() {
   const leases = useLeases();
@@ -59,7 +72,11 @@ export function BauxPage() {
   const notify = useNotify();
   const duplicate = useDuplicateLease();
   const remove = useDeleteLease();
+  const exits = useExits();
 
+  const [building, setBuilding] = useState(ALL);
+  const [kind, setKind] = useState(ALL);
+  const [balance, setBalance] = useState(ALL);
   const [sort, setSort] = useState('fin');
   const [window, setWindow] = useState<number | null>(null);
   const [selected, setSelected] = useState<readonly string[]>([]);
@@ -70,7 +87,18 @@ export function BauxPage() {
   const today = todayIso();
   const endingWithin = (lease: Lease, days: number) => lease.status !== 'termine' && lease.status !== 'brouillon' && lease.end >= today && daysBetween(today, lease.end) <= days;
   const searchText = (lease: Lease) => `${lease.reference} ${lookups.unitLabel(lease.unitId)} ${lookups.tenantsOf(lease)}`;
-  const view = useListView({ items, tabs, searchText, predicate: (lease) => window === null || endingWithin(lease, window) });
+  const buildings = [...new Set(items.map((lease) => lookups.unitBuilding(lease.unitId)).filter((entry) => entry !== ''))].sort((a, b) => a.localeCompare(b, 'fr'));
+  const view = useListView({
+    items,
+    tabs,
+    searchText,
+    predicate: (lease) =>
+      (window === null || endingWithin(lease, window)) &&
+      (building === ALL || lookups.unitBuilding(lease.unitId) === building) &&
+      (kind === ALL || (kind === 'meuble') === lease.furnished) &&
+      (balance === ALL || (balance === 'impayes') === (lease.balance < 0)),
+  });
+  const filtered = window !== null || building !== ALL || kind !== ALL || balance !== ALL;
 
   const sorted = [...view.rows].sort((a, b) => {
     if (sort === 'loyer') return b.rent - a.rent;
@@ -81,7 +109,12 @@ export function BauxPage() {
 
   const active = items.filter((lease) => lease.status === 'en_cours' || lease.status === 'preavis');
   const monthlyRent = active.reduce((sum, lease) => sum + lease.rent + lease.charges, 0);
+  const endingSoon = active.filter((lease) => endingWithin(lease, SOON_DAYS)).length;
+  const departureOf = (lease: Lease) => exits.data?.find((entry) => entry.leaseId === lease.id)?.departure ?? lease.end;
+  const notices = items.filter((lease) => lease.status === 'preavis').sort((a, b) => departureOf(a).localeCompare(departureOf(b)));
+  const nextNotice = notices[0];
   const visibleSelected = selected.filter((id) => sorted.some((lease) => lease.id === id));
+  const selectedLeases = items.filter((lease) => visibleSelected.includes(lease.id));
   const allSelected = sorted.length > 0 && sorted.every((lease) => selected.includes(lease.id));
 
   const toggle = (id: string) => { setSelected((current) => (current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id])); };
@@ -120,6 +153,13 @@ export function BauxPage() {
       { id: 'receipt', label: 'Quittances', icon: Receipt, disabled: lease.status === 'brouillon' || lease.status === 'a_venir', onSelect: () => { push('/documents/quittances'); } },
       { id: 'notice', label: 'Avis d’échéance', icon: Receipt, disabled: lease.status === 'brouillon' || lease.status === 'a_venir', onSelect: () => { push('/documents/avis-echeance'); } },
       { id: 'revise', label: 'Réviser le loyer', icon: TrendingUp, disabled: lease.status === 'termine' || lease.status === 'brouillon', onSelect: () => { setRevising(lease); } },
+      {
+        id: 'renew',
+        label: 'Renouveler',
+        icon: RefreshCw,
+        disabled: lease.status !== 'en_cours' && lease.status !== 'preavis',
+        onSelect: () => { push(`${links.newLease({ bien: lease.unitId, locataire: lease.tenantIds[0] })}&debut=${addDays(lease.end, 1)}`); },
+      },
       { id: 'edl', label: 'État des lieux', icon: ClipboardCheck, disabled: lease.status === 'brouillon', onSelect: () => { push(`${bauxPaths.newEdl}?bien=${lease.unitId}`); } },
       { id: 'letter', label: 'Générer un courrier', icon: FilePen, onSelect: () => { push(links.newCourrier({ bien: lease.unitId, locataire: lease.tenantIds[0] })); } },
       {
@@ -145,7 +185,7 @@ export function BauxPage() {
         title="Baux"
         subtitle={
           leases.data
-            ? `${String(active.length)} baux en cours, ${money(monthlyRent)} appelés par mois, charges comprises.`
+            ? `${String(active.length)} baux en cours, ${money(monthlyRent)} appelés par mois, charges comprises.${endingSoon > 0 ? ` ${String(endingSoon)} ${endingSoon > 1 ? 'se terminent' : 'se termine'} dans moins de ${String(SOON_DAYS)} jours.` : ''}`
             : ' '
         }
         actions={
@@ -158,6 +198,12 @@ export function BauxPage() {
       />
 
       {leases.isError ? <LoadError title="Les baux n’ont pas pu être chargés" /> : null}
+      {nextNotice ? (
+        <Alert tone="warning" title={`Bail de ${lookups.tenantsOf(nextNotice)}, fin le ${formatDateFr(departureOf(nextNotice))}`}>
+          {`Préavis donné. Vérifier l’état des lieux de sortie.${notices.length > 1 ? ` ${String(notices.length - 1)} autre${notices.length > 2 ? 's' : ''} préavis en cours.` : ''}`}
+          <div className="mt-1"><LinkButton href={bauxPaths.exit(nextNotice.id)} size="sm">Ouvrir</LinkButton></div>
+        </Alert>
+      ) : null}
 
       <Card role="region" aria-label="Liste des baux" className="gap-3">
         <Tabs value={view.tab} onValueChange={(value) => { view.setTab(value); setSelected([]); }} defaultValue="actifs">
@@ -169,6 +215,17 @@ export function BauxPage() {
           <TabPanel value={view.tab} className="flex flex-col gap-3 pt-1">
             <div className="flex flex-wrap items-center gap-2">
               <SearchInput label="Rechercher un bail" placeholder="Référence, bien, locataire" value={view.query} onValueChange={view.setQuery} />
+              <Select
+                label="Immeuble"
+                hideLabel
+                placeholder="Immeuble : Tous"
+                value={building}
+                onValueChange={(value) => { setBuilding(value); view.resetPage(); }}
+                options={[{ value: ALL, label: 'Immeuble : Tous' }, ...buildings.map((entry) => ({ value: entry, label: entry }))]}
+                className="w-52"
+              />
+              <Select label="Type" hideLabel placeholder="Type : Tous" value={kind} onValueChange={(value) => { setKind(value); view.resetPage(); }} options={TYPES} className="w-40" />
+              <Select label="Solde" hideLabel placeholder="Solde : Tous" value={balance} onValueChange={(value) => { setBalance(value); view.resetPage(); }} options={BALANCES} className="w-40" />
               <Select label="Tri" hideLabel placeholder="Trier" value={sort} onValueChange={setSort} options={SORTS} className="w-56" />
               <div role="group" aria-label="Fin de bail" className="flex flex-wrap items-center gap-1.5">
                 {WINDOWS.map((days) => (
@@ -181,14 +238,22 @@ export function BauxPage() {
 
             {visibleSelected.length > 0 ? (
               <div role="region" aria-label="Actions sur la sélection" className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-action-subtle px-3 py-2 text-body text-action-on-subtle">
-                <span>{`${String(visibleSelected.length)} sélectionné${visibleSelected.length > 1 ? 's' : ''}`}</span>
+                <span>{`${String(visibleSelected.length)} ${visibleSelected.length > 1 ? 'baux sélectionnés' : 'bail sélectionné'}`}</span>
                 <span className="flex flex-wrap items-center gap-2">
-                  <Button variant="secondary" size="sm" onClick={() => { exportCsv(items.filter((lease) => visibleSelected.includes(lease.id))); }}>Exporter la sélection</Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={!selectedLeases.every((lease) => lease.status === 'en_cours' || lease.status === 'preavis')}
+                    onClick={() => { push('/documents/avis-echeance'); }}
+                  >
+                    Envoyer un avis
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => { exportCsv(selectedLeases); }}>Exporter la sélection</Button>
                   <Button
                     variant="danger"
                     size="sm"
-                    disabled={!items.filter((lease) => visibleSelected.includes(lease.id)).every((lease) => lease.status === 'brouillon')}
-                    onClick={() => { setPendingDelete(items.filter((lease) => visibleSelected.includes(lease.id))); }}
+                    disabled={!selectedLeases.every((lease) => lease.status === 'brouillon')}
+                    onClick={() => { setPendingDelete(selectedLeases); }}
                   >
                     Supprimer les brouillons
                   </Button>
@@ -202,7 +267,7 @@ export function BauxPage() {
               <EmptyState
                 icon={FileStack}
                 title="Aucun bail"
-                description={view.query !== '' || window !== null ? 'Aucun bail ne correspond à ces filtres.' : 'Rien à afficher dans cette rubrique pour le moment.'}
+                description={view.query !== '' || filtered ? 'Aucun bail ne correspond à ces filtres.' : 'Rien à afficher dans cette rubrique pour le moment.'}
               >
                 <LinkButton href={links.newLease()} variant="primary" icon={FilePlus}>Nouveau bail</LinkButton>
               </EmptyState>
@@ -212,11 +277,15 @@ export function BauxPage() {
                 <TableHead>
                   <TableRow>
                     <TableHeaderCell className="w-8"><Checkbox label="Tout sélectionner" hideLabel checked={allSelected} onChange={toggleAll} /></TableHeaderCell>
-                    <TableHeaderCell>Bail</TableHeaderCell>
-                    <TableHeaderCell>Locataires</TableHeaderCell>
-                    <TableHeaderCell>Période</TableHeaderCell>
+                    <TableHeaderCell>Bien</TableHeaderCell>
+                    <TableHeaderCell>Locataire</TableHeaderCell>
+                    <TableHeaderCell>Type</TableHeaderCell>
                     <TableHeaderCell numeric>Loyer</TableHeaderCell>
-                    <TableHeaderCell>Statut</TableHeaderCell>
+                    <TableHeaderCell numeric>Charges</TableHeaderCell>
+                    <TableHeaderCell numeric>Dépôt</TableHeaderCell>
+                    <TableHeaderCell>Fin</TableHeaderCell>
+                    <TableHeaderCell numeric>Solde</TableHeaderCell>
+                    <TableHeaderCell>État</TableHeaderCell>
                     <TableHeaderCell><span className="sr-only">Actions</span></TableHeaderCell>
                   </TableRow>
                 </TableHead>
@@ -225,7 +294,7 @@ export function BauxPage() {
                     <LeaseRow
                       key={lease.id}
                       lease={lease}
-                      unit={lookups.unitLabel(lease.unitId)}
+                      unit={lookups.unitShort(lease.unitId)}
                       tenants={lookups.tenantsOf(lease)}
                       checked={selected.includes(lease.id)}
                       onToggle={() => { toggle(lease.id); }}
@@ -251,39 +320,5 @@ export function BauxPage() {
       />
       <ReviseRentDialog lease={revising} onClose={() => { setRevising(null); }} />
     </>
-  );
-}
-
-function LeaseRow({
-  lease,
-  unit,
-  tenants,
-  checked,
-  onToggle,
-  actions,
-}: {
-  lease: Lease;
-  unit: string;
-  tenants: string;
-  checked: boolean;
-  onToggle: () => void;
-  actions: ActionItem[];
-}) {
-  const { Link } = useGestionNavigation();
-  return (
-    <TableRow selected={checked}>
-      <TableCell><Checkbox label={`Sélectionner ${lease.reference}`} hideLabel checked={checked} onChange={onToggle} /></TableCell>
-      <TableCell strong>
-        <Link href={bauxPaths.detail(lease.id)} className="text-fg hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
-          {lease.reference}
-        </Link>
-        <span className="block text-caption font-normal text-fg-subtle">{unit}</span>
-      </TableCell>
-      <TableCell>{tenants}</TableCell>
-      <TableCell>{leasePeriod(lease)}</TableCell>
-      <TableCell numeric>{money(lease.rent + lease.charges)}</TableCell>
-      <TableCell><LeaseStatusBadge status={lease.status} /></TableCell>
-      <TableCell><ActionMenu label={`Plus d’actions, bail ${lease.reference}`} items={actions} /></TableCell>
-    </TableRow>
   );
 }

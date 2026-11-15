@@ -26,6 +26,7 @@ export interface LeaseLookups {
   ready: boolean;
   unitLabel: (unitId: string) => string;
   unitShort: (unitId: string) => string;
+  unitBuilding: (unitId: string) => string;
   tenantName: (tenantId: string) => string;
   tenantCivility: (tenantId: string) => string;
   tenantsOf: (lease: Pick<Lease, 'tenantIds'>) => string;
@@ -47,6 +48,7 @@ export function useLeaseLookups(): LeaseLookups {
       return unit ? unitFullLabel(unit) : unitId;
     },
     unitShort: (unitId) => unitList.find((entry) => entry.id === unitId)?.label ?? unitId,
+    unitBuilding: (unitId) => unitList.find((entry) => entry.id === unitId)?.building ?? '',
     tenantName,
     tenantCivility: (tenantId) => tenantList.find((entry) => entry.id === tenantId)?.civility ?? '',
     tenantsOf: (lease) => (lease.tenantIds.length === 0 ? 'Aucun locataire' : lease.tenantIds.map(tenantName).join(', ')),
