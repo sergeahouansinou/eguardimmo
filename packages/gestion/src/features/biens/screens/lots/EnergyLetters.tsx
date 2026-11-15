@@ -6,11 +6,9 @@ const tones: Record<Letter, BadgeTone> = { A: 'success', B: 'success', C: 'info'
 
 export function EnergyLetters({ energy, ghg }: { energy: Letter; ghg: Letter }) {
   return (
-    <p className="flex items-center gap-2 text-caption text-fg-subtle">
-      <span>Énergie</span>
-      <Badge tone={tones[energy]}>{energy}</Badge>
-      <span>Climat</span>
-      <Badge tone={tones[ghg]}>{ghg}</Badge>
-    </p>
+    <span className="inline-flex items-center gap-1">
+      <Badge tone={tones[energy]} aria-label={`DPE classe ${energy}`}>{energy}</Badge>
+      <Badge tone={tones[ghg]} aria-label={`GES classe ${ghg}`}>{ghg}</Badge>
+    </span>
   );
 }
