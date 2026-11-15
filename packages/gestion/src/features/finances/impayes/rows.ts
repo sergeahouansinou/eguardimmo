@@ -4,7 +4,8 @@ import type { Bail, Echeance, FinancesData } from '../schemas';
 
 export const ALL = 'tous';
 export const OLD_THRESHOLD = 15;
-export const VERY_OLD_THRESHOLD = 20;
+export const AGE_MONTH = 30;
+export const AGE_TWO_MONTHS = 60;
 
 export interface ImpayeRow {
   echeance: Echeance;
@@ -32,13 +33,14 @@ export function prochaineEtape(data: FinancesData, echeance: Echeance, formatDat
 }
 
 export interface ImpayeFilters {
-  age: 'tous' | 'recent' | 'ancien';
+  age: 'tous' | 'moins30' | 'de30a60' | 'plus60';
   search: string;
+  immeuble: string;
   proprietaire: string;
   miseEnDemeure: boolean;
 }
 
-export const defaultImpayeFilters: ImpayeFilters = { age: 'tous', search: '', proprietaire: ALL, miseEnDemeure: false };
+export const defaultImpayeFilters: ImpayeFilters = { age: 'tous', search: '', immeuble: ALL, proprietaire: ALL, miseEnDemeure: false };
 
 export function allImpayeRows(data: FinancesData, formatDate: (iso: string) => string): ImpayeRow[] {
   const rows: ImpayeRow[] = [];
@@ -61,19 +63,27 @@ export function allImpayeRows(data: FinancesData, formatDate: (iso: string) => s
   return rows;
 }
 
+export const matchesAge = (jours: number, age: ImpayeFilters['age']): boolean => {
+  if (age === 'moins30') return jours < AGE_MONTH;
+  if (age === 'de30a60') return jours >= AGE_MONTH && jours <= AGE_TWO_MONTHS;
+  if (age === 'plus60') return jours > AGE_TWO_MONTHS;
+  return true;
+};
+
 export function filterImpayes(rows: readonly ImpayeRow[], filters: ImpayeFilters): ImpayeRow[] {
   const needle = fold(filters.search.trim());
   return rows.filter(
     (row) =>
-      (filters.age === 'tous' || (filters.age === 'recent' ? row.jours < OLD_THRESHOLD : row.jours >= OLD_THRESHOLD)) &&
+      matchesAge(row.jours, filters.age) &&
+      (filters.immeuble === ALL || row.bail.immeuble === filters.immeuble) &&
       (needle === '' || fold(`${row.bail.locataire} ${row.bail.unite} ${row.bail.immeuble}`).includes(needle)) &&
       (filters.proprietaire === ALL || row.bail.proprietaire === filters.proprietaire) &&
       (!filters.miseEnDemeure || row.miseEnDemeureDue),
   );
 }
 
-export const remindersOfMonth = (data: FinancesData): { total: number; dossiers: number } => {
+export const remindersOfMonth = (data: FinancesData): { total: number; recommandes: number } => {
   const month = monthOf(data.today);
   const relances = data.relances.filter((relance) => monthOf(relance.date) === month);
-  return { total: relances.length, dossiers: new Set(relances.map((relance) => relance.echeanceId)).size };
+  return { total: relances.length, recommandes: relances.filter((relance) => relance.canal === 'recommande').length };
 };

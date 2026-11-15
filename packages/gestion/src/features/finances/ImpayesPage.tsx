@@ -4,7 +4,7 @@ import { BookOpen, CreditCard, FileSearch, FileText, FolderOpen, Gavel, HandCoin
 import { useState } from 'react';
 import { Alert, Button, Checkbox, Chip, ConfirmDialog, MenuItem, MenuSeparator, Select, StatCard, Tab, TabList, TabPanel, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow, Tabs, TextField } from '@eguardimmo/ui';
 import { downloadCsv } from './csv';
-import { formatDate, monthNameOf } from './dates';
+import { formatDate } from './dates';
 import { formatMoneyInput, sum } from './money';
 import { EmptyBlock, FINANCES_ROUTES, PageHeader, PagedFooter, PAGE_SIZE, QueryGate, useExec, useMoney, useSelection } from './parts';
 import type { ScreenProps } from './parts';
@@ -13,7 +13,7 @@ import { financesPaths } from './paths';
 import { RowMenu } from './RowMenu';
 import type { FinancesData } from './schemas';
 import { PlanDialog } from './impayes/PlanDialog';
-import { ALL, OLD_THRESHOLD, VERY_OLD_THRESHOLD, allImpayeRows, defaultImpayeFilters, filterImpayes, remindersOfMonth } from './impayes/rows';
+import { AGE_MONTH, AGE_TWO_MONTHS, ALL, allImpayeRows, defaultImpayeFilters, filterImpayes, matchesAge, remindersOfMonth } from './impayes/rows';
 import type { ImpayeFilters, ImpayeRow } from './impayes/rows';
 
 export function ImpayesPage({ Link, navigate }: ScreenProps) {
@@ -24,7 +24,7 @@ export function ImpayesPage({ Link, navigate }: ScreenProps) {
         Link={Link}
         crumbs={[{ label: 'Finances', href: FINANCES_ROUTES.operations }, { label: 'Impayés' }]}
         title="Impayés"
-        description="Loyers et charges non réglés, classés par ancienneté. Chaque relance envoyée est tracée dans le dossier."
+        description="Loyers et charges non réglés, classés par ancienneté. Chaque relance envoyée est tracée."
       />
       <QueryGate query={query} errorTitle="Les impayés n’ont pas pu être chargés">
         {(data) => <ImpayesContent data={data} navigate={navigate} />}
@@ -46,8 +46,9 @@ function ImpayesContent({ data, navigate }: Pick<ScreenProps, 'navigate'> & { da
   const rows = filterImpayes(all, filters);
   const visible = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const chosen = rows.filter((row) => selection.selected.has(row.echeance.id));
-  const old = all.filter((row) => row.jours >= VERY_OLD_THRESHOLD);
+  const old = all.filter((row) => row.jours >= AGE_MONTH);
   const reminders = remindersOfMonth(data);
+  const immeubles = [...new Set(all.map((row) => row.bail.immeuble))].sort();
   const proprietaires = [...new Set(all.map((row) => row.bail.proprietaire))].sort();
   const dirty = JSON.stringify(filters) !== JSON.stringify(defaultImpayeFilters);
   const allChecked = visible.length > 0 && visible.every((row) => selection.selected.has(row.echeance.id));
@@ -84,27 +85,31 @@ function ImpayesContent({ data, navigate }: Pick<ScreenProps, 'navigate'> & { da
       ) : null}
       <section aria-label="Chiffres des impayés" className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <StatCard label="Total impayé" tone="danger" icon={TriangleAlert} value={money(sum(all.map((row) => row.reste)))}>
-          <span className="text-caption text-fg-subtle">{all.length} dossier{all.length > 1 ? 's' : ''}, {new Set(all.map((row) => row.bail.proprietaire)).size} propriétaire{new Set(all.map((row) => row.bail.proprietaire)).size > 1 ? 's' : ''}</span>
+          <span className="text-caption text-fg-subtle">{all.length} dossier{all.length > 1 ? 's' : ''}, {proprietaires.length} propriétaire{proprietaires.length > 1 ? 's' : ''}</span>
         </StatCard>
-        <StatCard label={`Plus de ${String(VERY_OLD_THRESHOLD)} jours`} icon={FileText} value={money(sum(old.map((row) => row.reste)))}>
-          <span className="text-caption text-fg-subtle">{old.length === 0 ? 'Aucun retard ancien' : old.map((row) => `${row.bail.unite}, ${row.bail.locataire}`).join(' ; ')}</span>
+        <StatCard label={`Plus de ${String(AGE_MONTH)} jours`} icon={FileText} value={money(sum(old.map((row) => row.reste)))}>
+          <span className="text-caption text-fg-subtle">{old.length === 0 ? 'Aucun locataire' : old.map((row) => `${row.bail.unite}, ${row.bail.locataire}`).join(' ; ')}</span>
         </StatCard>
-        <StatCard label={`Relances en ${monthNameOf(data.today)}`} icon={Mail} value={String(reminders.total)}>
-          <span className="text-caption text-fg-subtle">sur {reminders.dossiers} dossier{reminders.dossiers > 1 ? 's' : ''}</span>
+        <StatCard label="Relances envoyées ce mois" icon={Mail} value={String(reminders.total)}>
+          <span className="text-caption text-fg-subtle">{reminders.recommandes === 0 ? 'dont aucune lettre recommandée' : `dont ${String(reminders.recommandes)} lettre${reminders.recommandes > 1 ? 's' : ''} recommandée${reminders.recommandes > 1 ? 's' : ''}`}</span>
         </StatCard>
       </section>
 
       <section aria-label="Liste des impayés" className="flex min-w-0 flex-col gap-2 rounded-lg border border-line bg-surface p-4">
-        <Tabs value={filters.age} defaultValue="tous" onValueChange={(age) => { update({ age: age === 'recent' || age === 'ancien' ? age : 'tous' }); }}>
+        <Tabs value={filters.age} defaultValue="tous" onValueChange={(age) => { update({ age: age === 'moins30' || age === 'de30a60' || age === 'plus60' ? age : 'tous' }); }}>
           <TabList aria-label="Ancienneté du retard">
             <Tab value="tous" count={all.length}>Tous</Tab>
-            <Tab value="recent" count={count((row) => row.jours < OLD_THRESHOLD)}>Moins de {OLD_THRESHOLD} jours</Tab>
-            <Tab value="ancien" count={count((row) => row.jours >= OLD_THRESHOLD)}>Plus de {OLD_THRESHOLD} jours</Tab>
+            <Tab value="moins30" count={count((row) => matchesAge(row.jours, 'moins30'))}>Moins de {AGE_MONTH} jours</Tab>
+            <Tab value="de30a60" count={count((row) => matchesAge(row.jours, 'de30a60'))}>{AGE_MONTH} à {AGE_TWO_MONTHS} jours</Tab>
+            <Tab value="plus60" count={count((row) => matchesAge(row.jours, 'plus60'))}>Plus de {AGE_TWO_MONTHS} jours</Tab>
           </TabList>
         <TabPanel value={filters.age}>
         <div className="flex flex-wrap items-end gap-2">
           <div className="w-full sm:w-56">
-            <TextField label="Recherche" placeholder="Locataire, lot" value={filters.search} onChange={(event) => { update({ search: event.target.value }); }} />
+            <TextField label="Recherche" placeholder="Locataire, bien" value={filters.search} onChange={(event) => { update({ search: event.target.value }); }} />
+          </div>
+          <div className="w-full sm:w-56">
+            <Select label="Immeuble" placeholder="Tous" options={[{ value: ALL, label: 'Immeuble : Tous' }, ...immeubles.map((value) => ({ value, label: value }))]} value={filters.immeuble} onValueChange={(immeuble) => { update({ immeuble }); }} />
           </div>
           <div className="w-full sm:w-56">
             <Select label="Propriétaire" placeholder="Tous" options={[{ value: ALL, label: 'Propriétaire : Tous' }, ...proprietaires.map((value) => ({ value, label: value }))]} value={filters.proprietaire} onValueChange={(proprietaire) => { update({ proprietaire }); }} />
@@ -116,6 +121,22 @@ function ImpayesContent({ data, navigate }: Pick<ScreenProps, 'navigate'> & { da
             Effacer les filtres
           </Button>
         </div>
+        {chosen.length > 0 ? (
+          <div role="region" aria-label="Sélection" className="flex flex-wrap items-center gap-2 rounded-md bg-action-subtle px-3 py-2">
+            <span className="grow text-body-strong">{chosen.length} sélectionné{chosen.length > 1 ? 's' : ''}</span>
+            <Button size="sm" loading={exec.pending} onClick={() => { remind(chosen, 'email', selection.clear); }}>
+              Envoyer une relance
+            </Button>
+            {chosen.length === 1 ? (
+              <Button size="sm" variant="secondary" onClick={() => { setPlanFor(chosen[0] ?? null); }}>
+                Proposer un échéancier
+              </Button>
+            ) : null}
+            <Button size="sm" variant="secondary" onClick={() => { exportRows(chosen); }}>
+              Exporter
+            </Button>
+          </div>
+        ) : null}
         {rows.length === 0 ? (
           <EmptyBlock title={dirty ? 'Aucun impayé ne correspond aux filtres' : 'Aucun impayé'}>
             {dirty ? 'Modifiez ou effacez les filtres pour élargir la liste.' : 'Toutes les échéances échues sont réglées.'}
@@ -128,10 +149,11 @@ function ImpayesContent({ data, navigate }: Pick<ScreenProps, 'navigate'> & { da
                   <Checkbox label="Tout sélectionner" hideLabel checked={allChecked} onChange={(event) => { selection.setAll(visible.map((row) => row.echeance.id), event.target.checked); }} />
                 </TableHeaderCell>
                 <TableHeaderCell>Locataire</TableHeaderCell>
+                <TableHeaderCell>Bien</TableHeaderCell>
                 <TableHeaderCell>Propriétaire</TableHeaderCell>
                 <TableHeaderCell>Échéance</TableHeaderCell>
                 <TableHeaderCell numeric>Reste dû</TableHeaderCell>
-                <TableHeaderCell>Retard</TableHeaderCell>
+                <TableHeaderCell>Ancienneté</TableHeaderCell>
                 <TableHeaderCell>Dernière relance</TableHeaderCell>
                 <TableHeaderCell>Prochaine étape</TableHeaderCell>
                 <TableHeaderCell>Action</TableHeaderCell>
@@ -145,10 +167,8 @@ function ImpayesContent({ data, navigate }: Pick<ScreenProps, 'navigate'> & { da
                     <TableCell>
                       <Checkbox label={`Sélectionner ${row.bail.locataire}`} hideLabel checked={selection.selected.has(id)} onChange={() => { selection.toggle(id); }} />
                     </TableCell>
-                    <TableCell strong>
-                      {row.bail.locataire}
-                      <span className="block text-caption font-normal text-fg-subtle">{row.bail.unite}</span>
-                    </TableCell>
+                    <TableCell strong>{row.bail.locataire}</TableCell>
+                    <TableCell>{row.bail.unite}</TableCell>
                     <TableCell>{row.bail.proprietaire}</TableCell>
                     <TableCell>{formatDate(row.echeance.echeance)}</TableCell>
                     <TableCell numeric className="font-semibold text-fg-danger">{money(row.reste)}</TableCell>

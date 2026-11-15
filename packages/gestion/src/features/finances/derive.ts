@@ -129,11 +129,11 @@ export function dossierSteps(dossier: Dossier, solde: boolean, formatDate: (iso:
   const dates = [reached('relance'), reached('mise_en_demeure'), reached('commandement')];
   const labels = ['Relance amiable', 'Mise en demeure', 'Commandement de payer', 'Échéancier ou assignation', 'Clôture du dossier'];
   const lastReached = dates.reduce((acc, date, index) => (date ? index : acc), -1);
-  const current = solde ? 4 : dossier.plan ? 3 : lastReached;
+  const current = solde ? 4 : dossier.plan ? 3 : Math.max(lastReached, 0);
   return labels.map((label, index) => {
     const date = dates[index];
     const state: StepState = index < current || (solde && index === 4) ? 'done' : index === current ? 'cur' : 'todo';
-    let caption = date ? formatDate(date) : '';
+    let caption = date ? formatDate(date) : index === 0 && current === 0 ? 'À envoyer' : '';
     if (index === 3) caption = dossier.plan ? `Proposé le ${formatDate(dossier.plan.propositionLe)}` : dossier.delaiJusquau ? `Après le ${formatDate(dossier.delaiJusquau)}` : 'Selon le dossier';
     if (index === 4) caption = solde ? 'Soldé' : 'Au solde complet';
     return { id: `step-${String(index)}`, label, caption, state };

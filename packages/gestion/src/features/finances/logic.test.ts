@@ -124,6 +124,9 @@ describe('calculs du registre de démonstration', () => {
     expect(totals).toMatchObject({ dette: 85000, frais: 14570, fraisRegles: 1500, facturesEnAttente: 13070, totalARecouvrer: 98070, nonRefactures: 0, jours: 11 });
     const steps = dossierSteps(dossier, false, formatDate);
     expect(steps.map((step) => step.state)).toEqual(['done', 'done', 'cur', 'todo', 'todo']);
+    const vide = dossierSteps({ ...dossier, actes: [], delaiJusquau: null }, false, formatDate);
+    expect(vide.map((step) => step.state)).toEqual(['cur', 'todo', 'todo', 'todo', 'todo']);
+    expect(vide[0]?.caption).toBe('À envoyer');
   });
 
   it('propose la suite de numéros sans réutiliser un numéro émis', () => {

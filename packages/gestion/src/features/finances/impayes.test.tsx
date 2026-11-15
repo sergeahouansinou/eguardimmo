@@ -40,11 +40,60 @@ describe('ImpayesPage', () => {
     expect(within(screen.getByRole('table', { name: 'Impayés' })).getAllByRole('row').slice(1)).toHaveLength(3);
   });
 
-  it('l’onglet « Plus de 15 jours » est vide à la date de démonstration', async () => {
+  it('classe par ancienneté : tous les impayés ont moins de 30 jours à la date de démonstration', async () => {
     renderFinances((props) => <ImpayesPage {...props} />);
     await screen.findByRole('table', { name: 'Impayés' });
-    await userEvent.click(screen.getByRole('tab', { name: /Plus de 15 jours/ }));
+    expect(screen.getByRole('tab', { name: /Moins de 30 jours/ }).textContent).toContain('3');
+    await userEvent.click(screen.getByRole('tab', { name: /30 à 60 jours/ }));
     expect(screen.getByText('Aucun impayé ne correspond aux filtres')).toBeTruthy();
+    await userEvent.click(screen.getByRole('tab', { name: /Plus de 60 jours/ }));
+    expect(screen.getByText('Aucun impayé ne correspond aux filtres')).toBeTruthy();
+    await userEvent.click(screen.getByRole('tab', { name: /Moins de 30 jours/ }));
+    expect(within(screen.getByRole('table', { name: 'Impayés' })).getAllByRole('row').slice(1)).toHaveLength(3);
+  });
+
+  it('affiche le sous-titre, les relances du mois avec les recommandés, et les colonnes Bien et Ancienneté', async () => {
+    renderFinances((props) => <ImpayesPage {...props} />);
+    const table = await screen.findByRole('table', { name: 'Impayés' });
+    expect(screen.getByText('Loyers et charges non réglés, classés par ancienneté. Chaque relance envoyée est tracée.')).toBeTruthy();
+    const kpis = norm(screen.getByRole('region', { name: 'Chiffres des impayés' }).textContent);
+    expect(kpis).toContain('Relances envoyées ce mois');
+    expect(kpis).toContain('dont 1 lettre recommandée');
+    expect(kpis).toContain('Plus de 30 jours');
+    expect(kpis).toContain('Aucun locataire');
+    expect(within(table).getByRole('columnheader', { name: 'Bien' })).toBeTruthy();
+    expect(within(table).getByRole('columnheader', { name: 'Ancienneté' })).toBeTruthy();
+    expect(norm(rowAt(table, 1).textContent)).toContain('Apt A1');
+  });
+
+  it('filtre par immeuble', async () => {
+    renderFinances((props) => <ImpayesPage {...props} />);
+    await screen.findByRole('table', { name: 'Impayés' });
+    await userEvent.click(screen.getByRole('combobox', { name: /Immeuble/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Résidence du Parc' }));
+    const rows = within(screen.getByRole('table', { name: 'Impayés' })).getAllByRole('row').slice(1);
+    expect(rows).toHaveLength(1);
+    expect(norm(rows[0]?.textContent ?? '')).toContain('Ibrahim Yao');
+  });
+
+  it('montre la barre de sélection, relance la sélection et propose un échéancier pour une seule ligne', async () => {
+    const { source } = renderFinances((props) => <ImpayesPage {...props} />);
+    await screen.findByRole('table', { name: 'Impayés' });
+    expect(screen.queryByRole('region', { name: 'Sélection' })).toBeNull();
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Sélectionner Clarisse Hounkpatin' }));
+    const bar = screen.getByRole('region', { name: 'Sélection' });
+    expect(norm(bar.textContent)).toContain('1 sélectionné');
+    await userEvent.click(within(bar).getByRole('button', { name: 'Proposer un échéancier' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Proposer un échéancier' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Proposer l’échéancier' }));
+    await waitFor(async () => {
+      expect((await snapshotOf(source)).dossiers.filter((dossier) => dossier.plan !== null)).toHaveLength(1);
+    });
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Sélectionner Ibrahim Yao' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Sélectionner Koffi Adjovi' }));
+    const bar2 = screen.getByRole('region', { name: 'Sélection' });
+    expect(norm(bar2.textContent)).toContain('3 sélectionnés');
+    expect(within(bar2).queryByRole('button', { name: 'Proposer un échéancier' })).toBeNull();
   });
 
   it('relance la sélection : une relance est tracée par dossier et le compteur du mois augmente', async () => {
@@ -202,6 +251,15 @@ describe('RecouvrementPage', () => {
     });
     expect(await screen.findByRole('heading', { name: 'Recouvrement, Clarisse Hounkpatin' })).toBeTruthy();
     expect(await screen.findByText('Aucun acte au carnet')).toBeTruthy();
+    const current = screen.getAllByRole('listitem').filter((item) => item.getAttribute('aria-current') === 'step');
+    expect(current).toHaveLength(1);
+    expect(norm(current[0]?.textContent ?? '')).toContain('Relance amiable');
+    expect(norm(current[0]?.textContent ?? '')).toContain('À envoyer');
+    expect(screen.getByRole('heading', { name: 'Étapes de la procédure' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Facture des frais' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Prochaine étape' })).toBeTruthy();
+    expect(norm(screen.getByRole('region', { name: 'Chiffres du dossier' }).textContent)).toContain('210 €');
+    expect(screen.getByRole('button', { name: 'Ajouter une diligence' })).toBeTruthy();
   });
 
   it('signale un impayé introuvable', async () => {
