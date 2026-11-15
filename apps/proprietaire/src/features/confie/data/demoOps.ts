@@ -1,0 +1,77 @@
+import type { Intervention, OwnerDocument } from "./schemas";
+
+export const demoDocuments: OwnerDocument[] = [
+  { id: "compte-rendu-t3-2026", title: "Compte rendu de gestion, T3 2026", detail: "PDF · 2 pages", category: "compte_rendu", date: "2026-10-05", sizeKo: 186, lotIds: [] },
+  { id: "releve-reversement-2026-10", title: "Relevé de reversement, octobre 2026", detail: "PDF · 1 page", category: "reversement", date: "2026-11-05", sizeKo: 92, lotIds: [] },
+  { id: "quittance-apt-12-2026-11", title: "Quittance de loyer, Apt 12, novembre 2026", detail: "PDF · 1 page", category: "quittance", date: "2026-11-03", sizeKo: 58, lotIds: ["apt-12"] },
+  { id: "avis-taxe-fonciere-2026", title: "Avis de taxe foncière 2026", detail: "PDF · déposé par l'agence", category: "fiscal", date: "2026-10-15", sizeKo: 242, lotIds: ["apt-12", "studio-4"] },
+  { id: "quittance-apt-12-2026-10", title: "Quittance de loyer, Apt 12, octobre 2026", detail: "PDF · 1 page", category: "quittance", date: "2026-10-03", sizeKo: 58, lotIds: ["apt-12"] },
+  { id: "quittance-studio-4-2026-10", title: "Quittance de loyer, Studio 4, octobre 2026", detail: "PDF · 1 page", category: "quittance", date: "2026-10-03", sizeKo: 57, lotIds: ["studio-4"] },
+  { id: "compte-rendu-t2-2026", title: "Compte rendu de gestion, T2 2026", detail: "PDF · 2 pages", category: "compte_rendu", date: "2026-07-05", sizeKo: 181, lotIds: [] },
+  { id: "compte-rendu-t1-2026", title: "Compte rendu de gestion, T1 2026", detail: "PDF · 2 pages", category: "compte_rendu", date: "2026-04-05", sizeKo: 179, lotIds: [] },
+  { id: "attestation-assurance", title: "Attestation d'assurance propriétaire", detail: "Valable jusqu'au 31/12/2026", category: "assurance", date: "2026-01-12", sizeKo: 134, lotIds: ["apt-12", "studio-4"], validUntil: "2026-12-31" },
+  { id: "mandat-m-2025-0142", title: "Mandat de gestion M-2025-0142", detail: "PDF · signé le 15/01/2025", category: "mandat", date: "2025-01-15", sizeKo: 412, lotIds: [] },
+];
+
+export const demoInterventions: Intervention[] = [
+  {
+    id: "fuite-sous-l-evier",
+    ref: "I-2026-0102",
+    title: "Fuite sous l'évier",
+    category: "Plomberie",
+    lotId: "studio-4",
+    artisan: "Rivoire Plomberie",
+    status: "quote_pending",
+    totalTtc: 38000,
+    vatRatePercent: 10,
+    reportedOn: "2026-11-11",
+    doneOn: null,
+    imputedOn: null,
+    quote: {
+      ref: "D-2026-0318",
+      receivedOn: "2026-11-12",
+      validUntil: "2026-12-12",
+      decideBefore: "2026-11-20",
+      proposedOn: "2026-11-18",
+      reason: "Fuite sous l'évier de la cuisine",
+      lines: [
+        { label: "Déplacement", amount: 4500 },
+        { label: "Main-d'œuvre, 2 h", amount: 13000 },
+        { label: "Fournitures, siphon et flexibles", amount: 17045 },
+      ],
+    },
+    decision: null,
+    timeline: [
+      { id: "signalement", title: "Fuite signalée", detail: "11/11/2026 · fuite sous l'évier de la cuisine", tone: "warning" },
+      { id: "devis", title: "Devis de 380,00 € TTC reçu", detail: "12/11/2026 · au-dessus du seuil de 300 €, votre accord est demandé", tone: "warning" },
+    ],
+    files: [{ id: "devis-d-2026-0318", title: "Devis D-2026-0318", detail: "PDF · 380,00 € TTC" }],
+  },
+  {
+    id: "remplacement-de-la-serrure",
+    ref: "I-2026-0087",
+    title: "Remplacement de la serrure",
+    category: "Serrurerie",
+    lotId: "apt-12",
+    artisan: "Serrurerie Lyonnaise",
+    status: "done",
+    totalTtc: 24000,
+    vatRatePercent: 10,
+    reportedOn: "2026-07-15",
+    doneOn: "2026-07-18",
+    imputedOn: "2026-08-05",
+    quote: null,
+    decision: null,
+    timeline: [
+      { id: "signalement", title: "Problème signalé", detail: "15/07/2026 · serrure de la porte d'entrée bloquée", tone: "warning" },
+      { id: "devis", title: "Devis de 240,00 € TTC reçu", detail: "15/07/2026 · sous le seuil, intervention autorisée", tone: "default" },
+      { id: "planification", title: "Intervention planifiée", detail: "17/07/2026 · passage de l'artisan le 18/07", tone: "default" },
+      { id: "terminee", title: "Intervention terminée", detail: "18/07/2026 · serrure remplacée, 3 clés remises", tone: "success" },
+      { id: "imputation", title: "Montant imputé au reversement", detail: "05/08/2026 · 829,50 € versés au lieu de 1 069,50 €", tone: "default" },
+    ],
+    files: [
+      { id: "facture-artisan", title: "Facture de l'artisan", detail: "PDF · 240,00 € TTC" },
+      { id: "rapport-intervention", title: "Rapport d'intervention", detail: "PDF · 2 photos" },
+    ],
+  },
+];

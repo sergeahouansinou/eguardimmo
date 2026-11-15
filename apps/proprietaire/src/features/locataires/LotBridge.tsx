@@ -1,0 +1,35 @@
+"use client";
+
+import { GestionNavigationProvider, PendingNotice } from "@eguardimmo/gestion";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import type { ComponentType, ReactNode } from "react";
+
+function LotBridge({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const search = useSearchParams();
+  return (
+    <GestionNavigationProvider
+      value={{
+        Link,
+        push: (href) => {
+          router.push(href);
+        },
+        search,
+      }}
+    >
+      <PendingNotice />
+      {children}
+    </GestionNavigationProvider>
+  );
+}
+
+export function bindLot<P extends object = object>(Screen: ComponentType<P>): ComponentType<P> {
+  return function BoundLotScreen(props: P) {
+    return (
+      <LotBridge>
+        <Screen {...props} />
+      </LotBridge>
+    );
+  };
+}

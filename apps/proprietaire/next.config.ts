@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   cacheComponents: true,
   partialPrefetching: true,
-  transpilePackages: ["@eguardimmo/ui", "@eguardimmo/tokens", "@eguardimmo/config", "@eguardimmo/gestion"],
+  transpilePackages: ["@eguardimmo/ui", "@eguardimmo/tokens", "@eguardimmo/config", "@eguardimmo/gestion", "@eguardimmo/messagerie", "@eguardimmo/shell"],
   turbopack: {
     rules: {
       "*.css": {

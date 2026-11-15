@@ -4,7 +4,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+const DELIVERED_ROUTES = ["/messages", "/messages/nouveau", "/campagnes", "/campagnes/nouvelle", "/aide"];
+
 const screens = plannedScreens();
+for (const href of DELIVERED_ROUTES) screens.delete(href);
 
 export function generateStaticParams() {
   return Array.from(screens.keys(), (href) => ({ ecran: href.slice(1).split("/") }));

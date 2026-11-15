@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestionSourceProvider, createDemoSource } from "@eguardimmo/gestion";
-import { TooltipProvider } from "@eguardimmo/ui";
+import { ToastProvider, TooltipProvider } from "@eguardimmo/ui";
 import { useState } from "react";
 import type { ReactNode } from "react";
 
@@ -12,7 +12,9 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={client}>
       <GestionSourceProvider source={source}>
-        <TooltipProvider>{children}</TooltipProvider>
+        <TooltipProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </TooltipProvider>
       </GestionSourceProvider>
     </QueryClientProvider>
   );
