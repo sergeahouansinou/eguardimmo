@@ -347,6 +347,17 @@ describe('cohérence inter-lots : Biens', () => {
     expect(lots.map((lot) => lot.row.tantiemes).every((value) => value !== null && value > 0)).toBe(true);
   });
 
+  it('la régularisation répartit le récupérable de l’immeuble au prorata des tantièmes sans dépasser la carte', () => {
+    const charges = state.immeubleExtras['les-tilleuls']?.charges;
+    const pot = (charges?.lines ?? []).reduce((total, line) => total + Math.round((line.share * line.recoverablePercent) / 100), 0);
+    const rows = charges?.regularisation ?? [];
+    const gaps = rows
+      .map((row) => ({ lot: row.lotId, gap: Math.abs(row.recoverable - Math.round((pot * row.tantiemes) / (charges?.sharePerMille ?? 1))) }))
+      .filter((item) => item.gap > 100);
+    expect(gaps).toEqual([]);
+    expect(rows.reduce((total, row) => total + row.recoverable, 0)).toBeLessThanOrEqual(pot);
+  });
+
   it('inventaires, équipements et compteurs ne citent que des lots existants, sous leur nom', () => {
     const lotById = new Map(state.lots.map((lot) => [lot.row.id, lot.row]));
     const problems = [
