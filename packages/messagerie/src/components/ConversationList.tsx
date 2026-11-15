@@ -1,5 +1,6 @@
 'use client';
 
+import { stripRichText } from '../lib/richText';
 import { Archive, ArchiveRestore, Ellipsis, MailCheck, MailOpen, Paperclip } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -64,7 +65,7 @@ function ConversationRow({ item, onFailure }: { item: ConversationSummary; onFai
             </time>
           </span>
           <span className="truncate text-caption text-fg-muted">
-            {byCounterpart ? `${item.subject} — ${item.preview}` : `${item.counterpart.name} — ${item.preview}`}
+            {byCounterpart ? `${item.subject} — ${stripRichText(item.preview)}` : `${item.counterpart.name} — ${stripRichText(item.preview)}`}
           </span>
           <span className="flex flex-wrap items-center gap-1.5">
             <RoleBadge role={item.counterpart.role} />

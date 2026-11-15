@@ -4,6 +4,7 @@ import { ChartColumn } from 'lucide-react';
 import { Button, Dialog, DialogContent, DialogTrigger, Icon } from '@eguardimmo/ui';
 import type { Campaign } from '../data/schemas';
 import { formatDateTime } from '../lib/dates';
+import { RichText } from './RichText';
 
 function percent(part: number, total: number): string {
   return total === 0 ? '0 %' : `${String(Math.round((part * 100) / total))} %`;
@@ -37,7 +38,7 @@ export function CampaignTracking({ campaign }: { campaign: Campaign }) {
           </dl>
           <div className="flex flex-col gap-1 rounded-md border border-line bg-muted p-3">
             <span className="text-caption text-fg-subtle">Objet : {campaign.subject}</span>
-            <p className="text-body break-words whitespace-pre-wrap text-fg">{campaign.body}</p>
+            <p className="text-body break-words whitespace-pre-wrap text-fg"><RichText text={campaign.body} /></p>
           </div>
         </div>
       </DialogContent>

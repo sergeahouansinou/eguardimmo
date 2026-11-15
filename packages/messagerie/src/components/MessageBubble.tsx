@@ -3,6 +3,7 @@ import { Avatar, Icon, cx } from '@eguardimmo/ui';
 import { formatDateTime } from '../lib/dates';
 import type { Message, Participant } from '../data/schemas';
 import { AttachmentChip } from './attachments';
+import { RichText } from './RichText';
 
 export interface MessageBubbleProps {
   message: Message;
@@ -38,7 +39,7 @@ export function MessageBubble({ message, author, own }: MessageBubbleProps) {
             {formatDateTime(message.sentAt)}
           </time>
         </header>
-        <p className="text-body break-words whitespace-pre-wrap">{message.body}</p>
+        <p className="text-body break-words whitespace-pre-wrap"><RichText text={message.body} /></p>
         {message.attachments.length > 0 ? (
           <ul aria-label="Pièces jointes" className="flex flex-wrap gap-1.5">
             {message.attachments.map((attachment) => (

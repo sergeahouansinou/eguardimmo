@@ -1,13 +1,14 @@
 'use client';
 
 import { Send } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { Alert, Button, Checkbox, Icon, Textarea } from '@eguardimmo/ui';
 import { replyInputSchema } from '../data/inputs';
 import type { ReplyInput } from '../data/inputs';
 import { errorMessage } from '../lib/errors';
 import { AttachmentList, AttachmentPicker, useAttachments } from './attachments';
+import { FormatToolbar } from './FormatToolbar';
 
 export interface ComposerProps {
   onSend: (input: ReplyInput) => Promise<unknown>;
@@ -27,6 +28,7 @@ export function Composer({
   disabled = false,
 }: ComposerProps) {
   const attachments = useAttachments();
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
   const [body, setBody] = useState('');
   const [internal, setInternal] = useState(false);
   const [fieldError, setFieldError] = useState<string | undefined>();
@@ -76,6 +78,7 @@ export function Composer({
       }}
     >
       <Textarea
+        ref={bodyRef}
         label={label}
         hideLabel
         placeholder={placeholder}
@@ -93,6 +96,7 @@ export function Composer({
       {failure ? <Alert tone="danger" title="Envoi impossible">{failure}</Alert> : null}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-3">
+          <FormatToolbar fieldRef={bodyRef} value={body} onChange={setBody} disabled={disabled || pending} />
           <AttachmentPicker attachments={attachments} variant="icon" disabled={disabled || pending} />
           {allowInternal ? (
             <Checkbox label="Note interne" checked={internal} onChange={(event) => { setInternal(event.target.checked); }} />

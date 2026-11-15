@@ -42,6 +42,20 @@ describe('NewMessageForm', () => {
     expect(screen.queryByRole('link', { name: 'Créer une campagne' })).toBeNull();
   });
 
+  it('met en forme la sélection avec la barre d’outils et l’envoie balisée', async () => {
+    const { source, navigate } = renderMessagerie(<NewMessageForm />);
+    const body = await screen.findByRole<HTMLTextAreaElement>('textbox', { name: 'Message' });
+    await userEvent.type(screen.getByRole('textbox', { name: 'Sujet' }), 'Coupure');
+    await userEvent.type(body, 'Coupure demain');
+    body.setSelectionRange(0, 7);
+    await userEvent.click(screen.getByRole('button', { name: 'Gras' }));
+    expect(body.value).toBe('**Coupure** demain');
+    await userEvent.click(screen.getByRole('button', { name: 'Envoyer' }));
+    await waitFor(() => { expect(navigate).toHaveBeenCalledOnce(); });
+    const list = conversationListSchema.parse(await source.listConversations({ tab: 'all', search: '', page: 1, pageSize: 50 }));
+    expect(list.items.find((item) => item.subject === 'Coupure')?.preview).toBe('**Coupure** demain');
+  });
+
   it('agence : le destinataire est obligatoire, le rattachement suit le destinataire', async () => {
     const { navigate } = renderMessagerie(<NewMessageForm />, { space: 'agence' });
     await screen.findByRole('combobox', { name: /Destinataire/ });

@@ -1,13 +1,14 @@
 'use client';
 
 import { Send } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, Button, Icon, Select, TextField, Textarea } from '@eguardimmo/ui';
 import { useMessagerieConfig } from '../config';
 import { newMessageInputSchema } from '../data/inputs';
 import { useCreateConversation, useRecipients } from '../data/queries';
 import { errorMessage } from '../lib/errors';
 import { AttachmentList, AttachmentPicker, useAttachments } from './attachments';
+import { FormatToolbar } from './FormatToolbar';
 import { fieldErrors } from './formErrors';
 import type { FieldErrors } from './formErrors';
 import { ErrorBlock, LoadingBlock } from './parts';
@@ -27,6 +28,7 @@ export function NewMessageForm({ initialRecipientId = '' }: NewMessageFormProps)
   const [chosenId, setChosenId] = useState(initialRecipientId);
   const [linkId, setLinkId] = useState(NO_LINK);
   const [subject, setSubject] = useState('');
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
   const [body, setBody] = useState('');
   const [errors, setErrors] = useState<FieldErrors>({});
   const [failure, setFailure] = useState<string | null>(null);
@@ -131,7 +133,9 @@ export function NewMessageForm({ initialRecipientId = '' }: NewMessageFormProps)
         }}
         {...(errors.subject ? { error: errors.subject } : {})}
       />
+      <div className="flex flex-col gap-1.5">
       <Textarea
+        ref={bodyRef}
         label="Message"
         placeholder={compose.bodyPlaceholder}
         rows={7}
@@ -142,6 +146,8 @@ export function NewMessageForm({ initialRecipientId = '' }: NewMessageFormProps)
         }}
         {...(errors.body ? { error: errors.body } : {})}
       />
+      <FormatToolbar fieldRef={bodyRef} value={body} onChange={setBody} disabled={create.isPending} />
+      </div>
       <div className="flex flex-col gap-2">
         <AttachmentPicker attachments={attachments} variant="zone" disabled={create.isPending} />
         <AttachmentList files={attachments.files} onRemove={attachments.remove} />

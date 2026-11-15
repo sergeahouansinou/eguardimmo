@@ -1,5 +1,6 @@
 'use client';
 
+import { FormatToolbar } from './FormatToolbar';
 import { CircleCheck, Save, Send } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Alert, Button, Checkbox, Icon, RadioGroup, TextField, Textarea } from '@eguardimmo/ui';
@@ -175,6 +176,7 @@ function CampaignFormBody({ audiences, existing }: { audiences: CampaignAudience
           }}
           {...(errors.body ? { error: errors.body } : {})}
         />
+        <FormatToolbar fieldRef={bodyRef} value={body} onChange={setBody} />
         {config && config.mergeTags.length > 0 ? (
           <div role="group" aria-label="Variables de personnalisation" className="flex flex-wrap items-center gap-1.5">
             <span className="text-caption text-fg-subtle">Insérer</span>
