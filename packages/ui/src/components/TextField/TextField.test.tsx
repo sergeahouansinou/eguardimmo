@@ -81,4 +81,10 @@ describe('TextField', () => {
     );
     await expectNoA11yViolations(container);
   });
+
+  it('masque visuellement le label sans le retirer de l’accessibilité', () => {
+    render(<TextField label="Rechercher" placeholder="Ex. Awa" hideLabel />);
+    expect(screen.getByText('Rechercher').className).toContain('sr-only');
+    expect(screen.getByLabelText('Rechercher')).toBeTruthy();
+  });
 });

@@ -7,6 +7,7 @@ export interface TextFieldProps extends Omit<ComponentProps<'input'>, 'placehold
   placeholder: string;
   hint?: string;
   error?: string;
+  hideLabel?: boolean;
 }
 
 export function TextField({
@@ -14,6 +15,7 @@ export function TextField({
   placeholder,
   hint,
   error,
+  hideLabel = false,
   id,
   type = 'text',
   className,
@@ -27,7 +29,7 @@ export function TextField({
 
   return (
     <div className="flex min-w-0 flex-col gap-1">
-      <label htmlFor={inputId} className="text-caption text-fg-muted">
+      <label htmlFor={inputId} className={cx('text-caption text-fg-muted', hideLabel && 'sr-only')}>
         {label}
       </label>
       <input
