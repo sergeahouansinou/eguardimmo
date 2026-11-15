@@ -84,6 +84,7 @@
   --breakpoint-sm: 600px;
   --breakpoint-md: 900px;
   --breakpoint-lg: 1280px;
+  --breakpoint-xl: 1440px;
   --shadow-*: initial;
   --inset-shadow-*: initial;
   --drop-shadow-*: initial;

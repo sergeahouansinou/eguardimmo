@@ -158,4 +158,5 @@ abstract final class EgTokens {
   static const double breakpointSm = 600.0;
   static const double breakpointMd = 900.0;
   static const double breakpointLg = 1280.0;
+  static const double breakpointXl = 1440.0;
 }

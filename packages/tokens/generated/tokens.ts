@@ -251,6 +251,7 @@ export const tokens = {
     sm: 600,
     md: 900,
     lg: 1280,
+    xl: 1440,
   },
 } as const;
 
