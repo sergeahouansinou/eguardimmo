@@ -42,23 +42,36 @@ export function MenuContent({
 const itemBase =
   'flex h-8 w-full cursor-pointer items-center gap-2 rounded-sm px-2 text-left text-body outline-none select-none data-[disabled]:cursor-not-allowed data-[disabled]:text-fg-disabled data-[highlighted]:bg-muted';
 
-export interface MenuItemProps extends ComponentProps<typeof MenuPrimitive.Item> {
+export interface MenuItemProps extends Omit<ComponentProps<typeof MenuPrimitive.Item>, 'asChild'> {
   icon?: LucideIcon;
   meta?: ReactNode;
   tone?: 'default' | 'danger';
+  href?: string;
 }
 
-export function MenuItem({ icon, meta, tone = 'default', className, children, ...props }: MenuItemProps) {
-  return (
-    <MenuPrimitive.Item
-      {...props}
-      className={cx(itemBase, tone === 'danger' ? 'text-fg-danger' : 'text-fg', className)}
-    >
+export function MenuItem({ icon, meta, tone = 'default', href, className, children, ...props }: MenuItemProps) {
+  const content = (
+    <>
       {icon ? (
         <Icon icon={icon} className={tone === 'danger' ? 'text-fg-danger' : 'text-fg-subtle'} />
       ) : null}
       <span className="min-w-0 flex-1 truncate">{children}</span>
       {meta ? <span className="ml-auto text-caption text-fg-subtle">{meta}</span> : null}
+    </>
+  );
+  const classes = cx(itemBase, tone === 'danger' ? 'text-fg-danger' : 'text-fg', className);
+  if (href !== undefined) {
+    return (
+      <MenuPrimitive.Item {...props} asChild>
+        <a href={href} className={classes}>
+          {content}
+        </a>
+      </MenuPrimitive.Item>
+    );
+  }
+  return (
+    <MenuPrimitive.Item {...props} className={classes}>
+      {content}
     </MenuPrimitive.Item>
   );
 }

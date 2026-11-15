@@ -23,3 +23,17 @@ export const Compte: StoryObj<typeof meta> = {
     </Menu>
   ),
 };
+
+export const AvecLien: StoryObj<typeof meta> = {
+  render: () => (
+    <Menu>
+      <MenuTrigger asChild>
+        <Button variant="secondary">Compte</Button>
+      </MenuTrigger>
+      <MenuContent>
+        <MenuItem icon={Settings} href="https://auth.eguardimmo.example/compte/securite">Sécurité du compte</MenuItem>
+        <MenuItem icon={LogOut} tone="danger" href="https://auth.eguardimmo.example/deconnecte">Se déconnecter</MenuItem>
+      </MenuContent>
+    </Menu>
+  ),
+};

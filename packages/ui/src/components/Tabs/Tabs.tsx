@@ -59,7 +59,7 @@ export function TabList({ className, ...props }: TabListProps) {
     <div
       {...props}
       role="tablist"
-      className={cx('flex gap-1 overflow-x-auto border-b border-line', className)}
+      className={cx('relative flex gap-1 overflow-x-auto border-b border-line', className)}
     />
   );
 }
@@ -119,18 +119,20 @@ export function Tab({ value, count, className, children, ...props }: TabProps) {
 
 export interface TabPanelProps extends Omit<ComponentProps<'div'>, 'role'> {
   value: string;
+  keepMounted?: boolean;
 }
 
-export function TabPanel({ value, className, ...props }: TabPanelProps) {
+export function TabPanel({ value, keepMounted = false, className, ...props }: TabPanelProps) {
   const tabs = useTabs();
-  if (tabs.value !== value) return null;
+  const active = tabs.value === value;
+  if (!active && !keepMounted) return null;
   return (
     <div
       {...props}
       role="tabpanel"
       id={idOf(tabs.baseId, 'panel', value)}
       aria-labelledby={idOf(tabs.baseId, 'tab', value)}
-      className={className}
+      className={cx(!active && 'hidden', className)}
     />
   );
 }

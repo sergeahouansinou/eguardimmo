@@ -55,6 +55,26 @@ describe('Menu', () => {
     expect(screen.getByRole('menu')).toBeTruthy();
   });
 
+  it('rend un vrai lien quand href est fourni et reste accessible', async () => {
+    render(
+      <Menu>
+        <MenuTrigger asChild>
+          <Button>Compte</Button>
+        </MenuTrigger>
+        <MenuContent>
+          <MenuItem icon={LogOut} href="https://auth.eguardimmo.example/profils">
+            Changer d’espace
+          </MenuItem>
+        </MenuContent>
+      </Menu>,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Compte' }));
+    const item = await screen.findByRole('menuitem', { name: 'Changer d’espace' });
+    expect(item.tagName).toBe('A');
+    expect(item.getAttribute('href')).toBe('https://auth.eguardimmo.example/profils');
+    await expectNoA11yViolations(await screen.findByRole('menu'));
+  });
+
   it('n’a aucune violation axe une fois ouvert', async () => {
     render(<Exemple onLogout={vi.fn()} />);
     await userEvent.click(screen.getByRole('button', { name: 'Compte' }));

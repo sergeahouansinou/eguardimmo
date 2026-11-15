@@ -1,0 +1,32 @@
+/* Papier des aperçus A4 : reste blanc en mode sombre (jetons clairs réaffectés). */
+[data-paper] {
+  color-scheme: light;
+  background-color: #FFFFFF;
+  color: #000000;
+  --eg-bg-page: #F6F8F8;
+  --eg-bg-surface: #FFFFFF;
+  --eg-bg-muted: #EEF2F2;
+  --eg-bg-disabled: #F6F8F8;
+  --eg-border-default: #DDE4E5;
+  --eg-border-control: #5F7176;
+  --eg-border-strong: #334349;
+  --eg-text-default: #14202A;
+  --eg-text-muted: #334349;
+  --eg-text-subtle: #5F7176;
+  --eg-text-placeholder: #5F7176;
+  --eg-text-disabled: #9AAAAE;
+  --eg-text-inverse: #FFFFFF;
+  --eg-text-danger: #B42318;
+  --eg-action-default: #1A6F84;
+  --eg-action-subtle: #F1F9FB;
+  --eg-action-on-subtle: #145A6B;
+  --eg-action-text: #FFFFFF;
+  --eg-info-bg: #F1F9FB;
+  --eg-info-text: #145A6B;
+  --eg-success-bg: #ECFDF3;
+  --eg-success-text: #067647;
+  --eg-warning-bg: #FFFAEB;
+  --eg-warning-text: #93370D;
+  --eg-danger-bg: #FEF3F2;
+  --eg-danger-text: #B42318;
+}
