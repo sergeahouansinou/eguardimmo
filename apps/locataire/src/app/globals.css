@@ -1,0 +1,32 @@
+@import "@eguardimmo/ui/styles.css";
+@source "../../../../packages/messagerie/src";
+@source "../../../../packages/shell/src";
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  body:has(.print-area) * {
+    visibility: hidden;
+  }
+
+  body:has(.print-area) .print-area,
+  body:has(.print-area) .print-area * {
+    visibility: visible;
+  }
+
+  .print-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 210mm;
+  }
+
+  .print-reset {
+    width: auto !important;
+    height: auto !important;
+    transform: none !important;
+  }
+}
