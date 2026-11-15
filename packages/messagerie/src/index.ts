@@ -84,6 +84,7 @@ export type { ConversationThreadProps } from './components/ConversationThread';
 export { HelpCenter } from './components/HelpCenter';
 export { MessageBubble } from './components/MessageBubble';
 export type { MessageBubbleProps } from './components/MessageBubble';
+export { MyTicketList, MyTicketThread } from './components/MyTickets';
 export { NewMessageForm } from './components/NewMessageForm';
 export type { NewMessageFormProps } from './components/NewMessageForm';
 export { PageHeader } from './components/parts';

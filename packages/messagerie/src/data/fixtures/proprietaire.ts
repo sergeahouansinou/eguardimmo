@@ -17,7 +17,7 @@ export function proprietaireSeed(): MessagerieSeed {
         subject: 'Devis de plomberie, Studio 4',
         unread: true,
         context: [{ label: 'Gestionnaire', value: 'Sophie Delmas' }, { label: 'Mandat', value: 'M-2025-0142' }],
-        links: [{ kind: 'devis', label: 'Voir le devis', href: '/interventions/devis-plomberie' }],
+        links: [{ kind: 'devis', label: 'Voir le devis', href: '/interventions/fuite-sous-l-evier/devis' }],
         messages: [
           msg('m1', sophie.id, '2026-11-12T16:20:00+01:00', 'Bonjour Monsieur Chevalier, une fuite sous l’évier du Studio 4 a été signalée le 10/11. Le plombier propose un devis de 380 € TTC. Ce montant dépasse le seuil de 300 € prévu au mandat : votre accord est nécessaire.'),
           msg('m2', me.id, '2026-11-12T18:05:00+01:00', 'Bonjour, pouvez-vous me donner le détail du devis ?'),

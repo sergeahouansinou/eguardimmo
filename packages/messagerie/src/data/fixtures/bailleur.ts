@@ -6,8 +6,8 @@ import type { Campaign } from '../schemas';
 
 const me = person('u-marc-b', 'Marc Chevalier', 'bailleur', 'Gestion Les Tilleuls');
 const koffi = person('t-koffi', 'Koffi Adjovi', 'locataire', 'Apt A1');
-const ibrahim = person('t-ibrahim', 'Ibrahim Yao', 'locataire', 'Apt B2');
-const dossou = person('t-dossou', 'Marc Dossou', 'locataire', 'Studio C2');
+const ibrahim = person('t-ibrahim', 'Ibrahim Yao', 'locataire', 'Studio 2e');
+const dossou = person('t-dossou', 'Marc Dossou', 'locataire', 'Villa RDC');
 
 function campaign(
   id: string,
@@ -61,8 +61,10 @@ export function bailleurSeed(): MessagerieSeed {
         subject: 'Merci pour l’état des lieux',
         counterpart: ibrahim,
         me,
-        tag: 'Apt B2',
+        tag: 'Studio 2e',
         unread: true,
+        context: [{ label: 'Bien', value: 'Studio 2e, Résidence du Parc' }, { label: 'Bail', value: 'Préavis en cours' }],
+        links: [{ kind: 'bail', label: 'Ouvrir le bail', href: '/baux/studio-2e' }],
         messages: [msg('m1', ibrahim.id, '2026-11-12T10:20:00+01:00', 'Merci pour l’état des lieux.')],
       }),
       conversation({
@@ -70,14 +72,19 @@ export function bailleurSeed(): MessagerieSeed {
         subject: 'Le chauffe-eau fonctionne à nouveau',
         counterpart: dossou,
         me,
-        tag: 'Studio C2',
+        tag: 'Villa RDC',
+        context: [{ label: 'Bien', value: 'Villa RDC, Maison Rivière' }, { label: 'Bail', value: 'Bail en cours' }],
+        links: [
+          { kind: 'bail', label: 'Ouvrir le bail', href: '/baux/villa-rdc' },
+          { kind: 'intervention', label: 'Voir l’intervention', href: '/interventions/chauffe-eau-a-remplacer' },
+        ],
         messages: [msg('m1', dossou.id, '2026-11-09T17:45:00+01:00', 'Le chauffe-eau fonctionne à nouveau.')],
       }),
     ],
     recipients: [
       { ...koffi, linkOptions: [{ id: 'bail-a1', label: 'Bail de l’Apt A1' }] },
-      { ...ibrahim, linkOptions: [{ id: 'bail-b2', label: 'Bail de l’Apt B2' }] },
-      { ...dossou, linkOptions: [] },
+      { ...ibrahim, linkOptions: [{ id: 'bail-studio-2e', label: 'Bail du Studio 2e' }] },
+      { ...dossou, linkOptions: [{ id: 'bail-villa-rdc', label: 'Bail de la Villa RDC' }] },
     ],
     audiences: [
       { id: 'aud-locataires', label: 'Tous les locataires', detail: 'Baux en cours', count: 10, withoutEmail: 1 },
@@ -102,6 +109,8 @@ export function bailleurSeed(): MessagerieSeed {
             { id: 'loyer', question: 'Comment enregistrer un loyer encaissé ?', answer: 'Depuis Finances, choisissez Encaisser un loyer, sélectionnez le bail et saisissez le montant reçu. La quittance se génère une fois le loyer soldé.' },
             { id: 'relance', question: 'Comment relancer un locataire en retard ?', answer: 'Depuis Impayés, ouvrez le dossier puis envoyez un message ou une campagne aux locataires concernés.' },
             { id: 'campagne', question: 'Comment écrire à plusieurs locataires ?', answer: 'Créez une campagne : chaque locataire reçoit le message à part et vous suivez la lecture.' },
+            { id: 'raccourcis', question: 'Existe-t-il des raccourcis clavier ?', answer: 'Oui : ⌘ K ou Ctrl K ouvre la recherche, ? affiche la liste complète des raccourcis.', href: '/aide/raccourcis', hrefLabel: 'Voir les raccourcis' },
+            { id: 'probleme', question: 'Comment signaler un problème ?', answer: 'Décrivez ce qui s’est passé depuis la page de signalement : le support reçoit votre demande avec le contexte.', href: '/aide/signaler', hrefLabel: 'Signaler un problème' },
           ],
         },
       ],

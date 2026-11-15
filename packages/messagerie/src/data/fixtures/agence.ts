@@ -70,8 +70,8 @@ export function agenceSeed(): MessagerieSeed {
           { label: 'Intervention', value: 'Fuite, urgente' },
         ],
         links: [
-          { kind: 'bail', label: 'Ouvrir le bail', href: '/baux/studio-4' },
-          { kind: 'intervention', label: 'Voir l’intervention', href: '/interventions/fuite-studio-4' },
+          { kind: 'bail', label: 'Ouvrir le bail', href: '/baux/b-2026-007' },
+          { kind: 'intervention', label: 'Voir l’intervention', href: '/interventions/fuite-sous-l-evier' },
         ],
         messages: [
           msg('m1', anais.id, '2026-11-11T18:02:00+01:00', 'Bonjour, il y a une fuite sous l’évier de la cuisine depuis hier soir. J’ai posé une bassine.'),
