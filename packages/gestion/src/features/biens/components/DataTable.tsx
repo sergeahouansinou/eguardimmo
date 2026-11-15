@@ -134,15 +134,7 @@ export function DataTable<T>({
         </TableBody>
       </Table>
       {footer ? (
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <Select
-            label="Lignes par page"
-            placeholder="10"
-            options={pageSizes.map((size) => ({ value: String(size), label: String(size) }))}
-            value={String(list.pageSize)}
-            onValueChange={(value) => { list.setPageSize(Number(value)); }}
-            className="w-36"
-          />
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Pagination
             page={page}
             pageSize={list.pageSize}
@@ -151,6 +143,20 @@ export function DataTable<T>({
             label={`Pagination, ${label}`}
             className="min-w-full flex-1 border-t-0 pt-0 sm:min-w-0"
           />
+          <div className="flex items-center gap-2">
+            <span aria-hidden="true" className="text-caption text-fg-muted">
+              Lignes par page
+            </span>
+            <Select
+              label="Lignes par page"
+              hideLabel
+              placeholder="10"
+              options={pageSizes.map((size) => ({ value: String(size), label: String(size) }))}
+              value={String(list.pageSize)}
+              onValueChange={(value) => { list.setPageSize(Number(value)); }}
+              className="w-20"
+            />
+          </div>
         </div>
       ) : null}
     </div>
