@@ -8,7 +8,6 @@ import {
   Folder,
   House,
   ListChecks,
-  Megaphone,
   MessageSquare,
   Settings,
   Users,
@@ -100,7 +99,6 @@ export function buildNavigation(counts?: ShellCounts): Navigation {
         label: 'Suivi',
         entries: [
           { id: 'messages', label: 'Messages', href: '/messages', icon: MessageSquare, count: counts?.unreadMessages },
-          { id: 'campagnes', label: 'Campagnes', href: '/campagnes', icon: Megaphone },
           { id: 'interventions', label: 'Interventions', href: '/interventions', icon: Wrench, count: counts?.openInterventions },
           { id: 'agenda', label: 'Agenda', href: '/agenda', icon: Calendar },
           { id: 'taches', label: 'Tâches et rappels', href: '/taches', icon: ListChecks },
