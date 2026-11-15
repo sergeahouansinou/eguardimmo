@@ -1,8 +1,9 @@
 'use client';
 
-import { Button, Card, CardTitle, Menu, MenuContent, MenuItem, MenuTrigger, Select, Textarea, TextField } from '@eguardimmo/ui';
+import { Badge, Button, Card, CardTitle, Menu, MenuContent, MenuItem, MenuTrigger, Select, Switch, Textarea, TextField } from '@eguardimmo/ui';
 import { useRef } from 'react';
 import type { z } from 'zod';
+import { ModeleFieldsCard, ModeleUsageCard } from './ModeleFields';
 import { RecordGate } from './RecordGate';
 import { useCreateTemplate, useTemplates, useUpdateTemplate } from './hooks';
 import { courriersPaths } from './paths';
@@ -20,7 +21,7 @@ const SAMPLE: Record<string, string> = Object.fromEntries(TEMPLATE_FIELDS.map((f
 
 export function ModeleFormPage({ id }: { id?: string }) {
   const templates = useTemplates();
-  if (id === undefined) return <TemplateForm initial={{ name: '', category: 'loyers', subject: '', body: '' }} />;
+  if (id === undefined) return <TemplateForm initial={{ name: '', category: 'loyers', description: '', subject: '', body: '', suggestRegistered: false }} />;
   return (
     <RecordGate
       query={templates}
@@ -38,7 +39,7 @@ export function ModeleFormPage({ id }: { id?: string }) {
             actions={<LinkButton href={courriersPaths.modeles}>Retour aux modèles</LinkButton>}
           />
         ) : (
-          <TemplateForm template={template} initial={{ name: template.name, category: template.category, subject: template.subject, body: template.body }} />
+          <TemplateForm template={template} initial={{ name: template.name, category: template.category, description: template.description, subject: template.subject, body: template.body, suggestRegistered: template.suggestRegistered }} />
         )
       }
     </RecordGate>
@@ -81,7 +82,12 @@ function TemplateForm({ template, initial }: { template?: Template; initial: Val
 
   return (
     <form noValidate className="flex flex-col gap-3" onSubmit={(event) => { event.preventDefault(); void save(); }}>
-      <PageHeader crumbs={[...crumbs, { label: editing ? 'Modifier' : 'Nouveau modèle' }]} title={editing ? `Modifier ${template.name}` : 'Nouveau modèle'} subtitle="Insérez des champs pour que le courrier se remplisse tout seul." />
+      <PageHeader
+        crumbs={[...crumbs, { label: editing ? 'Modifier' : 'Nouveau modèle' }]}
+        title={editing ? `Modifier ${template.name}` : 'Nouveau modèle'}
+        subtitle="Rédigez le texte une fois. Les champs entre accolades se remplissent à l’envoi de chaque courrier."
+        actions={editing ? <Badge tone="info">Personnalisé</Badge> : undefined}
+      />
       <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <Card className="gap-3" role="group" aria-labelledby="mf-edit">
           <CardTitle as="h2" id="mf-edit">Contenu du modèle</CardTitle>
@@ -95,13 +101,19 @@ function TemplateForm({ template, initial }: { template?: Template; initial: Val
               onBlur={() => { form.touch('name'); }}
             />
             <Select
-              label="Catégorie"
+              label="Catégorie *"
               placeholder="Choisir une catégorie"
               value={form.values.category}
               onValueChange={(value) => { form.setValue('category', asCategory(value)); }}
               options={TEMPLATE_CATEGORIES.map((entry) => ({ value: entry, label: templateCategoryLabel[entry] }))}
             />
           </div>
+          <TextField
+            label="Description"
+            placeholder="Ex. : envoyée après deux relances sans réponse"
+            value={form.values.description}
+            onChange={(event) => { form.setValue('description', event.target.value); }}
+          />
           <TextField
             label="Objet *"
             placeholder="Ex. Relance, loyer de {mois} impayé"
@@ -136,13 +148,23 @@ function TemplateForm({ template, initial }: { template?: Template; initial: Val
               onBlur={() => { form.touch('body'); }}
             />
           </div>
+          <Switch
+            label="Proposer l’envoi en lettre recommandée"
+            checked={form.values.suggestRegistered}
+            onCheckedChange={(checked) => { form.setValue('suggestRegistered', checked); }}
+          />
         </Card>
         <aside className="flex min-w-0 flex-col gap-3">
+          <ModeleFieldsCard onInsert={insertField} />
           <Card className="gap-2" role="group" aria-labelledby="mf-apercu">
-            <CardTitle as="h2" id="mf-apercu">Aperçu avec des données d’exemple</CardTitle>
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle as="h2" id="mf-apercu">Aperçu avec des données d’exemple</CardTitle>
+              {template ? <LinkButton href={courriersPaths.modele(template.id)} size="sm">Ouvrir le PDF</LinkButton> : null}
+            </div>
             <b className="text-body-strong text-fg">{form.values.subject === '' ? 'Objet du courrier' : renderTemplate(form.values.subject, SAMPLE)}</b>
             <p className="text-body whitespace-pre-wrap text-fg-muted">{form.values.body === '' ? 'Le contenu apparaît ici au fil de la saisie.' : renderTemplate(form.values.body, SAMPLE)}</p>
           </Card>
+          {template ? <ModeleUsageCard templateId={template.id} /> : null}
         </aside>
       </div>
       <div className="flex flex-wrap justify-end gap-2">

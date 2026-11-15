@@ -3,6 +3,7 @@
 import { Copy, FileText, Mail, PenLine, SquarePen, Trash2 } from 'lucide-react';
 import {
   Badge,
+  Button,
   Card,
   ConfirmDialog,
   EmptyState,
@@ -28,12 +29,13 @@ import { channelLabel } from './schemas';
 import type { Courrier, CourrierStatus } from './schemas';
 import { ActionMenu, LinkButton, ListLoading, LoadError, PageHeader, SearchInput, errorMessage, useGestionNavigation, useNotify } from '../locataires/kit';
 import type { ActionItem } from '../locataires/kit';
-import { formatDateFr } from '../locataires/kit/dates';
+import { addDays, formatDateFr, todayIso } from '../locataires/kit/dates';
 import { links } from '../locataires/kit/links';
 import { useListView } from '../locataires/kit/useListView';
 import type { ListTab } from '../locataires/kit/useListView';
 
 const ALL = 'tous';
+const LAST_30_DAYS = '30j';
 
 const statusBadge: Record<CourrierStatus, { label: string; tone: BadgeTone }> = {
   brouillon: { label: 'Brouillon', tone: 'neutral' },
@@ -57,11 +59,12 @@ export function CourriersPage() {
   const send = useMarkCourrierSent();
   const remove = useDeleteCourrier();
   const [templateId, setTemplateId] = useState(ALL);
+  const [period, setPeriod] = useState(ALL);
   const [pendingDelete, setPendingDelete] = useState<Courrier | null>(null);
 
   const items = courriers.data ?? [];
   const searchText = (item: Courrier) => `${item.reference} ${item.subject} ${lookups.tenantName(item.tenantId)}`;
-  const view = useListView({ items, tabs, searchText, predicate: (item) => templateId === ALL || item.templateId === templateId });
+  const view = useListView({ items, tabs, searchText, predicate: (item) => (templateId === ALL || item.templateId === templateId) && (period === ALL || (item.sentOn ?? item.createdOn) >= addDays(todayIso(), -30)) });
 
   const run = async (task: () => Promise<unknown>, success: { title: string; description?: string }) => {
     try {
@@ -73,7 +76,7 @@ export function CourriersPage() {
   };
 
   const actionsFor = (item: Courrier): ActionItem[] => [
-    { id: 'open', label: 'Ouvrir l’aperçu', icon: FileText, onSelect: () => { push(courriersPaths.courrier(item.id)); } },
+    { id: 'open', label: 'Aperçu du PDF', icon: FileText, onSelect: () => { push(courriersPaths.courrier(item.id)); } },
     { id: 'edit', label: 'Modifier', icon: SquarePen, disabled: item.status === 'envoye', onSelect: () => { push(courriersPaths.editCourrier(item.id)); } },
     {
       id: 'send',
@@ -85,7 +88,7 @@ export function CourriersPage() {
     { id: 'sign', label: 'Envoyer en signature', icon: PenLine, onSelect: () => { push(courriersPaths.signatureFor(item.subject, `${item.reference}.pdf`)); } },
     {
       id: 'reuse',
-      label: 'Nouveau courrier similaire',
+      label: 'Dupliquer',
       icon: Copy,
       onSelect: () => { push(links.newCourrier({ modele: item.templateId ?? undefined, locataire: item.tenantId, bien: item.unitId ?? undefined })); },
     },
@@ -103,7 +106,7 @@ export function CourriersPage() {
       <PageHeader
         crumbs={[{ label: 'Accueil', href: links.home }, { label: 'Documents', href: courriersPaths.documents }, { label: 'Courriers' }]}
         title="Courriers"
-        subtitle={courriers.data ? `${String(view.counts.brouillons ?? 0)} brouillons, ${String(view.counts.a_envoyer ?? 0)} à envoyer.` : ' '}
+        subtitle="Lettres envoyées aux locataires : relances, avis, congés, notifications."
         actions={
           <>
             <LinkButton href={courriersPaths.modeles}>Modèles</LinkButton>
@@ -121,7 +124,7 @@ export function CourriersPage() {
           </TabList>
           <TabPanel value={view.tab} className="flex flex-col gap-3 pt-1">
             <div className="flex flex-wrap items-center gap-2">
-              <SearchInput label="Rechercher un courrier" placeholder="Référence, objet, locataire" value={view.query} onValueChange={view.setQuery} />
+              <SearchInput label="Rechercher un courrier" placeholder="Sujet, destinataire" value={view.query} onValueChange={view.setQuery} />
               <Select
                 label="Modèle"
                 hideLabel
@@ -131,10 +134,19 @@ export function CourriersPage() {
                 options={[{ value: ALL, label: 'Modèle : Tous' }, ...(templates.data ?? []).map((template) => ({ value: template.id, label: template.name }))]}
                 className="w-60"
               />
+              <Select
+                label="Période"
+                hideLabel
+                placeholder="Période : Toutes"
+                value={period}
+                onValueChange={(value) => { setPeriod(value); view.resetPage(); }}
+                options={[{ value: ALL, label: 'Période : Toutes' }, { value: LAST_30_DAYS, label: 'Période : 30 derniers jours' }]}
+                className="w-64"
+              />
             </div>
             {courriers.isPending ? <ListLoading label="Chargement des courriers" /> : null}
             {courriers.data && view.rows.length === 0 ? (
-              <EmptyState icon={Mail} title="Aucun courrier" description={view.query !== '' || templateId !== ALL ? 'Aucun courrier ne correspond à ces filtres.' : 'Rien à afficher dans cette rubrique pour le moment.'}>
+              <EmptyState icon={Mail} title="Aucun courrier" description={view.query !== '' || templateId !== ALL || period !== ALL ? 'Aucun courrier ne correspond à ces filtres.' : 'Rien à afficher dans cette rubrique pour le moment.'}>
                 <LinkButton href={courriersPaths.newCourrier} variant="primary">Nouveau courrier</LinkButton>
               </EmptyState>
             ) : null}
@@ -142,11 +154,12 @@ export function CourriersPage() {
               <Table aria-label="Courriers">
                 <TableHead>
                   <TableRow>
-                    <TableHeaderCell>Courrier</TableHeaderCell>
-                    <TableHeaderCell>Destinataire</TableHeaderCell>
+                    <TableHeaderCell>Sujet</TableHeaderCell>
+                    <TableHeaderCell>À</TableHeaderCell>
                     <TableHeaderCell>Canal</TableHeaderCell>
                     <TableHeaderCell>Date</TableHeaderCell>
-                    <TableHeaderCell>Statut</TableHeaderCell>
+                    <TableHeaderCell>Créé le</TableHeaderCell>
+                    <TableHeaderCell>État</TableHeaderCell>
                     <TableHeaderCell><span className="sr-only">Actions</span></TableHeaderCell>
                   </TableRow>
                 </TableHead>
@@ -159,9 +172,15 @@ export function CourriersPage() {
                       </TableCell>
                       <TableCell>{lookups.tenantName(item.tenantId)}</TableCell>
                       <TableCell>{channelLabel[item.channel]}</TableCell>
-                      <TableCell>{formatDateFr(item.sentOn ?? item.createdOn)}</TableCell>
+                      <TableCell>{item.sentOn ? formatDateFr(item.sentOn) : '—'}</TableCell>
+                      <TableCell>{formatDateFr(item.createdOn)}</TableCell>
                       <TableCell><Badge tone={statusBadge[item.status].tone}>{statusBadge[item.status].label}</Badge></TableCell>
-                      <TableCell><ActionMenu label={`Plus d’actions, ${item.reference}`} items={actionsFor(item)} /></TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button variant="secondary" size="sm" aria-label={`Ouvrir, ${item.reference}`} onClick={() => { push(courriersPaths.courrier(item.id)); }}>Ouvrir</Button>
+                          <ActionMenu label={`Plus d’actions, ${item.reference}`} items={actionsFor(item)} />
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

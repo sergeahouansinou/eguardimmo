@@ -2,11 +2,14 @@
 
 import { Archive, ArchiveRestore, Copy, Eye, FilePen, Pencil, Trash2 } from 'lucide-react';
 import {
+  Alert,
   Badge,
+  Button,
   Card,
   ConfirmDialog,
   EmptyState,
   Pagination,
+  Select,
   Tab,
   TabList,
   TabPanel,
@@ -21,7 +24,7 @@ import {
 import { useState } from 'react';
 import { useArchiveTemplate, useDeleteTemplate, useDuplicateTemplate, useTemplates } from './hooks';
 import { courriersPaths } from './paths';
-import { templateCategoryLabel } from './schemas';
+import { TEMPLATE_CATEGORIES, templateCategoryLabel } from './schemas';
 import type { Template } from './schemas';
 import { ActionMenu, LinkButton, ListLoading, LoadError, PageHeader, SearchInput, errorMessage, useGestionNavigation, useNotify } from '../locataires/kit';
 import type { ActionItem } from '../locataires/kit';
@@ -30,11 +33,12 @@ import { links } from '../locataires/kit/links';
 import { useListView } from '../locataires/kit/useListView';
 import type { ListTab } from '../locataires/kit/useListView';
 
+const ALL = 'toutes';
+
 const tabs: ListTab<Template>[] = [
   { id: 'tous', label: 'Tous', match: (item) => !item.archived },
-  { id: 'loyers', label: 'Loyers', match: (item) => !item.archived && item.category === 'loyers' },
-  { id: 'baux', label: 'Baux', match: (item) => !item.archived && item.category === 'baux' },
-  { id: 'general', label: 'Général', match: (item) => !item.archived && item.category === 'general' },
+  { id: 'defaut', label: 'Par défaut', match: (item) => !item.archived && item.builtIn },
+  { id: 'personnalises', label: 'Personnalisés', match: (item) => !item.archived && !item.builtIn },
   { id: 'archives', label: 'Archivés', match: (item) => item.archived },
 ];
 
@@ -46,9 +50,10 @@ export function ModelesPage() {
   const archive = useArchiveTemplate();
   const remove = useDeleteTemplate();
   const [pendingDelete, setPendingDelete] = useState<Template | null>(null);
+  const [category, setCategory] = useState(ALL);
 
   const items = templates.data ?? [];
-  const view = useListView({ items, tabs, searchText: (item) => `${item.name} ${item.subject}` });
+  const view = useListView({ items, tabs, searchText: (item) => `${item.name} ${item.subject} ${item.description}`, predicate: (item) => category === ALL || item.category === category });
 
   const run = async (task: () => Promise<unknown>, success: { title: string; description?: string }) => {
     try {
@@ -70,6 +75,16 @@ export function ModelesPage() {
     { id: 'delete', label: 'Supprimer', icon: Trash2, tone: 'danger', disabled: item.builtIn, onSelect: () => { setPendingDelete(item); } },
   ];
 
+  const customize = async (item: Template) => {
+    try {
+      const copy = await duplicate.mutateAsync(item.id);
+      notify({ title: 'Modèle personnalisé créé', description: copy.name });
+      push(courriersPaths.editModele(copy.id));
+    } catch (error) {
+      notify({ tone: 'danger', title: 'Action impossible', description: errorMessage(error) });
+    }
+  };
+
   const confirmDelete = async () => {
     const target = pendingDelete;
     setPendingDelete(null);
@@ -81,9 +96,10 @@ export function ModelesPage() {
       <PageHeader
         crumbs={[{ label: 'Accueil', href: links.home }, { label: 'Modèles de courriers' }]}
         title="Modèles de courriers"
-        subtitle="Les champs entre accolades sont remplis automatiquement à la génération."
+        subtitle="Lettres types prêtes à l’envoi. Un modèle personnalisé remplace celui proposé par défaut."
         actions={<LinkButton href={courriersPaths.newModele} variant="primary">Nouveau modèle</LinkButton>}
       />
+      <Alert tone="info">Les modèles par défaut sont des bases à adapter. Ils ne remplacent pas l’avis d’un professionnel du droit.</Alert>
       {templates.isError ? <LoadError title="Les modèles n’ont pas pu être chargés" /> : null}
       <Card role="region" aria-label="Liste des modèles" className="gap-3">
         <Tabs value={view.tab} onValueChange={view.setTab} defaultValue="tous">
@@ -93,10 +109,21 @@ export function ModelesPage() {
             ))}
           </TabList>
           <TabPanel value={view.tab} className="flex flex-col gap-3 pt-1">
-            <SearchInput label="Rechercher un modèle" placeholder="Nom ou objet" value={view.query} onValueChange={view.setQuery} />
+            <div className="flex flex-wrap items-center gap-2">
+              <SearchInput label="Rechercher un modèle" placeholder="Titre, mot-clé" value={view.query} onValueChange={view.setQuery} />
+              <Select
+                label="Catégorie"
+                hideLabel
+                placeholder="Catégorie : Toutes"
+                value={category}
+                onValueChange={(value) => { setCategory(value); view.resetPage(); }}
+                options={[{ value: ALL, label: 'Catégorie : Toutes' }, ...TEMPLATE_CATEGORIES.map((entry) => ({ value: entry, label: templateCategoryLabel[entry] }))]}
+                className="w-56"
+              />
+            </div>
             {templates.isPending ? <ListLoading label="Chargement des modèles" /> : null}
             {templates.data && view.rows.length === 0 ? (
-              <EmptyState icon={FilePen} title="Aucun modèle" description={view.query === '' ? 'Rien à afficher dans cette rubrique pour le moment.' : 'Aucun modèle ne correspond à cette recherche.'}>
+              <EmptyState icon={FilePen} title="Aucun modèle" description={view.query === '' && category === ALL ? 'Rien à afficher dans cette rubrique pour le moment.' : 'Aucun modèle ne correspond à cette recherche.'}>
                 <LinkButton href={courriersPaths.newModele} variant="primary">Nouveau modèle</LinkButton>
               </EmptyState>
             ) : null}
@@ -106,8 +133,9 @@ export function ModelesPage() {
                   <TableRow>
                     <TableHeaderCell>Modèle</TableHeaderCell>
                     <TableHeaderCell>Catégorie</TableHeaderCell>
-                    <TableHeaderCell>Origine</TableHeaderCell>
+                    <TableHeaderCell>Source</TableHeaderCell>
                     <TableHeaderCell>Mis à jour</TableHeaderCell>
+                    <TableHeaderCell>État</TableHeaderCell>
                     <TableHeaderCell><span className="sr-only">Actions</span></TableHeaderCell>
                   </TableRow>
                 </TableHead>
@@ -116,12 +144,22 @@ export function ModelesPage() {
                     <TableRow key={item.id}>
                       <TableCell strong>
                         <Link href={courriersPaths.modele(item.id)} className="text-fg hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">{item.name}</Link>
-                        <span className="block text-caption font-normal text-fg-subtle">{item.subject}</span>
+                        <span className="block text-caption font-normal text-fg-subtle">{item.description === '' ? item.subject : item.description}</span>
                       </TableCell>
                       <TableCell>{templateCategoryLabel[item.category]}</TableCell>
-                      <TableCell><Badge tone={item.builtIn ? 'info' : 'neutral'}>{item.builtIn ? 'Fourni' : 'Personnalisé'}</Badge></TableCell>
+                      <TableCell><Badge tone={item.builtIn ? 'neutral' : 'info'}>{item.builtIn ? 'Par défaut' : 'Personnalisé'}</Badge></TableCell>
                       <TableCell>{formatDateFr(item.updatedOn)}</TableCell>
-                      <TableCell><ActionMenu label={`Plus d’actions, ${item.name}`} items={actionsFor(item)} /></TableCell>
+                      <TableCell><Badge tone={item.archived ? 'neutral' : 'success'}>{item.archived ? 'Archivé' : 'Actif'}</Badge></TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {item.builtIn ? (
+                            <Button variant="secondary" size="sm" aria-label={`Personnaliser, ${item.name}`} disabled={item.archived} loading={duplicate.isPending && duplicate.variables === item.id} onClick={() => { void customize(item); }}>Personnaliser</Button>
+                          ) : (
+                            <Button variant="secondary" size="sm" aria-label={`Utiliser, ${item.name}`} disabled={item.archived} onClick={() => { push(links.newCourrier({ modele: item.id })); }}>Utiliser</Button>
+                          )}
+                          <ActionMenu label={`Plus d’actions, ${item.name}`} items={actionsFor(item)} />
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

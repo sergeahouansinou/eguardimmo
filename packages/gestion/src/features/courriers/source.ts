@@ -117,6 +117,7 @@ export function createDemoCourriersSource(): CourriersSource {
           reference,
           title: values.title,
           fileName: values.fileName,
+          unitId: values.unitId === undefined || values.unitId === '' ? null : values.unitId,
           signers: values.signers.map((signer) => ({ name: signer.name.trim(), email: signer.email.trim(), status: 'attente' as const })),
           status: 'en_cours',
           createdOn: todayIso(),
@@ -156,7 +157,7 @@ export function createDemoCourriersSource(): CourriersSource {
     },
     receipts: () => Promise.resolve(receipts.all()),
     emitReceipts: (month) => {
-      const pending = receipts.all().filter((receipt) => receipt.number === null && receipt.month === month);
+      const pending = receipts.all().filter((receipt) => receipt.number === null && receipt.outstanding === 0 && receipt.month === month);
       if (pending.length === 0) return Promise.reject(new Error('Aucune quittance à émettre pour ce mois.'));
       const taken = receipts.all().map((receipt) => receipt.number ?? '');
       const emitted = pending.map((receipt) => {

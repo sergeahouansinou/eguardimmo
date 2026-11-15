@@ -8,10 +8,19 @@ const text = z.string().trim();
 const required = (message: string) => text.min(1, message);
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const TEMPLATE_CATEGORIES = ['loyers', 'baux', 'general'] as const;
+export const TEMPLATE_CATEGORIES = ['loyers', 'recouvrement', 'baux', 'conges', 'attestations', 'assurance', 'depot', 'general'] as const;
 export const templateCategorySchema = z.enum(TEMPLATE_CATEGORIES);
 export type TemplateCategory = z.infer<typeof templateCategorySchema>;
-export const templateCategoryLabel: Record<TemplateCategory, string> = { loyers: 'Loyers', baux: 'Baux', general: 'Général' };
+export const templateCategoryLabel: Record<TemplateCategory, string> = {
+  loyers: 'Loyers',
+  recouvrement: 'Recouvrement',
+  baux: 'Baux',
+  conges: 'Congés',
+  attestations: 'Attestations',
+  assurance: 'Assurance',
+  depot: 'Dépôt de garantie',
+  general: 'Général',
+};
 
 export const TEMPLATE_FIELDS = [
   { key: 'locataire', label: 'Nom du locataire', sample: 'Koffi Adjovi' },
@@ -20,6 +29,8 @@ export const TEMPLATE_FIELDS = [
   { key: 'adresse', label: 'Adresse du bien', sample: '12 rue des Lilas, 75011 Paris' },
   { key: 'reference_bail', label: 'Référence du bail', sample: 'BL-2023-0007' },
   { key: 'loyer', label: 'Loyer charges comprises', sample: '850,00 €' },
+  { key: 'bail.loyer', label: 'Loyer hors charges', sample: '700,00 €' },
+  { key: 'bail.charges', label: 'Provision sur charges', sample: '150,00 €' },
   { key: 'montant_impaye', label: 'Montant impayé', sample: '850,00 €' },
   { key: 'mois', label: 'Mois concerné', sample: 'Novembre 2026' },
   { key: 'echeance', label: 'Date d’échéance', sample: '01/12/2026' },
@@ -28,16 +39,20 @@ export const TEMPLATE_FIELDS = [
 ] as const;
 export const TEMPLATE_FIELD_KEYS: readonly string[] = TEMPLATE_FIELDS.map((field) => field.key);
 
+const TEMPLATE_TOKEN = /\{([a-z_]+(?:\.[a-z_]+)?)\}/g;
+
 export function renderTemplate(body: string, values: Readonly<Record<string, string>>): string {
-  return body.replace(/\{([a-z_]+)\}/g, (match, key: string) => values[key] ?? match);
+  return body.replace(TEMPLATE_TOKEN, (match, key: string) => values[key] ?? match);
 }
 
 export const templateSchema = z.object({
   id: slug,
   name: z.string().min(1),
   category: templateCategorySchema,
+  description: z.string(),
   subject: z.string(),
   body: z.string(),
+  suggestRegistered: z.boolean(),
   builtIn: z.boolean(),
   archived: z.boolean(),
   updatedOn: isoDate,
@@ -48,11 +63,13 @@ export const templateInputSchema = z
   .object({
     name: required('Donnez un nom au modèle'),
     category: templateCategorySchema,
+    description: text,
     subject: required('Renseignez l’objet du courrier'),
     body: text.min(20, 'Le contenu est trop court, 20 caractères au minimum'),
+    suggestRegistered: z.boolean(),
   })
   .superRefine((value, context) => {
-    const unknown = [...value.body.matchAll(/\{([a-z_]+)\}/g)].map((match) => match[1] ?? '').filter((key) => !TEMPLATE_FIELD_KEYS.includes(key));
+    const unknown = [...value.body.matchAll(TEMPLATE_TOKEN)].map((match) => match[1] ?? '').filter((key) => !TEMPLATE_FIELD_KEYS.includes(key));
     if (unknown.length > 0) {
       context.addIssue({ code: 'custom', path: ['body'], message: `Champ inconnu : {${unknown[0] ?? ''}}. Utilisez la liste des champs.` });
     }
@@ -92,10 +109,10 @@ export const courrierInputSchema = z.object({
 });
 export type CourrierInput = z.infer<typeof courrierInputSchema>;
 
-export const SIGNATURE_STATUSES = ['en_cours', 'signe', 'annule'] as const;
+export const SIGNATURE_STATUSES = ['en_cours', 'signe', 'refuse', 'annule'] as const;
 export const signatureStatusSchema = z.enum(SIGNATURE_STATUSES);
 export type SignatureStatus = z.infer<typeof signatureStatusSchema>;
-export const signerSchema = z.object({ name: z.string().min(1), email: z.string().min(1), status: z.enum(['attente', 'signe']) });
+export const signerSchema = z.object({ name: z.string().min(1), email: z.string().min(1), status: z.enum(['attente', 'signe', 'refuse']) });
 export const SIGNATURE_PAGES = 3;
 export const signatureFieldSchema = z.object({
   signer: z.number().int().min(0),
@@ -114,6 +131,7 @@ export const signatureSchema = z.object({
   reference: z.string().min(1),
   title: z.string().min(1),
   fileName: z.string().min(1),
+  unitId: slug.nullable(),
   signers: z.array(signerSchema).min(1),
   status: signatureStatusSchema,
   createdOn: isoDate,
@@ -127,6 +145,7 @@ export const signatureInputSchema = z
   .object({
     title: required('Donnez un titre au document'),
     fileName: required('Joignez le PDF à signer'),
+    unitId: z.string().optional(),
     signers: z.array(z.object({ name: z.string(), email: z.string() })),
     fields: z.array(signatureFieldSchema).optional(),
   })
@@ -152,6 +171,7 @@ export const receiptSchema = z.object({
   month: yearMonth,
   rent: minor,
   charges: minor,
+  outstanding: minor,
   issuedOn: isoDate.nullable(),
   sentOn: isoDate.nullable(),
 });

@@ -27,36 +27,66 @@ const noticesOf = async (source: { notices: () => Promise<unknown> }) => (await 
 const signaturesOf = async (source: { signatures: () => Promise<unknown> }) => (await source.signatures()) as Signature[];
 
 describe('QuittancesPage', () => {
-  it('liste les quittances émises, paginées, et celles à émettre', async () => {
+  it('liste toutes les quittances, paginées, avec les compteurs d’onglets et l’état de chacune', async () => {
     const { container } = renderLot(<QuittancesPage />);
     const table = await screen.findByRole('table', { name: 'Quittances' });
     expect(dataRows(table)).toHaveLength(10);
-    expect(screen.getByRole('tab', { name: /Émises/ }).textContent).toContain('36');
+    expect(screen.getByRole('tab', { name: /Toutes/ }).textContent).toContain('45');
+    expect(screen.getByRole('tab', { name: /À solder/ }).textContent).toContain('3');
     expect(screen.getByRole('tab', { name: /À émettre/ }).textContent).toContain('6');
+    expect(screen.getByRole('tab', { name: /Envoyées/ }).textContent).toContain('36');
+    expect(within(table).getAllByText('Envoyée').length).toBeGreaterThan(0);
     await expectNoA11yViolations(container);
   });
 
-  it('filtre par mois', async () => {
+  it('montre les échéances à solder avec le reste dû et un lien vers l’échéancier', async () => {
+    renderLot(<QuittancesPage />);
+    await userEvent.click(await screen.findByRole('tab', { name: /À solder/ }));
+    const rows = dataRows(screen.getByRole('table', { name: 'Quittances' }));
+    expect(rows).toHaveLength(3);
+    const first = at(rows, 0);
+    expect(norm(first.textContent)).toContain('Brouillon');
+    expect(norm(first.textContent)).toContain('Reste dû 850 €');
+    expect(within(first).getByRole('link', { name: 'Échéancier' }).getAttribute('href')).toBe('/baux/apt-a1/echeancier');
+  });
+
+  it('filtre par période et par bien', async () => {
     renderLot(<QuittancesPage />);
     await screen.findByRole('table', { name: 'Quittances' });
-    await userEvent.click(screen.getByRole('combobox', { name: /^Mois/ }));
+    await userEvent.click(screen.getByRole('combobox', { name: /^Période/ }));
     await userEvent.click(await screen.findByRole('option', { name: 'Octobre 2026' }));
     expect(dataRows(screen.getByRole('table', { name: 'Quittances' }))).toHaveLength(9);
+    await userEvent.click(screen.getByRole('combobox', { name: /^Bien/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Apt A1, Les Tilleuls' }));
+    const rows = dataRows(screen.getByRole('table', { name: 'Quittances' }));
+    expect(rows).toHaveLength(1);
+    expect(norm(at(rows, 0).textContent)).toContain('Koffi Adjovi');
+  });
+
+  it('propose de voir le paiement et interdit le PDF d’un brouillon', async () => {
+    const { push } = renderLot(<QuittancesPage />);
+    await userEvent.click(await screen.findByRole('tab', { name: /À solder/ }));
+    await userEvent.click(at(screen.getAllByRole('button', { name: /^Plus d’actions, brouillon/ }), 0));
+    expect((await screen.findByRole('menuitem', { name: 'Télécharger le PDF' })).getAttribute('aria-disabled')).toBe('true');
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Voir le paiement' }));
+    expect(push).toHaveBeenCalledWith('/finances?locataire=koffi-adjovi');
   });
 
   it('affiche le panneau de détail d’une quittance et envoie la quittance', async () => {
     const { sources } = renderLot(<QuittancesPage />);
     await screen.findByRole('table', { name: 'Quittances' });
-    await userEvent.click(at(screen.getAllByRole('button', { name: 'Détail' }), 0));
+    await userEvent.click(at(screen.getAllByRole('button', { name: /^Plus d’actions, QT-/ }), 0));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Voir le détail' }));
     const panel = await screen.findByRole('region', { name: 'Détail de la quittance' });
-    expect(within(panel).getByRole('link', { name: /Aperçu et PDF/ })).toBeTruthy();
+    expect(within(panel).getByText('Scellée')).toBeTruthy();
+    expect(within(panel).getByRole('link', { name: /Ouvrir le PDF/ })).toBeTruthy();
     await userEvent.click(within(panel).getByRole('button', { name: 'Envoyer par e-mail' }));
     await waitFor(async () => {
       expect((await receiptsOf(sources.courriers)).filter((item) => item.sentOn === '2026-11-13').length).toBe(1);
     });
   });
 
-  it('émet les quittances soldées de novembre avec des numéros continus', async () => {
+  it('émet les quittances soldées de novembre avec des numéros continus, sans toucher aux échéances à solder', async () => {
     const { sources } = renderLot(<QuittancesPage />);
     await userEvent.click(await screen.findByRole('tab', { name: /À émettre/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Émettre les quittances soldées' }));
@@ -65,8 +95,8 @@ describe('QuittancesPage', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: 'Émettre les quittances' }));
     await waitFor(async () => {
       const receipts = await receiptsOf(sources.courriers);
-      expect(receipts.filter((item) => item.number === null)).toHaveLength(0);
-      const numbers = receipts.filter((item) => item.month === '2026-11').map((item) => item.number).sort();
+      expect(receipts.filter((item) => item.number === null).map((item) => item.outstanding)).toEqual([850, 210, 60].map((euros) => euros * 100));
+      const numbers = receipts.filter((item) => item.month === '2026-11' && item.number !== null).map((item) => item.number).sort();
       expect(numbers).toEqual(['QT-2026-0413', 'QT-2026-0414', 'QT-2026-0415', 'QT-2026-0416', 'QT-2026-0417', 'QT-2026-0418']);
     });
   });
@@ -143,17 +173,64 @@ describe('AttestationApercuPage', () => {
 });
 
 describe('SignaturesPage', () => {
-  it('liste les demandes en attente et affiche les signataires', async () => {
+  it('liste toutes les demandes avec leurs signataires, leur état et les compteurs d’onglets', async () => {
     const { container } = renderLot(<SignaturesPage />);
     const table = await screen.findByRole('table', { name: 'Demandes de signature' });
-    expect(dataRows(table)).toHaveLength(1);
-    expect(norm(table.textContent)).toContain('1 sur 2 ont signé');
+    expect(dataRows(table)).toHaveLength(4);
+    expect(screen.getByRole('tab', { name: /Toutes/ }).textContent).toContain('4');
+    expect(screen.getByRole('tab', { name: /En attente/ }).textContent).toContain('1');
+    expect(screen.getByRole('tab', { name: /Signées/ }).textContent).toContain('1');
+    expect(screen.getByRole('tab', { name: /Refusées/ }).textContent).toContain('1');
+    expect(screen.getByRole('tab', { name: /Annulées/ }).textContent).toContain('1');
+    expect(norm(table.textContent)).toContain('Yann Le Gall, SCI Les Tilleuls');
+    expect(norm(table.textContent)).toContain('En attente, 1/2');
+    await expectNoA11yViolations(container);
+  });
+
+  it('affiche les demandes refusées et le signataire qui a refusé', async () => {
+    renderLot(<SignaturesPage />);
+    await userEvent.click(await screen.findByRole('tab', { name: /Refusées/ }));
+    const rows = dataRows(screen.getByRole('table', { name: 'Demandes de signature' }));
+    expect(rows).toHaveLength(1);
+    expect(norm(at(rows, 0).textContent)).toContain('Avenant Apt A1');
+    expect(norm(at(rows, 0).textContent)).toContain('Refusé');
+    await userEvent.click(within(at(rows, 0)).getByRole('button', { name: 'Ouvrir, SG-2026-0009' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(norm(dialog.textContent)).toContain('A refusé');
+  });
+
+  it('filtre par bien et par période', async () => {
+    renderLot(<SignaturesPage />);
+    await screen.findByRole('table', { name: 'Demandes de signature' });
+    await userEvent.click(screen.getByRole('combobox', { name: /^Bien/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Studio B3, Les Tilleuls' }));
+    expect(dataRows(screen.getByRole('table', { name: 'Demandes de signature' }))).toHaveLength(1);
+    await userEvent.click(screen.getByRole('combobox', { name: /^Bien/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Bien : Tous' }));
+    await userEvent.click(screen.getByRole('combobox', { name: /^Période/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Période : 2025' }));
+    const rows = dataRows(screen.getByRole('table', { name: 'Demandes de signature' }));
+    expect(rows).toHaveLength(1);
+    expect(norm(at(rows, 0).textContent)).toContain('Bail Apt B1');
+  });
+
+  it('relance les signataires depuis le bouton de la ligne', async () => {
+    const { sources } = renderLot(<SignaturesPage />);
+    await screen.findByRole('table', { name: 'Demandes de signature' });
+    await userEvent.click(screen.getByRole('button', { name: 'Relancer, SG-2026-0012' }));
+    await waitFor(async () => {
+      expect((await signaturesOf(sources.courriers)).find((item) => item.id === 'sg-2026-0012')?.reminderSentOn).toBe('2026-11-13');
+    });
+  });
+
+  it('affiche les signataires dans le détail', async () => {
+    renderLot(<SignaturesPage />);
+    await screen.findByRole('table', { name: 'Demandes de signature' });
     await userEvent.click(screen.getByRole('button', { name: 'Plus d’actions, SG-2026-0012' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Voir les signataires' }));
     const dialog = await screen.findByRole('dialog');
     expect(norm(dialog.textContent)).toContain('Yann Le Gall');
     expect(norm(dialog.textContent)).toContain('A signé');
-    await expectNoA11yViolations(container);
   });
 
   it('annule une demande après confirmation', async () => {
@@ -176,17 +253,26 @@ describe('SignatureNewPage', () => {
     expect(screen.getByText('Joignez le PDF à signer', { selector: '[role="alert"]' })).toBeTruthy();
   });
 
+  it('annonce l’étape et rappelle la valeur de la signature', async () => {
+    renderLot(<SignatureNewPage />);
+    expect(await screen.findByText('Étape 1 sur 3 : le document à faire signer.')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Valeur de la signature' })).toBeTruthy();
+    expect(screen.getByText(/empreinte du fichier/)).toBeTruthy();
+  });
+
   it('refuse un fichier qui n’est pas un PDF', async () => {
     renderLot(<SignatureNewPage />);
-    const input = await screen.findByLabelText('Joindre le PDF à signer');
+    const input = await screen.findByLabelText('Importer le PDF à signer');
     await userEvent.upload(input, new File(['x'], 'photo.png', { type: 'image/png' }), { applyAccept: false });
     expect(await screen.findByText('Ce type de fichier n’est pas accepté.')).toBeTruthy();
   });
 
-  it('crée la demande en trois étapes', async () => {
+  it('crée la demande en trois étapes, rattachée à un bien', async () => {
     const { sources, push } = renderLot(<SignatureNewPage />);
     await userEvent.type(await screen.findByLabelText('Titre du document *'), 'Avenant Apt A2');
-    await userEvent.upload(screen.getByLabelText('Joindre le PDF à signer'), new File(['%PDF'], 'avenant.pdf', { type: 'application/pdf' }));
+    await userEvent.upload(screen.getByLabelText('Importer le PDF à signer'), new File(['%PDF'], 'avenant.pdf', { type: 'application/pdf' }));
+    await userEvent.click(screen.getByRole('combobox', { name: /^Bien/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Apt A2, Les Tilleuls' }));
     await userEvent.click(screen.getByRole('button', { name: 'Suivant' }));
     await userEvent.click(screen.getByRole('button', { name: 'Suivant' }));
     expect(await screen.findByText('Chaque signataire a besoin d’un nom et d’un e-mail valide')).toBeTruthy();
@@ -199,6 +285,7 @@ describe('SignatureNewPage', () => {
     expect((await signaturesOf(sources.courriers)).find((item) => item.id === 'sg-2026-0013')).toMatchObject({
       title: 'Avenant Apt A2',
       fileName: 'avenant.pdf',
+      unitId: 'apt-a2',
       status: 'en_cours',
       signers: [{ name: 'Nadège Sossou', email: 'nadege.sossou@example.com', status: 'attente' }],
     });

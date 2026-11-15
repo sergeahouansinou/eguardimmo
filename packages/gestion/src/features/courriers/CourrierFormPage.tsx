@@ -3,7 +3,7 @@
 import { Button, Card, CardTitle, RadioGroup, Select, Textarea, TextField } from '@eguardimmo/ui';
 import type { z } from 'zod';
 import { useLeases } from '../baux/hooks';
-import { useCourriers, useCreateCourrier, useTemplates, useUpdateCourrier } from './hooks';
+import { useCourriers, useCreateCourrier, useMarkCourrierSent, useTemplates, useUpdateCourrier } from './hooks';
 import { activeLeaseOf, templateValues } from './fields';
 import { courriersPaths } from './paths';
 import { CHANNELS, channelLabel, courrierInputSchema, renderTemplate } from './schemas';
@@ -12,7 +12,7 @@ import { useTenants, useUnits } from '../locataires/hooks';
 import { LinkButton, ListLoading, LoadError, NotFoundPanel, PageHeader, errorMessage, noticeAfterNavigation, useGestionNavigation, useNotify } from '../locataires/kit';
 import { links } from '../locataires/kit/links';
 import { useZodForm } from '../locataires/kit/useZodForm';
-import { tenantNameOf } from '../locataires/schemas';
+import { tenantNameOf, unitFullLabel } from '../locataires/schemas';
 import type { Tenant, Unit } from '../locataires/schemas';
 import type { Lease } from '../baux/schemas';
 
@@ -94,14 +94,17 @@ function CourrierForm({
   const notify = useNotify();
   const create = useCreateCourrier();
   const update = useUpdateCourrier(courrier?.id ?? '');
+  const send = useMarkCourrierSent();
   const editing = courrier !== undefined;
-  const pending = create.isPending || update.isPending;
+  const pending = create.isPending || update.isPending || send.isPending;
 
-  const compose = (templateId: string, tenantId: string, unitHint: string): Pick<Values, 'subject' | 'body' | 'unitId'> => {
+  const compose = (templateId: string, tenantId: string, unitHint: string, chosenUnit?: string): Pick<Values, 'subject' | 'body' | 'unitId'> => {
     const template = templates.find((entry) => entry.id === templateId);
     const tenant = tenants.find((entry) => entry.id === tenantId);
-    const lease = activeLeaseOf(leases, tenantId);
-    const unitId = lease?.unitId ?? tenant?.unitId ?? unitHint;
+    const lease = chosenUnit
+      ? leases.find((entry) => entry.tenantIds.includes(tenantId) && entry.unitId === chosenUnit && (entry.status === 'en_cours' || entry.status === 'preavis'))
+      : activeLeaseOf(leases, tenantId);
+    const unitId = chosenUnit ?? lease?.unitId ?? tenant?.unitId ?? unitHint;
     const unit = units.find((entry) => entry.id === unitId);
     if (!template) return { subject: '', body: '', unitId };
     const values = templateValues({ tenant, unit, lease });
@@ -114,22 +117,32 @@ function CourrierForm({
     courrierInputSchema,
     courrier
       ? { templateId: courrier.templateId ?? '', tenantId: courrier.tenantId, unitId: courrier.unitId ?? '', channel: courrier.channel, subject: courrier.subject, body: courrier.body }
-      : { templateId: startTemplate, tenantId: startTenant, channel: 'email', ...compose(startTemplate, startTenant, presetUnit) },
+      : { templateId: startTemplate, tenantId: startTenant, channel: templates.find((entry) => entry.id === startTemplate)?.suggestRegistered ? 'lrar' : 'email', ...compose(startTemplate, startTenant, presetUnit) },
   );
 
-  const recompose = (templateId: string, tenantId: string) => {
-    const next = compose(templateId, tenantId, '');
+  const recompose = (templateId: string, tenantId: string, chosenUnit?: string) => {
+    const next = compose(templateId, tenantId, '', chosenUnit);
     form.setValue('subject', next.subject);
     form.setValue('body', next.body);
     form.setValue('unitId', next.unitId);
   };
 
-  const save = async (status: 'brouillon' | 'genere') => {
+  const save = async (status: 'brouillon' | 'genere' | 'envoye') => {
     const values = form.submit();
     if (!values) return;
     try {
-      const saved = courrier ? await update.mutateAsync(values) : await create.mutateAsync({ input: values, status });
-      noticeAfterNavigation({ title: courrier ? 'Courrier modifié' : status === 'brouillon' ? 'Brouillon enregistré' : 'Courrier généré', description: saved.reference });
+      const saved = courrier ? await update.mutateAsync(values) : await create.mutateAsync({ input: values, status: status === 'brouillon' ? 'brouillon' : 'genere' });
+      if (status === 'envoye') {
+        try {
+          await send.mutateAsync(saved.id);
+        } catch (error) {
+          notify({ tone: 'danger', title: 'Courrier enregistré, envoi impossible', description: errorMessage(error) });
+          push(courriersPaths.courrier(saved.id));
+          return;
+        }
+      }
+      const done = status === 'envoye' ? 'Courrier envoyé' : courrier ? 'Courrier modifié' : status === 'brouillon' ? 'Brouillon enregistré' : 'Courrier généré';
+      noticeAfterNavigation({ title: done, description: saved.reference });
       push(courriersPaths.courrier(saved.id));
     } catch (error) {
       notify({ tone: 'danger', title: 'Enregistrement impossible', description: errorMessage(error) });
@@ -153,7 +166,11 @@ function CourrierForm({
               label="Modèle"
               placeholder="Choisir un modèle (facultatif)"
               value={form.values.templateId}
-              onValueChange={(value) => { form.setValue('templateId', value); recompose(value, form.values.tenantId); }}
+              onValueChange={(value) => {
+                form.setValue('templateId', value);
+                form.setValue('channel', templates.find((entry) => entry.id === value)?.suggestRegistered ? 'lrar' : form.values.channel);
+                recompose(value, form.values.tenantId);
+              }}
               options={templates.map((template) => ({ value: template.id, label: template.name }))}
             />
             <Select
@@ -165,8 +182,16 @@ function CourrierForm({
               onValueChange={(value) => { form.setValue('tenantId', value); form.touch('tenantId'); recompose(form.values.templateId, value); }}
               options={tenants.map((entry) => ({ value: entry.id, label: tenantNameOf(entry) }))}
             />
+            <Select
+              label="Bien"
+              placeholder="Choisir un bien"
+              searchable
+              value={form.values.unitId}
+              onValueChange={(value) => { form.setValue('unitId', value); if (form.values.templateId !== '') recompose(form.values.templateId, form.values.tenantId, value); }}
+              options={units.map((entry) => ({ value: entry.id, label: unitFullLabel(entry) }))}
+            />
             <RadioGroup
-              label="Canal d’envoi"
+              label="Mode d’envoi"
               value={form.values.channel}
               onValueChange={(value) => { form.setValue('channel', asChannel(value)); }}
               options={CHANNELS.map((entry) => ({ value: entry, label: channelLabel[entry] }))}
@@ -205,7 +230,8 @@ function CourrierForm({
       <div className="flex flex-wrap justify-end gap-2">
         <Button variant="ghost" onClick={() => { push(courriersPaths.courriers); }}>Annuler</Button>
         {editing ? null : <Button variant="secondary" loading={pending} onClick={() => { void save('brouillon'); }}>Enregistrer en brouillon</Button>}
-        <Button type="submit" loading={pending}>{editing ? 'Enregistrer les modifications' : 'Générer le courrier'}</Button>
+        <Button type="submit" variant={editing ? 'primary' : 'secondary'} loading={pending}>{editing ? 'Enregistrer les modifications' : 'Générer le courrier'}</Button>
+        <Button loading={pending} onClick={() => { void save('envoye'); }}>Envoyer le courrier</Button>
       </div>
     </form>
   );

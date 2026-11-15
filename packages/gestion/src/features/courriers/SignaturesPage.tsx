@@ -11,6 +11,7 @@ import {
   DialogContent,
   EmptyState,
   Pagination,
+  Select,
   Tab,
   TabList,
   TabPanel,
@@ -24,6 +25,7 @@ import {
 } from '@eguardimmo/ui';
 import type { BadgeTone } from '@eguardimmo/ui';
 import { useState } from 'react';
+import { useLeaseLookups } from '../baux/BauxParts';
 import { useCancelSignature, useRemindSignature, useSignatures } from './hooks';
 import { courriersPaths } from './paths';
 import type { Signature, SignatureStatus } from './schemas';
@@ -37,15 +39,25 @@ import type { ListTab } from '../locataires/kit/useListView';
 const statusBadge: Record<SignatureStatus, { label: string; tone: BadgeTone }> = {
   en_cours: { label: 'En attente', tone: 'warning' },
   signe: { label: 'Signé', tone: 'success' },
+  refuse: { label: 'Refusé', tone: 'danger' },
   annule: { label: 'Annulé', tone: 'neutral' },
 };
 
+const ALL = 'tous';
+
 const tabs: ListTab<Signature>[] = [
+  { id: 'tous', label: 'Toutes', match: () => true },
   { id: 'en_cours', label: 'En attente', match: (item) => item.status === 'en_cours' },
-  { id: 'signes', label: 'Signés', match: (item) => item.status === 'signe' },
-  { id: 'annules', label: 'Annulés', match: (item) => item.status === 'annule' },
-  { id: 'tous', label: 'Tous', match: () => true },
+  { id: 'signes', label: 'Signées', match: (item) => item.status === 'signe' },
+  { id: 'refuses', label: 'Refusées', match: (item) => item.status === 'refuse' },
+  { id: 'annules', label: 'Annulées', match: (item) => item.status === 'annule' },
 ];
+
+const signedCount = (item: Signature) => item.signers.filter((signer) => signer.status === 'signe').length;
+
+function stateLabel(item: Signature): string {
+  return item.status === 'en_cours' ? `En attente, ${String(signedCount(item))}/${String(item.signers.length)}` : statusBadge[item.status].label;
+}
 
 export function SignaturesPage() {
   const signatures = useSignatures();
@@ -54,9 +66,19 @@ export function SignaturesPage() {
   const notify = useNotify();
   const [detail, setDetail] = useState<Signature | null>(null);
   const [pendingCancel, setPendingCancel] = useState<Signature | null>(null);
+  const [unitId, setUnitId] = useState(ALL);
+  const [year, setYear] = useState(ALL);
+  const lookups = useLeaseLookups();
 
   const items = signatures.data ?? [];
-  const view = useListView({ items, tabs, searchText: (item) => `${item.title} ${item.reference} ${item.signers.map((signer) => signer.name).join(' ')}` });
+  const unitIds = [...new Set(items.flatMap((item) => (item.unitId ? [item.unitId] : [])))].sort((a, b) => lookups.unitLabel(a).localeCompare(lookups.unitLabel(b), 'fr'));
+  const years = [...new Set(items.map((item) => item.createdOn.slice(0, 4)))].sort().reverse();
+  const view = useListView({
+    items,
+    tabs,
+    searchText: (item) => `${item.title} ${item.reference} ${item.signers.map((signer) => signer.name).join(' ')}`,
+    predicate: (item) => (unitId === ALL || item.unitId === unitId) && (year === ALL || item.createdOn.startsWith(year)),
+  });
 
   const confirmCancel = async () => {
     const target = pendingCancel;
@@ -80,7 +102,7 @@ export function SignaturesPage() {
   };
 
   const download = (target: Signature, kind: 'documents' | 'certificat') => {
-    const text = kind === 'documents' ? `Document : ${target.title}\nFichier : ${target.fileName}\n` : `Certificat de signature ${target.reference}\n${target.signers.map((signer) => `${signer.name} <${signer.email}> : ${signer.status === 'signe' ? 'a signé' : 'en attente'}`).join('\n')}\n`;
+    const text = kind === 'documents' ? `Document : ${target.title}\nFichier : ${target.fileName}\n` : `Certificat de signature ${target.reference}\n${target.signers.map((signer) => `${signer.name} <${signer.email}> : ${signer.status === 'signe' ? 'a signé' : signer.status === 'refuse' ? 'a refusé' : 'en attente'}`).join('\n')}\n`;
     const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url;
@@ -102,34 +124,54 @@ export function SignaturesPage() {
     <>
       <PageHeader
         crumbs={[{ label: 'Accueil', href: links.home }, { label: 'Documents', href: courriersPaths.documents }, { label: 'Signatures' }]}
-        title="Signatures"
-        subtitle={signatures.data ? `${String(view.counts.en_cours ?? 0)} demandes en attente de signature.` : ' '}
-        actions={<LinkButton href={courriersPaths.newSignature} variant="primary" icon={PenLine}>Nouvelle demande</LinkButton>}
+        title="Signatures électroniques"
+        subtitle="Un document, ses signataires et l’état de chaque signature."
+        actions={<LinkButton href={courriersPaths.newSignature} variant="primary" icon={PenLine}>Nouvelle signature</LinkButton>}
       />
       {signatures.isError ? <LoadError title="Les signatures n’ont pas pu être chargées" /> : null}
       <Card role="region" aria-label="Liste des signatures" className="gap-3">
-        <Tabs value={view.tab} onValueChange={view.setTab} defaultValue="en_cours">
+        <Tabs value={view.tab} onValueChange={view.setTab} defaultValue="tous">
           <TabList aria-label="Filtrer les signatures">
             {tabs.map((tab) => (
               <Tab key={tab.id} value={tab.id} count={view.counts[tab.id] ?? 0}>{tab.label}</Tab>
             ))}
           </TabList>
           <TabPanel value={view.tab} className="flex flex-col gap-3 pt-1">
-            <SearchInput label="Rechercher une demande" placeholder="Titre, référence, signataire" value={view.query} onValueChange={view.setQuery} />
+            <div className="flex flex-wrap items-center gap-2">
+              <SearchInput label="Rechercher une demande" placeholder="Document, signataire" value={view.query} onValueChange={view.setQuery} />
+              <Select
+                label="Bien"
+                hideLabel
+                placeholder="Bien : Tous"
+                value={unitId}
+                onValueChange={(value) => { setUnitId(value); view.resetPage(); }}
+                options={[{ value: ALL, label: 'Bien : Tous' }, ...unitIds.map((entry) => ({ value: entry, label: lookups.unitLabel(entry) }))]}
+                className="w-56"
+              />
+              <Select
+                label="Période"
+                hideLabel
+                placeholder="Période : Toutes"
+                value={year}
+                onValueChange={(value) => { setYear(value); view.resetPage(); }}
+                options={[{ value: ALL, label: 'Période : Toutes' }, ...years.map((entry) => ({ value: entry, label: `Période : ${entry}` }))]}
+                className="w-48"
+              />
+            </div>
             {signatures.isPending ? <ListLoading label="Chargement des signatures" /> : null}
             {signatures.data && view.rows.length === 0 ? (
-              <EmptyState icon={PenLine} title="Aucune demande" description={view.query === '' ? 'Rien à afficher dans cette rubrique pour le moment.' : 'Aucune demande ne correspond à cette recherche.'}>
-                <LinkButton href={courriersPaths.newSignature} variant="primary">Nouvelle demande</LinkButton>
+              <EmptyState icon={PenLine} title="Aucune demande" description={view.query === '' && unitId === ALL && year === ALL ? 'Rien à afficher dans cette rubrique pour le moment.' : 'Aucune demande ne correspond à cette recherche.'}>
+                <LinkButton href={courriersPaths.newSignature} variant="primary">Nouvelle signature</LinkButton>
               </EmptyState>
             ) : null}
             {view.rows.length > 0 ? (
               <Table aria-label="Demandes de signature">
                 <TableHead>
                   <TableRow>
-                    <TableHeaderCell>Document</TableHeaderCell>
+                    <TableHeaderCell>Description</TableHeaderCell>
                     <TableHeaderCell>Signataires</TableHeaderCell>
-                    <TableHeaderCell>Envoyé le</TableHeaderCell>
-                    <TableHeaderCell>Statut</TableHeaderCell>
+                    <TableHeaderCell>Date</TableHeaderCell>
+                    <TableHeaderCell>État</TableHeaderCell>
                     <TableHeaderCell><span className="sr-only">Actions</span></TableHeaderCell>
                   </TableRow>
                 </TableHead>
@@ -141,10 +183,19 @@ export function SignaturesPage() {
                         <span className="block text-caption font-normal text-fg-subtle">{`${item.reference}, ${item.fileName}`}</span>
                         {item.reminderSentOn ? <span className="block text-caption font-normal text-fg-subtle">{`Relancé le ${formatDateFr(item.reminderSentOn)}`}</span> : null}
                       </TableCell>
-                      <TableCell>{`${String(item.signers.filter((signer) => signer.status === 'signe').length)} sur ${String(item.signers.length)} ont signé`}</TableCell>
+                      <TableCell>{item.signers.map((signer) => signer.name).join(', ')}</TableCell>
                       <TableCell>{formatDateFr(item.createdOn)}</TableCell>
-                      <TableCell><Badge tone={statusBadge[item.status].tone}>{statusBadge[item.status].label}</Badge></TableCell>
-                      <TableCell><ActionMenu label={`Plus d’actions, ${item.reference}`} items={actionsFor(item)} /></TableCell>
+                      <TableCell><Badge tone={statusBadge[item.status].tone}>{stateLabel(item)}</Badge></TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {item.status === 'en_cours' ? (
+                            <Button variant="secondary" size="sm" aria-label={`Relancer, ${item.reference}`} onClick={() => { void remindSigners(item); }}>Relancer</Button>
+                          ) : (
+                            <Button variant="secondary" size="sm" aria-label={`Ouvrir, ${item.reference}`} onClick={() => { setDetail(item); }}>Ouvrir</Button>
+                          )}
+                          <ActionMenu label={`Plus d’actions, ${item.reference}`} items={actionsFor(item)} />
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -165,7 +216,7 @@ export function SignaturesPage() {
                   icon={PenLine}
                   title={signer.name}
                   detail={signer.email}
-                  badge={signer.status === 'signe' ? { label: 'A signé', tone: 'success' } : { label: 'En attente', tone: 'warning' }}
+                  badge={signer.status === 'signe' ? { label: 'A signé', tone: 'success' } : signer.status === 'refuse' ? { label: 'A refusé', tone: 'danger' } : { label: 'En attente', tone: 'warning' }}
                 />
               ))}
             </ul>

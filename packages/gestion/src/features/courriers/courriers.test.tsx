@@ -28,11 +28,30 @@ describe('CourriersPage', () => {
   it('liste les courriers avec les compteurs d’onglets', async () => {
     const { container } = renderLot(<CourriersPage />);
     const table = await screen.findByRole('table', { name: 'Courriers' });
-    expect(dataRows(table)).toHaveLength(4);
+    expect(dataRows(table)).toHaveLength(5);
     expect(screen.getByRole('tab', { name: /Brouillons/ }).textContent).toContain('1');
     expect(screen.getByRole('tab', { name: /À envoyer/ }).textContent).toContain('1');
-    expect(screen.getByRole('tab', { name: /Envoyés/ }).textContent).toContain('2');
+    expect(screen.getByRole('tab', { name: /Envoyés/ }).textContent).toContain('3');
     await expectNoA11yViolations(container);
+  });
+
+  it('restreint la liste aux 30 derniers jours et affiche un tiret pour un brouillon non envoyé', async () => {
+    renderLot(<CourriersPage />);
+    const table = await screen.findByRole('table', { name: 'Courriers' });
+    expect(norm(at(dataRows(table), 1).textContent)).toContain('CR-2026-0040');
+    expect(at(within(at(dataRows(table), 1)).getAllByRole('cell'), 3).textContent).toBe('—');
+    await userEvent.click(screen.getByRole('combobox', { name: /^Période/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Période : 30 derniers jours' }));
+    const rows = dataRows(screen.getByRole('table', { name: 'Courriers' }));
+    expect(rows).toHaveLength(4);
+    expect(norm(screen.getByRole('table', { name: 'Courriers' }).textContent)).not.toContain('CR-2026-0029');
+  });
+
+  it('ouvre le courrier depuis le bouton Ouvrir de la ligne', async () => {
+    const { push } = renderLot(<CourriersPage />);
+    await screen.findByRole('table', { name: 'Courriers' });
+    await userEvent.click(screen.getByRole('button', { name: 'Ouvrir, CR-2026-0041' }));
+    expect(push).toHaveBeenCalledWith('/documents/courriers/cr-2026-0041');
   });
 
   it('marque un courrier généré comme envoyé', async () => {
@@ -63,7 +82,7 @@ describe('CourriersPage', () => {
     renderLot(<CourriersPage />);
     await screen.findByRole('table', { name: 'Courriers' });
     await userEvent.type(screen.getByRole('searchbox', { name: 'Rechercher un courrier' }), 'nadège');
-    expect(dataRows(screen.getByRole('table', { name: 'Courriers' }))).toHaveLength(1);
+    expect(dataRows(screen.getByRole('table', { name: 'Courriers' }))).toHaveLength(2);
     await userEvent.type(screen.getByRole('searchbox', { name: 'Rechercher un courrier' }), 'zzz');
     expect(screen.getByText('Aucun courrier ne correspond à ces filtres.')).toBeTruthy();
   });
@@ -107,6 +126,39 @@ describe('CourrierFormPage', () => {
   });
 });
 
+describe('CourrierFormPage, bien, mode d’envoi et envoi direct', () => {
+  it('propose la lettre recommandée quand le modèle la suggère', async () => {
+    renderLot(<CourrierFormPage />, { search: 'modele=revision-du-loyer&locataire=nadege-sossou' });
+    await screen.findByDisplayValue('Révision annuelle du loyer');
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'Lettre recommandée' }).checked).toBe(true);
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'E-mail' }).checked).toBe(false);
+  });
+
+  it('recompose le message avec le bien choisi', async () => {
+    renderLot(<CourrierFormPage />, { search: 'modele=relance-de-loyer-impaye&locataire=koffi-adjovi' });
+    await screen.findByDisplayValue('Relance, loyer de Novembre 2026 impayé');
+    await userEvent.click(screen.getByRole('combobox', { name: /^Bien/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Apt A2, Les Tilleuls' }));
+    expect(norm(screen.getByLabelText<HTMLTextAreaElement>('Message *').value)).toContain('logement Apt A2, Les Tilleuls');
+  });
+
+  it('crée le courrier et l’envoie directement', async () => {
+    const { sources, push } = renderLot(<CourrierFormPage />, { search: 'modele=relance-de-loyer-impaye&locataire=koffi-adjovi' });
+    await screen.findByDisplayValue('Relance, loyer de Novembre 2026 impayé');
+    await userEvent.click(screen.getByRole('button', { name: 'Envoyer le courrier' }));
+    await waitFor(() => { expect(push).toHaveBeenCalledWith('/documents/courriers/cr-2026-0042'); });
+    expect((await courriersOf(sources.courriers)).find((item) => item.id === 'cr-2026-0042')).toMatchObject({ status: 'envoye', sentOn: '2026-11-13', channel: 'email', unitId: 'apt-a1' });
+  });
+
+  it('ne crée rien quand le formulaire est incomplet', async () => {
+    const { sources, push } = renderLot(<CourrierFormPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Envoyer le courrier' }));
+    expect(await screen.findByText('Choisissez le destinataire')).toBeTruthy();
+    expect(push).not.toHaveBeenCalled();
+    expect(await courriersOf(sources.courriers)).toHaveLength(5);
+  });
+});
+
 describe('CourrierApercuPage', () => {
   it('affiche le courrier sur le papier et déclenche l’impression', async () => {
     const print = vi.spyOn(window, 'print').mockImplementation(() => undefined);
@@ -146,14 +198,43 @@ describe('CourrierApercuPage', () => {
 });
 
 describe('ModelesPage', () => {
-  it('liste les modèles actifs avec leur origine', async () => {
+  it('liste les modèles actifs avec leur source, leur état et la mention sur les modèles par défaut', async () => {
     const { container } = renderLot(<ModelesPage />);
     const table = await screen.findByRole('table', { name: 'Modèles' });
-    expect(dataRows(table)).toHaveLength(6);
+    expect(dataRows(table)).toHaveLength(9);
     expect(norm(table.textContent)).toContain('Personnalisé');
-    await userEvent.click(screen.getByRole('tab', { name: /^Loyers/ }));
-    expect(dataRows(screen.getByRole('table', { name: 'Modèles' }))).toHaveLength(3);
+    expect(norm(table.textContent)).toContain('Par défaut');
+    expect(within(table).getAllByText('Actif').length).toBe(9);
+    expect(screen.getByText('Les modèles par défaut sont des bases à adapter. Ils ne remplacent pas l’avis d’un professionnel du droit.')).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /^Par défaut/ }).textContent).toContain('7');
+    expect(screen.getByRole('tab', { name: /^Personnalisés/ }).textContent).toContain('2');
     await expectNoA11yViolations(container);
+  });
+
+  it('filtre par source et par catégorie', async () => {
+    renderLot(<ModelesPage />);
+    await screen.findByRole('table', { name: 'Modèles' });
+    await userEvent.click(screen.getByRole('tab', { name: /^Personnalisés/ }));
+    expect(dataRows(screen.getByRole('table', { name: 'Modèles' }))).toHaveLength(2);
+    await userEvent.click(screen.getByRole('tab', { name: /^Tous/ }));
+    await userEvent.click(screen.getByRole('combobox', { name: /^Catégorie/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Loyers' }));
+    expect(dataRows(screen.getByRole('table', { name: 'Modèles' }))).toHaveLength(3);
+  });
+
+  it('propose Utiliser sur un modèle personnalisé', async () => {
+    const { push } = renderLot(<ModelesPage />);
+    await screen.findByRole('table', { name: 'Modèles' });
+    await userEvent.click(screen.getByRole('button', { name: 'Utiliser, Mise en demeure de payer' }));
+    expect(push).toHaveBeenCalledWith('/documents/courriers/nouveau?modele=mise-en-demeure-de-payer');
+  });
+
+  it('personnalise un modèle par défaut en créant une copie modifiable', async () => {
+    const { sources, push } = renderLot(<ModelesPage />);
+    await screen.findByRole('table', { name: 'Modèles' });
+    await userEvent.click(screen.getByRole('button', { name: 'Personnaliser, Congé pour vendre' }));
+    await waitFor(() => { expect(push).toHaveBeenCalledWith('/modeles/conge-pour-vendre-copie/modifier'); });
+    expect((await templatesOf(sources.courriers)).find((item) => item.id === 'conge-pour-vendre-copie')).toMatchObject({ builtIn: false, category: 'conges', suggestRegistered: true });
   });
 
   it('duplique puis supprime la copie, mais refuse de supprimer un modèle déjà utilisé', async () => {
@@ -226,6 +307,59 @@ describe('ModeleFormPage', () => {
     renderLot(<ModeleFormPage id="relance-de-loyer-impaye" />);
     expect(await screen.findByText(/Ce modèle fourni ne peut pas être modifié/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Enregistrer les modifications' })).toBeNull();
+  });
+});
+
+describe('ModeleFormPage, champs, options et utilisation', () => {
+  it('crée un modèle de recouvrement avec description, lettre recommandée et champ inséré depuis la liste', async () => {
+    const { sources, push } = renderLot(<ModeleFormPage />);
+    await userEvent.type(await screen.findByLabelText('Nom du modèle *'), 'Dernier rappel');
+    await userEvent.click(screen.getByRole('combobox', { name: /^Catégorie/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Recouvrement' }));
+    await userEvent.type(screen.getByLabelText('Description'), 'Après deux relances');
+    await userEvent.type(screen.getByLabelText('Objet *'), 'Dernier rappel, {{mois}');
+    await userEvent.type(screen.getByLabelText('Message *'), 'Bonjour, votre loyer de ');
+    await userEvent.click(screen.getByRole('button', { name: 'Insérer Loyer hors charges' }));
+    await waitFor(() => { expect(document.activeElement).toBe(screen.getByLabelText('Message *')); });
+    await userEvent.type(screen.getByLabelText('Message *'), ' reste impayé.');
+    await userEvent.click(screen.getByRole('switch', { name: 'Proposer l’envoi en lettre recommandée' }));
+    expect(await screen.findByText(/Dernier rappel, Novembre 2026/)).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'Créer le modèle' }));
+    await waitFor(() => { expect(push).toHaveBeenCalledWith('/modeles'); });
+    expect((await templatesOf(sources.courriers)).find((item) => item.id === 'dernier-rappel')).toMatchObject({
+      category: 'recouvrement',
+      description: 'Après deux relances',
+      suggestRegistered: true,
+      body: 'Bonjour, votre loyer de {bail.loyer} reste impayé.',
+    });
+  });
+
+  it('filtre les champs disponibles', async () => {
+    renderLot(<ModeleFormPage />);
+    await screen.findByRole('heading', { name: 'Champs disponibles' });
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Chercher un champ' }), 'charges');
+    expect(screen.getByRole('button', { name: 'Insérer Provision sur charges' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Insérer Nom du locataire' })).toBeNull();
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Chercher un champ' }), 'zzz');
+    expect(screen.getByText('Aucun champ ne correspond.')).toBeTruthy();
+  });
+
+  it('refuse un champ à point inconnu', async () => {
+    renderLot(<ModeleFormPage />);
+    await userEvent.type(await screen.findByLabelText('Nom du modèle *'), 'Rappel');
+    await userEvent.type(screen.getByLabelText('Objet *'), 'Rappel');
+    await userEvent.type(screen.getByLabelText('Message *'), 'Bonjour {{bail.inconnu}, merci de votre retour.');
+    await userEvent.click(screen.getByRole('button', { name: 'Créer le modèle' }));
+    expect(await screen.findByText(/Champ inconnu : \{bail\.inconnu\}/)).toBeTruthy();
+  });
+
+  it('affiche l’utilisation d’un modèle personnalisé déjà employé', async () => {
+    renderLot(<ModeleFormPage id="convocation-a-l-etat-des-lieux" />);
+    const usage = await screen.findByRole('group', { name: 'Utilisation' });
+    await waitFor(() => { expect(norm(usage.textContent)).toContain('Courriers créés2'); });
+    expect(norm(usage.textContent)).toContain('Courriers envoyés1');
+    expect(norm(usage.textContent)).toContain('Dernier envoi14/09/2026');
+    expect(screen.getByRole('link', { name: 'Ouvrir le PDF' }).getAttribute('href')).toBe('/modeles/convocation-a-l-etat-des-lieux');
   });
 });
 

@@ -29,7 +29,7 @@ async function choose(label: RegExp, option: string) {
 describe('SignatureNewPage, placement des signatures', () => {
   const reachPlacement = async () => {
     await userEvent.type(await screen.findByLabelText('Titre du document *'), 'Avenant Apt A2');
-    await userEvent.upload(screen.getByLabelText('Joindre le PDF à signer'), new File(['%PDF'], 'avenant.pdf', { type: 'application/pdf' }));
+    await userEvent.upload(screen.getByLabelText('Importer le PDF à signer'), new File(['%PDF'], 'avenant.pdf', { type: 'application/pdf' }));
     await userEvent.click(screen.getByRole('button', { name: 'Suivant' }));
     await userEvent.type(screen.getByLabelText('Nom du signataire 1'), 'Nadège Sossou');
     await userEvent.type(screen.getByLabelText('E-mail du signataire 1'), 'nadege.sossou@example.com');
@@ -92,7 +92,7 @@ describe('SignaturesPage, menu', () => {
 
   it('désactive la relance d’une demande signée et le certificat d’une demande en cours', async () => {
     renderLot(<SignaturesPage />);
-    await userEvent.click(await screen.findByRole('tab', { name: /Signés/ }));
+    await userEvent.click(await screen.findByRole('tab', { name: /Signées/ }));
     await userEvent.click(await screen.findByRole('button', { name: 'Plus d’actions, SG-2026-0011' }));
     expect((await screen.findByRole('menuitem', { name: 'Relancer les signataires' })).getAttribute('aria-disabled')).toBe('true');
     await userEvent.keyboard('{Escape}');
@@ -153,7 +153,7 @@ describe('CourrierFormPage, modification', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer les modifications' }));
     await waitFor(() => { expect(push).toHaveBeenCalledWith('/documents/courriers/cr-2026-0040'); });
     const all = await courriersOf(sources.courriers);
-    expect(all).toHaveLength(4);
+    expect(all).toHaveLength(5);
     expect(all.find((item) => item.id === 'cr-2026-0040')).toMatchObject({ subject: 'Deuxième relance', status: 'brouillon' });
   });
 

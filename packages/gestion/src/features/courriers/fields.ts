@@ -15,6 +15,8 @@ export function templateValues({ tenant, unit, lease }: { tenant: Tenant | undef
     adresse: tenant?.address && tenant.address !== '' ? tenant.address : `${BAILLEUR.address}, ${BAILLEUR.city}`,
     reference_bail: lease?.reference ?? '',
     loyer: lease ? money(lease.rent + lease.charges) : '',
+    'bail.loyer': lease ? money(lease.rent) : '',
+    'bail.charges': lease ? money(lease.charges) : '',
     montant_impaye: lease ? money(lease.balance < 0 ? -lease.balance : 0) : '',
     mois: monthLabel(today.slice(0, 7)),
     echeance: formatDateFr(next),
