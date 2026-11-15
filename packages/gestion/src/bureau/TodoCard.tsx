@@ -13,8 +13,8 @@ import type { LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Badge, Icon, Tab, TabList, TabPanel, Tabs, cx } from '@eguardimmo/ui';
 import type { LinkComponent } from '@eguardimmo/ui';
+import { toneBadge, toneTile } from '@eguardimmo/shell';
 import type { BureauTodo, TodoCategory, TodoKind } from '../data/schemas';
-import { toneBadge, toneTile } from '../lib/tone';
 import { accountRoutes } from '../navigation/routes';
 import { CardLink, EmptyLine, SectionCard } from './parts';
 

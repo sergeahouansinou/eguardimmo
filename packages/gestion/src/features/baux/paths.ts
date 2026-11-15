@@ -1,0 +1,13 @@
+export const bauxPaths = {
+  list: '/baux',
+  create: '/baux/nouveau',
+  detail: (id: string) => `/baux/${id}`,
+  edit: (id: string) => `/baux/${id}/modifier`,
+  schedule: (id: string) => `/baux/${id}/echeancier`,
+  exit: (id: string) => `/baux/${id}/sortie`,
+  edls: '/baux/etats-des-lieux',
+  newEdl: '/baux/etats-des-lieux/nouveau',
+  edl: (id: string) => `/baux/etats-des-lieux/${id}`,
+  editEdl: (id: string) => `/baux/etats-des-lieux/${id}/modifier`,
+  reservations: '/baux/reservations',
+};

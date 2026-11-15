@@ -1,6 +1,7 @@
+import { shellSchema } from '@eguardimmo/shell';
 import { describe, expect, it } from 'vitest';
 import { createDemoSource, demoBureau, demoShell } from './demo';
-import { bureauSchema, shellSchema } from './schemas';
+import { bureauSchema } from './schemas';
 
 describe('données de démonstration', () => {
   it('respectent les contrats', () => {

@@ -3,7 +3,8 @@
 import { CircleAlert, DoorOpen, HandCoins, Receipt, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { Alert, Badge, Button, Icon, ProgressBar, StatCard } from '@eguardimmo/ui';
 import type { LinkComponent } from '@eguardimmo/ui';
-import { useBureau, useShellData } from '../data/queries';
+import { useShellData } from '@eguardimmo/shell';
+import { useBureau } from '../data/queries';
 import type { BureauData } from '../data/schemas';
 import { formatDayMonth, formatLongDate, monthName } from '../format/dates';
 import { formatMoney, percent, variation } from '../format/money';

@@ -1,4 +1,5 @@
-import type { BureauData, ShellData } from './schemas';
+import type { ShellData } from '@eguardimmo/shell';
+import type { BureauData } from './schemas';
 import type { GestionSource } from './source';
 
 const euros = (value: number) => value * 100;

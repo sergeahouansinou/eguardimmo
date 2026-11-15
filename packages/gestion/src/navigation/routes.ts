@@ -8,6 +8,7 @@ import {
   Folder,
   House,
   ListChecks,
+  Megaphone,
   MessageSquare,
   Settings,
   Users,
@@ -15,15 +16,12 @@ import {
   Wallet,
   Wrench,
 } from 'lucide-react';
-import type { NavEntry, NavLink, NavSection } from '@eguardimmo/ui';
-import type { ShellData } from '../data/schemas';
+import type { NavLink } from '@eguardimmo/ui';
+import type { HelpMenuItem, ShellCounts, ShellNavigation } from '@eguardimmo/shell';
 
-export interface Navigation {
-  sections: NavSection[];
-  footer: NavEntry[];
-}
+export type Navigation = ShellNavigation;
 
-export function buildNavigation(counts?: ShellData['counts']): Navigation {
+export function buildNavigation(counts?: ShellCounts): Navigation {
   return {
     sections: [
       {
@@ -102,6 +100,7 @@ export function buildNavigation(counts?: ShellData['counts']): Navigation {
         label: 'Suivi',
         entries: [
           { id: 'messages', label: 'Messages', href: '/messages', icon: MessageSquare, count: counts?.unreadMessages },
+          { id: 'campagnes', label: 'Campagnes', href: '/campagnes', icon: Megaphone },
           { id: 'interventions', label: 'Interventions', href: '/interventions', icon: Wrench, count: counts?.openInterventions },
           { id: 'agenda', label: 'Agenda', href: '/agenda', icon: Calendar },
           { id: 'taches', label: 'Tâches et rappels', href: '/taches', icon: ListChecks },
@@ -164,16 +163,17 @@ export const addMenu: MenuGroupDef[] = [
       { id: 'nouvelle-intervention', label: 'Nouvelle intervention', href: '/interventions/nouvelle' },
       { id: 'nouvelle-tache', label: 'Nouvelle tâche', href: '/taches/nouvelle' },
       { id: 'nouveau-message', label: 'Nouveau message', href: '/messages/nouveau' },
+      { id: 'nouvelle-campagne', label: 'Nouvelle campagne', href: '/campagnes/nouvelle' },
       { id: 'nouveau-document', label: 'Nouveau document', href: '/documents/nouveau' },
     ],
   },
 ];
 
-export const helpMenu: NavLink[] = [
+export const helpMenu: HelpMenuItem[] = [
   { id: 'centre-aide', label: "Centre d'aide", href: '/aide' },
   { id: 'support', label: 'Discuter avec le support', href: '/aide/support' },
-  { id: 'raccourcis', label: 'Raccourcis clavier', href: '/aide/raccourcis' },
-  { id: 'nouveautes', label: 'Nouveautés', href: '/aide/nouveautes' },
+  { id: 'raccourcis', label: 'Raccourcis clavier', href: '/aide/raccourcis', shortcut: '?' },
+  { id: 'nouveautes', label: 'Nouveautés', href: '/aide/nouveautes', separatorBefore: true },
   { id: 'signaler', label: 'Signaler un problème', href: '/aide/signaler' },
 ];
 

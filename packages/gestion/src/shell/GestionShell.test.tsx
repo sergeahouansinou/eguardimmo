@@ -4,7 +4,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { expectNoA11yViolations } from '../../test/axe';
 import { TestLink, renderWithSource } from '../../test/render';
 import { GestionShell } from './GestionShell';
-import { searchPages } from './CommandPalette';
 
 function renderShell(currentPath = '/') {
   const onNavigate = vi.fn();
@@ -96,20 +95,5 @@ describe('GestionShell', () => {
     const { container } = renderShell('/biens/immeubles');
     await screen.findByRole('button', { name: 'Notifications, 3 non lues' });
     await expectNoA11yViolations(container);
-  });
-});
-
-describe('searchPages', () => {
-  const pages = [
-    { href: '/finances/impayes', label: 'Impayés' },
-    { href: '/documents/avis-echeance', label: "Avis d'échéance" },
-  ];
-
-  it('ignore accents et casse', () => {
-    expect(searchPages('ECHEANCE', pages).map((page) => page.href)).toEqual(['/documents/avis-echeance']);
-  });
-
-  it('retourne les premières pages quand la requête est vide', () => {
-    expect(searchPages('  ', pages)).toHaveLength(2);
   });
 });

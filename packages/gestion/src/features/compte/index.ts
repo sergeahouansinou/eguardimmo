@@ -1,0 +1,9 @@
+export { JournalPage } from './journal/JournalPage';
+export { ReglagesPage } from './reglages/GeneralPage';
+export { ReglagesDocumentsPage } from './reglages/DocumentsPage';
+export { ReglagesMenuPage } from './reglages/MenuPage';
+export { ReglagesNotificationsPage } from './reglages/NotificationsPage';
+export { EquipePage } from './equipe/EquipePage';
+export { EquipeInvitePage } from './equipe/EquipeInvitePage';
+export { ComptePage } from './compte/ComptePage';
+export { AbonnementPage } from './compte/AbonnementPage';

@@ -1,18 +1,22 @@
 'use client';
 
+import { ShellSourceProvider } from '@eguardimmo/shell';
+import type { ShellSource } from '@eguardimmo/shell';
 import { createContext, use } from 'react';
 import type { ReactNode } from 'react';
 
-export interface GestionSource {
-  shell: () => Promise<unknown>;
+export interface GestionSource extends ShellSource {
   bureau: () => Promise<unknown>;
-  markAllNotificationsRead: () => Promise<void>;
 }
 
 const SourceContext = createContext<GestionSource | null>(null);
 
 export function GestionSourceProvider({ source, children }: { source: GestionSource; children: ReactNode }) {
-  return <SourceContext value={source}>{children}</SourceContext>;
+  return (
+    <SourceContext value={source}>
+      <ShellSourceProvider source={source}>{children}</ShellSourceProvider>
+    </SourceContext>
+  );
 }
 
 export function useGestionSource(): GestionSource {
