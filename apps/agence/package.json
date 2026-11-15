@@ -14,10 +14,13 @@
   },
   "dependencies": {
     "@eguardimmo/config": "workspace:*",
+    "@eguardimmo/messagerie": "workspace:*",
+    "@eguardimmo/shell": "workspace:*",
     "@eguardimmo/tokens": "workspace:*",
     "@eguardimmo/ui": "workspace:*",
     "@hookform/resolvers": "catalog:",
     "@tanstack/react-query": "catalog:",
+    "lucide-react": "catalog:",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
@@ -28,10 +31,14 @@
   "devDependencies": {
     "@next/eslint-plugin-next": "catalog:",
     "@tailwindcss/turbopack": "catalog:",
+    "@testing-library/react": "catalog:",
+    "@testing-library/user-event": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "axe-core": "catalog:",
     "eslint": "catalog:",
+    "jsdom": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

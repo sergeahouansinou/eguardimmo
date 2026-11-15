@@ -1,1 +1,3 @@
 @import "@eguardimmo/ui/styles.css";
+@source "../../../../packages/messagerie/src";
+@source "../../../../packages/shell/src";
