@@ -1,9 +1,9 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Download, Printer, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, Maximize2, Printer, ZoomIn, ZoomOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Button, Card, CardHeader, CardTitle, cx, IconButton } from '@eguardimmo/ui';
+import { Button, Card, CardHeader, CardTitle, cx, Icon, IconButton } from '@eguardimmo/ui';
 import { shortHash } from '../seal';
 import { useFinancesSource } from '../source';
 
@@ -54,7 +54,10 @@ export function DocumentViewer({
           <IconButton label="Réduire" icon={ZoomOut} disabled={index <= 0} onClick={() => { setZoom(ZOOMS[Math.max(0, index - 1)] ?? 100); }} />
           <span className="min-w-10 text-center text-caption text-fg-muted" aria-live="polite">{zoom} %</span>
           <IconButton label="Agrandir" icon={ZoomIn} disabled={index >= ZOOMS.length - 1} onClick={() => { setZoom(ZOOMS[Math.min(ZOOMS.length - 1, index + 1)] ?? 100); }} />
-          <Button variant="ghost" size="sm" onClick={() => { setZoom(100); }}>Ajuster</Button>
+          <Button variant="ghost" size="sm" onClick={() => { setZoom(100); }}>
+            <Icon icon={Maximize2} />
+            Ajuster
+          </Button>
           <span className="grow" />
           <IconButton label="Imprimer" icon={Printer} onClick={print} />
           <IconButton label="Télécharger le PDF" icon={Download} onClick={print} />

@@ -1,6 +1,7 @@
 'use client';
 
-import { Badge, Button } from '@eguardimmo/ui';
+import { ChartPie, Pencil, Plus } from 'lucide-react';
+import { Badge, Button, Icon } from '@eguardimmo/ui';
 import type { ReactNode } from 'react';
 import { FicheSkeleton } from '../../components/FicheHeader';
 import { FicheTabs } from '../../components/FicheTabs';
@@ -38,13 +39,22 @@ export function ImmeubleFiche({ id, children }: { id: string; children: ReactNod
         actions={
           <>
             <Button variant="secondary" asChild>
-              <Link href={biensPaths.immeuble(id, 'charges')}>Répartir des charges</Link>
+              <Link href={biensPaths.immeuble(id, 'charges')}>
+                <Icon icon={ChartPie} />
+                Répartir des charges
+              </Link>
             </Button>
             <Button variant="secondary" asChild>
-              <Link href={biensPaths.newLot}>Ajouter un lot</Link>
+              <Link href={biensPaths.newLot}>
+                <Icon icon={Plus} />
+                Ajouter un lot
+              </Link>
             </Button>
             <Button asChild>
-              <Link href={biensPaths.editImmeuble(id)}>Modifier l’immeuble</Link>
+              <Link href={biensPaths.editImmeuble(id)}>
+                <Icon icon={Pencil} />
+                Modifier l’immeuble
+              </Link>
             </Button>
           </>
         }

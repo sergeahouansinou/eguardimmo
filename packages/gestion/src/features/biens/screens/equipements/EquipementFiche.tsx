@@ -1,6 +1,7 @@
 'use client';
 
-import { Badge, Button } from '@eguardimmo/ui';
+import { CalendarPlus, Pencil, Wrench } from 'lucide-react';
+import { Badge, Button, Icon } from '@eguardimmo/ui';
 import type { ReactNode } from 'react';
 import { FicheSkeleton } from '../../components/FicheHeader';
 import { FicheTabs } from '../../components/FicheTabs';
@@ -38,13 +39,22 @@ export function EquipementFiche({ id, children }: { id: string; children: ReactN
         actions={
           <>
             <Button variant="secondary" asChild>
-              <Link href={biensPaths.equipement(id, 'entretien')}>Planifier l’entretien</Link>
+              <Link href={biensPaths.equipement(id, 'entretien')}>
+                <Icon icon={CalendarPlus} />
+                Planifier l’entretien
+              </Link>
             </Button>
             <Button variant="secondary" asChild>
-              <Link href={externalPaths.newIntervention}>Créer une intervention</Link>
+              <Link href={externalPaths.newIntervention}>
+                <Icon icon={Wrench} />
+                Créer une intervention
+              </Link>
             </Button>
             <Button asChild>
-              <Link href={biensPaths.editEquipement(id)}>Modifier</Link>
+              <Link href={biensPaths.editEquipement(id)}>
+                <Icon icon={Pencil} />
+                Modifier
+              </Link>
             </Button>
           </>
         }

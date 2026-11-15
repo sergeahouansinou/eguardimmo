@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Button } from '@eguardimmo/ui';
+import { Banknote, Download, Send } from 'lucide-react';
+import { Alert, Button, Icon } from '@eguardimmo/ui';
 import { RecuSide, RecuSheet } from './documents/RecuDocument';
 import { DocumentViewer } from './documents/Viewer';
 import { FINANCES_ROUTES, NotFoundBlock, PageHeader, QueryGate, useExec } from './parts';
@@ -24,13 +25,18 @@ export function RecuDocumentPage({ Link, navigate, recuId }: ScreenProps & { rec
           recu ? (
             <>
               <Button variant="ghost" loading={exec.pending} onClick={() => { exec.run({ type: 'sendReceipt', recuId: recu.id }); }}>
+                <Icon icon={Send} />
                 Renvoyer
               </Button>
               <Button variant="secondary" onClick={() => { window.print(); }}>
+                <Icon icon={Download} />
                 Télécharger
               </Button>
               {recu.resteDu > 0 && recu.echeanceId ? (
-                <Button onClick={() => { navigate(`${FINANCES_ROUTES.encaisser}?echeance=${recu.echeanceId ?? ''}`); }}>Enregistrer le solde</Button>
+                <Button onClick={() => { navigate(`${FINANCES_ROUTES.encaisser}?echeance=${recu.echeanceId ?? ''}`); }}>
+                  <Icon icon={Banknote} />
+                  Enregistrer le solde
+                </Button>
               ) : null}
             </>
           ) : null

@@ -1,7 +1,7 @@
 'use client';
 
-import { Maximize2, Minus, Plus } from 'lucide-react';
-import { Button, IconButton } from '@eguardimmo/ui';
+import { Download, Maximize2, Minus, Plus, Printer } from 'lucide-react';
+import { Button, Icon, IconButton } from '@eguardimmo/ui';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNotify } from '../locataires/kit';
@@ -80,8 +80,14 @@ export function DocumentViewer({ title, children }: { title: string; children: R
           <IconButton label="Ajuster à la largeur" icon={Maximize2} onClick={() => { setFitted(true); }} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="secondary" onClick={print}>Imprimer</Button>
-          <Button onClick={download}>Télécharger en PDF</Button>
+          <Button variant="secondary" onClick={print}>
+            <Icon icon={Printer} />
+            Imprimer
+          </Button>
+          <Button onClick={download}>
+            <Icon icon={Download} />
+            Télécharger en PDF
+          </Button>
         </div>
       </div>
       <div ref={stage} className="min-w-0 overflow-auto rounded-lg border border-line bg-muted p-4">

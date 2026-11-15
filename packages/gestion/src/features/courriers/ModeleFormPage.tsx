@@ -1,6 +1,7 @@
 'use client';
 
-import { Badge, Button, Card, CardTitle, Menu, MenuContent, MenuItem, MenuTrigger, Select, Switch, Textarea, TextField } from '@eguardimmo/ui';
+import { Braces } from 'lucide-react';
+import { Badge, Button, Card, CardTitle, Icon, Menu, MenuContent, MenuItem, MenuTrigger, Select, Switch, Textarea, TextField } from '@eguardimmo/ui';
 import { useRef } from 'react';
 import type { z } from 'zod';
 import { FormatToolbar } from './FormatToolbar';
@@ -171,7 +172,10 @@ function TemplateForm({ template, initial }: { template?: Template; initial: Val
           <div role="toolbar" aria-label="Outils de rédaction" className="flex flex-wrap items-center gap-2">
             <Menu>
               <MenuTrigger asChild>
-                <Button variant="secondary" size="sm">Insérer un champ</Button>
+                <Button variant="secondary" size="sm">
+                  <Icon icon={Braces} />
+                  Insérer un champ
+                </Button>
               </MenuTrigger>
               <MenuContent>
                 {TEMPLATE_FIELDS.map((field) => (

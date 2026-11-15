@@ -1,6 +1,6 @@
 'use client';
 
-import { Archive, ArchiveRestore, ClipboardList, Copy, Download, Pencil, PenLine, Search, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, ClipboardList, Copy, Download, Pencil, PenLine, Plus, Search, Trash2 } from 'lucide-react';
 import { Badge, Button, ConfirmDialog, EmptyState, Icon, Select, Tab, TabList, TabPanel, Tabs, TextField } from '@eguardimmo/ui';
 import { useState } from 'react';
 import { DataTable } from '../../components/DataTable';
@@ -114,6 +114,7 @@ export function InventairesScreen() {
         subtitle="Inventaire du mobilier fourni par bien, avec sa valeur. Il sert de référence à la sortie du locataire."
         actions={
           <Button disabled={query.data === undefined || lots.data === undefined} onClick={() => { setCreating(true); }}>
+            <Icon icon={Plus} />
             Nouvel inventaire
           </Button>
         }

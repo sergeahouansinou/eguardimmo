@@ -1,6 +1,7 @@
 'use client';
 
-import { Badge, Button } from '@eguardimmo/ui';
+import { FilePenLine, Pencil, Wrench } from 'lucide-react';
+import { Badge, Button, Icon } from '@eguardimmo/ui';
 import type { ReactNode } from 'react';
 import { FicheSkeleton } from '../../components/FicheHeader';
 import { FicheTabs } from '../../components/FicheTabs';
@@ -37,13 +38,22 @@ export function LotFiche({ id, children }: { id: string; children: ReactNode }) 
         actions={
           <>
             <Button variant="secondary" asChild>
-              <Link href={lot.lot.tenant ? externalPaths.leases : externalPaths.newLease(lot.lot.id)}>{lot.lot.tenant ? 'Voir le bail' : 'Créer un bail'}</Link>
+              <Link href={lot.lot.tenant ? externalPaths.leases : externalPaths.newLease(lot.lot.id)}>
+                {lot.lot.tenant ? <Icon icon={FilePenLine} /> : null}
+                {lot.lot.tenant ? 'Voir le bail' : 'Créer un bail'}
+              </Link>
             </Button>
             <Button variant="secondary" asChild>
-              <Link href={externalPaths.newIntervention}>Créer une intervention</Link>
+              <Link href={externalPaths.newIntervention}>
+                <Icon icon={Wrench} />
+                Créer une intervention
+              </Link>
             </Button>
             <Button asChild>
-              <Link href={biensPaths.editLot(id)}>Modifier le lot</Link>
+              <Link href={biensPaths.editLot(id)}>
+                <Icon icon={Pencil} />
+                Modifier le lot
+              </Link>
             </Button>
           </>
         }

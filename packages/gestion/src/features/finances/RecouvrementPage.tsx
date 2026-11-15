@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, CalendarClock, Gavel, ListChecks, Mail } from 'lucide-react';
+import { BookOpen, CalendarClock, Gavel, ListChecks, Mail, Plus } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Alert, Badge, Button, Card, CardHeader, CardTitle, Icon, StatCard, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@eguardimmo/ui';
@@ -110,13 +110,17 @@ function RecouvrementContent({ data, echeanceId, Link, navigate }: ScreenProps &
         actions={
           <>
             <Button variant="secondary" disabled={solde} onClick={() => { setPlan(true); }}>
+              <Icon icon={CalendarClock} />
               Proposer un échéancier
             </Button>
             <Button variant="secondary" onClick={() => { navigate(financesPaths.grandLivre(echeanceId)); }}>
               <Icon icon={BookOpen} />
               Grand livre
             </Button>
-            <Button onClick={() => { setDiligence(true); }}>Ajouter une diligence</Button>
+            <Button onClick={() => { setDiligence(true); }}>
+              <Icon icon={Plus} />
+              Ajouter une diligence
+            </Button>
           </>
         }
       />

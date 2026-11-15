@@ -1,6 +1,7 @@
 'use client';
 
-import { Alert, Button, Skeleton } from '@eguardimmo/ui';
+import { RotateCw } from 'lucide-react';
+import { Alert, Button, Icon, Skeleton } from '@eguardimmo/ui';
 import type { ReactNode } from 'react';
 import type { BiensQuery } from '../queries';
 
@@ -11,6 +12,7 @@ export function ErrorPanel({ title, onRetry, children }: { title: string; onRetr
         <span>{children ?? 'Vérifiez votre connexion puis réessayez.'}</span>
         {onRetry ? (
           <Button variant="secondary" size="sm" onClick={onRetry}>
+            <Icon icon={RotateCw} />
             Réessayer
           </Button>
         ) : null}

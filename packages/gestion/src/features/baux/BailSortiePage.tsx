@@ -1,7 +1,7 @@
 'use client';
 
-import { Check, LogOut } from 'lucide-react';
-import { Alert, Badge, Button, ConfirmDialog, EmptyState, StatCard, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@eguardimmo/ui';
+import { CalendarPlus, Check, LogOut, MailCheck } from 'lucide-react';
+import { Alert, Badge, Button, ConfirmDialog, EmptyState, Icon, StatCard, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@eguardimmo/ui';
 import type { BadgeTone } from '@eguardimmo/ui';
 import { useState } from 'react';
 import { useLeaseLookups } from './BauxParts';
@@ -53,8 +53,8 @@ function Exit({ lease }: { lease: Lease }) {
           <>
             {exit && !exit.depositReturned ? (
               <>
-                <LinkButton href={`${bauxPaths.newEdl}?bien=${lease.unitId}`}>Planifier la visite</LinkButton>
-                <LinkButton href={links.newCourrier({ modele: 'accuse-de-reception-du-preavis', locataire: lease.tenantIds[0], bien: lease.unitId })}>Accusé de réception</LinkButton>
+                <LinkButton href={`${bauxPaths.newEdl}?bien=${lease.unitId}`} icon={CalendarPlus}>Planifier la visite</LinkButton>
+                <LinkButton href={links.newCourrier({ modele: 'accuse-de-reception-du-preavis', locataire: lease.tenantIds[0], bien: lease.unitId })} icon={MailCheck}>Accusé de réception</LinkButton>
               </>
             ) : null}
             {canRecord ? (
@@ -226,7 +226,10 @@ function ExitBody({ lease, exit, onEditNotice }: { lease: Lease; exit: LeaseExit
               <div className="mt-1"><LinkButton href={courriersPaths.attestation(exit.attestationId)} size="sm">Voir l’attestation</LinkButton></div>
             </Alert>
           ) : (
-            <Button loading={markReturned.isPending} onClick={() => { setConfirming(true); }}>Marquer comme restitué</Button>
+            <Button loading={markReturned.isPending} onClick={() => { setConfirming(true); }}>
+              <Icon icon={Check} />
+              Marquer comme restitué
+            </Button>
           )}
         </SectionCard>
       </aside>

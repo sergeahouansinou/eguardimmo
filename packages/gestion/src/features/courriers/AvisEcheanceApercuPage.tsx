@@ -1,6 +1,7 @@
 'use client';
 
-import { Button } from '@eguardimmo/ui';
+import { Send } from 'lucide-react';
+import { Button, Icon } from '@eguardimmo/ui';
 import { useLeaseLookups } from '../baux/BauxParts';
 import { noticeTotal } from './AvisEcheancePage';
 import { DocumentViewer, Paper, PaperHeader } from './DocumentViewer';
@@ -55,7 +56,12 @@ function NoticeSheet({ notice }: { notice: Notice }) {
         actions={
           <>
             <LinkButton href={courriersPaths.notices}>Retour aux avis</LinkButton>
-            {notice.sentOn ? null : <Button loading={send.isPending} onClick={() => { void sendNotice(); }}>Envoyer à {lookups.tenantName(notice.tenantId)}</Button>}
+            {notice.sentOn ? null : (
+              <Button loading={send.isPending} onClick={() => { void sendNotice(); }}>
+                <Icon icon={Send} />
+                Envoyer à {lookups.tenantName(notice.tenantId)}
+              </Button>
+            )}
           </>
         }
       />

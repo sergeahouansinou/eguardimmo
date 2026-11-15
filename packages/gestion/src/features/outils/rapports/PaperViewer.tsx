@@ -2,8 +2,8 @@
 
 import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { ChevronLeft, ChevronRight, Download, Minus, Plus, Printer } from 'lucide-react';
-import { Button, IconButton } from '@eguardimmo/ui';
+import { ChevronLeft, ChevronRight, Download, Maximize2, Minus, Plus, Printer } from 'lucide-react';
+import { Button, Icon, IconButton } from '@eguardimmo/ui';
 import { PRINT_CSS } from './printCss';
 import { PAPER_HEIGHT, PAPER_WIDTH } from './ReportPaper';
 
@@ -40,7 +40,10 @@ export function PaperViewer({ pages, current, onPageChange, children }: PaperVie
         <IconButton label="Réduire" icon={Minus} disabled={zoom <= ZOOM_MIN} onClick={() => { setZoom(Math.max(ZOOM_MIN, zoom - ZOOM_STEP)); }} />
         <span className="min-w-11 text-center tabular-nums">{`${String(zoom)} %`}</span>
         <IconButton label="Agrandir" icon={Plus} disabled={zoom >= ZOOM_MAX} onClick={() => { setZoom(Math.min(ZOOM_MAX, zoom + ZOOM_STEP)); }} />
-        <Button variant="ghost" size="sm" onClick={fit}>Ajuster</Button>
+        <Button variant="ghost" size="sm" onClick={fit}>
+          <Icon icon={Maximize2} />
+          Ajuster
+        </Button>
         <span className="flex-1" />
         <IconButton label="Imprimer" icon={Printer} onClick={print} />
         <IconButton label="Télécharger le PDF" icon={Download} onClick={print} />

@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarClock, CircleAlert, FilePlus, FileText, LogOut, Pencil } from 'lucide-react';
+import { BellRing, CalendarClock, CircleAlert, FilePlus, FileText, LogOut, Pencil } from 'lucide-react';
 import { Alert, Badge, Card, StatCard, Tab, TabList, TabPanel, Tabs } from '@eguardimmo/ui';
 import { useState } from 'react';
 import { LatestInstallments, LeaseParties, LeasePreview } from './BailResume';
@@ -62,7 +62,7 @@ function LeaseSheet({ lease }: { lease: Lease }) {
       {lease.balance < 0 ? (
         <Alert tone="danger" title={`${money(-lease.balance)} d’impayé sur ce bail.`}>
           <div className="mt-1 flex flex-wrap gap-2">
-            <LinkButton href={links.newCourrier({ modele: 'relance-de-loyer-impaye', locataire: lease.tenantIds[0], bien: lease.unitId })} variant="primary" size="sm">Relancer</LinkButton>
+            <LinkButton href={links.newCourrier({ modele: 'relance-de-loyer-impaye', locataire: lease.tenantIds[0], bien: lease.unitId })} variant="primary" size="sm" icon={BellRing}>Relancer</LinkButton>
             <LinkButton href={links.newPayment({ locataire: lease.tenantIds[0] })} size="sm">Enregistrer un paiement</LinkButton>
           </div>
         </Alert>

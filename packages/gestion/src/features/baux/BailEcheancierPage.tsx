@@ -1,7 +1,7 @@
 'use client';
 
 import { Alert, Button, Card, EmptyState, Pagination, Select, StatCard, Tab, TabList, TabPanel, Table, TableBody, TableHead, TableHeaderCell, TableRow, Tabs } from '@eguardimmo/ui';
-import { CalendarX } from 'lucide-react';
+import { Banknote, CalendarX } from 'lucide-react';
 import { useState } from 'react';
 import { AcomptesList, AvailableAcomptesCard, useLeaseAcomptes } from './AcomptesParts';
 import { useLeaseLookups } from './BauxParts';
@@ -72,7 +72,7 @@ function Schedule({ lease }: { lease: Lease }) {
         actions={
           <>
             <Button variant="secondary" onClick={exportCsv} disabled={shown.length === 0}>Exporter</Button>
-            <LinkButton href={links.newPayment({ locataire: lease.tenantIds[0] })} variant="primary">Enregistrer un paiement</LinkButton>
+            <LinkButton href={links.newPayment({ locataire: lease.tenantIds[0] })} variant="primary" icon={Banknote}>Enregistrer un paiement</LinkButton>
           </>
         }
       />

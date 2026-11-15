@@ -1,7 +1,7 @@
 'use client';
 
-import { Badge, Button, EmptyState } from '@eguardimmo/ui';
-import { Wrench } from 'lucide-react';
+import { Badge, Button, EmptyState, Icon } from '@eguardimmo/ui';
+import { Plus, Wrench } from 'lucide-react';
 import { DataTable } from '../../components/DataTable';
 import { EntryList, Panel } from '../../components/Panels';
 import { QueryBoundary, SkeletonRows } from '../../components/QueryState';
@@ -46,7 +46,10 @@ export function EquipementInterventions({ id }: { id: string }) {
               empty={
                 <EmptyState icon={Wrench} title="Aucune intervention pour l’instant" description="Pannes, réparations et dépannages apparaîtront ici avec leur coût.">
                   <Button asChild>
-                    <Link href={externalPaths.newIntervention}>Créer une intervention</Link>
+                    <Link href={externalPaths.newIntervention}>
+                      <Icon icon={Plus} />
+                      Créer une intervention
+                    </Link>
                   </Button>
                 </EmptyState>
               }

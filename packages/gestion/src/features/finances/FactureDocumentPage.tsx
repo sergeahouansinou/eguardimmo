@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Alert, Button, ConfirmDialog } from '@eguardimmo/ui';
+import { Download, ReceiptText, Send } from 'lucide-react';
+import { Alert, Button, ConfirmDialog, Icon } from '@eguardimmo/ui';
 import { FactureSide, FactureSheet } from './documents/FactureDocument';
 import { DocumentViewer } from './documents/Viewer';
 import { FINANCES_ROUTES, NotFoundBlock, PageHeader, QueryGate, useExec } from './parts';
@@ -28,13 +29,16 @@ export function FactureDocumentPage({ Link, navigate, factureId, autoPrint = fal
             <>
               {facture.type === 'facture' && !facture.avoirId ? (
                 <Button variant="ghost" onClick={() => { setCrediting(true); }}>
+                  <Icon icon={ReceiptText} />
                   Émettre un avoir
                 </Button>
               ) : null}
               <Button variant="secondary" onClick={() => { window.print(); }}>
+                <Icon icon={Download} />
                 Télécharger
               </Button>
               <Button loading={exec.pending} onClick={() => { exec.run({ type: 'sendInvoice', factureId: facture.id }); }}>
+                <Icon icon={Send} />
                 Envoyer par e-mail
               </Button>
             </>

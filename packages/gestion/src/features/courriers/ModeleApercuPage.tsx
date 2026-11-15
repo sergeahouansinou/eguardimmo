@@ -1,5 +1,6 @@
 'use client';
 
+import { MailPlus, Pencil } from 'lucide-react';
 import { DocumentViewer, Paper, PaperHeader } from './DocumentViewer';
 import { FormattedText } from './FormattedText';
 import { RecordGate } from './RecordGate';
@@ -31,8 +32,8 @@ export function ModeleApercuPage({ id }: { id: string }) {
             subtitle={`${templateCategoryLabel[template.category]}, aperçu avec des données d’exemple`}
             actions={
               <>
-                {template.builtIn || template.archived ? null : <LinkButton href={courriersPaths.editModele(template.id)}>Modifier</LinkButton>}
-                <LinkButton href={links.newCourrier({ modele: template.id })} variant="primary">Utiliser ce modèle</LinkButton>
+                {template.builtIn || template.archived ? null : <LinkButton href={courriersPaths.editModele(template.id)} icon={Pencil}>Modifier</LinkButton>}
+                <LinkButton href={links.newCourrier({ modele: template.id })} variant="primary" icon={MailPlus}>Utiliser ce modèle</LinkButton>
               </>
             }
           />
