@@ -6,20 +6,21 @@ import { useEffect, useRef, useState } from "react";
 import { IconTile } from "@/components/IconTile";
 import { TextLink } from "@/components/TextLink";
 import { useProfiles, useSelectProfile, useSignOut } from "@/features/auth/queries";
+import { useReturnContext } from "@/features/auth/useReturnContext";
 import type { Profile } from "@/features/auth/schemas";
-import { homeUrlOfApp } from "@/lib/returnTo";
 import { redirectTo } from "@/lib/navigation";
 import { ROUTES } from "@/lib/routes";
-import { appOfProfile } from "@/lib/spaces";
+import { destinationOfProfile } from "@/lib/spaceLinks";
 import { PROFILE_ICONS } from "./profileIcons";
 import { useSessionGuard } from "./useSessionGuard";
 
 export function useOpenProfile() {
   const select = useSelectProfile();
+  const { returnTo } = useReturnContext();
   const [error, setError] = useState<string | null>(null);
   const open = async (profile: Profile) => {
     setError(null);
-    const url = homeUrlOfApp(appOfProfile(profile.kind));
+    const url = destinationOfProfile(profile.kind, returnTo);
     if (url === null) {
       setError("L’adresse de cet espace n’est pas configurée pour cet environnement.");
       return;

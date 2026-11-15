@@ -1,6 +1,6 @@
 import { type AppKind, appOfHost } from "./spaces";
 
-const DEV_HOSTS = ["localhost:3010", "localhost:3020", "localhost:3030"];
+const DEV_HOSTS = ["localhost:3010", "localhost:3020", "localhost:3030", "localhost:3040", "localhost:3050"];
 
 function configuredHosts(): string[] {
   const raw = process.env.NEXT_PUBLIC_AUTH_RETURN_TO_ALLOWED_HOSTS;

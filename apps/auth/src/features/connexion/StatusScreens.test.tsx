@@ -1,6 +1,7 @@
 import { screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
-import { renderWithAuth } from "../../../test/render";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createTestEnvironment, renderWithAuth } from "../../../test/render";
 import { expectNoA11yViolations } from "../../../test/axe";
 import { resetNavigation, setLocation } from "../../../test/navigation";
 import {
@@ -33,7 +34,7 @@ describe("écrans de statut", () => {
   it.each(CASES)("%s : titre, lien d’action et accessibilité", async (_name, Screen, location, title) => {
     setLocation(location);
     const { container } = renderWithAuth(<Screen />);
-    expect(screen.getByRole("heading", { name: title })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: title })).toBeTruthy();
     expect(screen.getAllByRole("link").length).toBeGreaterThan(0);
     await expectNoA11yViolations(container);
   });
@@ -49,5 +50,29 @@ describe("écrans de statut", () => {
     setLocation("/lien-expire?type=verification");
     renderWithAuth(<LienExpireScreen />);
     expect(screen.getByRole("link", { name: "Recevoir un nouveau lien" }).getAttribute("href")).toBe("/verification-email");
+  });
+
+  it("la déconnexion ferme la session encore ouverte puis propose de se reconnecter", async () => {
+    setLocation("/deconnecte");
+    const environment = createTestEnvironment("marc");
+    renderWithAuth(<DeconnecteScreen />, environment);
+    expect(await screen.findByRole("heading", { name: "Vous êtes déconnecté" })).toBeTruthy();
+    expect(environment.store.read()).toBeNull();
+    expect(screen.getByRole("link", { name: "Me reconnecter" }).getAttribute("href")).toBe("/connexion");
+  });
+
+  it("la déconnexion signale l’échec de fermeture de la session au lieu d’annoncer une déconnexion", async () => {
+    setLocation("/deconnecte");
+    const environment = createTestEnvironment("marc");
+    const signOut = vi.spyOn(environment.source, "signOut").mockRejectedValueOnce(new Error("panne"));
+    const { container } = renderWithAuth(<DeconnecteScreen />, environment);
+    expect((await screen.findByRole("alert")).textContent).toContain("La déconnexion a échoué");
+    expect(screen.queryByRole("heading", { name: "Vous êtes déconnecté" })).toBeNull();
+    expect(environment.store.read()).not.toBeNull();
+    await expectNoA11yViolations(container);
+    await userEvent.click(screen.getByRole("button", { name: "Réessayer" }));
+    expect(await screen.findByRole("heading", { name: "Vous êtes déconnecté" })).toBeTruthy();
+    expect(signOut).toHaveBeenCalledTimes(2);
+    expect(environment.store.read()).toBeNull();
   });
 });

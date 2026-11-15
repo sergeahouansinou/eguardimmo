@@ -1,9 +1,12 @@
 "use client";
 
 import { BadgeCheck, Clock, LogOut, ShieldCheck, Trash2, TriangleAlert, UserX } from "lucide-react";
+import { Alert, Button, Spinner } from "@eguardimmo/ui";
 import { useSearchParams } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { ButtonLink, AltLine, TextLink } from "@/components/TextLink";
 import { StatusScreen } from "@/components/StatusScreen";
+import { useSession, useSignOut } from "@/features/auth/queries";
 import { providerSchema } from "@/features/auth/schemas";
 import type { SocialProvider } from "@/features/auth/schemas";
 import { useReturnContext } from "@/features/auth/useReturnContext";
@@ -88,6 +91,45 @@ export function SessionExpireeScreen() {
 }
 
 export function DeconnecteScreen() {
+  const session = useSession();
+  const signOut = useSignOut();
+  const started = useRef(false);
+  const { mutate } = signOut;
+
+  useEffect(() => {
+    if (session.data && !started.current) {
+      started.current = true;
+      mutate(undefined);
+    }
+  }, [session.data, mutate]);
+
+  if (session.isError || signOut.isError) {
+    return (
+      <div className="flex flex-col gap-3">
+        <Alert tone="danger" title="La déconnexion a échoué">
+          Votre session n’a pas pu être fermée. Réessayez avant de quitter cet appareil.
+        </Alert>
+        <Button
+          className="self-start"
+          onClick={() => {
+            if (session.isError) session.refetch();
+            else mutate(undefined);
+          }}
+        >
+          Réessayer
+        </Button>
+      </div>
+    );
+  }
+
+  if (session.data !== null) {
+    return (
+      <div className="flex justify-center py-10">
+        <Spinner size={32} label="Fermeture de votre session" />
+      </div>
+    );
+  }
+
   return (
     <StatusScreen
       icon={LogOut}

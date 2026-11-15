@@ -33,6 +33,23 @@ describe("ProfilsScreen", () => {
     expect(String(vi.mocked(redirectTo).mock.calls[0]?.[0])).toContain("localhost");
   });
 
+  it.each([
+    ["Espace bailleur", "http://localhost:3020/"],
+    ["Espace propriétaire", "http://localhost:3020/confie"],
+    ["Espace locataire", "http://localhost:3030/"],
+  ])("ouvre %s à l’adresse configurée", async (title, expected) => {
+    const user = userEvent.setup();
+    renderWithAuth(<ProfilsScreen />, createTestEnvironment("marc"));
+    await user.click(await screen.findByRole("button", { name: `Ouvrir cet espace : ${title}` }));
+    await waitFor(() => { expect(redirectTo).toHaveBeenCalledWith(expected); });
+  });
+
+  it("reprend l’adresse de retour demandée quand elle vise le profil ouvert", async () => {
+    setLocation("/profils?return_to=" + encodeURIComponent("http://localhost:3030/loyers"));
+    renderWithAuth(<ProfilsScreen />, createTestEnvironment("koffi"));
+    await waitFor(() => { expect(redirectTo).toHaveBeenCalledWith("http://localhost:3030/loyers"); });
+  });
+
   it("ouvre directement l’unique profil", async () => {
     renderWithAuth(<ProfilsScreen />, createTestEnvironment("koffi"));
     await waitFor(() => { expect(redirectTo).toHaveBeenCalledTimes(1); });
