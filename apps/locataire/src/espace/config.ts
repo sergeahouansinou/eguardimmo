@@ -21,23 +21,23 @@ export function buildNavigation(counts?: ShellCounts): ShellNavigation {
   return {
     sections: [
       {
-        id: "principal",
-        label: "Principal",
-        entries: [
-          { id: "accueil", label: "Accueil", href: "/", icon: House },
-          { id: "loyers", label: "Loyers et quittances", href: "/loyers", icon: ReceiptText, count: counts?.loyers },
-          { id: "interventions", label: "Interventions", href: "/interventions", icon: Wrench, count: counts?.interventions },
-          { id: "messages", label: "Messages", href: "/messages", icon: MessageSquare, count: counts?.messages },
-        ],
-      },
-      {
         id: "logement",
         label: "Mon logement",
         entries: [
+          { id: "accueil", label: "Accueil", href: "/", icon: House },
           { id: "bail", label: "Mon bail", href: "/bail", icon: KeyRound },
+          { id: "loyers", label: "Loyers et quittances", href: "/loyers", icon: ReceiptText, count: counts?.loyers },
           { id: "etats-des-lieux", label: "États des lieux", href: "/etats-des-lieux", icon: ClipboardCheck },
           { id: "documents", label: "Documents", href: "/documents", icon: FolderOpen },
-          { id: "assurance", label: "Assurance habitation", href: "/assurance", icon: ShieldCheck },
+        ],
+      },
+      {
+        id: "echanges",
+        label: "Échanges",
+        entries: [
+          { id: "messages", label: "Messages", href: "/messages", icon: MessageSquare, count: counts?.messages },
+          { id: "interventions", label: "Interventions", href: "/interventions", icon: Wrench, count: counts?.interventions },
+          { id: "assurance", label: "Assurance", href: "/assurance", icon: ShieldCheck },
         ],
       },
     ],
