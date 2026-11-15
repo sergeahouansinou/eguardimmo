@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeftRight, ChevronDown, LogOut, SunMoon } from 'lucide-react';
+import { BuildingComplex, ChevronDown, ChevronsUpDown, LogOut, SunMoon } from 'lucide-react';
 import {
   Avatar,
   Badge,
@@ -16,6 +16,7 @@ import {
 import { Fragment } from 'react';
 import type { AccountMenuConfig, AccountMenuItem } from '../config/types';
 import type { ShellData } from '../data/schemas';
+import { isExternalHref } from '../lib/spaceUrls';
 import { THEMES, useTheme } from '../lib/theme';
 import type { ThemeChoice } from '../lib/theme';
 
@@ -35,8 +36,9 @@ export function AccountMenu({ shell, config, onNavigate }: AccountMenuProps) {
   const [theme, setTheme] = useTheme();
   const { user, workspace } = shell;
   const go = (href: string) => () => { onNavigate(href); };
+  const target = (href: string) => (isExternalHref(href) ? { href } : { onSelect: go(href) });
   const renderItem = (item: AccountMenuItem) => (
-    <MenuItem key={item.id} icon={item.icon} meta={item.meta?.(shell)} onSelect={go(item.href)}>
+    <MenuItem key={item.id} icon={item.icon} meta={item.meta?.(shell)} {...target(item.href)}>
       {item.label}
     </MenuItem>
   );
@@ -51,7 +53,7 @@ export function AccountMenu({ shell, config, onNavigate }: AccountMenuProps) {
         <span className="hidden max-w-[180px] truncate md:inline">{workspace.name}</span>
         <Icon icon={ChevronDown} size={14} className="hidden text-fg-subtle md:block" />
       </MenuTrigger>
-      <MenuContent width="md" className="rounded-lg">
+      <MenuContent width="md" className="rounded-lg" aria-label="Menu du compte" aria-labelledby={undefined}>
         <div className="flex items-center gap-2.5 p-2">
           <Avatar initials={user.initials} size="lg" />
           <div className="flex min-w-0 flex-1 flex-col">
@@ -62,8 +64,9 @@ export function AccountMenu({ shell, config, onNavigate }: AccountMenuProps) {
         </div>
         {config.switchSpace ? (
           <MenuItem
-            icon={ArrowLeftRight}
-            onSelect={go(config.switchSpace.href)}
+            icon={BuildingComplex}
+            meta={<Icon icon={ChevronsUpDown} size={16} />}
+            {...target(config.switchSpace.href)}
             aria-label="Changer d'espace"
             className="mx-1 mb-1 h-10 w-auto border border-line bg-page"
           >
@@ -93,7 +96,7 @@ export function AccountMenu({ shell, config, onNavigate }: AccountMenuProps) {
         />
         {config.footerItems?.map(renderItem)}
         <MenuSeparator />
-        <MenuItem icon={LogOut} tone="danger" onSelect={go(config.signOut.href)}>Se déconnecter</MenuItem>
+        <MenuItem icon={LogOut} tone="danger" {...target(config.signOut.href)}>Se déconnecter</MenuItem>
       </MenuContent>
     </Menu>
   );

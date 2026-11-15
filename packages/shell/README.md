@@ -20,12 +20,42 @@ Modèles à copier : `apps/locataire` et `apps/console` (coquille minimale), `ap
 | `railStorageKey` | clé `localStorage` du rail replié, une par app |
 | `navigation` | `{ sections, footer }` ou `(counts) => { sections, footer }` (compteurs de `ShellData.counts`) |
 | `bottomItems` | `{ id, label, icon, href }[]` de la barre mobile ; « Plus » est ajouté, et ces `id` sont exclus du volet (ils doivent correspondre aux `id` de la navigation) |
-| `accountMenu` | `{ groups, footerItems?, switchSpace?, signOut, roleLabels? }` ; `switchSpace` absent = pas de « Changer d'espace » |
+| `accountMenu` | `{ groups, footerItems?, switchSpace?, signOut, roleLabels? }` ; `switchSpace` absent = pas de « Changer d'espace ». Un `href` absolu (`https://…`, ex. `authUrl('/profils')`) devient un vrai `<a>` ; un chemin interne passe par `onNavigate` |
 | `notifications` | `{ allHref, settingsHref? }` |
 | `searchPages` | index ⌘K `{ href, label }[]` ; `searchPlaceholder?`, `searchNote?` |
 | `addMenu?`, `helpMenu?` | bouton « Ajouter » et menu d'aide ; masqués si absents (`HelpMenuItem` : `shortcut?`, `separatorBefore?`) |
 
-Autres exports : `useShellData`, `useMarkAllNotificationsRead`, `shellKeys`, `useAfterHydration`, `useStoredValue`, `useTheme`, `toneTile`, `toneBadge`, `shellSchema`, `hrefSchema`, `toneSchema`.
+Autres exports : `useShellData`, `useMarkAllNotificationsRead`, `useMarkNotificationRead`, `useCanMarkNotificationRead`, `shellKeys`, `useAfterHydration`, `useStoredValue`, `useTheme`, `toneTile`, `toneBadge`, `shellSchema`, `hrefSchema`, `toneSchema`.
+
+## Centre de notifications (`NotificationsPage`)
+
+Page complète des notifications de `ShellData` : filtres Toutes / Non lues, marquage d'une notification ou de toutes, lien vers l'objet, états chargement / erreur (avec « Réessayer») / vide, pagination au-delà de 20, lien vers les préférences.
+
+| Prop | Rôle |
+|---|---|
+| `Link` | composant de lien de l'app (`next/link`) : une fonction n'est pas sérialisable, la page de l'app passe donc par un petit composant client |
+| `settingsHref?` | lien « Préférences » (absent = pas de lien) |
+| `pageSize?` | 20 par défaut |
+
+Convention : le centre vit sur `/notifications` (`/notifications/toutes` quand `/notifications` porte déjà les préférences), et `notifications.allHref` pointe dessus.
+
+Le marquage d'une seule notification demande `ShellSource.markNotificationRead(id)`, **optionnel** : sans lui, seul « Tout marquer comme lu » est proposé. Les sources de démo locataire, console, propriétaire (bailleur et mandant) et agence l'implémentent.
+
+## Liens entre applications (`spaceUrls`)
+
+`authUrl(path)` et `spaceUrl('locataire' | 'proprietaire' | 'agence', path)` composent des adresses absolues vers une autre application (le chemin doit être interne : `/…`, sans `//` ni schéma). Les liens sortants sont de vrais `<a>`, jamais `next/link`.
+
+| Variable (lue au build, `NEXT_PUBLIC_*`) | Défaut en développement |
+|---|---|
+| `NEXT_PUBLIC_AUTH_URL` | `http://localhost:3040` |
+| `NEXT_PUBLIC_LOCATAIRE_URL` | `http://localhost:3030` |
+| `NEXT_PUBLIC_PROPRIETAIRE_URL` | `http://localhost:3020` |
+| `NEXT_PUBLIC_AGENCE_URL` | `http://localhost:3010` |
+
+- Valeur : une origine `https://` sans chemin ni identifiants (`http://` admis uniquement pour un hôte local) ; sinon erreur explicite.
+- En production (`NODE_ENV=production`) une variable absente lève une erreur au premier appel : aucune adresse n'est devinée. Les appels étant faits à l'import des configs, un build sans variable échoue.
+- Un `.env.example` par app liste les variables qu'elle utilise ; l'app `auth` liste les quatre, plus `NEXT_PUBLIC_AUTH_RETURN_TO_ALLOWED_HOSTS` (liste blanche de `return_to`, hôtes séparés par des virgules).
+- `isExternalHref(href)` distingue une adresse absolue d'un chemin interne.
 
 ## Pièges
 

@@ -18,8 +18,19 @@ export { hrefSchema, shellSchema, toneSchema } from './data/schemas';
 export type { ShellCounts, ShellData, ShellNotification, Tone } from './data/schemas';
 export { ShellSourceProvider, useShellSource } from './data/source';
 export type { ShellSource } from './data/source';
-export { shellKeys, useAfterHydration, useMarkAllNotificationsRead, useShellData } from './data/queries';
+export {
+  shellKeys,
+  useAfterHydration,
+  useCanMarkNotificationRead,
+  useMarkAllNotificationsRead,
+  useMarkNotificationRead,
+  useShellData,
+} from './data/queries';
 export type { ClientQuery } from './data/queries';
+export { NotificationsPage } from './notifications/NotificationsPage';
+export type { NotificationsPageProps } from './notifications/NotificationsPage';
+export { authUrl, isExternalHref, spaceUrl } from './lib/spaceUrls';
+export type { SpaceName } from './lib/spaceUrls';
 export { useStoredValue } from './lib/storedValue';
 export { THEMES, useTheme } from './lib/theme';
 export type { ThemeChoice } from './lib/theme';

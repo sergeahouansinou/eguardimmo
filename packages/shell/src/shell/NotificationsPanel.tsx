@@ -1,7 +1,6 @@
 'use client';
 
-import { Bell, CircleAlert, CircleCheck, Info, Settings, TriangleAlert } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { Bell, Settings } from 'lucide-react';
 import { useState } from 'react';
 import {
   Icon,
@@ -16,17 +15,10 @@ import {
 } from '@eguardimmo/ui';
 import type { LinkComponent } from '@eguardimmo/ui';
 import { useMarkAllNotificationsRead } from '../data/queries';
-import type { ShellNotification, Tone } from '../data/schemas';
+import type { ShellNotification } from '../data/schemas';
 import { toneTile } from '../lib/tone';
+import { toneIcon } from '../lib/toneIcon';
 import type { NotificationsConfig } from '../config/types';
-
-const toneIcon: Record<Tone, LucideIcon> = {
-  danger: CircleAlert,
-  warning: TriangleAlert,
-  info: Info,
-  success: CircleCheck,
-  neutral: Bell,
-};
 
 export interface NotificationsPanelProps {
   notifications: ShellNotification[];

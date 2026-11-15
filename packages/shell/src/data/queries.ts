@@ -45,3 +45,19 @@ export function useMarkAllNotificationsRead() {
     onSuccess: () => client.invalidateQueries({ queryKey: shellKeys.data }),
   });
 }
+
+export function useCanMarkNotificationRead(): boolean {
+  return useShellSource().markNotificationRead !== undefined;
+}
+
+export function useMarkNotificationRead() {
+  const source = useShellSource();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!source.markNotificationRead) throw new Error('Cette source ne sait pas marquer une notification comme lue.');
+      await source.markNotificationRead(id);
+    },
+    onSuccess: () => client.invalidateQueries({ queryKey: shellKeys.data }),
+  });
+}

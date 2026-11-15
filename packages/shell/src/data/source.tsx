@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 export interface ShellSource {
   shell: () => Promise<unknown>;
   markAllNotificationsRead: () => Promise<void>;
+  markNotificationRead?: (id: string) => Promise<void>;
 }
 
 const SourceContext = createContext<ShellSource | null>(null);

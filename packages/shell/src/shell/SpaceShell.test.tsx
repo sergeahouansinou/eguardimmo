@@ -137,6 +137,26 @@ describe('SpaceShell', () => {
     expect(onNavigate).toHaveBeenCalledWith('/deconnexion');
   });
 
+  it('rend de vrais liens pour les adresses d’une autre application, sans passer par onNavigate', async () => {
+    const { onNavigate } = renderShell({
+      accountMenu: {
+        ...testAccountMenu,
+        switchSpace: { href: 'http://localhost:3040/profils' },
+        signOut: { href: 'http://localhost:3040/deconnecte' },
+      },
+    });
+    await userEvent.click(await screen.findByRole('button', { name: 'Compte, espace de travail Espace test' }));
+    const menu = await screen.findByRole('menu');
+    const switchSpace = within(menu).getByRole('menuitem', { name: "Changer d'espace" });
+    const signOut = within(menu).getByRole('menuitem', { name: 'Se déconnecter' });
+    expect(switchSpace.tagName).toBe('A');
+    expect(switchSpace.getAttribute('href')).toBe('http://localhost:3040/profils');
+    expect(signOut.tagName).toBe('A');
+    expect(signOut.getAttribute('href')).toBe('http://localhost:3040/deconnecte');
+    expect(onNavigate).not.toHaveBeenCalled();
+    await expectNoA11yViolations(menu);
+  });
+
   it('change l’apparence depuis le menu du compte', async () => {
     renderShell();
     await userEvent.click(await screen.findByRole('button', { name: 'Compte, espace de travail Espace test' }));
