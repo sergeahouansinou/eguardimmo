@@ -75,7 +75,7 @@ export function NoticeDialog({
             value={form.values.reason}
             onChange={(event) => { form.setValue('reason', event.target.value); }}
           />
-          <div className="flex justify-end gap-2 pt-1">
+          <div className="flex flex-wrap justify-end gap-2 pt-1">
             <DialogClose asChild>
               <Button variant="ghost">Annuler</Button>
             </DialogClose>

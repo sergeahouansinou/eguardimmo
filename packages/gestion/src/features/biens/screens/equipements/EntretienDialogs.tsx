@@ -40,7 +40,7 @@ export function LogEntryDialog({ equipementId, currency, asOf, open, onOpenChang
           <TextField label="Date" type="date" placeholder="2026-11-13" {...form.field('date')} />
           <TextField label="Détail" placeholder="Clim Services 75, photo jointe" {...form.field('detail')} />
           <TextField label="Coût, €" placeholder="95" inputMode="decimal" {...form.field('cost')} />
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <Button variant="ghost" type="button" onClick={() => { onOpenChange(false); }}>
               Annuler
             </Button>
@@ -80,7 +80,7 @@ export function OperationDialog({ equipementId, asOf, open, onOpenChange }: Dial
           <TextField label="Réalisée par" placeholder="Clim Services 75" {...form.field('doneBy')} />
           <TextField label="Périodicité, en mois" placeholder="12" inputMode="numeric" {...form.field('periodicityMonths')} />
           <TextField label="Dernière réalisation" type="date" placeholder="2026-05-20" {...form.field('lastOn')} />
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <Button variant="ghost" type="button" onClick={() => { onOpenChange(false); }}>
               Annuler
             </Button>

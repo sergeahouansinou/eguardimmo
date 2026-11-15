@@ -30,7 +30,7 @@ function Shell({ open, title, count, onClose, children }: Pick<TaskDialogProps, 
 
 function Footer({ pending, label }: { pending: boolean; label: string }) {
   return (
-    <div className="flex justify-end gap-2">
+    <div className="flex flex-wrap justify-end gap-2">
       <DialogClose asChild>
         <Button variant="secondary">Annuler</Button>
       </DialogClose>

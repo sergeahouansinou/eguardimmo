@@ -73,7 +73,7 @@ export function TicketAccessDialog({ ticketId, onGranted }: { ticketId: string; 
             {...(error ? { error } : {})}
           />
           {failure ? <Alert tone="danger" title="Demande impossible">{failure}</Alert> : null}
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <DialogClose asChild>
               <Button variant="secondary">Annuler</Button>
             </DialogClose>

@@ -32,7 +32,7 @@ function Shell({ item, title, onClose, children }: Pick<DialogShellProps, 'item'
 
 function Footer({ pending, label, disabled = false }: { pending: boolean; label: string; disabled?: boolean }) {
   return (
-    <div className="flex justify-end gap-2">
+    <div className="flex flex-wrap justify-end gap-2">
       <DialogClose asChild>
         <Button variant="secondary">Annuler</Button>
       </DialogClose>

@@ -86,7 +86,7 @@ function EditForm({ fields, schema, onSubmit, onCancel, onDone }: EditFormProps)
           onChange={(event) => { setValues((current) => ({ ...current, [field.name]: event.target.value })); }}
         />
       ))}
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
         <Button variant="ghost" onClick={onCancel}>
           Annuler
         </Button>

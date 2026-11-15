@@ -63,7 +63,7 @@ function InventaireForm({ onOpenChange, currency, lots, templates, inventaire }:
       />
       <TextField label="Locataire" placeholder={lot?.tenant?.name ?? 'Nom du locataire, facultatif'} hint="Par défaut, le locataire actuel du bien." {...form.field('tenant')} />
       <TextField label="Valeur du mobilier, €" placeholder="2350" inputMode="decimal" {...form.field('value')} />
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
         <Button variant="ghost" type="button" onClick={() => { onOpenChange(false); }}>
           Annuler
         </Button>

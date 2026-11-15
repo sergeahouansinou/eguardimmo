@@ -73,7 +73,7 @@ function ReadingForm({ onOpenChange, meters, describe, initialMeterId, reading }
       </div>
       <FilePicker label="Joindre une photo du compteur" hint="JPG ou PNG, 10 Mo au maximum, facultatif" accept={['image/jpeg', 'image/png', '.jpg', '.jpeg', '.png']} onPick={(files) => { setPhoto(files[0]?.name ?? null); }} />
       {photo ? <p className="text-body text-fg">{photo}</p> : null}
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
         <Button variant="ghost" type="button" onClick={() => { onOpenChange(false); }}>
           Annuler
         </Button>

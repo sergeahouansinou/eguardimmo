@@ -68,7 +68,7 @@ export function LotsImportDialog({ open, onOpenChange, currency }: { open: boole
               {parsed.rows.length > 3 ? '…' : ''}
             </Alert>
           ) : null}
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <Button variant="ghost" onClick={() => { onOpenChange(false); }}>
               Annuler
             </Button>

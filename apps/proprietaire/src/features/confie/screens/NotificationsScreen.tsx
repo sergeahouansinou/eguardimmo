@@ -64,7 +64,7 @@ function Notifications({ data }: { data: ConfieData }) {
             </li>
           ))}
         </ul>
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex flex-wrap justify-end gap-2 pt-2">
           <Button variant="secondary" disabled={!dirty || save.isPending} onClick={() => { setDraft(data.preferences); }}>Annuler les changements</Button>
           <Button disabled={!dirty} loading={save.isPending} onClick={() => { void submit(); }}>Enregistrer mes préférences</Button>
         </div>

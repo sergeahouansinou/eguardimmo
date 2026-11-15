@@ -2,6 +2,7 @@
 
 Statut : accepté (2026-11-13). Complète l'ADR 0001. Cloisonnement : ADR 0006. Flux financiers : ADR 0007.
 Amendements proposés (2026-11-15) : module Catalog et clé étrangère vers ses référentiels (ADR 0018), module Parties et ses dépendances (ADR 0019).
+Amendements acceptés (2026-11-15) : Messaging → Identity (annuaire des opérateurs) et Messaging → Organizations (appartenance, équipe) ; Recovery → Accounting, Documents, Parties, Leases et Recovery ⇢ RecoveryBundleSent ⇢ Notifications (ADR 0023). Les demandes d'assistance (support) sont des données de plateforme, hors organisation, rattachées au besoin à l'organisation du demandeur.
 
 ## Contexte
 

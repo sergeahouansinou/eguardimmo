@@ -7,6 +7,11 @@ use App\Modules\Identity\Models\PersonalAccessToken;
 use App\Modules\Identity\Models\SocialIdentity;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Models\UserDevice;
+use App\Modules\Messaging\Models\SupportAccessGrant;
+use App\Modules\Messaging\Models\SupportAttachment;
+use App\Modules\Messaging\Models\SupportTicket;
+use App\Modules\Messaging\Models\SupportTicketMessage;
+use App\Modules\Organizations\Models\Organization;
 use App\Shared\Audit\AuditLog;
 use App\Shared\Tenancy\AcrossOrganizations;
 use App\Shared\Tenancy\BelongsToOrganization;
@@ -20,7 +25,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\ServiceProvider;
 
 // Modèles qui n'appartiennent à aucune organisation ; toute autre entrée est une décision d'architecture.
-$horsOrganisation = [User::class, Operator::class, SocialIdentity::class, UserDevice::class, PersonalAccessToken::class];
+$horsOrganisation = [User::class, Operator::class, SocialIdentity::class, UserDevice::class, PersonalAccessToken::class, Organization::class,
+    SupportTicket::class, SupportTicketMessage::class, SupportAttachment::class, SupportAccessGrant::class];
 
 $modules = array_map('basename', glob(__DIR__.'/../../app/Modules/*', GLOB_ONLYDIR) ?: []);
 

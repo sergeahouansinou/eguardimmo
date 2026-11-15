@@ -30,7 +30,7 @@ export function ConfirmDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent title={title} description={description} className="max-w-[440px]">
-        <div className="flex justify-end gap-2 p-4">
+        <div className="flex flex-wrap justify-end gap-2 p-4">
           <DialogClose asChild>
             <Button variant="ghost" data-autofocus>
               {cancelLabel}

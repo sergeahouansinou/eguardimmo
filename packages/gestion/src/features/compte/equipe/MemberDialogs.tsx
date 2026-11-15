@@ -29,7 +29,7 @@ export function RoleDialog({ member, pending, onClose, onSave }: Common & { onSa
             onValueChange={(value) => { setRole(INVITABLE_ROLES.find((candidate) => candidate === value) ?? role); }}
             options={INVITABLE_ROLES.map((value) => ({ value, label: `${ROLE_LABELS[value]} : ${ROLE_SUMMARIES[value]}` }))}
           />
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <DialogClose asChild>
               <Button variant="secondary">Annuler</Button>
             </DialogClose>
@@ -86,7 +86,7 @@ export function ScopeDialog({ member, pending, onClose, onSave }: Common & { onS
               {problem ? <p className="text-caption text-fg-danger">{problem}</p> : null}
             </div>
           ) : null}
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <DialogClose asChild>
               <Button variant="secondary">Annuler</Button>
             </DialogClose>

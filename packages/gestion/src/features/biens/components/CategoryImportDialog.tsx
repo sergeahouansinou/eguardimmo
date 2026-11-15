@@ -41,7 +41,7 @@ export function CategoryImportDialog({ owner, category, title, pickerLabel, open
           <FilePicker label={pickerLabel} hint="PDF, JPG ou PNG, 10 Mo au maximum" accept={['.pdf', '.jpg', '.jpeg', '.png']} onPick={(files) => { setFile(files[0] ?? null); setError(null); }} />
           {file ? <p className="text-body text-fg">{`${file.name} · ${formatBytes(file.sizeBytes)}`}</p> : null}
           {error ? <p role="alert" className="text-caption text-fg-danger">{error}</p> : null}
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <Button variant="ghost" onClick={() => { onOpenChange(false); }}>
               Annuler
             </Button>

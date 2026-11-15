@@ -56,7 +56,7 @@ function AddDialog({ lotId, open, onOpenChange }: { lotId: string; open: boolean
             }}
           />
           <TextField label="Résultat" placeholder="Conforme, aucune anomalie" {...form.field('result')} />
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <Button variant="ghost" type="button" onClick={() => { onOpenChange(false); }}>
               Annuler
             </Button>
@@ -88,7 +88,7 @@ function OrderDialog({ lotId, items, open, onOpenChange }: { lotId: string; item
               onChange={(event) => { setChosen(event.target.checked ? [...chosen, item.id] : chosen.filter((entry) => entry !== item.id)); }}
             />
           ))}
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex flex-wrap justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => { onOpenChange(false); }}>
               Annuler
             </Button>

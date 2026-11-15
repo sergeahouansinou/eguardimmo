@@ -73,7 +73,7 @@ export function DiligenceDialog({
           <TextField label="Description" placeholder="Mise en demeure, recommandé AR" value={libelle} error={errors.libelle} onChange={(event) => { setLibelle(event.target.value); }} />
           <TextField label="Intervenant" placeholder="SCP Agbodjo, commissaire de justice" value={intervenant} error={errors.intervenant} onChange={(event) => { setIntervenant(event.target.value); }} />
           <MoneyField label="Coût, €" value={cout} placeholder="124,50" error={errors.cout} onChange={setCout} />
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <DialogClose asChild>
               <Button variant="ghost">Annuler</Button>
             </DialogClose>

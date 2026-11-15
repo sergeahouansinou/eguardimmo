@@ -557,6 +557,34 @@ importers:
         specifier: 'catalog:'
         version: 5.1.0(@types/node@24.19.2)(jsdom@31.0.1)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0))
 
+  packages/api:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
+    devDependencies:
+      '@eguardimmo/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.19.2
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.5(jiti@2.7.0)
+      jsdom:
+        specifier: 'catalog:'
+        version: 31.0.1
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vite:
+        specifier: 'catalog:'
+        version: 8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)
+      vitest:
+        specifier: 'catalog:'
+        version: 5.1.0(@types/node@24.19.2)(jsdom@31.0.1)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0))
+
   packages/config:
     dependencies:
       eslint-plugin-jsx-a11y:
@@ -590,6 +618,9 @@ importers:
 
   packages/gestion:
     dependencies:
+      '@eguardimmo/api':
+        specifier: workspace:*
+        version: link:../api
       '@eguardimmo/shell':
         specifier: workspace:*
         version: link:../shell
@@ -651,6 +682,9 @@ importers:
 
   packages/messagerie:
     dependencies:
+      '@eguardimmo/api':
+        specifier: workspace:*
+        version: link:../api
       '@eguardimmo/ui':
         specifier: workspace:*
         version: link:../ui

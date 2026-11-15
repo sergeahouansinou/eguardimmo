@@ -47,7 +47,7 @@ export function BillFeesDialog({
         >
           <CommandAlert error={error} />
           <DateField label="À payer avant le" value={echeance} error={message} onChange={setEcheance} />
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <DialogClose asChild>
               <Button variant="ghost">Annuler</Button>
             </DialogClose>

@@ -51,7 +51,7 @@ export function MarkPaidDialog({
           <CommandAlert error={error} />
           <DateField label="Date du paiement" value={date} error={message} onChange={setDate} />
           <Select label="Mode de paiement" placeholder="Choisir un mode" options={options(MODE_LABELS)} value={mode} onValueChange={(value) => { setMode(paymentModeSchema.parse(value)); }} />
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <DialogClose asChild>
               <Button variant="ghost">Annuler</Button>
             </DialogClose>

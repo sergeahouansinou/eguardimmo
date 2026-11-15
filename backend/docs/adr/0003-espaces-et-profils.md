@@ -1,6 +1,7 @@
 # ADR 0003 — Espaces et profils utilisateur
 
 Statut : accepté (2026-11-13), révisé le même jour après revue : espace organisation (ADR 0006), espace propriétaire en consultation, console par jeton (ADR 0004), une application web par espace (ADR 0010), bailleur autonome dans l'application Propriétaire.
+Amendement (2026-11-15) : rôles d'organisation alignés sur les écrans — `owner` (titulaire, créateur, ni retiré ni désactivé ni changé de rôle), `admin`, `manager` (gestionnaire), `accountant` (comptable) ; `agent` abandonné. 2FA exigée pour `owner` et `admin` d'une agence, et pour tous les membres quand l'organisation l'impose. Un non-membre reçoit 404 `organization_not_found` sur `/org/{organization}`, sans distinguer « inexistante » et « interdite ». Les rôles restent des tables liées à `users` par `user_id` (composition), jamais des tables qui en héritent.
 
 ## Contexte
 

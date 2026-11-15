@@ -54,7 +54,7 @@ export function PrepayDialog({
         >
           <CommandAlert error={error} />
           <MoneyField label="Montant remboursé, €" value={montant} onChange={setMontant} error={message} placeholder="10000" />
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <DialogClose asChild>
               <Button variant="ghost">Annuler</Button>
             </DialogClose>

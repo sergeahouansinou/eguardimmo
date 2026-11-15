@@ -74,7 +74,7 @@ export function InviteTenantDialog({ open, onOpenChange }: { open: boolean; onOp
             onValueChange={(value) => { form.setValue('unitId', value); }}
             options={(units.data ?? []).map((unit) => ({ value: unit.id, label: unitFullLabel(unit) }))}
           />
-          <div className="flex justify-end gap-2 pt-1">
+          <div className="flex flex-wrap justify-end gap-2 pt-1">
             <DialogClose asChild>
               <Button variant="ghost">Annuler</Button>
             </DialogClose>

@@ -22,7 +22,7 @@ export function PaymentDialog({ open, onOpenChange, method }: { open: boolean; o
             <DialogClose asChild>
               <Button variant="secondary">Fermer</Button>
             </DialogClose>
-            <Button asChild>
+            <Button asChild className="h-auto! min-h-8 max-w-full py-1.5 text-center whitespace-normal!">
               <a href={PAYMENT_PORTAL_URL} target="_blank" rel="noopener noreferrer">
                 <Icon icon={ExternalLink} />
                 Ouvrir l'espace sécurisé du prestataire

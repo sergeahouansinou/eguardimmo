@@ -5,6 +5,8 @@ export { ReglagesMenuPage } from './reglages/MenuPage';
 export { ReglagesNotificationsPage } from './reglages/NotificationsPage';
 export { EquipePage } from './equipe/EquipePage';
 export { EquipeInvitePage } from './equipe/EquipeInvitePage';
+export { createApiEquipeSource } from './equipe/api';
+export { EquipeSourceProvider } from './equipe/source';
 export { ComptePage } from './compte/ComptePage';
 export { AbonnementPage } from './compte/AbonnementPage';
 export { ExportPage } from './export/ExportPage';

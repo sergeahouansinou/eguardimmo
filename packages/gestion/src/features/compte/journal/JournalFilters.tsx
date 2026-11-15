@@ -44,7 +44,7 @@ function PeriodPicker({ from, to, onChange }: { from: string; to: string; onChan
       <PopoverContent aria-label="Choisir la période" align="start" className="w-72 gap-3 p-3">
         <TextField label="Du" type="date" placeholder="jj/mm/aaaa" value={draftFrom} onChange={(event) => { setDraftFrom(event.target.value); }} />
         <TextField label="Au" type="date" placeholder="jj/mm/aaaa" value={draftTo} error={error} onChange={(event) => { setDraftTo(event.target.value); }} />
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <PopoverClose asChild>
             <Button variant="secondary">Annuler</Button>
           </PopoverClose>

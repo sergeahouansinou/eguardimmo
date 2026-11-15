@@ -82,7 +82,7 @@ export function ImportDialog({
               </ul>
             </Alert>
           ) : null}
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <DialogClose asChild>
               <Button variant="ghost">Annuler</Button>
             </DialogClose>

@@ -67,7 +67,7 @@ function EditForm({ echeance, pending, error, onSubmit }: { echeance: Echeance; 
         <MoneyField label="Montant, €" value={montant} error={errors.montant} onChange={setMontant} />
         <DateField label="Échéance" value={date} error={errors.echeance} onChange={setDate} />
       </div>
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
         <DialogClose asChild>
           <Button variant="ghost">Annuler</Button>
         </DialogClose>

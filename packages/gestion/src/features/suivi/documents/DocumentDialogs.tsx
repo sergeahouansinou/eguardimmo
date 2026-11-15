@@ -111,7 +111,7 @@ function EditForm({
           onValueChange={setBien}
         />
       )}
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
         <DialogClose asChild>
           <Button variant="secondary">Annuler</Button>
         </DialogClose>

@@ -18,7 +18,7 @@ const RECIPIENT = { label: 'Destinataire', placeholder: 'Ex. nom@exemple.com' } 
 
 function Actions({ pending, submitLabel }: { pending: boolean; submitLabel: string }) {
   return (
-    <div className="flex justify-end gap-2">
+    <div className="flex flex-wrap justify-end gap-2">
       <DialogClose asChild>
         <Button variant="secondary">Annuler</Button>
       </DialogClose>

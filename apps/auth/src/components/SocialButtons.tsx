@@ -48,11 +48,11 @@ export function SocialIdentityPicker({
               <Button
                 variant="secondary"
                 disabled={busy}
-                className="h-auto w-full flex-col items-start gap-0 py-2 whitespace-normal"
+                className="h-auto w-full flex-col items-start gap-0 py-2"
                 onClick={() => { onPick(identity.id); }}
               >
-                <span className="text-body-strong">{identity.label}</span>
-                <span className="text-caption font-normal text-fg-subtle">{identity.description}</span>
+                <span className="text-left text-body-strong whitespace-normal">{identity.label}</span>
+                <span className="text-left text-caption font-normal whitespace-normal text-fg-subtle">{identity.description}</span>
               </Button>
             </li>
           ))}

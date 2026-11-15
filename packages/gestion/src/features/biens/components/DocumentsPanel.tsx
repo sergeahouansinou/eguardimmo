@@ -57,7 +57,7 @@ function ImportDialog({ owner, categories, open, onOpenChange, showShare }: { ow
           <Select label="Catégorie" placeholder="Choisir une catégorie" options={categories.map((entry) => ({ value: entry, label: entry }))} value={category} onValueChange={setCategory} />
           {showShare ? <Switch label="Partager avec le locataire" checked={shared} onCheckedChange={setShared} /> : null}
           {error ? <p role="alert" className="text-caption text-fg-danger">{error}</p> : null}
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <Button variant="ghost" onClick={() => { onOpenChange(false); }}>
               Annuler
             </Button>

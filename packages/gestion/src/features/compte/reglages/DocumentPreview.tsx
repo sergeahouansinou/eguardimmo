@@ -70,7 +70,7 @@ export function DocumentPreview({ settings }: { settings: DocumentsSettings }) {
           <div className="overflow-y-auto p-4">
             <DocumentPaper kind={kind} settings={settings} />
           </div>
-          <div className="flex justify-end gap-2 border-t border-line p-4">
+          <div className="flex flex-wrap justify-end gap-2 border-t border-line p-4">
             <DialogClose asChild>
               <Button variant="secondary">Fermer</Button>
             </DialogClose>

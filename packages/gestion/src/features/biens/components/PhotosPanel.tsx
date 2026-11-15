@@ -85,7 +85,7 @@ export function PhotosPanel({ photos, count, pending, onAdd }: PhotosPanelProps)
               onPick={(files) => { setNames((current) => [...new Set([...current, ...files.map((file) => file.name)])]); }}
             />
             {names.length > 0 ? <p className="text-body text-fg">{names.join(', ')}</p> : null}
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-wrap justify-end gap-2">
               <Button variant="ghost" onClick={() => { setAdding(false); setNames([]); }}>
                 Annuler
               </Button>

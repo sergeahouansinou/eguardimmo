@@ -91,7 +91,7 @@ export function PretDialog({
             <MoneyField label="Capital restant dû, € *" value={restantDu} onChange={setRestantDu} error={errors.restantDu} placeholder="132880" />
             <MoneyField label="Intérêts payés cette année, €" value={interets} onChange={setInterets} error={errors.interetsAnnee} placeholder="2918" />
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <DialogClose asChild>
               <Button variant="ghost">Annuler</Button>
             </DialogClose>

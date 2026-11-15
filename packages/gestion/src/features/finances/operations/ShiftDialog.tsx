@@ -46,7 +46,7 @@ export function ShiftDialog({
         >
           <CommandAlert error={error} />
           <DateField label="Nouvelle échéance" value={date} error={message} onChange={setDate} />
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <DialogClose asChild>
               <Button variant="ghost">Annuler</Button>
             </DialogClose>
