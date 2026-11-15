@@ -1,6 +1,7 @@
 import { demoLeaseTerms } from '../locataires/demo';
 import { euros } from '../locataires/kit/money';
-import type { Attestation, Edl, EdlTemplate, Installment, Lease, LeaseExit, LeaseExtras, Reservation } from './schemas';
+import { emptySurvey } from './schemas';
+import type { Attestation, Edl, EdlTemplate, Installment, Lease, LeaseExit, LeaseExtras, Reservation, SurveyRoom } from './schemas';
 
 export const DEMO_ANCHOR_MONTH = '2026-11';
 
@@ -263,7 +264,17 @@ export const demoEdlTemplates: readonly EdlTemplate[] = [
 
 const allRooms = ['Entrée', 'Séjour', 'Cuisine', 'Chambre 1', 'Salle de bains'];
 
-export const demoEdls: readonly Edl[] = [
+const entrySurvey: SurveyRoom[] = emptySurvey(allRooms).map((room) => ({
+  ...room,
+  elements: room.elements.map((element) => {
+    if (room.room === 'Séjour' && element.label === 'Murs') return { ...element, state: 'bon' as const, note: 'Peinture blanche, aucune trace.', photos: ['sejour-murs-1.jpg'] };
+    if (room.room === 'Cuisine' && element.label === 'Équipements') return { ...element, state: 'neuf' as const, note: 'Plaque de cuisson et hotte neuves.', photos: [] };
+    if (room.room === 'Salle de bains' && element.label === 'Équipements') return { ...element, state: 'usage' as const, note: 'Joint de douche légèrement terni.', photos: ['sdb-joint.jpg'] };
+    return { ...element, state: 'bon' as const };
+  }),
+}));
+
+const rawEdls: readonly Omit<Edl, 'survey'>[] = [
   { id: 'edl-2026-004', reference: 'EDL-2026-004', type: 'entree', unitId: 'apt-a1', tenantId: 'koffi-adjovi', date: '2026-04-01', createdOn: '2026-04-01', templateId: 'appartement-standard', status: 'signe', rooms: allRooms, archived: false },
   { id: 'edl-2026-005', reference: 'EDL-2026-005', type: 'sortie', unitId: 'studio-2e', tenantId: 'ibrahim-yao', date: null, createdOn: null, templateId: 'appartement-standard', status: 'a_planifier', rooms: allRooms, archived: false },
   { id: 'edl-2026-006', reference: 'EDL-2026-006', type: 'intermediaire', unitId: 'villa-rdc', tenantId: 'marc-dossou', date: '2026-10-05', createdOn: '2026-10-05', templateId: 'maison-avec-jardin', status: 'brouillon', rooms: allRooms, archived: false },
@@ -272,15 +283,17 @@ export const demoEdls: readonly Edl[] = [
   { id: 'edl-2023-001', reference: 'EDL-2023-001', type: 'sortie', unitId: 'apt-a1', tenantId: 'sarah-mensah', date: '2023-03-15', createdOn: '2023-03-15', templateId: 'appartement-standard', status: 'signe', rooms: allRooms, archived: true },
 ];
 
+export const demoEdls: readonly Edl[] = rawEdls.map((edl) => ({ ...edl, survey: edl.id === 'edl-2026-004' || edl.id === 'edl-2025-011' ? structuredClone(entrySurvey) : [] }));
+
 export const demoReservations: readonly Reservation[] = [
-  { id: 'rs-2026-031', reference: 'RS-2026-031', unitId: 'studio-plage', guest: 'Anna Kowalski', arrival: '2026-11-18', departure: '2026-11-25', amount: euros(630), deposit: euros(300), paid: euros(189), status: 'acompte_recu', optionUntil: null },
-  { id: 'rs-2026-032', reference: 'RS-2026-032', unitId: 'gite-du-lac', guest: 'Famille Mensah', arrival: '2026-12-20', departure: '2027-01-03', amount: euros(2380), deposit: euros(600), paid: euros(714), status: 'solde_a_percevoir', optionUntil: null },
-  { id: 'rs-2026-033', reference: 'RS-2026-033', unitId: 'gite-du-lac', guest: 'Julien Morel', arrival: '2027-01-10', departure: '2027-01-14', amount: euros(720), deposit: euros(600), paid: 0, status: 'option', optionUntil: '2026-11-16' },
-  { id: 'rs-2026-029', reference: 'RS-2026-029', unitId: 'studio-plage', guest: 'Léo Fabre', arrival: '2026-11-10', departure: '2026-11-16', amount: euros(540), deposit: euros(300), paid: euros(540), status: 'confirmee', optionUntil: null },
-  { id: 'rs-2026-024', reference: 'RS-2026-024', unitId: 'gite-du-lac', guest: 'Sophie Aubry', arrival: '2026-10-02', departure: '2026-10-09', amount: euros(1190), deposit: euros(600), paid: euros(1190), status: 'confirmee', optionUntil: null },
-  { id: 'rs-2026-021', reference: 'RS-2026-021', unitId: 'studio-plage', guest: 'Mehdi Benali', arrival: '2026-09-12', departure: '2026-09-19', amount: euros(630), deposit: euros(300), paid: euros(630), status: 'confirmee', optionUntil: null },
-  { id: 'rs-2026-018', reference: 'RS-2026-018', unitId: 'gite-du-lac', guest: 'Famille Roux', arrival: '2026-08-01', departure: '2026-08-15', amount: euros(2520), deposit: euros(600), paid: euros(2520), status: 'confirmee', optionUntil: null },
-  { id: 'rs-2026-025', reference: 'RS-2026-025', unitId: 'studio-plage', guest: 'Clara Weiss', arrival: '2026-10-20', departure: '2026-10-24', amount: euros(360), deposit: euros(300), paid: 0, status: 'annulee', optionUntil: null },
+  { id: 'rs-2026-031', reference: 'RS-2026-031', unitId: 'studio-plage', guest: 'Anna Kowalski', arrival: '2026-11-18', departure: '2026-11-25', amount: euros(630), deposit: euros(300), paid: euros(189), status: 'acompte_recu', optionUntil: null, confirmationSentOn: null, reminderSentOn: null },
+  { id: 'rs-2026-032', reference: 'RS-2026-032', unitId: 'gite-du-lac', guest: 'Famille Mensah', arrival: '2026-12-20', departure: '2027-01-03', amount: euros(2380), deposit: euros(600), paid: euros(714), status: 'solde_a_percevoir', optionUntil: null, confirmationSentOn: null, reminderSentOn: null },
+  { id: 'rs-2026-033', reference: 'RS-2026-033', unitId: 'gite-du-lac', guest: 'Julien Morel', arrival: '2027-01-10', departure: '2027-01-14', amount: euros(720), deposit: euros(600), paid: 0, status: 'option', optionUntil: '2026-11-16', confirmationSentOn: null, reminderSentOn: null },
+  { id: 'rs-2026-029', reference: 'RS-2026-029', unitId: 'studio-plage', guest: 'Léo Fabre', arrival: '2026-11-10', departure: '2026-11-16', amount: euros(540), deposit: euros(300), paid: euros(540), status: 'confirmee', optionUntil: null, confirmationSentOn: null, reminderSentOn: null },
+  { id: 'rs-2026-024', reference: 'RS-2026-024', unitId: 'gite-du-lac', guest: 'Sophie Aubry', arrival: '2026-10-02', departure: '2026-10-09', amount: euros(1190), deposit: euros(600), paid: euros(1190), status: 'confirmee', optionUntil: null, confirmationSentOn: null, reminderSentOn: null },
+  { id: 'rs-2026-021', reference: 'RS-2026-021', unitId: 'studio-plage', guest: 'Mehdi Benali', arrival: '2026-09-12', departure: '2026-09-19', amount: euros(630), deposit: euros(300), paid: euros(630), status: 'confirmee', optionUntil: null, confirmationSentOn: null, reminderSentOn: null },
+  { id: 'rs-2026-018', reference: 'RS-2026-018', unitId: 'gite-du-lac', guest: 'Famille Roux', arrival: '2026-08-01', departure: '2026-08-15', amount: euros(2520), deposit: euros(600), paid: euros(2520), status: 'confirmee', optionUntil: null, confirmationSentOn: null, reminderSentOn: null },
+  { id: 'rs-2026-025', reference: 'RS-2026-025', unitId: 'studio-plage', guest: 'Clara Weiss', arrival: '2026-10-20', departure: '2026-10-24', amount: euros(360), deposit: euros(300), paid: 0, status: 'annulee', optionUntil: null, confirmationSentOn: null, reminderSentOn: null },
 ];
 
 export const demoAttestations: readonly Attestation[] = [

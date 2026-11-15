@@ -141,7 +141,7 @@ function HistoryCard({ history, navigate }: { history: readonly HistoryEntry[]; 
         </h2>
         <span className="text-caption text-fg-subtle">Conservés 12 mois</span>
       </div>
-      <div className="overflow-x-auto">
+      <div className="relative overflow-x-auto">
         <DataTable caption="Derniers rapports générés">
           <thead>
             <tr>

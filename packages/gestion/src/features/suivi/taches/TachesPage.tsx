@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarClock, Eye, Trash2 } from 'lucide-react';
+import { CalendarClock, Eye, Pencil, Trash2, UserPlus } from 'lucide-react';
 import { Badge, Button, Card, Checkbox, Tab, TabList, TabPanel, Tabs, TextField } from '@eguardimmo/ui';
 import {
   ConfirmDialog,
   DataTable,
+  DEMO_TODAY,
   EmptyBlock,
   FilterChip,
   PageHeader,
@@ -18,21 +19,22 @@ import {
 } from '../../outils/kit';
 import type { ScreenProps } from '../../outils/kit';
 import { ALL, ASSIGNEES, bienOptions, bienShort, matchesBien } from '../shared/biens';
+import type { Assignee } from '../shared/biens';
 import { formatFrDate } from '../shared/dates';
 import { usePaging } from '../shared/paging';
 import { nextSort, sortItems } from '../shared/sort';
 import type { SortState } from '../shared/sort';
 import { matchesQuery } from '../shared/text';
-import { BulkBar, FilterSelect, Notice, PaginationBar, RowMenu, selectionLabel, Toolbar } from '../shared/ui';
+import { BulkBar, countLabel, FilterSelect, Notice, PaginationBar, RowMenu, selectionLabel, Toolbar } from '../shared/ui';
 import { compareTasks, defaultOrder, isOverdue, isThisMonth, isThisWeek, lateDays } from './logic';
 import type { SortKey } from './logic';
 import { reminderLabel } from './schemas';
 import type { Task } from './schemas';
+import { AssignTaskDialog, PostponeDialog } from './TaskDialogs';
 import { TaskDetailDialog } from './TaskDetailDialog';
 import { TASKS_KEY, useTasks, useTasksSource } from './source';
 
 type TabKey = 'todo' | 'late' | 'done';
-const POSTPONE_DAYS = 7;
 
 function StateBadge({ task }: { task: Task }) {
   if (task.done) return <Badge tone="success">Terminée</Badge>;
@@ -44,7 +46,7 @@ function StateBadge({ task }: { task: Task }) {
   return <Badge tone="neutral">À faire</Badge>;
 }
 
-export function TachesPage({ Link }: ScreenProps) {
+export function TachesPage({ Link, navigate }: ScreenProps) {
   const query = useTasks();
   const source = useTasksSource();
   const [tab, setTab] = useState<TabKey>('todo');
@@ -57,12 +59,16 @@ export function TachesPage({ Link }: ScreenProps) {
   const [selected, setSelected] = useState<readonly string[]>([]);
   const [toDelete, setToDelete] = useState<Task | null>(null);
   const [detail, setDetail] = useState<Task | null>(null);
+  const [postponing, setPostponing] = useState<readonly Task[] | null>(null);
+  const [assigning, setAssigning] = useState<readonly Task[] | null>(null);
+  const [dialogError, setDialogError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const invalidate = [TASKS_KEY] as const;
   const setDone = useSourceMutation((input: { id: string; done: boolean }) => source.setDone(input.id, input.done), invalidate);
   const complete = useSourceMutation((ids: readonly string[]) => source.complete(ids), invalidate);
-  const postpone = useSourceMutation((ids: readonly string[]) => source.postpone(ids, POSTPONE_DAYS), invalidate);
+  const postpone = useSourceMutation((input: { ids: readonly string[]; dueDate: string }) => source.postponeTo(input.ids, input.dueDate), invalidate);
+  const assign = useSourceMutation((input: { ids: readonly string[]; assignee: Assignee }) => source.assign(input.ids, input.assignee), invalidate);
   const remove = useSourceMutation((id: string) => source.remove(id), invalidate);
   const fail = () => { setError('L’action n’a pas abouti. Réessayez dans un instant.'); };
 
@@ -111,14 +117,36 @@ export function TachesPage({ Link }: ScreenProps) {
       onError: fail,
     });
   };
-  const bulkPostpone = (ids: readonly string[]) => {
-    postpone.mutate(ids, {
-      onSuccess: () => {
-        pushFlash(`Échéance reportée de ${String(POSTPONE_DAYS)} jours pour ${String(ids.length)} tâche${ids.length > 1 ? 's' : ''}.`);
-        setSelected([]);
+  const closeDialogs = () => {
+    setPostponing(null);
+    setAssigning(null);
+    setDialogError(null);
+  };
+  const submitPostpone = (tasks: readonly Task[], dueDate: string) => {
+    postpone.mutate(
+      { ids: tasks.map((task) => task.id), dueDate },
+      {
+        onSuccess: () => {
+          pushFlash(`Échéance reportée au ${formatFrDate(dueDate)} pour ${countLabel(tasks.length, 'tâche')}.`);
+          setSelected([]);
+          closeDialogs();
+        },
+        onError: () => { setDialogError('Réessayez dans un instant.'); },
       },
-      onError: fail,
-    });
+    );
+  };
+  const submitAssign = (tasks: readonly Task[], assignee: Assignee) => {
+    assign.mutate(
+      { ids: tasks.map((task) => task.id), assignee },
+      {
+        onSuccess: () => {
+          pushFlash(`${countLabel(tasks.length, 'tâche')} assignée${tasks.length > 1 ? 's' : ''} à ${assignee}.`);
+          setSelected([]);
+          closeDialogs();
+        },
+        onError: () => { setDialogError('Réessayez dans un instant.'); },
+      },
+    );
   };
   const sortHeader = (key: SortKey, label: string) => (
     <SortTh
@@ -191,9 +219,8 @@ export function TachesPage({ Link }: ScreenProps) {
                 {selectedTasks.some((task) => !task.done) ? (
                   <Button variant="secondary" size="sm" loading={complete.isPending} onClick={bulkComplete}>Marquer terminée</Button>
                 ) : null}
-                <Button variant="ghost" size="sm" loading={postpone.isPending} onClick={() => { bulkPostpone(selectedTasks.map((task) => task.id)); }}>
-                  Reporter
-                </Button>
+                <Button variant="ghost" size="sm" onClick={() => { setPostponing(selectedTasks); }}>Reporter</Button>
+                <Button variant="ghost" size="sm" onClick={() => { setAssigning(selectedTasks); }}>Assigner à</Button>
               </BulkBar>
             ) : null}
             <QueryState query={query} errorTitle="Les tâches n’ont pas pu être chargées" loadingLabel="Chargement des tâches">
@@ -243,13 +270,14 @@ export function TachesPage({ Link }: ScreenProps) {
                               }}
                             />
                           </Th>
+                          <Th className="w-20">Terminée</Th>
                           {sortHeader('title', 'Sujet')}
                           {sortHeader('bien', 'Bien')}
                           {sortHeader('assignee', 'Assignée à')}
                           {sortHeader('dueDate', 'Échéance')}
                           <Th>Rappel</Th>
                           <Th>État</Th>
-                          <Th><span className="sr-only">Actions</span></Th>
+                          <Th className="relative"><span className="sr-only">Actions</span></Th>
                         </tr>
                       </thead>
                       <tbody>
@@ -265,6 +293,14 @@ export function TachesPage({ Link }: ScreenProps) {
                                 }}
                               />
                             </Td>
+                            <Td>
+                              <Checkbox
+                                label={`${task.done ? 'Rouvrir' : 'Terminer'} ${task.title}`}
+                                hideLabel
+                                checked={task.done}
+                                onChange={() => { finish(task, !task.done); }}
+                              />
+                            </Td>
                             <Td strong>{task.title}</Td>
                             <Td>{bienShort(task.bienId)}</Td>
                             <Td>{task.assignee}</Td>
@@ -273,21 +309,15 @@ export function TachesPage({ Link }: ScreenProps) {
                             <Td><StateBadge task={task} /></Td>
                             <Td>
                               <span className="flex items-center justify-end gap-1">
-                                <Button
-                                  variant="link"
-                                  size="sm"
-                                  aria-label={`${task.done ? 'Rouvrir' : 'Terminer'} ${task.title}`}
-                                  onClick={() => { finish(task, !task.done); }}
-                                >
-                                  {task.done ? 'Rouvrir' : 'Terminer'}
-                                </Button>
                                 <RowMenu
                                   label={`Plus d’actions, ${task.title}`}
                                   actions={[
                                     { id: 'detail', label: 'Voir le détail', icon: Eye, onSelect: () => { setDetail(task); } },
+                                    { id: 'edit', label: 'Modifier', icon: Pencil, onSelect: () => { navigate(`/taches/${task.id}/modifier`); } },
                                     ...(task.done
                                       ? []
-                                      : [{ id: 'postpone', label: `Reporter de ${String(POSTPONE_DAYS)} jours`, icon: CalendarClock, onSelect: () => { bulkPostpone([task.id]); } }]),
+                                      : [{ id: 'postpone', label: 'Reporter à une date', icon: CalendarClock, onSelect: () => { setPostponing([task]); } }]),
+                                    { id: 'assign', label: 'Assigner à', icon: UserPlus, onSelect: () => { setAssigning([task]); } },
                                     { id: 'delete', label: 'Supprimer', icon: Trash2, tone: 'danger' as const, separatorBefore: true, onSelect: () => { setToDelete(task); } },
                                   ]}
                                 />
@@ -305,6 +335,23 @@ export function TachesPage({ Link }: ScreenProps) {
           </TabPanel>
         </Tabs>
       </Card>
+      <PostponeDialog
+        open={postponing !== null}
+        count={postponing?.length ?? 0}
+        initialDate={postponing?.length === 1 ? (postponing[0]?.dueDate ?? DEMO_TODAY) : DEMO_TODAY}
+        pending={postpone.isPending}
+        error={dialogError}
+        onClose={closeDialogs}
+        onSubmit={(dueDate) => { if (postponing) submitPostpone(postponing, dueDate); }}
+      />
+      <AssignTaskDialog
+        open={assigning !== null}
+        count={assigning?.length ?? 0}
+        pending={assign.isPending}
+        error={dialogError}
+        onClose={closeDialogs}
+        onSubmit={(assignee) => { if (assigning) submitAssign(assigning, assignee); }}
+      />
       <TaskDetailDialog task={detail} onClose={() => { setDetail(null); }} />
       <ConfirmDialog
         open={toDelete !== null}

@@ -6,6 +6,8 @@ export { BauxPage } from './BauxPage';
 export { EtatLieuxFormPage } from './EtatLieuxFormPage';
 export { EtatLieuxPage } from './EtatLieuxPage';
 export { EtatsLieuxPage } from './EtatsLieuxPage';
+export { ReservationContratPage } from './ReservationContratPage';
+export { ReservationFormPage } from './ReservationFormPage';
 export { ReservationsPage } from './ReservationsPage';
 export { demoAttestationIds, demoEdlIds, demoLeaseIds, demoReservationIds } from './demo';
 export { bauxPaths } from './paths';

@@ -193,7 +193,7 @@ describe('SignatureNewPage', () => {
     await userEvent.type(screen.getByLabelText('Nom du signataire 1'), 'Nadège Sossou');
     await userEvent.type(screen.getByLabelText('E-mail du signataire 1'), 'nadege.sossou@example.com');
     await userEvent.click(screen.getByRole('button', { name: 'Suivant' }));
-    expect(await screen.findByRole('heading', { name: 'Étape 3, Envoi' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Étape 3, Placement' })).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'Envoyer pour signature' }));
     await waitFor(() => { expect(push).toHaveBeenCalledWith('/documents/signatures'); });
     expect((await signaturesOf(sources.courriers)).find((item) => item.id === 'sg-2026-0013')).toMatchObject({

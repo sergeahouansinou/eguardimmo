@@ -1,0 +1,2 @@
+export const PRINT_CSS =
+  '@page{size:A4;margin:0}@media print{html,body{height:auto!important;overflow:visible!important}body *{visibility:hidden;overflow:visible!important}[data-print-root],[data-print-root] *{visibility:visible}[data-print-root]{position:absolute;left:0;top:0;display:block!important;transform:none!important}[data-print-page]{display:flex!important;break-after:page;border:0!important}}';

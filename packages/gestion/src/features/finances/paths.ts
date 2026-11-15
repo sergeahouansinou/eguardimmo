@@ -5,7 +5,7 @@ export const financesPaths = {
   impayes: '/finances/impayes',
   impaye: (echeanceId: string) => `/finances/impayes/${echeanceId}`,
   grandLivre: (echeanceId: string) => `/finances/impayes/${echeanceId}/grand-livre`,
-  relance: (echeanceId: string) => `/finances/impayes/${echeanceId}/relance`,
+  relance: (echeanceId: string, niveau?: 'amiable' | 'seconde' | 'mise_en_demeure') => `/finances/impayes/${echeanceId}/relance${niveau ? `?niveau=${niveau}` : ''}`,
   factures: '/finances/factures',
   nouvelleFacture: '/finances/factures/nouvelle',
   facture: (id: string) => `/finances/factures/${id}`,

@@ -1,4 +1,4 @@
-import { createCollection } from '../../outils/kit';
+import { createCollection, slugify } from '../../outils/kit';
 import { uniqueSlug } from '../shared/ids';
 import type { BienId } from '../shared/biens';
 import { contactInputSchema } from './schemas';
@@ -15,12 +15,9 @@ const make = (
   bienIds: BienId[],
   shared = false,
   archived = false,
+  notes = '',
 ): Contact => ({
-  id: name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, ''),
+  id: slugify(name),
   name,
   subtitle,
   category,
@@ -29,13 +26,14 @@ const make = (
   email,
   bienIds,
   shared,
+  notes,
   archived,
 });
 
 export const demoContacts: readonly Contact[] = [
-  make('Plomberie Sanvi', 'Rodrigue Sanvi', 'artisan', 'plombier', '+33 6 12 40 18 77', 'contact@plomberie-sanvi.example', ['apt-a1', 'apt-b3', 'villa-rdc'], true),
+  make('Plomberie Sanvi', 'Rodrigue Sanvi', 'artisan', 'plombier', '+33 6 12 40 18 77', 'contact@plomberie-sanvi.example', ['apt-a1', 'apt-b3', 'villa-rdc'], true, false, 'Intervient sous 48 h pour les urgences. Devis gratuit au-dessus de 200 €.'),
   make('Peinture Dupont', 'Sylvie Dupont', 'artisan', 'peintre', '+33 6 48 02 61 15', 'devis@peinture-dupont.example', ['residence-du-parc']),
-  make('Cabinet Lefèvre', 'Syndic de copropriété', 'syndic', '', '+33 1 43 55 20 10', 'syndic@cabinet-lefevre.example', ['les-tilleuls']),
+  make('Cabinet Lefèvre', 'Syndic de copropriété', 'syndic', '', '+33 1 43 55 20 10', 'syndic@cabinet-lefevre.example', ['les-tilleuls'], false, false, 'Assemblée générale annuelle en mars. Appeler le matin.'),
   make('Mutuelle Atlantique', 'Contrat PNO 22-48 117', 'assureur', '', '+33 5 56 90 14 22', 'sinistres@mutuelle-atlantique.example', ['apt-a1', 'apt-b3', 'villa-rdc', 'residence-du-parc']),
   make('Hélène Adjovi', 'Garante de Koffi Adjovi', 'garant', '', '+33 6 21 33 09 84', 'helene.adjovi@example.com', ['apt-a1']),
   make('Électricité Hounsou', 'Gaston Hounsou', 'artisan', 'électricien', '+33 6 33 18 72 40', 'contact@electricite-hounsou.example', ['apt-b3', 'villa-rdc']),
@@ -69,6 +67,19 @@ export function createDemoContactsSource(): ContactsSource {
       const input = contactInputSchema.parse(draft);
       const existing = (await items.list()).map((item) => item.id);
       return items.add({ ...input, id: uniqueSlug(input.name, existing, 'contact'), archived: false });
+    },
+    update: async (id, draft) => {
+      const input = contactInputSchema.parse(draft);
+      return items.update(id, input);
+    },
+    importMany: async (drafts) => {
+      const inputs = drafts.map((draft) => contactInputSchema.parse(draft));
+      const existing = (await items.list()).map((item) => item.id);
+      for (const input of inputs) {
+        const id = uniqueSlug(input.name, existing, 'contact');
+        existing.push(id);
+        await items.add({ ...input, id, archived: false });
+      }
     },
     setShared: (id, shared) => items.update(id, { shared }),
     setArchived: (id, archived) => items.update(id, { archived }),

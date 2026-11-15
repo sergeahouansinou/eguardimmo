@@ -6,7 +6,7 @@ import { nextSequence, uniqueSlug } from '../locataires/kit/ids';
 import { createSourceContext } from '../locataires/kit/sourceContext';
 import { demoCourriers, demoNotices, demoReceipts, demoSignatures, demoTemplates } from './demo';
 import { receiptIdOf } from './paths';
-import { courrierInputSchema, signatureInputSchema, templateInputSchema } from './schemas';
+import { courrierInputSchema, defaultSignatureFields, signatureInputSchema, templateInputSchema } from './schemas';
 import type { CourrierStatus } from './schemas';
 
 export interface CourriersSource {
@@ -23,6 +23,8 @@ export interface CourriersSource {
   signatures: () => Promise<unknown>;
   createSignature: (input: unknown) => Promise<unknown>;
   cancelSignature: (id: string) => Promise<unknown>;
+  remindSignature: (id: string) => Promise<unknown>;
+  updateCourrier: (id: string, input: unknown) => Promise<unknown>;
   receipts: () => Promise<unknown>;
   emitReceipts: (month: string) => Promise<unknown>;
   markReceiptSent: (id: string) => Promise<unknown>;
@@ -119,6 +121,30 @@ export function createDemoCourriersSource(): CourriersSource {
           status: 'en_cours',
           createdOn: todayIso(),
           completedOn: null,
+          reminderSentOn: null,
+          fields: values.fields && values.fields.length > 0 ? values.fields : defaultSignatureFields(values.signers.length),
+        }),
+      );
+    },
+    remindSignature: (id) => {
+      const current = signatures.find(id);
+      if (!current) return Promise.reject(new NotFoundError('Signature', id));
+      if (current.status !== 'en_cours') return Promise.reject(new Error('Seule une demande en cours peut être relancée.'));
+      return Promise.resolve(signatures.patch(id, { reminderSentOn: todayIso() }));
+    },
+    updateCourrier: (id, raw) => {
+      const current = courriers.find(id);
+      if (!current) return Promise.reject(new NotFoundError('Courrier', id));
+      if (current.status === 'envoye') return Promise.reject(new Error('Un courrier envoyé ne peut plus être modifié.'));
+      const values = courrierInputSchema.parse(raw);
+      return Promise.resolve(
+        courriers.patch(id, {
+          templateId: values.templateId === '' ? null : values.templateId,
+          tenantId: values.tenantId,
+          unitId: values.unitId === '' ? null : values.unitId,
+          subject: values.subject,
+          body: values.body,
+          channel: values.channel,
         }),
       );
     },

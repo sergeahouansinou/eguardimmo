@@ -178,7 +178,6 @@ export const helpMenu: HelpMenuItem[] = [
 ];
 
 export const accountRoutes = {
-  profiles: '/choix-du-profil',
   account: '/compte',
   security: '/compte/securite',
   subscription: '/compte/abonnement',
@@ -189,7 +188,6 @@ export const accountRoutes = {
   help: '/aide',
   notifications: '/notifications',
   notificationSettings: '/reglages/notifications',
-  signOut: '/deconnexion',
   encaisser: '/finances/encaissements/nouveau',
   depense: '/finances/depenses/nouvelle',
   analytique: '/analytique',
@@ -198,15 +196,12 @@ export const accountRoutes = {
 } as const;
 
 const extraTitles: Record<string, string> = {
-  [accountRoutes.profiles]: 'Choix du profil',
   [accountRoutes.account]: 'Mon compte',
   [accountRoutes.security]: 'Connexion et sécurité',
   [accountRoutes.subscription]: 'Abonnement',
   [accountRoutes.export]: 'Exporter mes données',
   [accountRoutes.journal]: "Journal d'activité",
-  [accountRoutes.notifications]: 'Notifications',
   [accountRoutes.notificationSettings]: 'Réglages des notifications',
-  [accountRoutes.signOut]: 'Déconnexion',
 };
 
 export function plannedScreens(): Map<string, string> {

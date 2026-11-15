@@ -15,7 +15,7 @@ import {
   leaseSchema,
   reservationSchema,
 } from './schemas';
-import type { EdlInput, EdlStatus, ExitStep, LeaseInput, NoticeInput } from './schemas';
+import type { EdlInput, EdlStatus, ExitStep, LeaseInput, NoticeInput, ReservationInput, SurveyRoom } from './schemas';
 import { useBauxSource } from './source';
 import type { ReturnContext } from './source';
 
@@ -148,10 +148,29 @@ export function useSetExitStep(leaseId: string) {
 
 export function useMarkReturned(leaseId: string) {
   const source = useBauxSource();
+  const tenants = useLocatairesSource();
+  const client = useQueryClient();
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: async (context: ReturnContext) => attestationSchema.parse(await source.markReturned(leaseId, context)),
-    onSuccess: invalidate,
+    mutationFn: async (context: ReturnContext) => {
+      const attestation = attestationSchema.parse(await source.markReturned(leaseId, context));
+      const all = z.array(leaseSchema).parse(await source.leases());
+      const closed = all.find((lease) => lease.id === leaseId);
+      if (closed) {
+        const otherLeaseOf = (tenantId: string) =>
+          all.find((lease) => lease.id !== leaseId && lease.tenantIds.includes(tenantId) && (lease.status === 'en_cours' || lease.status === 'preavis' || lease.status === 'a_venir'));
+        await tenants.releaseUnit(closed.unitId, closed.tenantIds.filter((tenantId) => !otherLeaseOf(tenantId)));
+        for (const tenantId of closed.tenantIds) {
+          const other = otherLeaseOf(tenantId);
+          if (other) await tenants.assignTenantUnit([tenantId], other.unitId);
+        }
+      }
+      return attestation;
+    },
+    onSuccess: async () => {
+      await invalidate();
+      await client.invalidateQueries({ queryKey: locatairesKeys.all });
+    },
   });
 }
 
@@ -195,6 +214,58 @@ export function useDeleteEdl() {
   const source = useBauxSource();
   const invalidate = useInvalidate();
   return useMutation({ mutationFn: (id: string) => source.deleteEdl(id), onSuccess: invalidate });
+}
+
+export function useCreateReservation() {
+  const source = useBauxSource();
+  const invalidate = useInvalidate();
+  return useMutation({ mutationFn: async (input: ReservationInput) => reservationSchema.parse(await source.createReservation(input)), onSuccess: invalidate });
+}
+
+export function useUpdateReservation(id: string) {
+  const source = useBauxSource();
+  const invalidate = useInvalidate();
+  return useMutation({ mutationFn: async (input: ReservationInput) => reservationSchema.parse(await source.updateReservation(id, input)), onSuccess: invalidate });
+}
+
+export function useImportReservations() {
+  const source = useBauxSource();
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async (inputs: readonly ReservationInput[]) => z.array(reservationSchema).parse(await source.importReservations(inputs)),
+    onSuccess: invalidate,
+  });
+}
+
+export function useReservationMail() {
+  const source = useBauxSource();
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async ({ id, kind }: { id: string; kind: 'confirmation' | 'rappel' }) =>
+      reservationSchema.parse(kind === 'confirmation' ? await source.sendReservationConfirmation(id) : await source.remindReservation(id)),
+    onSuccess: invalidate,
+  });
+}
+
+export function useReviseRent() {
+  const source = useBauxSource();
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async ({ leaseId, rent }: { leaseId: string; rent: string }) => leaseSchema.parse(await source.reviseRent(leaseId, rent)),
+    onSuccess: invalidate,
+  });
+}
+
+export function useSaveEdlSurvey(id: string) {
+  const source = useBauxSource();
+  const invalidate = useInvalidate();
+  return useMutation({ mutationFn: async (survey: SurveyRoom[]) => edlSchema.parse(await source.saveEdlSurvey(id, survey)), onSuccess: invalidate });
+}
+
+export function usePrepareExitEdl() {
+  const source = useBauxSource();
+  const invalidate = useInvalidate();
+  return useMutation({ mutationFn: async (id: string) => edlSchema.parse(await source.prepareExitEdl(id)), onSuccess: invalidate });
 }
 
 export function useReservationAction() {

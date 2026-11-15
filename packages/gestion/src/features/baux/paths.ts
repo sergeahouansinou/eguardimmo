@@ -10,4 +10,7 @@ export const bauxPaths = {
   edl: (id: string) => `/baux/etats-des-lieux/${id}`,
   editEdl: (id: string) => `/baux/etats-des-lieux/${id}/modifier`,
   reservations: '/baux/reservations',
+  newReservation: '/baux/reservations/nouvelle',
+  editReservation: (id: string) => `/baux/reservations/${id}/modifier`,
+  reservationContract: (id: string) => `/baux/reservations/${id}/contrat`,
 };

@@ -3,13 +3,13 @@
 import { Button, Card, CardTitle, RadioGroup, Select, Textarea, TextField } from '@eguardimmo/ui';
 import type { z } from 'zod';
 import { useLeases } from '../baux/hooks';
-import { useCreateCourrier, useTemplates } from './hooks';
+import { useCourriers, useCreateCourrier, useTemplates, useUpdateCourrier } from './hooks';
 import { activeLeaseOf, templateValues } from './fields';
 import { courriersPaths } from './paths';
 import { CHANNELS, channelLabel, courrierInputSchema, renderTemplate } from './schemas';
-import type { Channel, Template } from './schemas';
+import type { Channel, Courrier, Template } from './schemas';
 import { useTenants, useUnits } from '../locataires/hooks';
-import { ListLoading, LoadError, PageHeader, errorMessage, noticeAfterNavigation, useGestionNavigation, useNotify } from '../locataires/kit';
+import { LinkButton, ListLoading, LoadError, NotFoundPanel, PageHeader, errorMessage, noticeAfterNavigation, useGestionNavigation, useNotify } from '../locataires/kit';
 import { links } from '../locataires/kit/links';
 import { useZodForm } from '../locataires/kit/useZodForm';
 import { tenantNameOf } from '../locataires/schemas';
@@ -20,22 +20,46 @@ type Values = z.input<typeof courrierInputSchema>;
 
 const asChannel = (value: string): Channel => CHANNELS.find((entry) => entry === value) ?? 'email';
 
-export function CourrierFormPage() {
+export function CourrierFormPage({ id }: { id?: string }) {
   const { search } = useGestionNavigation();
+  const courriers = useCourriers();
   const tenants = useTenants();
   const units = useUnits();
   const leases = useLeases();
   const templates = useTemplates();
-  const crumbs = [{ label: 'Accueil', href: links.home }, { label: 'Documents', href: courriersPaths.documents }, { label: 'Courriers', href: courriersPaths.courriers }, { label: 'Nouveau courrier' }];
+  const title = id === undefined ? 'Nouveau courrier' : 'Modifier le courrier';
+  const crumbs = [{ label: 'Accueil', href: links.home }, { label: 'Documents', href: courriersPaths.documents }, { label: 'Courriers', href: courriersPaths.courriers }, { label: title }];
 
-  if (tenants.isError || units.isError || leases.isError || templates.isError) {
-    return (<><PageHeader crumbs={crumbs} title="Nouveau courrier" /><LoadError title="Le formulaire n’a pas pu être chargé" /></>);
+  if (tenants.isError || units.isError || leases.isError || templates.isError || (id !== undefined && courriers.isError)) {
+    return (<><PageHeader crumbs={crumbs} title={title} /><LoadError title="Le formulaire n’a pas pu être chargé" /></>);
   }
-  if (!tenants.data || !units.data || !leases.data || !templates.data) {
-    return (<><PageHeader crumbs={crumbs} title="Nouveau courrier" /><ListLoading label="Chargement du formulaire" /></>);
+  if (!tenants.data || !units.data || !leases.data || !templates.data || (id !== undefined && !courriers.data)) {
+    return (<><PageHeader crumbs={crumbs} title={title} /><ListLoading label="Chargement du formulaire" /></>);
+  }
+  const courrier = id === undefined ? undefined : courriers.data?.find((item) => item.id === id);
+  if (id !== undefined && !courrier) {
+    return (
+      <>
+        <PageHeader crumbs={[...crumbs.slice(0, 3), { label: 'Introuvable' }]} title="Courrier introuvable" />
+        <NotFoundPanel title="Courrier introuvable" description="Il a peut-être été supprimé ou le lien est incorrect." backHref={courriersPaths.courriers} backLabel="Retour aux courriers" />
+      </>
+    );
+  }
+  if (courrier?.status === 'envoye') {
+    return (
+      <>
+        <PageHeader
+          crumbs={crumbs}
+          title={courrier.subject}
+          subtitle="Un courrier envoyé ne peut plus être modifié. Créez un courrier similaire depuis la liste."
+          actions={<LinkButton href={courriersPaths.courrier(courrier.id)}>Voir le courrier</LinkButton>}
+        />
+      </>
+    );
   }
   return (
     <CourrierForm
+      courrier={courrier}
       tenants={tenants.data.filter((tenant) => tenant.status !== 'archive')}
       units={units.data}
       leases={leases.data}
@@ -48,6 +72,7 @@ export function CourrierFormPage() {
 }
 
 function CourrierForm({
+  courrier,
   tenants,
   units,
   leases,
@@ -56,6 +81,7 @@ function CourrierForm({
   presetTenant,
   presetUnit,
 }: {
+  courrier?: Courrier;
   tenants: Tenant[];
   units: Unit[];
   leases: Lease[];
@@ -67,6 +93,9 @@ function CourrierForm({
   const { push } = useGestionNavigation();
   const notify = useNotify();
   const create = useCreateCourrier();
+  const update = useUpdateCourrier(courrier?.id ?? '');
+  const editing = courrier !== undefined;
+  const pending = create.isPending || update.isPending;
 
   const compose = (templateId: string, tenantId: string, unitHint: string): Pick<Values, 'subject' | 'body' | 'unitId'> => {
     const template = templates.find((entry) => entry.id === templateId);
@@ -81,12 +110,12 @@ function CourrierForm({
 
   const startTemplate = templates.some((entry) => entry.id === presetTemplate) ? presetTemplate : '';
   const startTenant = tenants.some((entry) => entry.id === presetTenant) ? presetTenant : '';
-  const form = useZodForm(courrierInputSchema, {
-    templateId: startTemplate,
-    tenantId: startTenant,
-    channel: 'email',
-    ...compose(startTemplate, startTenant, presetUnit),
-  });
+  const form = useZodForm(
+    courrierInputSchema,
+    courrier
+      ? { templateId: courrier.templateId ?? '', tenantId: courrier.tenantId, unitId: courrier.unitId ?? '', channel: courrier.channel, subject: courrier.subject, body: courrier.body }
+      : { templateId: startTemplate, tenantId: startTenant, channel: 'email', ...compose(startTemplate, startTenant, presetUnit) },
+  );
 
   const recompose = (templateId: string, tenantId: string) => {
     const next = compose(templateId, tenantId, '');
@@ -99,8 +128,8 @@ function CourrierForm({
     const values = form.submit();
     if (!values) return;
     try {
-      const saved = await create.mutateAsync({ input: values, status });
-      noticeAfterNavigation({ title: status === 'brouillon' ? 'Brouillon enregistré' : 'Courrier généré', description: saved.reference });
+      const saved = courrier ? await update.mutateAsync(values) : await create.mutateAsync({ input: values, status });
+      noticeAfterNavigation({ title: courrier ? 'Courrier modifié' : status === 'brouillon' ? 'Brouillon enregistré' : 'Courrier généré', description: saved.reference });
       push(courriersPaths.courrier(saved.id));
     } catch (error) {
       notify({ tone: 'danger', title: 'Enregistrement impossible', description: errorMessage(error) });
@@ -112,8 +141,8 @@ function CourrierForm({
   return (
     <form noValidate className="flex flex-col gap-3" onSubmit={(event) => { event.preventDefault(); void save('genere'); }}>
       <PageHeader
-        crumbs={[{ label: 'Accueil', href: links.home }, { label: 'Documents', href: courriersPaths.documents }, { label: 'Courriers', href: courriersPaths.courriers }, { label: 'Nouveau courrier' }]}
-        title="Nouveau courrier"
+        crumbs={[{ label: 'Accueil', href: links.home }, { label: 'Documents', href: courriersPaths.documents }, { label: 'Courriers', href: courriersPaths.courriers }, { label: editing ? 'Modifier le courrier' : 'Nouveau courrier' }]}
+        title={editing ? 'Modifier le courrier' : 'Nouveau courrier'}
         subtitle="Choisissez un modèle et un destinataire, les champs sont remplis automatiquement."
       />
       <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
@@ -175,8 +204,8 @@ function CourrierForm({
       </div>
       <div className="flex flex-wrap justify-end gap-2">
         <Button variant="ghost" onClick={() => { push(courriersPaths.courriers); }}>Annuler</Button>
-        <Button variant="secondary" loading={create.isPending} onClick={() => { void save('brouillon'); }}>Enregistrer en brouillon</Button>
-        <Button type="submit" loading={create.isPending}>Générer le courrier</Button>
+        {editing ? null : <Button variant="secondary" loading={pending} onClick={() => { void save('brouillon'); }}>Enregistrer en brouillon</Button>}
+        <Button type="submit" loading={pending}>{editing ? 'Enregistrer les modifications' : 'Générer le courrier'}</Button>
       </div>
     </form>
   );

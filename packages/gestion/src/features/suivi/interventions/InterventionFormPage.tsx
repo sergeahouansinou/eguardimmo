@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import type { SyntheticEvent } from 'react';
-import { Card, CardTitle, Select, Switch, TextField, Textarea } from '@eguardimmo/ui';
-import { PageHeader, pushFlash, useSourceMutation } from '../../outils/kit';
+import { Button, Card, CardTitle, Select, Switch, TextField, Textarea } from '@eguardimmo/ui';
+import { EmptyBlock, nextId, PageHeader, pushFlash, QueryState, useSourceMutation } from '../../outils/kit';
 import type { ScreenProps } from '../../outils/kit';
-import { bienOptions, INTERVENANTS } from '../shared/biens';
+import { bienOptions } from '../shared/biens';
 import { DropZone } from '../shared/DropZone';
 import { pickFiles } from '../shared/files';
 import type { PickedFile, Rejection } from '../shared/files';
@@ -13,8 +13,10 @@ import { PickedFiles, RejectedFiles } from '../shared/FileList';
 import { fieldErrors, NONE } from '../shared/schemas';
 import type { FieldErrors } from '../shared/schemas';
 import { FieldGrid, FormActions, FormLayout, Notice } from '../shared/ui';
+import { useIntervenantNames } from './hooks';
 import { interventionInputSchema, priorityLabels, PRIORITIES } from './schemas';
-import { INTERVENTIONS_KEY, useInterventionsSource } from './source';
+import type { Intervention, InterventionInput } from './schemas';
+import { INTERVENTIONS_KEY, useInterventions, useInterventionsSource } from './source';
 
 const PHOTO_RULES = {
   extensions: ['jpg', 'jpeg', 'png'],
@@ -23,17 +25,52 @@ const PHOTO_RULES = {
   maxFiles: 10,
 } as const;
 
-export function InterventionFormPage({ Link, navigate }: ScreenProps) {
+export function InterventionFormPage({ Link, navigate, id }: ScreenProps & { id?: string }) {
+  const query = useInterventions();
+  if (id === undefined) return <InterventionForm Link={Link} navigate={navigate} item={null} />;
+  return (
+    <QueryState query={query} errorTitle="L’intervention n’a pas pu être chargée" loadingLabel="Chargement de l’intervention">
+      {(items) => {
+        const item = items.find((candidate) => candidate.id === id);
+        if (!item) {
+          return (
+            <>
+              <PageHeader Link={Link} crumbs={[{ label: 'Interventions', href: '/interventions' }, { label: 'Introuvable' }]} title="Intervention introuvable" />
+              <EmptyBlock
+                title="Intervention introuvable"
+                action={
+                  <Button variant="secondary" size="sm" asChild>
+                    <Link href="/interventions">Retour aux interventions</Link>
+                  </Button>
+                }
+              >
+                Elle a peut-être été supprimée.
+              </EmptyBlock>
+            </>
+          );
+        }
+        return <InterventionForm Link={Link} navigate={navigate} item={item} />;
+      }}
+    </QueryState>
+  );
+}
+
+function InterventionForm({ Link, navigate, item }: Pick<ScreenProps, 'Link' | 'navigate'> & { item: Intervention | null }) {
   const source = useInterventionsSource();
-  const create = useSourceMutation(source.create, [INTERVENTIONS_KEY]);
-  const [subject, setSubject] = useState('');
-  const [bienId, setBienId] = useState('');
-  const [priority, setPriority] = useState('normale');
-  const [dueDate, setDueDate] = useState('');
-  const [intervenant, setIntervenant] = useState(NONE);
-  const [description, setDescription] = useState('');
-  const [notifyTenant, setNotifyTenant] = useState(true);
-  const [photos, setPhotos] = useState<PickedFile[]>([]);
+  const editing = item !== null;
+  const save = useSourceMutation(
+    (draft: InterventionInput) => (item ? source.update(item.id, draft) : source.create(draft)),
+    [INTERVENTIONS_KEY],
+  );
+  const intervenants = useIntervenantNames([item?.intervenant ?? null]);
+  const [subject, setSubject] = useState(item?.subject ?? '');
+  const [bienId, setBienId] = useState<string>(item?.bienId ?? '');
+  const [priority, setPriority] = useState<string>(item?.priority ?? 'normale');
+  const [dueDate, setDueDate] = useState(item?.dueDate ?? '');
+  const [intervenant, setIntervenant] = useState(item?.intervenant ?? NONE);
+  const [description, setDescription] = useState(item?.description ?? '');
+  const [notifyTenant, setNotifyTenant] = useState(item?.notifyTenant ?? true);
+  const [photos, setPhotos] = useState<PickedFile[]>((item?.photos ?? []).map((photo) => ({ id: nextId('fichier'), ...photo })));
   const [rejected, setRejected] = useState<Rejection[]>([]);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [failure, setFailure] = useState<string | null>(null);
@@ -62,12 +99,12 @@ export function InterventionFormPage({ Link, navigate }: ScreenProps) {
       return;
     }
     setErrors({});
-    create.mutate(parsed.data, {
+    save.mutate(parsed.data, {
       onSuccess: () => {
-        pushFlash(`Intervention « ${parsed.data.subject} » créée.`);
-        navigate('/interventions');
+        pushFlash(editing ? `Intervention « ${parsed.data.subject} » modifiée.` : `Intervention « ${parsed.data.subject} » créée.`);
+        navigate(item ? `/interventions/${item.id}` : '/interventions');
       },
-      onError: () => { setFailure('L’intervention n’a pas pu être créée. Réessayez dans un instant.'); },
+      onError: () => { setFailure(editing ? 'L’intervention n’a pas pu être modifiée. Réessayez dans un instant.' : 'L’intervention n’a pas pu être créée. Réessayez dans un instant.'); },
     });
   };
 
@@ -75,8 +112,12 @@ export function InterventionFormPage({ Link, navigate }: ScreenProps) {
     <>
       <PageHeader
         Link={Link}
-        crumbs={[{ label: 'Interventions', href: '/interventions' }, { label: 'Nouvelle intervention' }]}
-        title="Nouvelle intervention"
+        crumbs={
+          item
+            ? [{ label: 'Interventions', href: '/interventions' }, { label: item.subject, href: `/interventions/${item.id}` }, { label: 'Modifier' }]
+            : [{ label: 'Interventions', href: '/interventions' }, { label: 'Nouvelle intervention' }]
+        }
+        title={item ? `Modifier ${item.subject}` : 'Nouvelle intervention'}
         description="Une intervention se rattache à un bien. Le locataire est prévenu à la planification."
       />
       <Notice tone="danger" message={failure} onDismiss={() => { setFailure(null); }} />
@@ -123,7 +164,7 @@ export function InterventionFormPage({ Link, navigate }: ScreenProps) {
                 <Select
                   label="Intervenant"
                   placeholder="À assigner"
-                  options={[{ value: NONE, label: 'À assigner' }, ...INTERVENANTS.map((value) => ({ value, label: value }))]}
+                  options={[{ value: NONE, label: 'À assigner' }, ...intervenants.map((value) => ({ value, label: value }))]}
                   value={intervenant}
                   error={errors.intervenant}
                   onValueChange={setIntervenant}
@@ -159,7 +200,11 @@ export function InterventionFormPage({ Link, navigate }: ScreenProps) {
             </Card>
           }
         />
-        <FormActions onCancel={() => { navigate('/interventions'); }} submitLabel="Créer l’intervention" pending={create.isPending} />
+        <FormActions
+          onCancel={() => { navigate(item ? `/interventions/${item.id}` : '/interventions'); }}
+          submitLabel={editing ? 'Enregistrer les modifications' : 'Créer l’intervention'}
+          pending={save.isPending}
+        />
       </form>
     </>
   );

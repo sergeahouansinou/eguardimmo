@@ -34,6 +34,7 @@ function Frame({ number, pages, visible, generated, children }: { number: number
   return (
     <article
       data-print-page=""
+      data-paper=""
       aria-label={`Page ${String(number)} sur ${String(pages)}`}
       style={{ width: PAPER_WIDTH, height: PAPER_HEIGHT }}
       className={cx(sheet, 'shrink-0', !visible && 'hidden')}

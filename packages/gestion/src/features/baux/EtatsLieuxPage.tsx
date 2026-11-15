@@ -1,6 +1,6 @@
 'use client';
 
-import { Archive, ArchiveRestore, ClipboardList, FileText, Pencil, PenLine, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, ClipboardList, FileText, LogOut, Pencil, PenLine, Printer, Send, Trash2 } from 'lucide-react';
 import {
   Card,
   ConfirmDialog,
@@ -23,6 +23,7 @@ import { useLeaseLookups } from './BauxParts';
 import { EdlStatusBadge } from './EdlParts';
 import { useArchiveEdl, useDeleteEdl, useEdls, useSetEdlStatus } from './hooks';
 import { bauxPaths } from './paths';
+import { useEdlActions } from './useEdlActions';
 import { EDL_TYPES, edlTypeLabel } from './schemas';
 import type { Edl } from './schemas';
 import { ActionMenu, LinkButton, ListLoading, LoadError, PageHeader, SearchInput, errorMessage, useGestionNavigation, useNotify } from '../locataires/kit';
@@ -49,6 +50,7 @@ export function EtatsLieuxPage() {
   const sign = useSetEdlStatus();
   const archive = useArchiveEdl();
   const remove = useDeleteEdl();
+  const { sendForSignature, prepareExitState } = useEdlActions();
   const [type, setType] = useState(ALL);
   const [pendingDelete, setPendingDelete] = useState<Edl | null>(null);
 
@@ -70,6 +72,9 @@ export function EtatsLieuxPage() {
   const actionsFor = (edl: Edl): ActionItem[] => [
     { id: 'open', label: 'Ouvrir', icon: FileText, onSelect: () => { push(bauxPaths.edl(edl.id)); } },
     { id: 'edit', label: 'Modifier', icon: Pencil, disabled: edl.status === 'signe' || edl.archived, onSelect: () => { push(bauxPaths.editEdl(edl.id)); } },
+    { id: 'pdf', label: 'Télécharger le PDF', icon: Printer, onSelect: () => { push(`${bauxPaths.edl(edl.id)}?imprimer=1`); } },
+    { id: 'send', label: 'Envoyer pour signature', icon: Send, disabled: edl.status === 'signe' || edl.archived, onSelect: () => { void sendForSignature(edl); } },
+    { id: 'exit', label: 'Préparer l’état de sortie', icon: LogOut, disabled: edl.type !== 'entree' || edl.archived, onSelect: () => { void prepareExitState(edl); } },
     {
       id: 'sign',
       label: 'Marquer comme signé',

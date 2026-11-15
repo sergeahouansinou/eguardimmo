@@ -74,9 +74,9 @@ export const demoCourriers: readonly Courrier[] = [
 ];
 
 export const demoSignatures: readonly Signature[] = [
-  { id: 'sg-2026-0012', reference: 'SG-2026-0012', title: 'Bail Studio B3, avenant', fileName: 'avenant-studio-b3.pdf', signers: [{ name: 'Yann Le Gall', email: 'yann.legall@example.com', status: 'signe' }, { name: 'SCI Les Tilleuls', email: 'gestion@example.com', status: 'attente' }], status: 'en_cours', createdOn: '2026-11-05', completedOn: null },
-  { id: 'sg-2026-0011', reference: 'SG-2026-0011', title: 'Bail Apt B1', fileName: 'bail-apt-b1.pdf', signers: [{ name: 'Clarisse Hounkpatin', email: 'clarisse.hounkpatin@example.com', status: 'signe' }, { name: 'SCI Les Tilleuls', email: 'gestion@example.com', status: 'signe' }], status: 'signe', createdOn: '2025-08-20', completedOn: '2025-08-24' },
-  { id: 'sg-2026-0010', reference: 'SG-2026-0010', title: 'Mandat de gestion', fileName: 'mandat-gestion.pdf', signers: [{ name: 'Marc Dossou', email: 'marc.dossou@example.com', status: 'attente' }], status: 'annule', createdOn: '2026-09-02', completedOn: null },
+  { id: 'sg-2026-0012', reference: 'SG-2026-0012', title: 'Bail Studio B3, avenant', fileName: 'avenant-studio-b3.pdf', signers: [{ name: 'Yann Le Gall', email: 'yann.legall@example.com', status: 'signe' }, { name: 'SCI Les Tilleuls', email: 'gestion@example.com', status: 'attente' }], status: 'en_cours', createdOn: '2026-11-05', completedOn: null, reminderSentOn: null, fields: [{ signer: 0, page: 3, x: 20, y: 85 }, { signer: 1, page: 3, x: 80, y: 85 }] },
+  { id: 'sg-2026-0011', reference: 'SG-2026-0011', title: 'Bail Apt B1', fileName: 'bail-apt-b1.pdf', signers: [{ name: 'Clarisse Hounkpatin', email: 'clarisse.hounkpatin@example.com', status: 'signe' }, { name: 'SCI Les Tilleuls', email: 'gestion@example.com', status: 'signe' }], status: 'signe', createdOn: '2025-08-20', completedOn: '2025-08-24', reminderSentOn: null, fields: [{ signer: 0, page: 3, x: 20, y: 85 }, { signer: 1, page: 3, x: 80, y: 85 }] },
+  { id: 'sg-2026-0010', reference: 'SG-2026-0010', title: 'Mandat de gestion', fileName: 'mandat-gestion.pdf', signers: [{ name: 'Marc Dossou', email: 'marc.dossou@example.com', status: 'attente' }], status: 'annule', createdOn: '2026-09-02', completedOn: null, reminderSentOn: null, fields: [{ signer: 0, page: 3, x: 70, y: 85 }] },
 ];
 
 const activeLeases = demoLeases.filter((lease) => lease.status === 'en_cours' || lease.status === 'preavis');

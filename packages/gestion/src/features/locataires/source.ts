@@ -23,6 +23,7 @@ export interface LocatairesSource {
   setCandidateStatus: (id: string, status: CandidateStatus) => Promise<unknown>;
   convertCandidate: (id: string) => Promise<unknown>;
   assignTenantUnit: (tenantIds: readonly string[], unitId: string) => Promise<void>;
+  releaseUnit: (unitId: string, archiveTenantIds: readonly string[]) => Promise<void>;
 }
 
 
@@ -192,6 +193,15 @@ export function createDemoLocatairesSource(): LocatairesSource {
         tenants.patch(tenantId, { unitId, status: tenant.status === 'invite' ? 'actif' : tenant.status, state: tenant.status === 'invite' ? 'a_jour' : tenant.state });
       }
       units.patch(unitId, { vacant: false });
+      return Promise.resolve();
+    },
+    releaseUnit: (unitId, archiveTenantIds) => {
+      if (!units.find(unitId)) return Promise.reject(new NotFoundError('Bien', unitId));
+      for (const tenantId of archiveTenantIds) {
+        requireTenant(tenantId);
+        tenants.patch(tenantId, { unitId: null, status: 'archive', state: 'a_jour', portalActive: false });
+      }
+      units.patch(unitId, { vacant: true });
       return Promise.resolve();
     },
     candidates: () => Promise.resolve(candidates.all()),

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Archive, ArchiveRestore, Eye, EyeOff, Mail, Phone, Share2, Trash2, Wrench } from 'lucide-react';
+import { Archive, ArchiveRestore, Eye, EyeOff, Mail, Pencil, Phone, Share2, Trash2, Wrench } from 'lucide-react';
 import { Avatar, Badge, Button, Card, Tab, TabList, TabPanel, Tabs, TextField } from '@eguardimmo/ui';
 import {
   ConfirmDialog,
@@ -25,10 +25,11 @@ import type { SortState } from '../shared/sort';
 import { matchesQuery } from '../shared/text';
 import { FilterSelect, Notice, PaginationBar, RowMenu, Toolbar } from '../shared/ui';
 import type { RowAction } from '../shared/ui';
+import { ContactImportDialog } from './ContactImportDialog';
 import { biensLabel, compareContacts, initialsOf, matchesBienFilter } from './logic';
 import type { SortKey } from './logic';
 import { CATEGORIES, categoryTabLabels, categoryText } from './schemas';
-import type { Category, Contact } from './schemas';
+import type { Category, Contact, ContactInput } from './schemas';
 import { CONTACTS_KEY, useContacts, useContactsSource } from './source';
 
 type TabKey = 'tous' | Category | 'archives';
@@ -43,12 +44,15 @@ export function ContactsPage({ Link, navigate }: ScreenProps) {
   const [share, setShare] = useState<ShareFilter>('tous');
   const [sort, setSort] = useState<SortState<SortKey>>({ key: null, direction: 'asc' });
   const [toDelete, setToDelete] = useState<Contact | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const invalidate = [CONTACTS_KEY] as const;
   const setShared = useSourceMutation((input: { id: string; shared: boolean }) => source.setShared(input.id, input.shared), invalidate);
   const setArchived = useSourceMutation((input: { id: string; archived: boolean }) => source.setArchived(input.id, input.archived), invalidate);
   const remove = useSourceMutation((id: string) => source.remove(id), invalidate);
+  const importMany = useSourceMutation((drafts: readonly ContactInput[]) => source.importMany(drafts), invalidate);
   const fail = () => { setError('L’action n’a pas abouti. Réessayez dans un instant.'); };
 
   const all = query.data ?? [];
@@ -107,7 +111,7 @@ export function ContactsPage({ Link, navigate }: ScreenProps) {
   };
 
   const actionsFor = (contact: Contact): RowAction[] => {
-    const actions: RowAction[] = [];
+    const actions: RowAction[] = [{ id: 'edit', label: 'Modifier', icon: Pencil, onSelect: () => { navigate(`/contacts/${contact.id}/modifier`); } }];
     if (contact.phone !== '') actions.push({ id: 'call', label: 'Appeler', icon: Phone, onSelect: () => { openExternal(`tel:${contact.phone.replace(/[^+\d]/g, '')}`); } });
     if (contact.email !== '') actions.push({ id: 'mail', label: 'Envoyer un e-mail', icon: Mail, onSelect: () => { openExternal(`mailto:${contact.email}`); } });
     actions.push({
@@ -136,9 +140,12 @@ export function ContactsPage({ Link, navigate }: ScreenProps) {
         title="Carnet de contacts"
         description="Artisans, syndics, assureurs et garants. Un contact partagé est visible par les locataires du bien."
         actions={
-          <Button asChild>
-            <Link href="/contacts/nouveau">Nouveau contact</Link>
-          </Button>
+          <>
+            <Button variant="ghost" onClick={() => { setImporting(true); }}>Importer</Button>
+            <Button asChild>
+              <Link href="/contacts/nouveau">Nouveau contact</Link>
+            </Button>
+          </>
         }
       />
       <Notice tone="danger" message={error} onDismiss={() => { setError(null); }} />
@@ -213,7 +220,7 @@ export function ContactsPage({ Link, navigate }: ScreenProps) {
                           <Th>E-mail</Th>
                           <Th>Biens</Th>
                           <Th>Partage</Th>
-                          <Th><span className="sr-only">Actions</span></Th>
+                          <Th className="relative"><span className="sr-only">Actions</span></Th>
                         </tr>
                       </thead>
                       <tbody>
@@ -258,6 +265,23 @@ export function ContactsPage({ Link, navigate }: ScreenProps) {
           </TabPanel>
         </Tabs>
       </Card>
+      <ContactImportDialog
+        key={importing ? 'ouvert' : 'ferme'}
+        open={importing}
+        pending={importMany.isPending}
+        error={importError}
+        onClose={() => { setImporting(false); setImportError(null); }}
+        onImport={(drafts) => {
+          setImportError(null);
+          importMany.mutate(drafts, {
+            onSuccess: () => {
+              pushFlash(`${String(drafts.length)} contact${drafts.length > 1 ? 's' : ''} importé${drafts.length > 1 ? 's' : ''} dans le carnet.`);
+              setImporting(false);
+            },
+            onError: () => { setImportError('Aucun contact n’a été créé. Réessayez dans un instant.'); },
+          });
+        }}
+      />
       <ConfirmDialog
         open={toDelete !== null}
         onOpenChange={(open) => { if (!open) setToDelete(null); }}

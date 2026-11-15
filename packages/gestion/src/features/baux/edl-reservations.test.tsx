@@ -80,14 +80,14 @@ describe('EtatsLieuxPage', () => {
 describe('EtatLieuxFormPage', () => {
   it('exige le bien avant de créer', async () => {
     const { push } = renderLot(<EtatLieuxFormPage />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Planifier la visite' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Créer et commencer le relevé' }));
     expect(await screen.findByText('Choisissez le bien')).toBeTruthy();
     expect(push).not.toHaveBeenCalled();
   });
 
   it('crée un état des lieux planifié et reprend le locataire du bail en cours', async () => {
     const { sources, push } = renderLot(<EtatLieuxFormPage />, { search: 'bien=apt-a1' });
-    await userEvent.click(await screen.findByRole('button', { name: 'Planifier la visite' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Créer et commencer le relevé' }));
     await waitFor(() => { expect(push).toHaveBeenCalledWith('/baux/etats-des-lieux/edl-2026-008'); });
     const created = (await edlsOf(sources.baux)).find((edl) => edl.id === 'edl-2026-008');
     expect(created).toMatchObject({ status: 'prevu', unitId: 'apt-a1', date: '2026-11-13', rooms: ['Entrée', 'Séjour'] });
@@ -104,7 +104,7 @@ describe('EtatLieuxFormPage', () => {
     renderLot(<EtatLieuxFormPage />, { search: 'bien=apt-a1' });
     await userEvent.click(await screen.findByRole('checkbox', { name: 'Entrée' }));
     await userEvent.click(screen.getByRole('checkbox', { name: 'Séjour' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Planifier la visite' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Créer et commencer le relevé' }));
     expect(await screen.findByText('Contrôlez au moins une pièce')).toBeTruthy();
   });
 

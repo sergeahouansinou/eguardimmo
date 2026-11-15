@@ -15,8 +15,8 @@ import {
   demoLeases,
   demoReservations,
 } from './demo';
-import { edlInputSchema, leaseInputSchema, noticeInputSchema } from './schemas';
-import type { Attestation, EdlStatus, ExitStep, Lease, LeaseExit, LeaseStatus } from './schemas';
+import { edlInputSchema, emptySurvey, leaseInputSchema, noticeInputSchema, reservationInputSchema, surveyInputSchema } from './schemas';
+import type { Attestation, EdlStatus, ExitStep, Lease, LeaseExit, LeaseStatus, Reservation, ReservationInput } from './schemas';
 
 export interface ReturnContext {
   tenantName: string;
@@ -46,6 +46,14 @@ export interface BauxSource {
   confirmReservation: (id: string) => Promise<unknown>;
   cancelReservation: (id: string) => Promise<unknown>;
   duplicateReservation: (id: string) => Promise<unknown>;
+  createReservation: (input: unknown) => Promise<unknown>;
+  updateReservation: (id: string, input: unknown) => Promise<unknown>;
+  importReservations: (inputs: unknown) => Promise<unknown>;
+  sendReservationConfirmation: (id: string) => Promise<unknown>;
+  remindReservation: (id: string) => Promise<unknown>;
+  reviseRent: (leaseId: string, rent: string) => Promise<unknown>;
+  saveEdlSurvey: (id: string, survey: unknown) => Promise<unknown>;
+  prepareExitEdl: (id: string) => Promise<unknown>;
   attestations: () => Promise<unknown>;
 }
 
@@ -78,6 +86,29 @@ function findOverlap(all: readonly Lease[], fields: Pick<Lease, 'unitId' | 'star
   return all.find(
     (other) => other.id !== selfId && other.unitId === fields.unitId && (other.status === 'en_cours' || other.status === 'preavis') && other.end >= fields.start && other.start <= fields.end,
   );
+}
+
+function reservationFields(values: ReservationInput): Pick<Reservation, 'unitId' | 'guest' | 'arrival' | 'departure' | 'amount' | 'deposit' | 'paid' | 'status' | 'optionUntil'> {
+  const amount = parseEuros(values.amount);
+  const paid = parseEuros(values.paid);
+  let status: Reservation['status'] = 'confirmee';
+  if (values.mode === 'option') status = 'option';
+  else if (paid > 0 && paid < amount) status = 'acompte_recu';
+  return {
+    unitId: values.unitId,
+    guest: values.guest,
+    arrival: values.arrival,
+    departure: values.departure,
+    amount,
+    deposit: parseEuros(values.deposit),
+    paid,
+    status,
+    optionUntil: values.mode === 'option' ? values.optionUntil : null,
+  };
+}
+
+function findReservationOverlap(all: readonly Reservation[], fields: Pick<Reservation, 'unitId' | 'arrival' | 'departure'>, selfId?: string): Reservation | undefined {
+  return all.find((other) => other.id !== selfId && other.status !== 'annulee' && other.unitId === fields.unitId && other.arrival < fields.departure && other.departure > fields.arrival);
 }
 
 export function createDemoBauxSource(): BauxSource {
@@ -295,6 +326,7 @@ export function createDemoBauxSource(): BauxSource {
           templateId: values.templateId,
           status: asDraft ? 'brouillon' : 'prevu',
           rooms: values.rooms,
+          survey: emptySurvey(values.rooms),
           archived: false,
         }),
       );
@@ -312,6 +344,7 @@ export function createDemoBauxSource(): BauxSource {
           date: values.date,
           templateId: values.templateId,
           rooms: values.rooms,
+          survey: values.rooms.map((room) => current.survey.find((entry) => entry.room === room) ?? emptySurvey([room])[0] ?? { room, elements: [] }),
         }),
       );
     },
@@ -356,7 +389,85 @@ export function createDemoBauxSource(): BauxSource {
           paid: 0,
           status: 'option',
           optionUntil: addDays(todayIso(), 7),
+          confirmationSentOn: null,
+          reminderSentOn: null,
         }),
+      );
+    },
+    createReservation: (raw) => {
+      const fields = reservationFields(reservationInputSchema.parse(raw));
+      const all = reservations.all();
+      const overlapping = findReservationOverlap(all, fields);
+      if (overlapping) return Promise.reject(new Error(`Ce bien est déjà réservé sur ces dates (${overlapping.reference}).`));
+      const reference = nextSequence(all.map((entry) => entry.reference), 'RS', Number(todayIso().slice(0, 4)), 3);
+      return Promise.resolve(reservations.add({ id: reference.toLowerCase(), reference, ...fields, confirmationSentOn: null, reminderSentOn: null }));
+    },
+    updateReservation: (id, raw) => {
+      const current = reservations.find(id);
+      if (!current) return Promise.reject(new NotFoundError('Réservation', id));
+      if (current.status === 'annulee') return Promise.reject(new Error('Une réservation annulée ne peut plus être modifiée.'));
+      const fields = reservationFields(reservationInputSchema.parse(raw));
+      const overlapping = findReservationOverlap(reservations.all(), fields, id);
+      if (overlapping) return Promise.reject(new Error(`Ce bien est déjà réservé sur ces dates (${overlapping.reference}).`));
+      return Promise.resolve(reservations.patch(id, fields));
+    },
+    importReservations: (raw) => {
+      const rows = reservationInputSchema.array().min(1, 'Aucune réservation à importer.').parse(raw);
+      const staged = reservations.all();
+      const year = Number(todayIso().slice(0, 4));
+      const created: Reservation[] = [];
+      for (const [index, row] of rows.entries()) {
+        const fields = reservationFields(row);
+        const overlapping = findReservationOverlap([...staged, ...created], fields);
+        if (overlapping) return Promise.reject(new Error(`Ligne ${String(index + 1)} : ce bien est déjà réservé sur ces dates (${overlapping.reference}).`));
+        const reference = nextSequence([...staged, ...created].map((entry) => entry.reference), 'RS', year, 3);
+        created.push({ id: reference.toLowerCase(), reference, ...fields, confirmationSentOn: null, reminderSentOn: null });
+      }
+      return Promise.resolve(created.map((entry) => reservations.add(entry)));
+    },
+    sendReservationConfirmation: (id) => {
+      const current = reservations.find(id);
+      if (!current) return Promise.reject(new NotFoundError('Réservation', id));
+      if (current.status === 'annulee') return Promise.reject(new Error('Une réservation annulée ne se confirme pas.'));
+      if (current.status === 'option') return Promise.reject(new Error('Confirmez d’abord l’option avant d’envoyer la confirmation.'));
+      return Promise.resolve(reservations.patch(id, { confirmationSentOn: todayIso() }));
+    },
+    remindReservation: (id) => {
+      const current = reservations.find(id);
+      if (!current) return Promise.reject(new NotFoundError('Réservation', id));
+      if (current.status === 'annulee') return Promise.reject(new Error('Une réservation annulée ne se relance pas.'));
+      if (current.paid >= current.amount) return Promise.reject(new Error('Cette réservation est soldée : aucune relance à envoyer.'));
+      return Promise.resolve(reservations.patch(id, { reminderSentOn: todayIso() }));
+    },
+    reviseRent: (leaseId, rentText) => {
+      const lease = requireLease(leaseId);
+      if (lease.status === 'termine' || lease.status === 'brouillon') return Promise.reject(new Error('Seul un bail en cours ou à venir peut être révisé.'));
+      if (!/^\d+([.,]\d{1,2})?$/.test(rentText.trim()) || parseEuros(rentText) <= 0) return Promise.reject(new Error('Indiquez le nouveau loyer, ex. 865 ou 865,50.'));
+      const rent = parseEuros(rentText);
+      if (rent === lease.rent) return Promise.reject(new Error('Le nouveau loyer est identique au loyer actuel.'));
+      return Promise.resolve(leases.patch(leaseId, { rent, nextRevision: lease.nextRevision ? addMonths(lease.nextRevision, 12) : addMonths(todayIso(), 12) }));
+    },
+    saveEdlSurvey: (id, raw) => {
+      const current = edls.find(id);
+      if (!current) return Promise.reject(new NotFoundError('État des lieux', id));
+      if (current.status === 'signe') return Promise.reject(new Error('Un état des lieux signé ne peut plus être modifié.'));
+      const survey = surveyInputSchema.safeParse(raw);
+      if (!survey.success) return Promise.reject(new Error(survey.error.issues[0]?.message ?? 'Relevé invalide.'));
+      const unknownRoom = survey.data.find((entry) => !current.rooms.includes(entry.room));
+      if (unknownRoom) return Promise.reject(new Error(`La pièce « ${unknownRoom.room} » n’est pas contrôlée dans cet état des lieux.`));
+      return Promise.resolve(edls.patch(id, { survey: survey.data }));
+    },
+    prepareExitEdl: (id) => {
+      const entry = edls.find(id);
+      if (!entry) return Promise.reject(new NotFoundError('État des lieux', id));
+      if (entry.type !== 'entree') return Promise.reject(new Error('L’état de sortie se prépare à partir de l’état d’entrée.'));
+      const all = edls.all();
+      if (all.some((other) => other.type === 'sortie' && other.unitId === entry.unitId && !other.archived && other.status !== 'signe')) {
+        return Promise.reject(new Error('Un état des lieux de sortie est déjà prévu pour ce bien.'));
+      }
+      const reference = nextSequence(all.map((other) => other.reference), 'EDL', Number(todayIso().slice(0, 4)), 3);
+      return Promise.resolve(
+        edls.add({ id: reference.toLowerCase(), reference, type: 'sortie', unitId: entry.unitId, tenantId: entry.tenantId, date: null, createdOn: todayIso(), templateId: entry.templateId, status: 'a_planifier', rooms: entry.rooms, survey: emptySurvey(entry.rooms), archived: false }),
       );
     },
     attestations: () => Promise.resolve(attestations.all()),

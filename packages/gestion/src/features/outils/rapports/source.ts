@@ -2,12 +2,15 @@
 
 import { createSourceContext, nextId, useScreenQuery, useSourceMutation } from '../kit';
 import { createDemoLoyers, createDemoOverview } from './demo';
+import { createDemoReportsData } from './engine/demoData';
+import { reportsDataSchema } from './engine/data';
 import { emailFormSchema, loyersDataSchema, overviewSchema, scheduleFormSchema } from './schemas';
 import type { EmailInput, Overview, ScheduleInput } from './schemas';
 
 export interface RapportsSource {
   loadOverview: () => Promise<unknown>;
   loadLoyers: () => Promise<unknown>;
+  loadReportsData: () => Promise<unknown>;
   toggleFavorite: (slug: string) => Promise<void>;
   addSchedule: (input: ScheduleInput) => Promise<void>;
   removeSchedule: (id: string) => Promise<void>;
@@ -19,9 +22,11 @@ const NEXT_RUN = { weekly: '2026-11-20', monthly: '2026-12-01', quarterly: '2027
 export function createDemoRapportsSource(): RapportsSource {
   let overview: Overview = createDemoOverview();
   const loyers = createDemoLoyers();
+  const reports = createDemoReportsData();
   return {
     loadOverview: () => Promise.resolve(structuredClone(overview)),
     loadLoyers: () => Promise.resolve(structuredClone(loyers)),
+    loadReportsData: () => Promise.resolve(structuredClone(reports)),
     toggleFavorite: (slug) => {
       const favorites = overview.favorites.includes(slug) ? overview.favorites.filter((item) => item !== slug) : [...overview.favorites, slug];
       overview = { ...overview, favorites };
@@ -52,6 +57,7 @@ export const resetRapportsSource = context.resetDefault;
 
 export const OVERVIEW_KEY = ['outils', 'rapports', 'overview'] as const;
 export const LOYERS_KEY = ['outils', 'rapports', 'loyers'] as const;
+export const REPORTS_KEY = ['outils', 'rapports', 'donnees'] as const;
 
 export function useOverview() {
   const source = useRapportsSource();
@@ -61,6 +67,11 @@ export function useOverview() {
 export function useLoyersData() {
   const source = useRapportsSource();
   return useScreenQuery(LOYERS_KEY, () => source.loadLoyers(), loyersDataSchema);
+}
+
+export function useReportsData() {
+  const source = useRapportsSource();
+  return useScreenQuery(REPORTS_KEY, () => source.loadReportsData(), reportsDataSchema);
 }
 
 export function useToggleFavorite() {

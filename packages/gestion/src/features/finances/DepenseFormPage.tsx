@@ -26,7 +26,20 @@ const schema = z.object({
 
 const fold = (text: string) => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-export function DepenseFormPage({ Link, navigate, depenseId = null, ligneBancaireId = null }: ScreenProps & { depenseId?: string | null; ligneBancaireId?: string | null }) {
+export interface DepenseSuggestion {
+  bien: string;
+  fournisseur: string;
+  montant: string;
+  description: string;
+}
+
+export function DepenseFormPage({
+  Link,
+  navigate,
+  depenseId = null,
+  ligneBancaireId = null,
+  suggestion = null,
+}: ScreenProps & { depenseId?: string | null; ligneBancaireId?: string | null; suggestion?: DepenseSuggestion | null }) {
   const query = useFinances();
   return (
     <>
@@ -41,25 +54,27 @@ export function DepenseFormPage({ Link, navigate, depenseId = null, ligneBancair
           const existing = depenseId ? data.depenses.find((item) => item.id === depenseId) : undefined;
           const ligne = ligneBancaireId ? data.lignesBancaires.find((item) => item.id === ligneBancaireId) : undefined;
           if ((depenseId && !existing) || (ligneBancaireId && !ligne)) return <NotFoundBlock Link={Link} title={depenseId ? 'Dépense introuvable' : 'Opération bancaire introuvable'} backHref={FINANCES_ROUTES.operations} backLabel="Retour aux finances" />;
-          return <DepenseForm data={data} navigate={navigate} Link={Link} existing={existing} ligneId={ligne?.id ?? null} prefill={ligne ? { date: ligne.date, montant: Math.abs(ligne.montant), libelle: ligne.libelle } : null} />;
+          return <DepenseForm data={data} navigate={navigate} Link={Link} existing={existing} suggestion={existing || ligne ? null : suggestion} ligneId={ligne?.id ?? null} prefill={ligne ? { date: ligne.date, montant: Math.abs(ligne.montant), libelle: ligne.libelle } : null} />;
         }}
       </QueryGate>
     </>
   );
 }
 
-function DepenseForm({ data, navigate, existing, ligneId, prefill }: ScreenProps & { data: FinancesData; existing: Depense | undefined; ligneId: string | null; prefill: { date: string; montant: number; libelle: string } | null }) {
+function DepenseForm({ data, navigate, existing, ligneId, prefill, suggestion }: ScreenProps & { data: FinancesData; existing: Depense | undefined; ligneId: string | null; suggestion: DepenseSuggestion | null; prefill: { date: string; montant: number; libelle: string } | null }) {
   const exec = useExec({ navigate });
   const requestKey = useRef(newRequestKey());
   const guess = prefill ? data.fournisseurs.find((name) => fold(prefill.libelle).includes(fold(name).split(' ')[0] ?? '')) : undefined;
   const known = existing ? data.fournisseurs.includes(existing.fournisseur) : true;
-  const [bien, setBien] = useState(existing?.bien ?? '');
+  const suggested = suggestion?.fournisseur ?? '';
+  const suggestedKnown = data.fournisseurs.includes(suggested);
+  const [bien, setBien] = useState(existing?.bien ?? suggestion?.bien ?? '');
   const [type, setType] = useState<ExpenseType>(existing?.type ?? 'reparation');
   const [date, setDate] = useState(existing?.date ?? prefill?.date ?? data.today);
-  const [montant, setMontant] = useState(existing ? formatMoneyInput(existing.montantTtc) : prefill ? formatMoneyInput(prefill.montant) : '');
-  const [fournisseur, setFournisseur] = useState(existing ? (known ? existing.fournisseur : OTHER) : (guess ?? ''));
-  const [autre, setAutre] = useState(existing && !known ? existing.fournisseur : '');
-  const [description, setDescription] = useState(existing?.description ?? '');
+  const [montant, setMontant] = useState(existing ? formatMoneyInput(existing.montantTtc) : prefill ? formatMoneyInput(prefill.montant) : (suggestion?.montant ?? ''));
+  const [fournisseur, setFournisseur] = useState(existing ? (known ? existing.fournisseur : OTHER) : suggested !== '' ? (suggestedKnown ? suggested : OTHER) : (guess ?? ''));
+  const [autre, setAutre] = useState(existing && !known ? existing.fournisseur : suggested !== '' && !suggestedKnown ? suggested : '');
+  const [description, setDescription] = useState(existing?.description ?? suggestion?.description ?? '');
   const [numeroFacture, setNumeroFacture] = useState(existing?.numeroFacture ?? '');
   const [deductible, setDeductible] = useState(existing?.deductible ?? true);
   const [recuperable, setRecuperable] = useState(existing?.recuperable ?? false);
@@ -67,7 +82,7 @@ function DepenseForm({ data, navigate, existing, ligneId, prefill }: ScreenProps
   const [justificatif, setJustificatif] = useState<string | null>(existing?.justificatif ?? null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const biens = [...new Set([...data.baux.map(bienLabel), ...data.depenses.map((item) => item.bien)])].sort((a, b) => a.localeCompare(b, 'fr'));
+  const biens = [...new Set([...data.baux.map(bienLabel), ...data.depenses.map((item) => item.bien), ...(suggestion?.bien ? [suggestion.bien] : [])])].sort((a, b) => a.localeCompare(b, 'fr'));
 
   const submit = () => {
     const name = fournisseur === OTHER ? autre : fournisseur;

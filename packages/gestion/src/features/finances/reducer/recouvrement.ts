@@ -77,3 +77,27 @@ export function proposePlan(data: FinancesData, ctx: ReducerContext, cmd: Financ
   dossier.plan = { lignes: instalments(reste, cmd.count, cmd.premiere), propositionLe: data.today };
   return { message: `Échéancier en ${String(cmd.count)} versements proposé.`, id: dossier.id };
 }
+
+const RELANCE_COUTS = { email: 0, courrier: 1500, recommande: 620 } as const;
+const RELANCE_CANAUX = { email: 'par e-mail', courrier: 'par courrier', recommande: 'en recommandé AR' } as const;
+const RELANCE_LIBELLES = { amiable: 'Relance amiable', seconde: 'Deuxième relance', mise_en_demeure: 'Mise en demeure' } as const;
+
+export function sendRelance(data: FinancesData, ctx: ReducerContext, cmd: FinancesCommandInput<'sendRelance'>): Outcome {
+  const echeance = find(data.echeances, cmd.echeanceId, 'Échéance');
+  if (echeance.statut !== 'active' || resteDu(echeance) <= 0) fail('Seule une échéance impayée peut être relancée.');
+  if (cmd.niveau === 'mise_en_demeure' && cmd.canal === 'email') fail('Une mise en demeure part par courrier ou en recommandé.');
+  const dossier = openDossierFor(data, cmd.echeanceId);
+  const kind = cmd.niveau === 'mise_en_demeure' ? 'mise_en_demeure' : 'relance';
+  const suffix = cmd.joindreGrandLivre ? ', grand livre joint' : '';
+  dossier.actes.push({
+    id: ctx.id('acte'),
+    date: data.today,
+    kind,
+    libelle: `${cmd.modele} ${RELANCE_CANAUX[cmd.canal]}${suffix}`,
+    intervenant: data.workspace.nom,
+    cout: RELANCE_COUTS[cmd.canal],
+    factureId: null,
+  });
+  data.relances.push({ id: ctx.id('rel'), echeanceId: cmd.echeanceId, date: data.today, canal: cmd.canal, amiable: kind === 'relance' && cmd.canal !== 'recommande' });
+  return { message: `${RELANCE_LIBELLES[cmd.niveau]} envoyée et consignée au dossier ${dossier.numero}.`, id: dossier.id };
+}

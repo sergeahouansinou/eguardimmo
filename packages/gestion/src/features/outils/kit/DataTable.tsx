@@ -8,7 +8,7 @@ export type SortDirection = 'asc' | 'desc';
 
 export function DataTable({ caption, className, children, ...props }: Omit<ComponentProps<'table'>, 'children'> & { caption: string; children: ReactNode }) {
   return (
-    <div className="max-w-full overflow-x-auto">
+    <div className="relative max-w-full overflow-x-auto">
       <table {...props} className={cx('w-full border-collapse text-body text-fg-muted', className)}>
         <caption className="sr-only">{caption}</caption>
         {children}

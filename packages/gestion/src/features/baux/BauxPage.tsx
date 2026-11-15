@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarClock, Copy, FilePen, FilePlus, FileText, LogOut, Pencil, Receipt, Trash2 } from 'lucide-react';
+import { Banknote, CalendarClock, ClipboardCheck, Copy, FilePen, FilePlus, FileText, LogOut, Pencil, Receipt, Trash2, TrendingUp } from 'lucide-react';
 import {
   Button,
   Card,
@@ -23,6 +23,7 @@ import {
 } from '@eguardimmo/ui';
 import { FileStack } from 'lucide-react';
 import { useState } from 'react';
+import { ReviseRentDialog } from './ReviseRentDialog';
 import { LeaseStatusBadge, leasePeriod, useLeaseLookups } from './BauxParts';
 import { useDeleteLease, useDuplicateLease, useLeases } from './hooks';
 import { bauxPaths } from './paths';
@@ -63,6 +64,7 @@ export function BauxPage() {
   const [window, setWindow] = useState<number | null>(null);
   const [selected, setSelected] = useState<readonly string[]>([]);
   const [pendingDelete, setPendingDelete] = useState<readonly Lease[]>([]);
+  const [revising, setRevising] = useState<Lease | null>(null);
 
   const items = leases.data ?? [];
   const today = todayIso();
@@ -113,8 +115,12 @@ export function BauxPage() {
     return [
       { id: 'open', label: 'Ouvrir le bail', icon: FileText, onSelect: () => { push(bauxPaths.detail(lease.id)); } },
       { id: 'edit', label: lease.status === 'brouillon' ? 'Poursuivre la saisie' : 'Modifier', icon: Pencil, disabled: !editable, onSelect: () => { push(bauxPaths.edit(lease.id)); } },
+      { id: 'payment', label: 'Enregistrer un paiement', icon: Banknote, disabled: lease.status === 'brouillon' || lease.status === 'a_venir', onSelect: () => { push(links.newPayment({ locataire: lease.tenantIds[0] })); } },
       { id: 'schedule', label: 'Échéancier', icon: CalendarClock, disabled: lease.status === 'brouillon', onSelect: () => { push(bauxPaths.schedule(lease.id)); } },
       { id: 'receipt', label: 'Quittances', icon: Receipt, disabled: lease.status === 'brouillon' || lease.status === 'a_venir', onSelect: () => { push('/documents/quittances'); } },
+      { id: 'notice', label: 'Avis d’échéance', icon: Receipt, disabled: lease.status === 'brouillon' || lease.status === 'a_venir', onSelect: () => { push('/documents/avis-echeance'); } },
+      { id: 'revise', label: 'Réviser le loyer', icon: TrendingUp, disabled: lease.status === 'termine' || lease.status === 'brouillon', onSelect: () => { setRevising(lease); } },
+      { id: 'edl', label: 'État des lieux', icon: ClipboardCheck, disabled: lease.status === 'brouillon', onSelect: () => { push(`${bauxPaths.newEdl}?bien=${lease.unitId}`); } },
       { id: 'letter', label: 'Générer un courrier', icon: FilePen, onSelect: () => { push(links.newCourrier({ bien: lease.unitId, locataire: lease.tenantIds[0] })); } },
       {
         id: 'duplicate',
@@ -243,6 +249,7 @@ export function BauxPage() {
         tone="danger"
         onConfirm={() => { void confirmDelete(); }}
       />
+      <ReviseRentDialog lease={revising} onClose={() => { setRevising(null); }} />
     </>
   );
 }

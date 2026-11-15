@@ -249,6 +249,26 @@ describe('DepenseFormPage', () => {
     expect((await snapshotOf(source)).depenses).toHaveLength(3);
   });
 
+  it('préremplit depuis une intervention : bien, fournisseur, montant et description', async () => {
+    const { source, navigate } = renderFinances((props) => (
+      <DepenseFormPage {...props} suggestion={{ bien: 'Apt A1, Les Tilleuls', fournisseur: 'Plomberie Agbodjo', montant: '120', description: 'Fuite sous l’évier réparée.' }} />
+    ));
+    const montant = await screen.findByRole('textbox', { name: 'Montant TTC, €' });
+    expect(inputValue(montant)).toBe('120');
+    expect(screen.getByRole<HTMLTextAreaElement>('textbox', { name: 'Description' }).value).toBe('Fuite sous l’évier réparée.');
+    expect(screen.getByRole('combobox', { name: /Bien/ }).textContent).toContain('Apt A1, Les Tilleuls');
+    expect(screen.getByRole('combobox', { name: /Payé à/ }).textContent).toContain('Plomberie Agbodjo');
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer la dépense' }));
+    await waitFor(() => { expect(navigate).toHaveBeenCalledWith('/finances'); });
+    expect((await snapshotOf(source)).depenses.some((depense) => depense.fournisseur === 'Plomberie Agbodjo' && depense.montantTtc === 12000)).toBe(true);
+  });
+
+  it('accepte un fournisseur ou un bien absents des listes connues', async () => {
+    renderFinances((props) => <DepenseFormPage {...props} suggestion={{ bien: 'Lot inconnu', fournisseur: 'Électricité Mensah', montant: '45,50', description: '' }} />);
+    expect(inputValue(await screen.findByRole('textbox', { name: 'Nom du fournisseur *' }))).toBe('Électricité Mensah');
+    expect(screen.getByRole('combobox', { name: /Bien/ }).textContent).toContain('Lot inconnu');
+  });
+
   it('préremplit depuis une opération bancaire et la marque rapprochée', async () => {
     const { source } = renderFinances((props) => <DepenseFormPage {...props} ligneBancaireId="bnk-quincaillerie" />);
     const montant = await screen.findByRole('textbox', { name: 'Montant TTC, €' });

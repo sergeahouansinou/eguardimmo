@@ -1,6 +1,6 @@
-import { createCollection } from '../../outils/kit';
-import { addDays } from '../shared/dates';
+import { createCollection, slugify } from '../../outils/kit';
 import { uniqueSlug } from '../shared/ids';
+import { isoDateSchema } from '../shared/schemas';
 import { taskInputSchema } from './schemas';
 import type { Task } from './schemas';
 import type { TasksSource } from './source';
@@ -38,7 +38,7 @@ const doneRows = [
 ] as const;
 
 const doneTasks: Task[] = doneRows.map(([title, bienId, assignee, dueDate], index) => ({
-  id: `${String(index + 1).padStart(2, '0')}-${title.toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40)}`,
+  id: `${String(index + 1).padStart(2, '0')}-${slugify(title).slice(0, 40)}`,
   title,
   bienId,
   assignee,
@@ -51,6 +51,11 @@ export const demoTasks: readonly Task[] = [...open, ...doneTasks];
 
 export function createDemoTasksSource(): TasksSource {
   const items = createCollection(demoTasks);
+  const requireKnown = async (ids: readonly string[]) => {
+    const current = await items.list();
+    const unknown = ids.filter((id) => !current.some((item) => item.id === id));
+    if (unknown.length > 0) throw new Error(`Tâches introuvables : ${unknown.join(', ')}`);
+  };
   return {
     list: () => items.list(),
     create: async (draft) => {
@@ -59,13 +64,16 @@ export function createDemoTasksSource(): TasksSource {
       return items.add({ ...input, id: uniqueSlug(input.title, existing, 'tache'), done: false });
     },
     setDone: (id, done) => items.update(id, { done }),
-    postpone: async (ids, days) => {
-      const current = await items.list();
-      const unknown = ids.filter((id) => !current.some((item) => item.id === id));
-      if (unknown.length > 0) throw new Error(`Tâches introuvables : ${unknown.join(', ')}`);
-      await Promise.all(
-        current.filter((item) => ids.includes(item.id)).map((item) => items.update(item.id, { dueDate: addDays(item.dueDate, days) })),
-      );
+    update: (id, draft) => items.update(id, taskInputSchema.parse(draft)),
+    postponeTo: async (ids, dueDate) => {
+      const date = isoDateSchema.parse(dueDate);
+      await requireKnown(ids);
+      await Promise.all(ids.map((id) => items.update(id, { dueDate: date })));
+    },
+    assign: async (ids, assignee) => {
+      const name = taskInputSchema.shape.assignee.parse(assignee);
+      await requireKnown(ids);
+      await Promise.all(ids.map((id) => items.update(id, { assignee: name })));
     },
     complete: async (ids) => {
       await Promise.all(ids.map((id) => items.update(id, { done: true })));

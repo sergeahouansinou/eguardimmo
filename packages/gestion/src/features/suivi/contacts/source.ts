@@ -9,6 +9,8 @@ import type { Contact, ContactInput } from './schemas';
 export interface ContactsSource {
   list: () => Promise<unknown>;
   create: (draft: ContactInput) => Promise<unknown>;
+  update: (id: string, draft: ContactInput) => Promise<unknown>;
+  importMany: (drafts: readonly ContactInput[]) => Promise<void>;
   setShared: (id: string, shared: boolean) => Promise<unknown>;
   setArchived: (id: string, archived: boolean) => Promise<unknown>;
   remove: (id: string) => Promise<void>;

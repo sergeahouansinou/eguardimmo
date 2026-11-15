@@ -32,7 +32,7 @@ export function createDemoFinancesSource({ seed = createDemoFinances(), now = DE
     chain = run.catch(() => undefined);
     return run;
   };
-  const ctx = { now, id: (prefix: string) => `${prefix}-${String((counter += 1))}` };
+  const ctx = { now, id: (prefix: string) => `${prefix}-n${String((counter += 1))}` };
 
   return {
     snapshot: async () => {

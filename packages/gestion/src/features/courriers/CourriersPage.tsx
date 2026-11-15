@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, FileText, Mail, Trash2 } from 'lucide-react';
+import { Copy, FileText, Mail, PenLine, SquarePen, Trash2 } from 'lucide-react';
 import {
   Badge,
   Card,
@@ -74,6 +74,7 @@ export function CourriersPage() {
 
   const actionsFor = (item: Courrier): ActionItem[] => [
     { id: 'open', label: 'Ouvrir l’aperçu', icon: FileText, onSelect: () => { push(courriersPaths.courrier(item.id)); } },
+    { id: 'edit', label: 'Modifier', icon: SquarePen, disabled: item.status === 'envoye', onSelect: () => { push(courriersPaths.editCourrier(item.id)); } },
     {
       id: 'send',
       label: 'Marquer comme envoyé',
@@ -81,6 +82,7 @@ export function CourriersPage() {
       disabled: item.status === 'envoye',
       onSelect: () => { void run(() => send.mutateAsync(item.id), { title: 'Courrier envoyé', description: `${item.reference}, ${lookups.tenantName(item.tenantId)}` }); },
     },
+    { id: 'sign', label: 'Envoyer en signature', icon: PenLine, onSelect: () => { push(courriersPaths.signatureFor(item.subject, `${item.reference}.pdf`)); } },
     {
       id: 'reuse',
       label: 'Nouveau courrier similaire',

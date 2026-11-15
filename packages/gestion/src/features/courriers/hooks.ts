@@ -107,6 +107,18 @@ export function useCreateSignature() {
   return useMutation({ mutationFn: async (input: SignatureInput) => signatureSchema.parse(await source.createSignature(input)), onSuccess: invalidate });
 }
 
+export function useRemindSignature() {
+  const source = useCourriersSource();
+  const invalidate = useInvalidate();
+  return useMutation({ mutationFn: async (id: string) => signatureSchema.parse(await source.remindSignature(id)), onSuccess: invalidate });
+}
+
+export function useUpdateCourrier(id: string) {
+  const source = useCourriersSource();
+  const invalidate = useInvalidate();
+  return useMutation({ mutationFn: async (input: CourrierInput) => courrierSchema.parse(await source.updateCourrier(id, input)), onSuccess: invalidate });
+}
+
 export function useCancelSignature() {
   const source = useCourriersSource();
   const invalidate = useInvalidate();

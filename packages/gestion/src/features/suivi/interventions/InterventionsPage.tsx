@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Archive, ArchiveRestore, CircleCheck, PlayCircle, RotateCcw, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, Bell, CircleCheck, Pencil, PlayCircle, Receipt, RotateCcw, Trash2, UserPlus } from 'lucide-react';
 import { Badge, Button, Card, Tab, TabList, TabPanel, Tabs, TextField } from '@eguardimmo/ui';
 import type { BadgeTone } from '@eguardimmo/ui';
 import {
@@ -18,7 +18,7 @@ import {
   useSourceMutation,
 } from '../../outils/kit';
 import type { ScreenProps } from '../../outils/kit';
-import { ALL, bienLabel, bienOptions, INTERVENANTS, matchesBien } from '../shared/biens';
+import { ALL, bienLabel, bienOptions, matchesBien } from '../shared/biens';
 import { formatFrDate } from '../shared/dates';
 import { usePaging } from '../shared/paging';
 import { nextSort, sortItems } from '../shared/sort';
@@ -26,7 +26,10 @@ import type { SortState } from '../shared/sort';
 import { matchesQuery } from '../shared/text';
 import { FilterSelect, Notice, PaginationBar, RowMenu, Toolbar } from '../shared/ui';
 import type { RowAction } from '../shared/ui';
-import { compareInterventions, defaultOrder, isLate } from './logic';
+import { InterventionDialogHost } from './InterventionDialogHost';
+import type { DialogState } from './InterventionDialogHost';
+import { useIntervenantNames } from './hooks';
+import { compareInterventions, defaultOrder, expenseHref, isLate } from './logic';
 import type { SortKey } from './logic';
 import { priorityLabels, PRIORITIES, statusLabels } from './schemas';
 import type { Intervention, InterventionStatus, Priority } from './schemas';
@@ -37,9 +40,10 @@ const statusTone: Record<InterventionStatus, BadgeTone> = { ouverte: 'neutral', 
 
 type TabKey = 'actives' | 'archives';
 
-export function InterventionsPage({ Link }: ScreenProps) {
+export function InterventionsPage({ Link, navigate }: ScreenProps) {
   const query = useInterventions();
   const source = useInterventionsSource();
+  const intervenants = useIntervenantNames((query.data ?? []).map((item) => item.intervenant));
   const [tab, setTab] = useState<TabKey>('actives');
   const [search, setSearch] = useState('');
   const [bien, setBien] = useState(ALL);
@@ -49,6 +53,7 @@ export function InterventionsPage({ Link }: ScreenProps) {
   const [statuses, setStatuses] = useState<readonly InterventionStatus[]>([]);
   const [sort, setSort] = useState<SortState<SortKey>>({ key: null, direction: 'asc' });
   const [toDelete, setToDelete] = useState<Intervention | null>(null);
+  const [dialog, setDialog] = useState<DialogState | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const invalidate = [INTERVENTIONS_KEY] as const;
@@ -122,10 +127,15 @@ export function InterventionsPage({ Link }: ScreenProps) {
   );
 
   const actionsFor = (item: Intervention): RowAction[] => {
-    const actions: RowAction[] = [];
+    const actions: RowAction[] = [
+      { id: 'edit', label: 'Modifier', icon: Pencil, onSelect: () => { navigate(`/interventions/${item.id}/modifier`); } },
+      { id: 'assign', label: 'Assigner un intervenant', icon: UserPlus, onSelect: () => { setDialog({ kind: 'assign', item }); } },
+    ];
     if (item.status === 'ouverte') actions.push({ id: 'start', label: 'Passer en cours', icon: PlayCircle, onSelect: () => { changeStatus(item, 'en_cours'); } });
     if (item.status !== 'terminee') actions.push({ id: 'done', label: 'Marquer terminée', icon: CircleCheck, onSelect: () => { changeStatus(item, 'terminee'); } });
     if (item.status === 'terminee') actions.push({ id: 'reopen', label: 'Rouvrir', icon: RotateCcw, onSelect: () => { changeStatus(item, 'ouverte'); } });
+    actions.push({ id: 'notify', label: 'Prévenir le locataire', icon: Bell, onSelect: () => { setDialog({ kind: 'notify', item }); } });
+    actions.push({ id: 'expense', label: 'Ajouter une dépense', icon: Receipt, onSelect: () => { navigate(expenseHref(item)); } });
     actions.push({
       id: 'archive',
       label: item.archived ? 'Désarchiver' : 'Archiver',
@@ -187,7 +197,7 @@ export function InterventionsPage({ Link }: ScreenProps) {
               <FilterSelect
                 label="Intervenant"
                 allLabel="Intervenant : Tous"
-                options={INTERVENANTS.map((value) => ({ value, label: value }))}
+                options={intervenants.map((value) => ({ value, label: value }))}
                 value={intervenant}
                 onValueChange={touch(setIntervenant)}
               />
@@ -227,7 +237,7 @@ export function InterventionsPage({ Link }: ScreenProps) {
                           {sortHeader('updatedAt', 'Mise à jour')}
                           {sortHeader('priority', 'Priorité')}
                           {sortHeader('status', 'État')}
-                          <Th><span className="sr-only">Actions</span></Th>
+                          <Th className="relative"><span className="sr-only">Actions</span></Th>
                         </tr>
                       </thead>
                       <tbody>
@@ -265,6 +275,7 @@ export function InterventionsPage({ Link }: ScreenProps) {
           </TabPanel>
         </Tabs>
       </Card>
+      <InterventionDialogHost state={dialog} onClose={() => { setDialog(null); }} />
       <ConfirmDialog
         open={toDelete !== null}
         onOpenChange={(open) => { if (!open) setToDelete(null); }}

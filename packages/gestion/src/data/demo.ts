@@ -72,5 +72,10 @@ export function createDemoSource(): GestionSource {
       shell = { ...shell, notifications: shell.notifications.map((item) => ({ ...item, unread: false })) };
       return Promise.resolve();
     },
+    markNotificationRead: (id) => {
+      if (!shell.notifications.some((item) => item.id === id)) return Promise.reject(new Error('Notification inconnue.'));
+      shell = { ...shell, notifications: shell.notifications.map((item) => (item.id === id ? { ...item, unread: false } : item)) };
+      return Promise.resolve();
+    },
   };
 }

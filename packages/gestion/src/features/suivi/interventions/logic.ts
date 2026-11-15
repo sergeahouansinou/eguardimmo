@@ -1,6 +1,8 @@
 import { DEMO_TODAY } from '../../outils/kit';
 import { compareText } from '../shared/text';
+import { euroInput } from '../../locataires/kit/money';
 import { bienLabel } from '../shared/biens';
+import { formatFrDate } from '../shared/dates';
 import type { Intervention, InterventionStatus, Priority } from './schemas';
 
 export type SortKey = 'subject' | 'bien' | 'dueDate' | 'updatedAt' | 'priority' | 'status';
@@ -32,3 +34,16 @@ export function compareInterventions(key: SortKey, a: Intervention, b: Intervent
 
 export const defaultOrder = (a: Intervention, b: Intervention): number =>
   priorityRank[a.priority] - priorityRank[b.priority] || dueOf(a).localeCompare(dueOf(b));
+
+export function expenseHref(item: Intervention): string {
+  const params = new URLSearchParams({ bien: bienLabel(item.bienId), description: item.subject });
+  if (item.intervenant) params.set('fournisseur', item.intervenant);
+  if (item.quote && item.quote.status !== 'refuse') params.set('montant', euroInput(item.quote.amount));
+  return `/finances/depenses/nouvelle?${params.toString()}`;
+}
+
+export function tenantMessage(item: Intervention, tenant: string): string {
+  const due = item.dueDate ? ` Échéance prévue : ${formatFrDate(item.dueDate)}.` : '';
+  const who = item.intervenant ? ` ${item.intervenant} interviendra.` : '';
+  return `Bonjour ${tenant},\n\nUne intervention est prévue dans votre logement (${bienLabel(item.bienId)}) : ${item.subject}.${due}${who}\n\nMerci de nous indiquer vos disponibilités.\n\nCordialement,`;
+}

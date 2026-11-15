@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, CreditCard, FileText, Mail, Send, TriangleAlert } from 'lucide-react';
+import { BookOpen, CreditCard, FileSearch, FileText, FolderOpen, Gavel, HandCoins, Mail, Send, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { Alert, Button, Checkbox, Chip, ConfirmDialog, MenuItem, MenuSeparator, Select, StatCard, Tab, TabList, TabPanel, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow, Tabs, TextField } from '@eguardimmo/ui';
 import { downloadCsv } from './csv';
@@ -163,9 +163,13 @@ function ImpayesContent({ data, navigate }: Pick<ScreenProps, 'navigate'> & { da
                         <RowMenu>
                           <MenuItem icon={Send} onSelect={() => { remind([row], 'email'); }}>Relancer par e-mail</MenuItem>
                           <MenuItem icon={Mail} onSelect={() => { remind([row], 'courrier'); }}>Relancer par courrier</MenuItem>
+                          <MenuItem icon={FileSearch} onSelect={() => { navigate(financesPaths.relance(id)); }}>Aperçu de la relance</MenuItem>
                           <MenuItem icon={CreditCard} onSelect={() => { navigate(`${FINANCES_ROUTES.encaisser}?echeance=${id}`); }}>Enregistrer un paiement</MenuItem>
+                          <MenuItem icon={HandCoins} onSelect={() => { navigate(`${FINANCES_ROUTES.acompte}?bail=${row.bail.id}`); }}>Enregistrer un acompte</MenuItem>
                           <MenuItem icon={FileText} onSelect={() => { setPlanFor(row); }}>Proposer un échéancier</MenuItem>
-                          <MenuItem icon={BookOpen} onSelect={() => { navigate(financesPaths.grandLivre(id)); }}>Grand livre</MenuItem>
+                          <MenuItem icon={BookOpen} onSelect={() => { navigate(financesPaths.grandLivre(id)); }}>Grand livre du locataire</MenuItem>
+                          <MenuItem icon={Gavel} onSelect={() => { navigate(financesPaths.relance(id, 'mise_en_demeure')); }}>Mise en demeure</MenuItem>
+                          <MenuItem icon={FolderOpen} onSelect={() => { navigate(financesPaths.impaye(id)); }}>Dossier de recouvrement</MenuItem>
                           <MenuSeparator />
                           <MenuItem icon={TriangleAlert} tone="danger" onSelect={() => { setWriteOff(row); }}>Passer en irrécouvrable</MenuItem>
                         </RowMenu>

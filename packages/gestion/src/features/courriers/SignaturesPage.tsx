@@ -1,6 +1,6 @@
 'use client';
 
-import { Ban, Eye, PenLine } from 'lucide-react';
+import { Award, Ban, BellRing, Download, Eye, PenLine } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -24,7 +24,7 @@ import {
 } from '@eguardimmo/ui';
 import type { BadgeTone } from '@eguardimmo/ui';
 import { useState } from 'react';
-import { useCancelSignature, useSignatures } from './hooks';
+import { useCancelSignature, useRemindSignature, useSignatures } from './hooks';
 import { courriersPaths } from './paths';
 import type { Signature, SignatureStatus } from './schemas';
 import { ActionMenu, ItemRow, LinkButton, ListLoading, LoadError, PageHeader, SearchInput, errorMessage, useNotify } from '../locataires/kit';
@@ -50,6 +50,7 @@ const tabs: ListTab<Signature>[] = [
 export function SignaturesPage() {
   const signatures = useSignatures();
   const cancel = useCancelSignature();
+  const remind = useRemindSignature();
   const notify = useNotify();
   const [detail, setDetail] = useState<Signature | null>(null);
   const [pendingCancel, setPendingCancel] = useState<Signature | null>(null);
@@ -69,8 +70,31 @@ export function SignaturesPage() {
     }
   };
 
+  const remindSigners = async (target: Signature) => {
+    try {
+      await remind.mutateAsync(target.id);
+      notify({ title: 'Signataires relancés', description: `${target.title}, ${String(target.signers.filter((signer) => signer.status !== 'signe').length)} rappel(s) envoyé(s)` });
+    } catch (error) {
+      notify({ tone: 'danger', title: 'Relance impossible', description: errorMessage(error) });
+    }
+  };
+
+  const download = (target: Signature, kind: 'documents' | 'certificat') => {
+    const text = kind === 'documents' ? `Document : ${target.title}\nFichier : ${target.fileName}\n` : `Certificat de signature ${target.reference}\n${target.signers.map((signer) => `${signer.name} <${signer.email}> : ${signer.status === 'signe' ? 'a signé' : 'en attente'}`).join('\n')}\n`;
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${target.reference}-${kind}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+    notify({ title: kind === 'documents' ? 'Documents téléchargés' : 'Certificat téléchargé', description: target.reference });
+  };
+
   const actionsFor = (item: Signature): ActionItem[] => [
     { id: 'detail', label: 'Voir les signataires', icon: Eye, onSelect: () => { setDetail(item); } },
+    { id: 'remind', label: 'Relancer les signataires', icon: BellRing, disabled: item.status !== 'en_cours', onSelect: () => { void remindSigners(item); } },
+    { id: 'documents', label: 'Télécharger les documents', icon: Download, separatorBefore: true, onSelect: () => { download(item, 'documents'); } },
+    { id: 'certificate', label: 'Télécharger le certificat', icon: Award, disabled: item.status !== 'signe', onSelect: () => { download(item, 'certificat'); } },
     { id: 'cancel', label: 'Annuler la demande', icon: Ban, tone: 'danger', separatorBefore: true, disabled: item.status !== 'en_cours', onSelect: () => { setPendingCancel(item); } },
   ];
 
@@ -115,6 +139,7 @@ export function SignaturesPage() {
                       <TableCell strong>
                         {item.title}
                         <span className="block text-caption font-normal text-fg-subtle">{`${item.reference}, ${item.fileName}`}</span>
+                        {item.reminderSentOn ? <span className="block text-caption font-normal text-fg-subtle">{`Relancé le ${formatDateFr(item.reminderSentOn)}`}</span> : null}
                       </TableCell>
                       <TableCell>{`${String(item.signers.filter((signer) => signer.status === 'signe').length)} sur ${String(item.signers.length)} ont signé`}</TableCell>
                       <TableCell>{formatDateFr(item.createdOn)}</TableCell>

@@ -96,6 +96,19 @@ export const SIGNATURE_STATUSES = ['en_cours', 'signe', 'annule'] as const;
 export const signatureStatusSchema = z.enum(SIGNATURE_STATUSES);
 export type SignatureStatus = z.infer<typeof signatureStatusSchema>;
 export const signerSchema = z.object({ name: z.string().min(1), email: z.string().min(1), status: z.enum(['attente', 'signe']) });
+export const SIGNATURE_PAGES = 3;
+export const signatureFieldSchema = z.object({
+  signer: z.number().int().min(0),
+  page: z.number().int().min(1).max(SIGNATURE_PAGES),
+  x: z.number().min(0).max(100),
+  y: z.number().min(0).max(100),
+});
+export type SignatureField = z.infer<typeof signatureFieldSchema>;
+
+export function defaultSignatureFields(count: number): SignatureField[] {
+  return Array.from({ length: count }, (_, signer) => ({ signer, page: SIGNATURE_PAGES, x: count === 1 ? 70 : 20 + (60 * signer) / Math.max(1, count - 1), y: 85 }));
+}
+
 export const signatureSchema = z.object({
   id: slug,
   reference: z.string().min(1),
@@ -105,6 +118,8 @@ export const signatureSchema = z.object({
   status: signatureStatusSchema,
   createdOn: isoDate,
   completedOn: isoDate.nullable(),
+  reminderSentOn: isoDate.nullable(),
+  fields: z.array(signatureFieldSchema),
 });
 export type Signature = z.infer<typeof signatureSchema>;
 
@@ -113,6 +128,7 @@ export const signatureInputSchema = z
     title: required('Donnez un titre au document'),
     fileName: required('Joignez le PDF à signer'),
     signers: z.array(z.object({ name: z.string(), email: z.string() })),
+    fields: z.array(signatureFieldSchema).optional(),
   })
   .superRefine((value, context) => {
     if (value.signers.length === 0) {
@@ -121,8 +137,11 @@ export const signatureInputSchema = z
     }
     const incomplete = value.signers.some((signer) => signer.name.trim() === '' || !EMAIL.test(signer.email.trim()));
     if (incomplete) context.addIssue({ code: 'custom', path: ['signers'], message: 'Chaque signataire a besoin d’un nom et d’un e-mail valide' });
+    if (value.fields?.some((field) => field.signer >= value.signers.length)) {
+      context.addIssue({ code: 'custom', path: ['fields'], message: 'Un champ de signature désigne un signataire inconnu' });
+    }
   });
-export type SignatureInput = z.infer<typeof signatureInputSchema>;
+export type SignatureInput = z.input<typeof signatureInputSchema>;
 
 export const receiptSchema = z.object({
   id: slug,

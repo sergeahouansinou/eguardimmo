@@ -1,17 +1,17 @@
 import {
   Building,
-  CircleQuestionMark,
-  CircleUser,
   CreditCard,
   Download,
+  History,
   House,
-  KeyRound,
-  ScrollText,
+  LifeBuoy,
   Settings,
+  ShieldCheck,
+  User,
   Users,
-  UsersRound,
   Wallet,
 } from 'lucide-react';
+import { authUrl } from '@eguardimmo/shell';
 import type {
   AccountMenuConfig,
   BottomItem,
@@ -29,15 +29,15 @@ export const bottomItems: BottomItem[] = [
 
 export const accountMenu: AccountMenuConfig = {
   roleLabels: { admin: 'Admin', gestionnaire: 'Gestionnaire', agent: 'Agent' },
-  switchSpace: { href: accountRoutes.profiles },
-  signOut: { href: accountRoutes.signOut },
+  switchSpace: { href: authUrl('/profils') },
+  signOut: { href: authUrl('/deconnecte') },
   groups: [
     {
       id: 'compte',
       label: 'Mon compte',
       items: [
-        { id: 'mon-compte', label: 'Mon compte', href: accountRoutes.account, icon: CircleUser },
-        { id: 'securite', label: 'Connexion et sécurité', href: accountRoutes.security, icon: KeyRound },
+        { id: 'mon-compte', label: 'Mon compte', href: accountRoutes.account, icon: User },
+        { id: 'securite', label: 'Connexion et sécurité', href: accountRoutes.security, icon: ShieldCheck },
         {
           id: 'abonnement',
           label: 'Abonnement',
@@ -57,14 +57,14 @@ export const accountMenu: AccountMenuConfig = {
           id: 'equipe',
           label: 'Équipe',
           href: accountRoutes.team,
-          icon: UsersRound,
+          icon: Users,
           meta: ({ workspace }) => (workspace.members === undefined ? undefined : `${String(workspace.members)} membres`),
         },
-        { id: 'journal', label: "Journal d'activité", href: accountRoutes.journal, icon: ScrollText },
+        { id: 'journal', label: "Journal d'activité", href: accountRoutes.journal, icon: History },
       ],
     },
   ],
-  footerItems: [{ id: 'aide', label: "Centre d'aide", href: accountRoutes.help, icon: CircleQuestionMark }],
+  footerItems: [{ id: 'aide', label: "Centre d'aide", href: accountRoutes.help, icon: LifeBuoy }],
 };
 
 export const notifications: NotificationsConfig = {

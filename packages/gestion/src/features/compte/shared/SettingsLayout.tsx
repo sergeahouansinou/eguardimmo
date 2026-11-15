@@ -79,7 +79,7 @@ export function SettingsLayout({ Link, section, description, onCancel, onSave, s
         }
       />
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[232px_minmax(0,1fr)]">
-        <nav aria-label="Sections des réglages" className="flex gap-0.5 overflow-x-auto rounded-lg border border-line bg-surface p-2 lg:flex-col lg:overflow-visible">
+        <nav aria-label="Sections des réglages" className="relative flex gap-0.5 overflow-x-auto rounded-lg border border-line bg-surface p-2 lg:flex-col lg:overflow-visible">
           {PREFERENCES.map((def) => (
             <SectionLink key={def.id} Link={Link} def={def} current={section} />
           ))}

@@ -166,6 +166,48 @@ export type EdlTemplate = z.infer<typeof edlTemplateSchema>;
 
 export const ROOMS = ['Entrée', 'Séjour', 'Cuisine', 'Chambre 1', 'Chambre 2', 'Salle de bains'] as const;
 
+export const SURVEY_STATES = ['non_controle', 'neuf', 'bon', 'usage', 'degrade', 'absent'] as const;
+export const surveyStateSchema = z.enum(SURVEY_STATES);
+export type SurveyState = z.infer<typeof surveyStateSchema>;
+export const surveyStateLabel: Record<SurveyState, string> = {
+  non_controle: 'Non contrôlé',
+  neuf: 'Neuf',
+  bon: 'Bon état',
+  usage: 'Usure normale',
+  degrade: 'Dégradé',
+  absent: 'Absent',
+};
+export const SURVEY_ELEMENTS = ['Murs', 'Sol', 'Plafond', 'Fenêtres et volets', 'Porte', 'Prises et éclairage', 'Équipements'] as const;
+
+export const surveyElementSchema = z.object({
+  id: slug,
+  label: z.string().min(1),
+  state: surveyStateSchema,
+  note: z.string().max(300),
+  photos: z.array(z.string().min(1)),
+});
+export type SurveyElement = z.infer<typeof surveyElementSchema>;
+
+export const surveyRoomSchema = z.object({ room: z.string().min(1), elements: z.array(surveyElementSchema) });
+export type SurveyRoom = z.infer<typeof surveyRoomSchema>;
+
+export const surveyInputSchema = z.array(surveyRoomSchema).superRefine((rooms, context) => {
+  rooms.forEach((room, roomIndex) => {
+    room.elements.forEach((element, elementIndex) => {
+      if ((element.state === 'degrade' || element.state === 'absent') && element.note.trim() === '' && element.photos.length === 0) {
+        context.addIssue({ code: 'custom', path: [roomIndex, 'elements', elementIndex, 'note'], message: `${room.room}, ${element.label} : précisez l’anomalie ou joignez une photo` });
+      }
+    });
+  });
+});
+
+export function emptySurvey(rooms: readonly string[]): SurveyRoom[] {
+  return rooms.map((room) => ({
+    room,
+    elements: SURVEY_ELEMENTS.map((label) => ({ id: label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''), label, state: 'non_controle' as const, note: '', photos: [] })),
+  }));
+}
+
 export const edlSchema = z.object({
   id: slug,
   reference: z.string().min(1),
@@ -177,6 +219,7 @@ export const edlSchema = z.object({
   templateId: slug,
   status: edlStatusSchema,
   rooms: z.array(z.string()),
+  survey: z.array(surveyRoomSchema),
   archived: z.boolean(),
 });
 export type Edl = z.infer<typeof edlSchema>;
@@ -207,8 +250,45 @@ export const reservationSchema = z.object({
   paid: minor,
   status: reservationStatusSchema,
   optionUntil: isoDate.nullable(),
+  confirmationSentOn: isoDate.nullable(),
+  reminderSentOn: isoDate.nullable(),
 });
 export type Reservation = z.infer<typeof reservationSchema>;
+
+export const RESERVATION_MODES = ['option', 'confirmee'] as const;
+export const reservationModeSchema = z.enum(RESERVATION_MODES);
+export type ReservationMode = z.infer<typeof reservationModeSchema>;
+
+const RESERVATION_EURO = /^\d+([.,]\d{1,2})?$/;
+
+export const reservationInputSchema = z
+  .object({
+    unitId: z.string().min(1, 'Choisissez le bien'),
+    guest: required('Renseignez le voyageur'),
+    arrival: required('Renseignez la date d’arrivée').pipe(isoDate),
+    departure: required('Renseignez la date de départ').pipe(isoDate),
+    amount: z.string(),
+    deposit: z.string(),
+    paid: z.string(),
+    mode: reservationModeSchema,
+    optionUntil: z.string(),
+  })
+  .superRefine((value, context) => {
+    const fail = (path: string, message: string) => { context.addIssue({ code: 'custom', path: [path], message }); };
+    if (isoDate.safeParse(value.arrival).success && isoDate.safeParse(value.departure).success && value.departure <= value.arrival) {
+      fail('departure', 'Le départ doit suivre l’arrivée');
+    }
+    const amountOk = RESERVATION_EURO.test(value.amount.trim()) && parseEuros(value.amount) > 0;
+    if (!amountOk) fail('amount', 'Indiquez le montant du séjour, ex. 630 ou 630,50');
+    if (!RESERVATION_EURO.test(value.deposit.trim())) fail('deposit', 'Indiquez le dépôt de garantie, 0 s’il n’y en a pas');
+    if (!RESERVATION_EURO.test(value.paid.trim())) fail('paid', 'Indiquez l’acompte reçu, 0 s’il n’y en a pas');
+    else if (amountOk && parseEuros(value.paid) > parseEuros(value.amount)) fail('paid', 'L’acompte ne peut pas dépasser le montant du séjour');
+    if (value.mode === 'option') {
+      if (!isoDate.safeParse(value.optionUntil).success) fail('optionUntil', 'Renseignez la fin de l’option');
+      else if (isoDate.safeParse(value.arrival).success && value.optionUntil > value.arrival) fail('optionUntil', 'L’option doit expirer avant l’arrivée');
+    }
+  });
+export type ReservationInput = z.infer<typeof reservationInputSchema>;
 
 export const attestationSchema = z.object({
   id: slug,

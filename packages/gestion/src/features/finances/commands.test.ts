@@ -297,3 +297,65 @@ describe('état partagé', () => {
     expect(first).toEqual(second);
   });
 });
+
+describe('relance', () => {
+  const relance = (extra: Partial<Extract<Draft, { type: 'sendRelance' }>> = {}): Draft => ({
+    type: 'sendRelance',
+    echeanceId: 'ech-2026-11-ibrahim-yao',
+    niveau: 'amiable',
+    modele: 'Relance amiable de loyer',
+    canal: 'email',
+    joindreGrandLivre: true,
+    texte: 'Sauf erreur de notre part, le loyer n’a pas été réglé.',
+    ...extra,
+  });
+
+  it('ouvre le dossier, consigne l’acte et trace la relance', async () => {
+    const source = createDemoFinancesSource();
+    const before = await read(source);
+    const result = await send(source, relance());
+    const after = await read(source);
+    expect(result.message).toContain('Relance amiable envoyée');
+    expect(after.relances).toHaveLength(before.relances.length + 1);
+    const dossier = after.dossiers.find((item) => item.echeanceId === 'ech-2026-11-ibrahim-yao');
+    expect(dossier?.actes).toHaveLength(1);
+    expect(dossier?.actes[0]).toMatchObject({ kind: 'relance', cout: 0, intervenant: 'Gestion Les Tilleuls' });
+    expect(dossier?.actes[0]?.libelle).toContain('grand livre joint');
+  });
+
+  it('une mise en demeure en recommandé coûte 6,20 € et n’est plus amiable', async () => {
+    const source = createDemoFinancesSource();
+    await send(source, relance({ echeanceId: 'ech-2026-11-koffi-adjovi', niveau: 'mise_en_demeure', canal: 'recommande' }));
+    const data = await read(source);
+    const dossier = data.dossiers.find((item) => item.echeanceId === 'ech-2026-11-koffi-adjovi');
+    expect(dossier?.actes.at(-1)).toMatchObject({ kind: 'mise_en_demeure', cout: 620 });
+    expect(data.relances.at(-1)).toMatchObject({ canal: 'recommande', amiable: false });
+  });
+
+  it('refuse une mise en demeure par e-mail, une échéance soldée et un texte trop court', async () => {
+    const source = createDemoFinancesSource();
+    await expect(send(source, relance({ niveau: 'mise_en_demeure', canal: 'email' }))).rejects.toThrow('courrier ou en recommandé');
+    await expect(send(source, relance({ echeanceId: 'ech-2026-11-nadege-sossou' }))).rejects.toThrow('impayée');
+    await expect(send(source, relance({ texte: 'Court' }))).rejects.toThrow('Données invalides');
+    expect((await read(source)).dossiers).toHaveLength(1);
+  });
+
+  it('rejoue la même requête sans doublon', async () => {
+    const source = createDemoFinancesSource();
+    await send(source, relance(), 'cle-relance-identique');
+    await send(source, relance(), 'cle-relance-identique');
+    expect((await read(source)).dossiers.find((item) => item.echeanceId === 'ech-2026-11-ibrahim-yao')?.actes).toHaveLength(1);
+  });
+});
+
+describe('identifiants générés', () => {
+  it('ne reprennent jamais un identifiant de la fixture', async () => {
+    const source = createDemoFinancesSource();
+    await send(source, { type: 'sendRelance', echeanceId: 'ech-2026-11-koffi-adjovi', niveau: 'seconde', modele: 'Deuxième relance de loyer', canal: 'email', joindreGrandLivre: false, texte: 'Malgré notre précédent courrier, le loyer reste impayé.' });
+    const data = await read(source);
+    const relances = data.relances.map((item) => item.id);
+    const actes = data.dossiers.flatMap((dossier) => dossier.actes.map((acte) => acte.id));
+    expect(new Set(relances).size).toBe(relances.length);
+    expect(new Set(actes).size).toBe(actes.length);
+  });
+});

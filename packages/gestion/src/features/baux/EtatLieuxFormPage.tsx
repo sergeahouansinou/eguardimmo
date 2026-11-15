@@ -66,7 +66,7 @@ function EdlForm({ edl, initial }: { edl?: Edl; initial: Values }) {
     if (!values) return;
     try {
       const saved = edl ? await update.mutateAsync(values) : await create.mutateAsync({ input: values, asDraft });
-      noticeAfterNavigation({ title: editing ? 'État des lieux modifié' : asDraft ? 'Brouillon enregistré' : 'État des lieux planifié', description: saved.reference });
+      noticeAfterNavigation({ title: editing ? 'État des lieux modifié' : asDraft ? 'Brouillon enregistré' : 'État des lieux créé, commencez le relevé', description: saved.reference });
       push(bauxPaths.edl(saved.id));
     } catch (error) {
       notify({ tone: 'danger', title: 'Enregistrement impossible', description: errorMessage(error) });
@@ -78,7 +78,7 @@ function EdlForm({ edl, initial }: { edl?: Edl; initial: Values }) {
       <PageHeader
         crumbs={[{ label: 'Accueil', href: links.home }, { label: 'Baux', href: bauxPaths.list }, { label: 'États des lieux', href: bauxPaths.edls }, { label: editing ? 'Modifier' : 'Nouveau' }]}
         title={editing ? `Modifier ${edl.reference}` : 'Nouvel état des lieux'}
-        subtitle="Choisissez le bien, la date et les pièces à contrôler."
+        subtitle="Un état par pièce. Les anomalies se signalent avec une photo."
       />
       {units.isError || tenants.isError || templates.isError ? <LoadError title="Les données du formulaire n’ont pas pu être chargées" /> : null}
       {loading ? <ListLoading label="Chargement du formulaire" /> : null}
@@ -163,7 +163,7 @@ function EdlForm({ edl, initial }: { edl?: Edl; initial: Values }) {
       <div className="flex flex-wrap justify-end gap-2">
         <Button variant="ghost" onClick={() => { push(edl ? bauxPaths.edl(edl.id) : bauxPaths.edls); }}>Annuler</Button>
         {editing ? null : <Button variant="secondary" loading={pending} onClick={() => { void save(true); }}>Enregistrer en brouillon</Button>}
-        <Button type="submit" loading={pending}>{editing ? 'Enregistrer les modifications' : 'Planifier la visite'}</Button>
+        <Button type="submit" loading={pending}>{editing ? 'Enregistrer les modifications' : 'Créer et commencer le relevé'}</Button>
       </div>
     </form>
   );

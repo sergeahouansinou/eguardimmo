@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Archive, ArchiveRestore, Download, Eye, EyeOff, FolderInput, Pencil, Share2, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, Download, Eye, EyeOff, FolderInput, Pencil, PenLine, Share2, Trash2 } from 'lucide-react';
 import { Button, Card, Checkbox, Tab, TabList, TabPanel, Tabs, TextField } from '@eguardimmo/ui';
 import {
   ConfirmDialog,
@@ -44,7 +44,7 @@ const SHARE_OPTIONS = [
 
 const DOWNLOAD_NOTICE = 'Le téléchargement sera disponible avec le stockage des fichiers : en démonstration, seules les informations des documents sont conservées.';
 
-export function DocumentsPage({ Link }: ScreenProps) {
+export function DocumentsPage({ Link, navigate }: ScreenProps) {
   const query = useDocuments();
   const source = useDocumentsSource();
   const [tab, setTab] = useState<TabKey>('actifs');
@@ -139,6 +139,12 @@ export function DocumentsPage({ Link }: ScreenProps) {
       icon: item.shared ? EyeOff : Share2,
       onSelect: () => { shareDocs([item], !item.shared); },
     },
+    {
+      id: 'sign',
+      label: 'Envoyer en signature',
+      icon: PenLine,
+      onSelect: () => { navigate(`/documents/signatures/nouvelle?document=${encodeURIComponent(item.fileName)}`); },
+    },
     { id: 'rename', label: 'Renommer', icon: Pencil, onSelect: () => { setEditing({ document: item, mode: 'rename' }); } },
     { id: 'attach', label: 'Rattacher à un bien', icon: FolderInput, onSelect: () => { setEditing({ document: item, mode: 'attach' }); } },
     {
@@ -159,9 +165,14 @@ export function DocumentsPage({ Link }: ScreenProps) {
         title="Documents"
         description="Chaque document a un bien, un partage et une date. Les documents partagés sont visibles par le locataire."
         actions={
-          <Button asChild>
-            <Link href="/documents/nouveau">Importer des documents</Link>
-          </Button>
+          <>
+            <Button variant="secondary" asChild>
+              <Link href="/modeles/nouveau">Nouveau modèle</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/documents/nouveau">Importer des documents</Link>
+            </Button>
+          </>
         }
       />
       <Notice tone="danger" message={error} onDismiss={() => { setError(null); }} />
@@ -265,7 +276,7 @@ export function DocumentsPage({ Link }: ScreenProps) {
                           <Th>Partage</Th>
                           {sortHeader('size', 'Taille', true)}
                           {sortHeader('date', 'Date')}
-                          <Th><span className="sr-only">Actions</span></Th>
+                          <Th className="relative"><span className="sr-only">Actions</span></Th>
                         </tr>
                       </thead>
                       <tbody>

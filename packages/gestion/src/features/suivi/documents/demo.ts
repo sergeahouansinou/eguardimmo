@@ -1,4 +1,4 @@
-import { createCollection, DEMO_TODAY } from '../../outils/kit';
+import { createCollection, DEMO_TODAY, slugify } from '../../outils/kit';
 import { BIENS, tenantOf } from '../shared/biens';
 import type { BienId } from '../shared/biens';
 import { uniqueSlug } from '../shared/ids';
@@ -9,13 +9,6 @@ import type { DocumentsSource } from './source';
 const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre'] as const;
 const LOTS: readonly BienId[] = ['apt-a1', 'villa-rdc', 'apt-b3'];
 const two = (value: number) => String(value).padStart(2, '0');
-
-const slug = (text: string) =>
-  text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
 
 const named: DocumentRecord[] = [
   { id: 'bail-signe-apt-a1-pdf', fileName: 'Bail signé, Apt A1.pdf', bienId: 'apt-a1', description: "Bail d'habitation vide", sharedWith: 'Koffi Adjovi', shared: true, sizeBytes: 1_200_000, date: '2026-04-01', archived: false },
@@ -43,7 +36,7 @@ function generated(index: number): DocumentRecord {
   ];
   const variant = variants[kind];
   if (!variant) throw new RangeError('Variante de document inconnue');
-  return { ...variant, ...base, id: slug(variant.fileName) };
+  return { ...variant, ...base, id: slugify(variant.fileName) };
 }
 
 const archives: DocumentRecord[] = Array.from({ length: 12 }, (_, index) => ({

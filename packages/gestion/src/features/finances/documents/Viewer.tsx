@@ -3,7 +3,7 @@
 import { ChevronLeft, ChevronRight, Download, Printer, ZoomIn, ZoomOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Button, Card, CardHeader, CardTitle, IconButton } from '@eguardimmo/ui';
+import { Button, Card, CardHeader, CardTitle, cx, IconButton } from '@eguardimmo/ui';
 import { shortHash } from '../seal';
 import { useFinancesSource } from '../source';
 
@@ -15,8 +15,25 @@ const PRINT_CSS = `@media print {
   [data-print-area] { position: absolute; inset: 0; width: 100%; margin: 0; border: 0; zoom: 1 !important; }
 }`;
 
-export function DocumentViewer({ title, children, side, autoPrint = false }: { title: string; children: ReactNode; side: ReactNode; autoPrint?: boolean }) {
+const PAPER = 'mx-auto w-full max-w-[720px] flex-col gap-3 rounded-md border border-line p-6 shadow-none';
+
+export function DocumentViewer({
+  title,
+  children,
+  pages,
+  side,
+  autoPrint = false,
+}: {
+  title: string;
+  children?: ReactNode;
+  pages?: readonly ReactNode[];
+  side: ReactNode;
+  autoPrint?: boolean;
+}) {
   const [zoom, setZoom] = useState<number>(100);
+  const [current, setCurrent] = useState(0);
+  const count = pages?.length ?? 1;
+  const shown = Math.min(current, count - 1);
   const index = ZOOMS.findIndex((value) => value === zoom);
   const print = () => {
     window.print();
@@ -30,9 +47,9 @@ export function DocumentViewer({ title, children, side, autoPrint = false }: { t
       <style>{PRINT_CSS}</style>
       <section aria-label={title} className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-line bg-muted print:border-0">
         <div role="toolbar" aria-label="Outils de l’aperçu" className="flex flex-wrap items-center gap-1 border-b border-line bg-surface px-2 py-1 print:hidden">
-          <IconButton label="Page précédente" icon={ChevronLeft} disabled />
-          <span className="text-caption text-fg-muted">Page 1 / 1</span>
-          <IconButton label="Page suivante" icon={ChevronRight} disabled />
+          <IconButton label="Page précédente" icon={ChevronLeft} disabled={shown <= 0} onClick={() => { setCurrent(Math.max(0, shown - 1)); }} />
+          <span className="text-caption text-fg-muted" aria-live="polite">Page {shown + 1} / {count}</span>
+          <IconButton label="Page suivante" icon={ChevronRight} disabled={shown >= count - 1} onClick={() => { setCurrent(Math.min(count - 1, shown + 1)); }} />
           <span aria-hidden="true" className="mx-1 h-4 w-px bg-line" />
           <IconButton label="Réduire" icon={ZoomOut} disabled={index <= 0} onClick={() => { setZoom(ZOOMS[Math.max(0, index - 1)] ?? 100); }} />
           <span className="min-w-10 text-center text-caption text-fg-muted" aria-live="polite">{zoom} %</span>
@@ -43,9 +60,19 @@ export function DocumentViewer({ title, children, side, autoPrint = false }: { t
           <IconButton label="Télécharger le PDF" icon={Download} onClick={print} />
         </div>
         <div className="overflow-auto p-3 sm:p-6">
-          <article data-print-area="" style={{ zoom: zoom / 100 }} className="mx-auto flex w-full max-w-[720px] flex-col gap-3 rounded-md border border-line bg-surface p-6 text-fg shadow-none">
-            {children}
-          </article>
+          {pages ? (
+            <div data-print-area="" style={{ zoom: zoom / 100 }} className="mx-auto flex w-full max-w-[720px] flex-col gap-3 print:gap-0">
+              {pages.map((page, index) => (
+                <article key={index} data-paper="" aria-label={`Page ${String(index + 1)} sur ${String(count)}`} className={cx(PAPER, index === shown ? 'flex' : 'hidden print:flex', 'print:break-after-page print:rounded-none')}>
+                  {page}
+                </article>
+              ))}
+            </div>
+          ) : (
+            <article data-print-area="" data-paper="" style={{ zoom: zoom / 100 }} className={cx(PAPER, 'flex')}>
+              {children}
+            </article>
+          )}
         </div>
       </section>
       <aside className="flex min-w-0 flex-col gap-3 print:hidden">{side}</aside>
@@ -71,7 +98,7 @@ export function KeyValues({ items }: { items: readonly (readonly [string, ReactN
       {items.map(([label, value]) => (
         <div key={label} className="contents">
           <dt className="text-fg-subtle">{label}</dt>
-          <dd className="min-w-0 text-fg">{value}</dd>
+          <dd className="min-w-0 [overflow-wrap:anywhere] text-fg">{value}</dd>
         </div>
       ))}
     </dl>

@@ -1,23 +1,31 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { expectNoA11yViolations } from '../../test/axe';
 import { TestLink, renderWithSource } from '../../test/render';
 import { GestionShell } from './GestionShell';
+import type { GestionShellProps } from './GestionShell';
 
-function renderShell(currentPath = '/') {
-  const onNavigate = vi.fn();
-  const view = renderWithSource(
+function shellElement(onNavigate: (href: string) => void, currentPath = '/', extra: Partial<GestionShellProps> = {}) {
+  return (
     <GestionShell
       spaceLabel="Espace bailleur"
       logoSrc="/logo.png"
       currentPath={currentPath}
       linkComponent={TestLink}
       onNavigate={onNavigate}
+      {...extra}
     >
       <h1>Contenu</h1>
-    </GestionShell>,
+      <input aria-label="Champ de saisie" placeholder="Ex. Koffi Adjovi" />
+    </GestionShell>
   );
+}
+
+function renderShell(currentPath = '/', extra: Partial<GestionShellProps> = {}) {
+  const onNavigate = vi.fn();
+  const view = renderWithSource(shellElement(onNavigate, currentPath, extra));
   return { ...view, onNavigate };
 }
 
@@ -33,6 +41,26 @@ describe('GestionShell', () => {
     expect(within(side).getByRole('link', { name: 'Accueil' }).getAttribute('aria-current')).toBe('page');
     expect(await within(side).findByRole('link', { name: /Messages\s*2/ })).toBeTruthy();
     expect(within(side).getByRole('button', { name: /Biens\s*11/ })).toBeTruthy();
+  });
+
+  it('reflète le compteur de messages non lus fourni par la messagerie, puis le fait baisser', async () => {
+    function Harness() {
+      const [unread, setUnread] = useState(2);
+      return (
+        <>
+          {shellElement(vi.fn(), '/', { unreadMessages: unread })}
+          <button type="button" onClick={() => { setUnread((value) => value - 1); }}>Lire un message</button>
+        </>
+      );
+    }
+    renderWithSource(<Harness />);
+    const side = screen.getByRole('navigation', { name: 'Navigation principale' });
+    expect(await within(side).findByRole('link', { name: /Messages\s*2/ })).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'Lire un message' }));
+    expect(await within(side).findByRole('link', { name: /Messages\s*1$/ })).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'Lire un message' }));
+    expect(await within(side).findByRole('link', { name: 'Messages' })).toBeTruthy();
+    expect(within(side).queryByRole('link', { name: /Messages\s*\d/ })).toBeNull();
   });
 
   it('replie la barre latérale et mémorise le choix', async () => {
@@ -55,6 +83,15 @@ describe('GestionShell', () => {
     expect(screen.queryByRole('dialog', { name: 'Recherche' })).toBeNull();
   });
 
+  it('ouvre les raccourcis clavier avec ?, sauf pendant une saisie', async () => {
+    const { onNavigate } = renderShell();
+    await userEvent.type(screen.getByRole('textbox', { name: 'Champ de saisie' }), '?');
+    expect(onNavigate).not.toHaveBeenCalled();
+    await userEvent.click(document.body);
+    await userEvent.keyboard('?');
+    expect(onNavigate).toHaveBeenCalledWith('/aide/raccourcis');
+  });
+
   it('crée depuis le menu Ajouter', async () => {
     const { onNavigate } = renderShell();
     await userEvent.click(screen.getByRole('button', { name: 'Ajouter' }));
@@ -70,6 +107,18 @@ describe('GestionShell', () => {
     await userEvent.click(within(panel).getByRole('button', { name: 'Tout marquer comme lu' }));
     await waitFor(() => { expect(within(panel).queryAllByText('Non lue')).toHaveLength(0); });
     expect(screen.getByRole('button', { name: 'Notifications' })).toBeTruthy();
+  });
+
+  it('nomme le menu du compte et reprend les icônes de la maquette', async () => {
+    renderShell();
+    await userEvent.click(await screen.findByRole('button', { name: 'Compte, espace de travail Gestion Les Tilleuls' }));
+    const menu = await screen.findByRole('menu', { name: 'Menu du compte' });
+    const icons = (name: string) => within(menu).getByRole('menuitem', { name }).querySelectorAll('svg');
+    expect(icons('Mon compte')[0]?.classList.contains('lucide-user')).toBe(true);
+    expect(icons('Connexion et sécurité')[0]?.classList.contains('lucide-shield-check')).toBe(true);
+    const [first, last] = icons("Changer d'espace");
+    expect(first?.classList.contains('lucide-building-complex')).toBe(true);
+    expect(last?.classList.contains('lucide-chevrons-up-down')).toBe(true);
   });
 
   it('change l’apparence depuis le menu du compte', async () => {

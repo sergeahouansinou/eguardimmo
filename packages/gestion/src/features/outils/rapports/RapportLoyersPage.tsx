@@ -152,7 +152,7 @@ function LoyersTable({ view, generatedOn }: { view: LoyersView; generatedOn: str
   const stamp = generatedOn.split('-').reverse().join('/');
   return (
     <section aria-label="Détail par bien" className="rounded-lg border border-line bg-surface">
-      <div className="overflow-x-auto">
+      <div className="relative overflow-x-auto">
         <DataTable caption="Détail des loyers par bien, en euros">
           <thead>
             <tr>

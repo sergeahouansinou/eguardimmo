@@ -97,8 +97,9 @@ export function Paper({ label, children }: { label: string; children: ReactNode 
   return (
     <article
       data-print-area
+      data-paper=""
       aria-label={label}
-      className="mx-auto flex min-h-[1123px] w-[794px] flex-col gap-6 border border-line bg-surface p-14 text-body text-fg shadow-sm"
+      className="mx-auto flex min-h-[1123px] w-[794px] flex-col gap-6 border border-line p-14 text-body shadow-sm"
     >
       {children}
     </article>

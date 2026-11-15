@@ -131,6 +131,17 @@ describe('DocumentsPage', () => {
     expect(screen.getByText(/Le téléchargement sera disponible/)).toBeTruthy();
   });
 
+  it('propose un nouveau modèle et envoie un document en signature', async () => {
+    const user = userEvent.setup();
+    renderList();
+    await screen.findByRole('table');
+    expect(screen.getByRole('link', { name: 'Nouveau modèle' }).getAttribute('href')).toBe('/modeles/nouveau');
+    expect(screen.getByRole('link', { name: 'Importer des documents' }).getAttribute('href')).toBe('/documents/nouveau');
+    await user.click(screen.getByRole('button', { name: 'Plus d’actions, Bail signé, Apt A1.pdf' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Envoyer en signature' }));
+    expect(navigate).toHaveBeenCalledWith('/documents/signatures/nouvelle?document=Bail%20sign%C3%A9%2C%20Apt%20A1.pdf');
+  });
+
   it('supprime après confirmation, y compris en groupe', async () => {
     const user = userEvent.setup();
     renderList();

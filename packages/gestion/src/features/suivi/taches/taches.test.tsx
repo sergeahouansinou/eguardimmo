@@ -18,7 +18,7 @@ beforeEach(() => {
 });
 
 const renderList = () => renderScreen(<TachesPage Link={TestLink} navigate={navigate} />);
-const titles = () => within(screen.getByRole('table')).getAllByRole('row').slice(1).map((row) => within(row).getAllByRole('cell')[1]?.textContent);
+const titles = () => within(screen.getByRole('table')).getAllByRole('row').slice(1).map((row) => within(row).getAllByRole('cell')[2]?.textContent);
 
 async function choose(user: ReturnType<typeof userEvent.setup>, field: RegExp, option: string) {
   await user.click(screen.getByRole('combobox', { name: field }));
@@ -101,14 +101,27 @@ describe('TachesPage', () => {
     const user = userEvent.setup();
     renderList();
     await screen.findByRole('table');
-    await user.click(screen.getByRole('button', { name: "Terminer Attestation d'assurance à demander" }));
+    await user.click(screen.getByRole('checkbox', { name: "Terminer Attestation d'assurance à demander" }));
     await vi.waitFor(() => { expect(titles()).not.toContain("Attestation d'assurance à demander"); });
     expect(screen.getByRole('tab', { name: /À faire/ }).textContent).toContain('5');
     expect(screen.getByRole('tab', { name: /Terminées/ }).textContent).toContain('19');
     expect(screen.getByRole('status').textContent).toContain('terminée');
   });
 
-  it('agit sur la sélection : marquer terminée et reporter', async () => {
+  it('rouvre une tâche terminée en décochant la case', async () => {
+    const user = userEvent.setup();
+    renderList();
+    await screen.findByRole('table');
+    await user.click(screen.getByRole('tab', { name: /Terminées/ }));
+    const box = screen.getByRole('checkbox', { name: 'Rouvrir Quittances d’octobre à envoyer' });
+    expect((box as HTMLInputElement).checked).toBe(true);
+    await user.click(box);
+    await vi.waitFor(() => { expect(screen.queryByRole('checkbox', { name: 'Rouvrir Quittances d’octobre à envoyer' })).toBeNull(); });
+    expect(screen.getByRole('tab', { name: /À faire/ }).textContent).toContain('7');
+    expect(screen.getByRole('status').textContent).toContain('rouverte');
+  });
+
+  it('reporte la sélection à une date libre puis la marque terminée', async () => {
     const user = userEvent.setup();
     renderList();
     await screen.findByRole('table');
@@ -117,11 +130,64 @@ describe('TachesPage', () => {
     const bar = screen.getByRole('region', { name: 'Actions sur la sélection' });
     expect(bar.textContent).toContain('1 tâche sélectionnée');
     await user.click(within(bar).getByRole('button', { name: 'Reporter' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Reporter l’échéance' });
+    const field = within(dialog).getByLabelText(/Nouvelle échéance/);
+    await user.clear(field);
+    await user.type(field, '2026-11-27');
+    await user.click(within(dialog).getByRole('button', { name: 'Reporter' }));
     await vi.waitFor(() => { expect(screen.getByRole('row', { name: /Relevé des compteurs/ }).textContent).toContain('27/11/2026'); });
+    expect(screen.getByRole('status').textContent).toContain('Échéance reportée au 27/11/2026 pour 1 tâche.');
     await user.click(screen.getByRole('checkbox', { name: 'Sélectionner toutes les tâches de la page' }));
     expect(screen.getByRole('region', { name: 'Actions sur la sélection' }).textContent).toContain('5 tâches sélectionnées');
     await user.click(screen.getByRole('button', { name: 'Marquer terminée' }));
     await vi.waitFor(() => { expect(screen.getByRole('tab', { name: /Terminées/ }).textContent).toContain('23'); });
+  });
+
+  it('refuse une date de report vide', async () => {
+    const user = userEvent.setup();
+    renderList();
+    await screen.findByRole('table');
+    await user.click(screen.getByRole('button', { name: 'Plus d’actions, Ramonage annuel' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Reporter à une date' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Reporter l’échéance' });
+    const field = within(dialog).getByLabelText<HTMLInputElement>(/Nouvelle échéance/);
+    expect(field.value).toBe('2026-12-15');
+    await user.clear(field);
+    await user.click(within(dialog).getByRole('button', { name: 'Reporter' }));
+    expect(within(dialog).getByText('Indiquez une date valide.')).toBeTruthy();
+    expect(screen.getByRole('row', { name: /Ramonage annuel/, hidden: true }).textContent).toContain('15/12/2026');
+  });
+
+  it('assigne une tâche puis la sélection à une personne', async () => {
+    const user = userEvent.setup();
+    renderList();
+    await screen.findByRole('table');
+    await user.click(screen.getByRole('button', { name: 'Plus d’actions, Ramonage annuel' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Assigner à' }));
+    let dialog = await screen.findByRole('dialog', { name: 'Assigner à' });
+    await user.click(within(dialog).getByRole('button', { name: 'Assigner' }));
+    expect(within(dialog).getByText('Choisissez la personne assignée.')).toBeTruthy();
+    await user.click(within(dialog).getByRole('combobox', { name: /Assigner à/ }));
+    await user.click(await screen.findByRole('option', { name: 'Marie Chabi' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Assigner' }));
+    await vi.waitFor(() => { expect(screen.getByRole('row', { name: /Ramonage annuel/ }).textContent).toContain('Marie Chabi'); });
+    expect(screen.getByRole('status').textContent).toContain('1 tâche assignée à Marie Chabi.');
+    await user.click(screen.getByRole('checkbox', { name: 'Sélectionner Relevé des compteurs' }));
+    await user.click(within(screen.getByRole('region', { name: 'Actions sur la sélection' })).getByRole('button', { name: 'Assigner à' }));
+    dialog = await screen.findByRole('dialog', { name: 'Assigner à' });
+    await user.click(within(dialog).getByRole('combobox', { name: /Assigner à/ }));
+    await user.click(await screen.findByRole('option', { name: 'Marie Chabi' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Assigner' }));
+    await vi.waitFor(() => { expect(screen.getByRole('row', { name: /Relevé des compteurs/ }).textContent).toContain('Marie Chabi'); });
+  });
+
+  it('mène à la modification depuis le menu', async () => {
+    const user = userEvent.setup();
+    renderList();
+    await screen.findByRole('table');
+    await user.click(screen.getByRole('button', { name: 'Plus d’actions, Ramonage annuel' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Modifier' }));
+    expect(navigate).toHaveBeenCalledWith('/taches/ramonage-annuel/modifier');
   });
 
   it('ouvre le détail d’une tâche', async () => {
@@ -219,5 +285,30 @@ describe('TacheFormPage', () => {
   it('n’a aucune violation axe', async () => {
     const { container } = renderScreen(<TacheFormPage Link={TestLink} navigate={navigate} />);
     await expectNoA11yViolations(container);
+  });
+
+  it('modifie une tâche existante puis revient à la liste', async () => {
+    const user = userEvent.setup();
+    const source = createDemoTasksSource();
+    renderScreen(
+      <TasksSourceProvider source={source}>
+        <TacheFormPage Link={TestLink} navigate={navigate} id="ramonage-annuel" />
+      </TasksSourceProvider>,
+    );
+    const subject = await screen.findByRole('textbox', { name: /Sujet/ });
+    expect((subject as HTMLInputElement).value).toBe('Ramonage annuel');
+    await user.clear(subject);
+    await user.type(subject, 'Ramonage des deux conduits');
+    await user.click(screen.getByRole('button', { name: 'Enregistrer les modifications' }));
+    await vi.waitFor(() => { expect(navigate).toHaveBeenCalledWith('/taches'); });
+    const saved = (await source.list()) as { id: string; title: string }[];
+    expect(saved.find((task) => task.id === 'ramonage-annuel')?.title).toBe('Ramonage des deux conduits');
+    expect(saved.filter((task) => task.title.startsWith('Ramonage'))).toHaveLength(1);
+  });
+
+  it('indique une tâche introuvable avec un retour', async () => {
+    renderScreen(<TacheFormPage Link={TestLink} navigate={navigate} id="absente" />);
+    expect(await screen.findByText('Tâche introuvable', { selector: 'h2, p, b, strong, div' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Retour aux tâches' }).getAttribute('href')).toBe('/taches');
   });
 });

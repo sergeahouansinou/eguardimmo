@@ -53,7 +53,7 @@ export function Strip({ items }: { items: readonly string[] }) {
 
 export function SheetTable({ headers, children, label }: { headers: readonly { label: string; numeric?: boolean }[]; children: ReactNode; label: string }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="relative overflow-x-auto">
       <table aria-label={label} className="w-full min-w-[480px] border-collapse text-body text-fg-muted">
         <thead>
           <tr>

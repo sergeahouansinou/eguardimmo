@@ -57,7 +57,7 @@ export function PlanningGrid({ rows, months }: { rows: readonly PlanningRow[]; m
   const rightSide = hovered ? hovered.col >= months.length / 2 : false;
 
   return (
-    <div className="overflow-x-auto">
+    <div className="relative overflow-x-auto">
       <div role="grid" aria-label="Planning d'occupation" className="relative flex min-w-[720px] flex-col">
         <div
           role="row"

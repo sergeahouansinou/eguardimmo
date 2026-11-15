@@ -25,7 +25,7 @@ describe('navigation de gestion', () => {
   it('recense chaque écran prévu avec un titre et un chemin unique', () => {
     const screens = plannedScreens();
     expect(screens.get('/biens/immeubles')).toBe('Immeubles');
-    expect(screens.get('/deconnexion')).toBe('Déconnexion');
+    for (const href of ['/deconnexion', '/choix-du-profil', '/notifications']) expect(screens.has(href), href).toBe(false);
     expect(screens.has('/')).toBe(false);
     for (const href of screens.keys()) expect(href).toMatch(/^\/[a-z0-9\-/]+$/);
   });

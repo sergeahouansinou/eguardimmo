@@ -1,14 +1,11 @@
 'use client';
 
-import { Ban, CalendarCheck, CalendarRange, Copy, Wallet } from 'lucide-react';
+import { Ban, BellRing, CalendarCheck, CalendarRange, Copy, FileText, Mail, Pencil, Wallet } from 'lucide-react';
 import {
   Badge,
   Button,
   Card,
   ConfirmDialog,
-  Dialog,
-  DialogClose,
-  DialogContent,
   EmptyState,
   Pagination,
   Select,
@@ -26,11 +23,14 @@ import {
 import type { BadgeTone } from '@eguardimmo/ui';
 import { useState } from 'react';
 import { useLeaseLookups } from './BauxParts';
-import { useReservationAction, useReservations } from './hooks';
+import { useReservationAction, useReservationMail, useReservations } from './hooks';
 import { bauxPaths } from './paths';
+import { ReservationCalendarDialog } from './ReservationCalendarDialog';
+import { ReservationImportDialog } from './ReservationImportDialog';
 import type { Reservation, ReservationStatus } from './schemas';
 import { ActionMenu, LinkButton, ListLoading, LoadError, PageHeader, SearchInput, errorMessage, useGestionNavigation, useNotify } from '../locataires/kit';
 import type { ActionItem } from '../locataires/kit';
+import { useUnits } from '../locataires/hooks';
 import { downloadCsv, toCsv } from '../locataires/kit/csv';
 import { daysBetween, formatDateFr } from '../locataires/kit/dates';
 import { links } from '../locataires/kit/links';
@@ -55,16 +55,17 @@ const tabs: ListTab<Reservation>[] = [
   { id: 'annulees', label: 'Annulées', match: (item) => item.status === 'annulee' },
 ];
 
-const TEMPLATE_HEADERS = ['Bien', 'Voyageur', 'Arrivée', 'Départ', 'Montant', 'Acompte'];
-
 export function ReservationsPage() {
   const reservations = useReservations();
   const lookups = useLeaseLookups();
   const { push } = useGestionNavigation();
   const notify = useNotify();
   const act = useReservationAction();
+  const mail = useReservationMail();
+  const units = useUnits();
   const [unitId, setUnitId] = useState(ALL);
   const [importOpen, setImportOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [pendingCancel, setPendingCancel] = useState<Reservation | null>(null);
 
   const items = reservations.data ?? [];
@@ -81,17 +82,25 @@ export function ReservationsPage() {
     }
   };
 
+  const send = async (id: string, kind: 'confirmation' | 'rappel') => {
+    try {
+      const result = await mail.mutateAsync({ id, kind });
+      notify({ title: kind === 'confirmation' ? 'Confirmation envoyée' : 'Relance envoyée', description: `${result.reference}, ${result.guest}` });
+    } catch (error) {
+      notify({ tone: 'danger', title: 'Envoi impossible', description: errorMessage(error) });
+    }
+  };
+
   const actionsFor = (item: Reservation): ActionItem[] => [
+    { id: 'edit', label: 'Modifier', icon: Pencil, disabled: item.status === 'annulee', onSelect: () => { push(bauxPaths.editReservation(item.id)); } },
     { id: 'confirm', label: 'Confirmer l’option', icon: CalendarCheck, disabled: item.status !== 'option', onSelect: () => { void run(item.id, 'confirm', 'Réservation confirmée'); } },
+    { id: 'mail', label: 'Envoyer la confirmation', icon: Mail, disabled: item.status === 'annulee' || item.status === 'option', onSelect: () => { void send(item.id, 'confirmation'); } },
+    { id: 'remind', label: 'Relancer le solde', icon: BellRing, disabled: item.status === 'annulee' || item.paid >= item.amount, onSelect: () => { void send(item.id, 'rappel'); } },
     { id: 'payment', label: 'Enregistrer un paiement', icon: Wallet, disabled: item.status === 'annulee', onSelect: () => { push(links.newPayment({ reservation: item.id })); } },
+    { id: 'contract', label: 'Contrat de location', icon: FileText, disabled: item.status === 'annulee', onSelect: () => { push(bauxPaths.reservationContract(item.id)); } },
     { id: 'duplicate', label: 'Dupliquer en option', icon: Copy, onSelect: () => { void run(item.id, 'duplicate', 'Option créée'); } },
     { id: 'cancel', label: 'Annuler la réservation', icon: Ban, tone: 'danger', separatorBefore: true, disabled: item.status === 'annulee', onSelect: () => { setPendingCancel(item); } },
   ];
-
-  const downloadTemplate = () => {
-    downloadCsv('modele-reservations.csv', toCsv(TEMPLATE_HEADERS, [['Studio Plage', 'Anna Kowalski', '2026-12-01', '2026-12-08', '630,00', '300,00']]));
-    notify({ title: 'Modèle téléchargé', description: 'modele-reservations.csv' });
-  };
 
   const exportCsv = () => {
     downloadCsv(
@@ -122,7 +131,8 @@ export function ReservationsPage() {
           <>
             <Button variant="secondary" onClick={exportCsv} disabled={!reservations.data}>Exporter</Button>
             <Button variant="secondary" onClick={() => { setImportOpen(true); }}>Importer</Button>
-            <LinkButton href={`${bauxPaths.reservations}/nouvelle`} variant="primary" icon={CalendarRange}>Nouvelle réservation</LinkButton>
+            <Button variant="secondary" disabled={!reservations.data || !units.data} onClick={() => { setCalendarOpen(true); }}>Calendrier</Button>
+            <LinkButton href={bauxPaths.newReservation} variant="primary" icon={CalendarRange}>Nouvelle réservation</LinkButton>
           </>
         }
       />
@@ -192,19 +202,8 @@ export function ReservationsPage() {
         </Tabs>
       </Card>
 
-      <Dialog open={importOpen} onOpenChange={setImportOpen}>
-        <DialogContent title="Importer des réservations" description="Téléchargez le modèle CSV et remplissez une ligne par réservation. L’import du fichier sera disponible prochainement.">
-          <div className="flex flex-col gap-3 p-4">
-            <p className="text-body text-fg-muted">{`Colonnes attendues : ${TEMPLATE_HEADERS.join(', ')}. Dates au format aaaa-mm-jj, montants en euros.`}</p>
-            <div className="flex flex-wrap justify-end gap-2">
-              <DialogClose asChild>
-                <Button variant="ghost">Fermer</Button>
-              </DialogClose>
-              <Button variant="secondary" onClick={downloadTemplate}>Télécharger le modèle</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ReservationImportDialog open={importOpen} onOpenChange={setImportOpen} />
+      <ReservationCalendarDialog open={calendarOpen} onOpenChange={setCalendarOpen} reservations={items} units={(units.data ?? []).filter((unit) => items.some((item) => item.unitId === unit.id))} />
       <ConfirmDialog
         open={pendingCancel !== null}
         onOpenChange={(open) => { if (!open) setPendingCancel(null); }}

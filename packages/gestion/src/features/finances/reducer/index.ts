@@ -20,7 +20,7 @@ import {
   updateEcheance,
 } from './ledger';
 import { deletePret, importEcheancier, prepayPret, savePret, saveRegularisation, setPretStatut } from './patrimoine';
-import { addDiligence, billDossierFees, openDossier, proposePlan } from './recouvrement';
+import { addDiligence, billDossierFees, openDossier, proposePlan, sendRelance } from './recouvrement';
 
 export { FinancesCommandError } from './context';
 export type { Outcome, ReducerContext } from './context';
@@ -35,6 +35,7 @@ function run(data: FinancesData, ctx: ReducerContext, cmd: FinancesCommand): Out
   switch (cmd.type) {
     case 'recordPayment': return recordPayment(data, ctx, cmd);
     case 'sendReminders': return sendReminders(data, ctx, cmd);
+    case 'sendRelance': return sendRelance(data, ctx, cmd);
     case 'markUncollectible': return markUncollectible(data, ctx, cmd);
     case 'updateEcheance': return updateEcheance(data, ctx, cmd);
     case 'shiftEcheances': return shiftEcheances(data, ctx, cmd);

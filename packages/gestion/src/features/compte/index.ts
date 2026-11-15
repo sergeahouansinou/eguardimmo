@@ -7,3 +7,4 @@ export { EquipePage } from './equipe/EquipePage';
 export { EquipeInvitePage } from './equipe/EquipeInvitePage';
 export { ComptePage } from './compte/ComptePage';
 export { AbonnementPage } from './compte/AbonnementPage';
+export { ExportPage } from './export/ExportPage';

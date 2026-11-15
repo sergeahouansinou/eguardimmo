@@ -4,24 +4,28 @@ import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardTitle, IconButton, Select, TextField } from '@eguardimmo/ui';
 import { useState } from 'react';
 import { useCreateSignature } from './hooks';
+import { SignaturePlacement } from './SignaturePlacement';
 import { courriersPaths } from './paths';
-import { signatureInputSchema } from './schemas';
+import { defaultSignatureFields, signatureInputSchema } from './schemas';
+import type { SignatureField } from './schemas';
 import { useTenants } from '../locataires/hooks';
 import { DescriptionList, FileDrop, PageHeader, Steps, errorMessage, noticeAfterNavigation, useGestionNavigation, useNotify } from '../locataires/kit';
 import { links } from '../locataires/kit/links';
 import { useZodForm } from '../locataires/kit/useZodForm';
 import { tenantNameOf } from '../locataires/schemas';
 
-const STEPS = ['Document', 'Signataires', 'Envoi'];
+const STEPS = ['Document', 'Signataires', 'Placement'];
 const MAX_BYTES = 20 * 1_048_576;
 
 export function SignatureNewPage() {
-  const { push } = useGestionNavigation();
+  const { push, search } = useGestionNavigation();
   const notify = useNotify();
   const tenants = useTenants();
   const create = useCreateSignature();
-  const form = useZodForm(signatureInputSchema, { title: '', fileName: '', signers: [{ name: '', email: '' }] });
+  const form = useZodForm(signatureInputSchema, { title: search.get('titre') ?? '', fileName: search.get('fichier') ?? '', signers: [{ name: '', email: '' }], fields: [] });
   const [step, setStep] = useState(0);
+  const [active, setActive] = useState(0);
+  const [page, setPage] = useState(3);
 
   const parsed = signatureInputSchema.safeParse(form.values);
   const issues = parsed.success ? [] : parsed.error.issues.map((issue) => String(issue.path[0]));
@@ -33,6 +37,12 @@ export function SignatureNewPage() {
     form.touch('fileName');
     form.touch('signers');
     if (blocked(step)) return;
+    if (step === 1) {
+      const kept = (form.values.fields ?? []).filter((field) => field.signer < form.values.signers.length);
+      const missing = defaultSignatureFields(form.values.signers.length).filter((field) => !kept.some((entry) => entry.signer === field.signer));
+      form.setValue('fields', [...kept, ...missing].sort((a, b) => a.signer - b.signer));
+      setActive(0);
+    }
     setStep((current) => Math.min(STEPS.length - 1, current + 1));
   };
 
@@ -64,7 +74,7 @@ export function SignatureNewPage() {
       <PageHeader
         crumbs={[{ label: 'Accueil', href: links.home }, { label: 'Documents', href: courriersPaths.documents }, { label: 'Signatures', href: courriersPaths.signatures }, { label: 'Nouvelle demande' }]}
         title="Nouvelle demande de signature"
-        subtitle="Trois étapes : le document, les signataires, l’envoi."
+        subtitle="Trois étapes : le document, les signataires, le placement des signatures."
       />
       <Steps steps={STEPS} current={step} label="Étapes de la demande" />
       <Card className="gap-3" role="group" aria-labelledby="sg-step">
@@ -127,14 +137,24 @@ export function SignatureNewPage() {
           </>
         ) : null}
         {step === 2 ? (
-          <DescriptionList
-            termWidth="130px"
-            items={[
-              { term: 'Document', detail: form.values.title },
-              { term: 'Fichier', detail: form.values.fileName },
-              { term: 'Signataires', detail: form.values.signers.map((signer) => `${signer.name} (${signer.email})`).join(', ') },
-            ]}
-          />
+          <>
+            <DescriptionList
+              termWidth="130px"
+              items={[
+                { term: 'Document', detail: `${form.values.title}, ${form.values.fileName}` },
+                { term: 'Signataires', detail: form.values.signers.map((signer) => `${signer.name} (${signer.email})`).join(', ') },
+              ]}
+            />
+            <SignaturePlacement
+              signers={form.values.signers}
+              fields={form.values.fields ?? []}
+              active={active}
+              page={page}
+              onActiveChange={setActive}
+              onPageChange={setPage}
+              onFieldsChange={(fields: SignatureField[]) => { form.setValue('fields', fields); }}
+            />
+          </>
         ) : null}
       </Card>
       <div className="flex flex-wrap justify-between gap-2">

@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Download, Mail, Minus, Plus, Printer } from 'lucide-react';
-import { Button, Icon, IconButton } from '@eguardimmo/ui';
+import { useMemo, useState } from 'react';
+import { Download, Mail, Printer } from 'lucide-react';
+import { Button, Icon } from '@eguardimmo/ui';
 import { EmptyBlock, PageHeader, QueryState, Switch } from '../kit';
 import type { ScreenProps } from '../kit';
 import { downloadCsv } from '../analytique/csv';
@@ -10,19 +10,11 @@ import { formatStamp } from '../analytique/format';
 import { MODELED_SLUG, reportHref } from './catalog';
 import { buildLoyers, decodeFilters, encodeFilters, loyersDataset, scopeLabel } from './loyers';
 import type { LoyersView } from './loyers';
-import { PAPER_HEIGHT, PAPER_WIDTH, ReportPaper } from './ReportPaper';
+import { PaperViewer, printDocument } from './PaperViewer';
+import { ReportPaper } from './ReportPaper';
 import type { PaperOptions } from './ReportPaper';
 import { EmailDialog } from './SendDialogs';
 import { useLoyersData } from './source';
-
-const PRINT_CSS =
-  '@page{size:A4;margin:0}@media print{html,body{height:auto!important;overflow:visible!important}body *{visibility:hidden;overflow:visible!important}[data-print-root],[data-print-root] *{visibility:visible}[data-print-root]{position:absolute;left:0;top:0;display:block!important;transform:none!important}[data-print-page]{display:flex!important;break-after:page;border:0!important}}';
-
-const ZOOM_MIN = 50;
-const ZOOM_MAX = 200;
-const ZOOM_STEP = 10;
-
-const print = () => { window.print(); };
 
 export interface ApercuRapportPageProps extends ScreenProps {
   search?: string;
@@ -34,22 +26,14 @@ export function ApercuRapportPage({ Link, navigate, search = '' }: ApercuRapport
   const view = useMemo(() => (query.data ? buildLoyers(query.data, filters) : null), [query.data, filters]);
   const [options, setOptions] = useState<PaperOptions>({ annex: true, letterhead: true, hideZero: false });
   const [page, setPage] = useState(1);
-  const [zoom, setZoom] = useState(100);
   const [emailing, setEmailing] = useState(false);
-  const stage = useRef<HTMLDivElement>(null);
   const title = view ? `Loyers encaissés ${view.period.title}` : 'Loyers encaissés';
   const pages = options.annex ? 2 : 1;
   const current = Math.min(page, pages);
   const backHref = `${reportHref(MODELED_SLUG)}?${encodeFilters(filters)}`;
 
-  const fit = () => {
-    const width = stage.current?.clientWidth ?? 0;
-    setZoom(width > 0 ? Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.floor(((width - 32) / PAPER_WIDTH) * 100))) : 100);
-  };
-
   return (
     <>
-      <style>{PRINT_CSS}</style>
       <PageHeader
         Link={Link}
         crumbs={[{ label: 'Outils' }, { label: 'Rapports', href: '/rapports' }, { label: 'Loyers encaissés', href: backHref }, { label: 'Aperçu PDF' }]}
@@ -69,7 +53,7 @@ export function ApercuRapportPage({ Link, navigate, search = '' }: ApercuRapport
               <Icon icon={Download} />
               Exporter en Excel
             </Button>
-            <Button disabled={!view?.hasData} onClick={print}>
+            <Button disabled={!view?.hasData} onClick={printDocument}>
               <Icon icon={Printer} />
               Télécharger le PDF
             </Button>
@@ -80,35 +64,16 @@ export function ApercuRapportPage({ Link, navigate, search = '' }: ApercuRapport
         {(data) =>
           view?.hasData ? (
             <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
-              <section aria-label="Aperçu du PDF" className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-surface">
-                <div role="toolbar" aria-label="Outils de l’aperçu" className="flex h-11 items-center gap-1 overflow-x-auto border-b border-line px-2 text-caption font-medium whitespace-nowrap text-fg-muted">
-                  <IconButton label="Page précédente" icon={ChevronLeft} disabled={current <= 1} onClick={() => { setPage(current - 1); }} />
-                  <span aria-live="polite">{`Page ${String(current)} / ${String(pages)}`}</span>
-                  <IconButton label="Page suivante" icon={ChevronRight} disabled={current >= pages} onClick={() => { setPage(current + 1); }} />
-                  <span aria-hidden="true" className="mx-1 h-5 w-px bg-line" />
-                  <IconButton label="Réduire" icon={Minus} disabled={zoom <= ZOOM_MIN} onClick={() => { setZoom(Math.max(ZOOM_MIN, zoom - ZOOM_STEP)); }} />
-                  <span className="min-w-11 text-center tabular-nums">{`${String(zoom)} %`}</span>
-                  <IconButton label="Agrandir" icon={Plus} disabled={zoom >= ZOOM_MAX} onClick={() => { setZoom(Math.min(ZOOM_MAX, zoom + ZOOM_STEP)); }} />
-                  <Button variant="ghost" size="sm" onClick={fit}>Ajuster</Button>
-                  <span className="flex-1" />
-                  <IconButton label="Imprimer" icon={Printer} onClick={print} />
-                  <IconButton label="Télécharger le PDF" icon={Download} onClick={print} />
-                </div>
-                <div ref={stage} className="flex justify-start overflow-auto bg-muted p-4 sm:justify-center">
-                  <div style={{ width: PAPER_WIDTH * (zoom / 100), height: PAPER_HEIGHT * (zoom / 100) }} className="shrink-0">
-                    <div data-print-root="" style={{ transform: `scale(${String(zoom / 100)})`, transformOrigin: 'top left', width: PAPER_WIDTH }}>
-                      <ReportPaper
-                        view={view}
-                        scope={scopeLabel(data, filters)}
-                        generated={formatStamp(data.generatedAt).replace(', ', ' à ')}
-                        options={options}
-                        pages={pages}
-                        current={current}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </section>
+              <PaperViewer pages={pages} current={current} onPageChange={setPage}>
+                <ReportPaper
+                  view={view}
+                  scope={scopeLabel(data, filters)}
+                  generated={formatStamp(data.generatedAt).replace(', ', ' à ')}
+                  options={options}
+                  pages={pages}
+                  current={current}
+                />
+              </PaperViewer>
               <Side view={view} options={options} onOptions={setOptions} pages={pages} onEdit={() => { navigate(backHref); }} scope={scopeLabel(data, filters)} />
             </div>
           ) : (

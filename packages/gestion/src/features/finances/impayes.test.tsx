@@ -102,6 +102,25 @@ describe('ImpayesPage', () => {
     });
   });
 
+  it('le menu d’une ligne ouvre l’aperçu de la relance, la mise en demeure, le grand livre, l’acompte et le dossier', async () => {
+    const { navigate } = renderFinances((props) => <ImpayesPage {...props} />);
+    const table = await screen.findByRole('table', { name: 'Impayés' });
+    const open = async (name: string) => {
+      await userEvent.click(within(rowAt(table, 1)).getByRole('button', { name: 'Plus d’actions' }));
+      await userEvent.click(await screen.findByRole('menuitem', { name }));
+    };
+    await open('Aperçu de la relance');
+    expect(navigate).toHaveBeenLastCalledWith(`/finances/impayes/${KOFFI}/relance`);
+    await open('Mise en demeure');
+    expect(navigate).toHaveBeenLastCalledWith(`/finances/impayes/${KOFFI}/relance?niveau=mise_en_demeure`);
+    await open('Grand livre du locataire');
+    expect(navigate).toHaveBeenLastCalledWith(`/finances/impayes/${KOFFI}/grand-livre`);
+    await open('Enregistrer un acompte');
+    expect(navigate).toHaveBeenLastCalledWith('/finances/encaissements/acompte?bail=bl-2023-0007');
+    await open('Dossier de recouvrement');
+    expect(navigate).toHaveBeenLastCalledWith(`/finances/impayes/${KOFFI}`);
+  });
+
   it('affiche une erreur de chargement avec un bouton Réessayer', async () => {
     const source = createDemoFinancesSource();
     renderFinances((props) => <ImpayesPage {...props} />, { ...source, snapshot: () => Promise.reject(new Error('panne')) });

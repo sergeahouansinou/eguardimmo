@@ -42,6 +42,7 @@ export const contactInputSchema = z
       .refine((value) => value === '' || z.email().safeParse(value).success, 'Indiquez une adresse e-mail valide, par exemple nom@exemple.fr.'),
     bienIds: z.array(z.enum(BIEN_IDS)),
     shared: z.boolean(),
+    notes: z.string().trim().max(500, 'Les notes ne dépassent pas 500 caractères.'),
   })
   .refine((value) => value.phone !== '' || value.email !== '', {
     path: ['phone'],
@@ -59,6 +60,7 @@ export const contactSchema = z.object({
   email: z.string(),
   bienIds: z.array(z.enum(BIEN_IDS)),
   shared: z.boolean(),
+  notes: z.string(),
   archived: z.boolean(),
 });
 export type Contact = z.infer<typeof contactSchema>;
