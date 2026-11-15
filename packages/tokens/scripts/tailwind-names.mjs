@@ -8,6 +8,7 @@ export const TAILWIND_COLOR_NAMES = {
   'border.default': 'line',
   'border.control': 'line-control',
   'border.strong': 'line-strong',
+  'border.toggle': 'line-toggle',
   'text.default': 'fg',
   'text.muted': 'fg-muted',
   'text.subtle': 'fg-subtle',

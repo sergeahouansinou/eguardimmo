@@ -8,6 +8,7 @@
   --color-line: var(--eg-border-default);
   --color-line-control: var(--eg-border-control);
   --color-line-strong: var(--eg-border-strong);
+  --color-line-toggle: var(--eg-border-toggle);
   --color-fg: var(--eg-text-default);
   --color-fg-muted: var(--eg-text-muted);
   --color-fg-subtle: var(--eg-text-subtle);

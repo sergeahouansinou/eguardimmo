@@ -8,6 +8,7 @@
   --eg-border-default: #DDE4E5;
   --eg-border-control: #5F7176;
   --eg-border-strong: #334349;
+  --eg-border-toggle: #C4CFD1;
   --eg-text-default: #14202A;
   --eg-text-muted: #334349;
   --eg-text-subtle: #5F7176;
@@ -116,6 +117,7 @@
     --eg-border-default: #3A3A3A;
     --eg-border-control: #9AAAAE;
     --eg-border-strong: #C4CFD1;
+    --eg-border-toggle: #5F7176;
     --eg-text-default: #F6F8F8;
     --eg-text-muted: #C4CFD1;
     --eg-text-subtle: #9AAAAE;
@@ -170,6 +172,7 @@
   --eg-border-default: #3A3A3A;
   --eg-border-control: #9AAAAE;
   --eg-border-strong: #C4CFD1;
+  --eg-border-toggle: #5F7176;
   --eg-text-default: #F6F8F8;
   --eg-text-muted: #C4CFD1;
   --eg-text-subtle: #9AAAAE;

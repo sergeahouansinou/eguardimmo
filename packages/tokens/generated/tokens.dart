@@ -9,6 +9,7 @@ abstract final class EgTokens {
   static const Color lightBorderDefault = Color(0xFFDDE4E5);
   static const Color lightBorderControl = Color(0xFF5F7176);
   static const Color lightBorderStrong = Color(0xFF334349);
+  static const Color lightBorderToggle = Color(0xFFC4CFD1);
   static const Color lightTextDefault = Color(0xFF14202A);
   static const Color lightTextMuted = Color(0xFF334349);
   static const Color lightTextSubtle = Color(0xFF5F7176);
@@ -59,6 +60,7 @@ abstract final class EgTokens {
   static const Color darkBorderDefault = Color(0xFF3A3A3A);
   static const Color darkBorderControl = Color(0xFF9AAAAE);
   static const Color darkBorderStrong = Color(0xFFC4CFD1);
+  static const Color darkBorderToggle = Color(0xFF5F7176);
   static const Color darkTextDefault = Color(0xFFF6F8F8);
   static const Color darkTextMuted = Color(0xFFC4CFD1);
   static const Color darkTextSubtle = Color(0xFF9AAAAE);

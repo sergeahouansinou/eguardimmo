@@ -28,7 +28,7 @@ export function Switch({ label, hideLabel = false, checked, onCheckedChange, id,
         onClick={() => { onCheckedChange(!checked); }}
         className={cx(
           'relative h-[18px] w-8 shrink-0 cursor-pointer rounded-full transition-colors',
-          checked ? 'bg-action' : 'bg-line-strong',
+          checked ? 'bg-action' : 'bg-line-toggle',
           'disabled:cursor-not-allowed disabled:bg-disabled',
           focusRing,
           className,

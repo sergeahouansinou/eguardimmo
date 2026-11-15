@@ -24,6 +24,9 @@
       },
       "strong": {
         "$value": "{palette.gris.300}"
+      },
+      "toggle": {
+        "$value": "{palette.gris.500}"
       }
     },
     "text": {

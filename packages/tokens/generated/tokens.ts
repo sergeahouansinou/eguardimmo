@@ -12,6 +12,7 @@ export const tokens = {
         default: "#DDE4E5",
         control: "#5F7176",
         strong: "#334349",
+        toggle: "#C4CFD1",
       },
       text: {
         default: "#14202A",
@@ -89,6 +90,7 @@ export const tokens = {
         default: "#3A3A3A",
         control: "#9AAAAE",
         strong: "#C4CFD1",
+        toggle: "#5F7176",
       },
       text: {
         default: "#F6F8F8",

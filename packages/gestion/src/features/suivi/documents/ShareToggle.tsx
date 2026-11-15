@@ -23,7 +23,7 @@ export function ShareToggle({
       onClick={() => { onCheckedChange(!checked); }}
       className={cx(
         'relative inline-block h-[18px] w-8 shrink-0 cursor-pointer rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-        checked ? 'bg-action' : 'bg-line-strong',
+        checked ? 'bg-action' : 'bg-line-toggle',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
       )}
     >
