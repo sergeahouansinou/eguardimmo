@@ -1,7 +1,6 @@
 'use client';
 
-import { Alert, Badge, Button, Icon, Switch } from '@eguardimmo/ui';
-import { Info } from 'lucide-react';
+import { Alert, Badge, Button, Switch } from '@eguardimmo/ui';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -73,6 +72,10 @@ function ModulesForm({ id, data }: { id: string; data: OrganisationModules }) {
   const all = useMemo(() => data.groups.flatMap((group) => group.modules), [data]);
   const names = useMemo(() => new Map(all.map((module) => [module.id, module.name])), [all]);
   const [enabled, setEnabled] = useState(() => new Set(all.filter((module) => module.enabled).map((module) => module.id)));
+  const columns = useMemo(() => {
+    const half = Math.ceil(data.groups.length / 2);
+    return [data.groups.slice(0, half), data.groups.slice(half)];
+  }, [data.groups]);
   const [cascade, setCascade] = useState<string | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
 
@@ -104,7 +107,7 @@ function ModulesForm({ id, data }: { id: string; data: OrganisationModules }) {
   };
 
   return (
-    <div className="flex max-w-[720px] flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <PageHeader
         Link={Link}
         breadcrumb={[
@@ -115,52 +118,56 @@ function ModulesForm({ id, data }: { id: string; data: OrganisationModules }) {
         title="Modules activés"
         badges={<Badge tone="info">{`${formatInteger(enabled.size)} sur ${formatInteger(data.total)}`}</Badge>}
         subtitle={`${data.organisation.name} · un module désactivé disparaît du menu de l’organisation, ses données sont conservées.`}
+        actions={
+          <>
+            <Button variant="secondary" asChild>
+              <Link href={`/organisations/${id}`}>Annuler</Link>
+            </Button>
+            <Button loading={save.isPending} onClick={submit}>
+              Enregistrer
+            </Button>
+          </>
+        }
       />
       <Alert tone="info">
-        <span className="flex items-start gap-2">
-          <Icon icon={Info} className="mt-0.5 shrink-0" />
-          Les dépendances sont appliquées : désactiver Baux masque aussi Quittances et Impayés. Chaque changement est consigné dans le journal d’audit.
-        </span>
+        Les dépendances sont appliquées : désactiver Baux masque aussi Quittances et Impayés. Chaque changement est consigné dans le journal d’audit.
       </Alert>
       <div aria-live="polite">{cascade ? <Alert tone="warning">{cascade}</Alert> : null}</div>
-      {data.groups.map((group) => (
-        <Section
-          key={group.group}
-          id={`groupe-${group.group}`}
-          title={group.label}
-          aside={<span className="text-caption text-fg-subtle">{`${String(group.modules.length)} modules`}</span>}
-        >
-          <ul>
-            {group.modules.map((module) => (
-              <li key={module.id} className="flex min-h-12 items-center gap-3 border-t border-line py-2 first:border-t-0">
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-body-strong text-fg">{module.name}</span>
-                  <span className="text-caption text-fg-subtle">{module.description}</span>
-                </span>
-                {module.degraded ? <Badge tone="warning">Dégradé</Badge> : null}
-                {module.mandatory ? (
-                  <Badge tone="neutral">Obligatoire</Badge>
-                ) : (
-                  <Switch
-                    label={`Module ${module.name}`}
-                    checked={enabled.has(module.id)}
-                    onCheckedChange={(next) => { toggle(module, next); }}
-                  />
-                )}
-              </li>
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+        {columns.map((groups, index) => (
+          <div key={index} className="flex min-w-0 flex-col gap-4">
+            {groups.map((group) => (
+              <Section
+                key={group.group}
+                id={`groupe-${group.group}`}
+                title={group.label}
+                aside={<span className="text-caption text-fg-subtle">{`${String(group.modules.length)} modules`}</span>}
+              >
+                <ul>
+                  {group.modules.map((module) => (
+                    <li key={module.id} className="flex min-h-12 items-center gap-3 border-t border-line py-2 first:border-t-0">
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="text-body-strong text-fg">{module.name}</span>
+                        <span className="text-caption text-fg-subtle">{module.description}</span>
+                      </span>
+                      {module.degraded ? <Badge tone="warning">Dégradé</Badge> : null}
+                      {module.mandatory ? <Badge tone="neutral">Obligatoire</Badge> : null}
+                      <Switch
+                        label={`Module ${module.name}`}
+                        hideLabel
+                        disabled={module.mandatory}
+                        checked={enabled.has(module.id)}
+                        onCheckedChange={(next) => { toggle(module, next); }}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </Section>
             ))}
-          </ul>
-        </Section>
-      ))}
-      {failure ? <Alert tone="danger">{failure}</Alert> : null}
-      <div className="flex flex-wrap justify-end gap-2">
-        <Button variant="secondary" asChild>
-          <Link href={`/organisations/${id}`}>Annuler</Link>
-        </Button>
-        <Button loading={save.isPending} onClick={submit}>
-          Enregistrer les modules
-        </Button>
+          </div>
+        ))}
       </div>
+      {failure ? <Alert tone="danger">{failure}</Alert> : null}
     </div>
   );
 }

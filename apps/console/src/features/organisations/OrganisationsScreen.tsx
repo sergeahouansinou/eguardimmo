@@ -153,7 +153,7 @@ export function OrganisationsScreen() {
               </TabList>
               <TabPanel value={type} className="flex flex-col gap-4">
             <FilterBar label="Filtrer les organisations">
-              <div className="min-w-56 flex-1">
+              <div className="w-full sm:w-64">
                 <TextField
                   label="Rechercher une organisation"
                   hideLabel

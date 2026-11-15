@@ -100,100 +100,104 @@ function DetailContent({ detail }: { detail: ModuleDetail }) {
           </div>
         ))}
       </dl>
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <Section
-          id="drapeaux"
-          title="Drapeaux de fonctionnalité"
-          aside={<span className="text-caption text-fg-subtle">{`${String(detail.flags.length)} drapeaux`}</span>}
-        >
-          {detail.flags.length === 0 ? (
-            <EmptyLine>Aucun drapeau pour ce module.</EmptyLine>
-          ) : (
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <div className="flex min-w-0 flex-col gap-4">
+          <Section
+            id="drapeaux"
+            title="Drapeaux de fonctionnalité"
+            aside={<span className="text-caption text-fg-subtle">{`${String(detail.flags.length)} drapeaux`}</span>}
+          >
+            {detail.flags.length === 0 ? (
+              <EmptyLine>Aucun drapeau pour ce module.</EmptyLine>
+            ) : (
+              <ul>
+                {detail.flags.map((flag) => (
+                  <ListRow
+                    key={flag.key}
+                    title={flag.label}
+                    detail={`${flag.key}${flag.detail ? ` · ${flag.detail}` : ''}`}
+                    trailing={
+                      <>
+                        {flag.badge ? <Badge tone={flag.badge.tone}>{flag.badge.label}</Badge> : null}
+                        <Switch label={flag.label} hideLabel checked={flag.enabled} onCheckedChange={(next) => { toggleFlag(flag.key, flag.label, next); }} />
+                      </>
+                    }
+                  />
+                ))}
+              </ul>
+            )}
+          </Section>
+          <Section id="informations" title="Informations">
+            <KeyValueList
+              items={[
+                { label: 'Version', value: `${module.version.slice(1)}, déployée le ${formatDate('2026-11-10')}` },
+                { label: 'Fournisseur d’envoi', value: detail.provider },
+                { label: 'Responsable', value: detail.responsible },
+                { label: 'Dernier incident', value: detail.lastIncidentAt ? formatDateTime(detail.lastIncidentAt) : 'Aucun' },
+                { label: 'Organisations actives', value: `${formatInteger(module.organisationsActive)} sur ${formatInteger(module.organisationsTotal)}` },
+                { label: 'Runbook', value: detail.runbook ?? 'Aucun' },
+              ]}
+            />
+          </Section>
+        </div>
+        <div className="flex min-w-0 flex-col gap-4">
+          <Section id="dependances" title="Dépendances">
+            <p className="pt-1 text-caption font-semibold text-fg-muted">S’appuie sur</p>
+            {detail.dependsOn.length === 0 ? (
+              <EmptyLine>Aucune dépendance.</EmptyLine>
+            ) : (
+              <ul>
+                {detail.dependsOn.map((dependency) => (
+                  <ListRow
+                    key={dependency.id}
+                    title={
+                      <Link href={`/modules/${dependency.id}`} className="hover:underline">
+                        {dependency.name}
+                      </Link>
+                    }
+                    detail={dependency.detail}
+                    trailing={<ModuleStateBadge state={dependency.state} />}
+                  />
+                ))}
+              </ul>
+            )}
+            <p className="pt-3 text-caption font-semibold text-fg-muted">Utilisé par</p>
+            {detail.usedBy.length === 0 ? (
+              <EmptyLine>Aucun module ne dépend de celui-ci.</EmptyLine>
+            ) : (
+              <ul>
+                {detail.usedBy.map((user) => (
+                  <ListRow
+                    key={user.id}
+                    title={
+                      <Link href={`/modules/${user.id}`} className="hover:underline">
+                        {user.name}
+                      </Link>
+                    }
+                    detail={user.detail}
+                    trailing={<Badge tone={user.impacted ? 'warning' : 'neutral'}>{user.impacted ? 'Impacté' : 'Non impacté'}</Badge>}
+                  />
+                ))}
+              </ul>
+            )}
+          </Section>
+          <Section
+            id="versions"
+            title="Versions"
+            aside={<span className="text-caption text-fg-subtle">{`${formatInteger(detail.versionTotal)} versions`}</span>}
+          >
             <ul>
-              {detail.flags.map((flag) => (
+              {detail.versions.map((version) => (
                 <ListRow
-                  key={flag.key}
-                  title={flag.label}
-                  detail={`${flag.key}${flag.detail ? ` · ${flag.detail}` : ''}`}
-                  trailing={
-                    <>
-                      {flag.badge ? <Badge tone={flag.badge.tone}>{flag.badge.label}</Badge> : null}
-                      <Switch label={flag.label} hideLabel checked={flag.enabled} onCheckedChange={(next) => { toggleFlag(flag.key, flag.label, next); }} />
-                    </>
-                  }
+                  key={version.version}
+                  title={version.version}
+                  detail={`${formatDate(version.on)} · ${version.note}`}
+                  trailing={version.current ? <Badge tone="success">En production</Badge> : undefined}
                 />
               ))}
             </ul>
-          )}
-        </Section>
-        <Section id="informations" title="Informations">
-          <KeyValueList
-            items={[
-              { label: 'Version', value: `${module.version.slice(1)}, déployée le ${formatDate('2026-11-10')}` },
-              { label: 'Fournisseur d’envoi', value: detail.provider },
-              { label: 'Responsable', value: detail.responsible },
-              { label: 'Dernier incident', value: detail.lastIncidentAt ? formatDateTime(detail.lastIncidentAt) : 'Aucun' },
-              { label: 'Organisations actives', value: `${formatInteger(module.organisationsActive)} sur ${formatInteger(module.organisationsTotal)}` },
-              { label: 'Runbook', value: detail.runbook ?? 'Aucun' },
-            ]}
-          />
-        </Section>
-        <Section id="dependances" title="Dépendances">
-          <p className="pt-1 text-caption font-semibold text-fg-muted">S’appuie sur</p>
-          {detail.dependsOn.length === 0 ? (
-            <EmptyLine>Aucune dépendance.</EmptyLine>
-          ) : (
-            <ul>
-              {detail.dependsOn.map((dependency) => (
-                <ListRow
-                  key={dependency.id}
-                  title={
-                    <Link href={`/modules/${dependency.id}`} className="hover:underline">
-                      {dependency.name}
-                    </Link>
-                  }
-                  detail={dependency.detail}
-                  trailing={<ModuleStateBadge state={dependency.state} />}
-                />
-              ))}
-            </ul>
-          )}
-          <p className="pt-3 text-caption font-semibold text-fg-muted">Utilisé par</p>
-          {detail.usedBy.length === 0 ? (
-            <EmptyLine>Aucun module ne dépend de celui-ci.</EmptyLine>
-          ) : (
-            <ul>
-              {detail.usedBy.map((user) => (
-                <ListRow
-                  key={user.id}
-                  title={
-                    <Link href={`/modules/${user.id}`} className="hover:underline">
-                      {user.name}
-                    </Link>
-                  }
-                  detail={user.detail}
-                  trailing={<Badge tone={user.impacted ? 'warning' : 'neutral'}>{user.impacted ? 'Impacté' : 'Non impacté'}</Badge>}
-                />
-              ))}
-            </ul>
-          )}
-        </Section>
-        <Section
-          id="versions"
-          title="Versions"
-          aside={<span className="text-caption text-fg-subtle">{`${formatInteger(detail.versionTotal)} versions`}</span>}
-        >
-          <ul>
-            {detail.versions.map((version) => (
-              <ListRow
-                key={version.version}
-                title={version.version}
-                detail={`${formatDate(version.on)} · ${version.note}`}
-                trailing={version.current ? <Badge tone="success">En production</Badge> : undefined}
-              />
-            ))}
-          </ul>
-        </Section>
+          </Section>
+        </div>
       </div>
       <ConfirmDialog
         open={pauseOpen}

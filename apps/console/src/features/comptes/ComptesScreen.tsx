@@ -134,7 +134,7 @@ export function ComptesScreen() {
               </TabList>
               <TabPanel value={tab} className="flex flex-col gap-4">
             <FilterBar label="Filtrer les comptes">
-              <div className="min-w-56 flex-1">
+              <div className="w-full sm:w-64">
                 <TextField
                   label="Rechercher un compte"
                   hideLabel

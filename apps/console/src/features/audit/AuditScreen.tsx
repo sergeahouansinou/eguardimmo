@@ -99,7 +99,7 @@ export function AuditScreen() {
         Le journal est horodaté et chaîné par empreinte. Il ne peut être ni modifié ni supprimé, y compris par l’équipe opérateur. Conservation : 5 ans.
       </Alert>
       <FilterBar label="Filtrer le journal">
-        <div className="min-w-56 flex-1">
+        <div className="w-full sm:w-64">
           <TextField
             label="Rechercher dans le journal"
             hideLabel
