@@ -32,6 +32,16 @@ describe('NewMessageForm', () => {
     expect(navigate).toHaveBeenCalledWith(`/messages/${created?.id ?? ''}`);
   });
 
+  it('agence : propose de créer une campagne pour plusieurs destinataires, pas le locataire', async () => {
+    const agence = renderMessagerie(<NewMessageForm />, { space: 'agence' });
+    const link = await screen.findByRole('link', { name: 'Créer une campagne' });
+    expect(link.getAttribute('href')).toBe('/messages/campagnes/nouvelle');
+    agence.unmount();
+    renderMessagerie(<NewMessageForm />);
+    await screen.findByRole('textbox', { name: 'Destinataire' });
+    expect(screen.queryByRole('link', { name: 'Créer une campagne' })).toBeNull();
+  });
+
   it('agence : le destinataire est obligatoire, le rattachement suit le destinataire', async () => {
     const { navigate } = renderMessagerie(<NewMessageForm />, { space: 'agence' });
     await screen.findByRole('combobox', { name: /Destinataire/ });

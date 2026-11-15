@@ -19,7 +19,7 @@ export interface NewMessageFormProps {
 }
 
 export function NewMessageForm({ initialRecipientId = '' }: NewMessageFormProps) {
-  const { profile, routes, navigate } = useMessagerieConfig();
+  const { profile, routes, navigate, Link } = useMessagerieConfig();
   const compose = profile.compose;
   const recipients = useRecipients();
   const create = useCreateConversation();
@@ -111,6 +111,14 @@ export function NewMessageForm({ initialRecipientId = '' }: NewMessageFormProps)
           value={linkId}
           onValueChange={setLinkId}
         />
+      ) : null}
+      {profile.campaigns ? (
+        <p className="text-caption text-fg-muted">
+          Plusieurs destinataires ?{' '}
+          <Link href={routes.newCampaign} className="text-link underline">
+            Créer une campagne
+          </Link>
+        </p>
       ) : null}
       <TextField
         label="Sujet"
