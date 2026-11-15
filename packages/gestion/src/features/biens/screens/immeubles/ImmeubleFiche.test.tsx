@@ -27,7 +27,7 @@ describe('ImmeubleFiche', () => {
     );
     expect(await screen.findByRole('heading', { level: 1, name: 'Les Tilleuls' })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Copropriété' })).toBeTruthy();
-    expect(screen.getByRole('tab', { name: /Lots\s*5/ })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /Lots\s*8/ })).toBeTruthy();
     expect(await screen.findByText('En bref')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Modifier l’immeuble' }).getAttribute('href')).toBe('/biens/immeubles/les-tilleuls/modifier');
   });
@@ -80,7 +80,7 @@ describe('ImmeubleFiche', () => {
   it('lots : détaille les statistiques et les tantièmes', async () => {
     renderBiens(<ImmeubleLots id={ID} />);
     expect(await screen.findByText('Tantièmes généraux par lot')).toBeTruthy();
-    expect(screen.getByText('412 / 1 000')).toBeTruthy();
+    expect(screen.getByText('824 / 1 000')).toBeTruthy();
     expect(within(screen.getByRole('table', { name: /lots/i })).getByRole('link', { name: 'Apt A1' }).getAttribute('href')).toBe('/biens/apt-a1');
   });
 

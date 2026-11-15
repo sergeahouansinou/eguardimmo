@@ -167,7 +167,7 @@ export function seedInventaires(): Inventaire[] {
   ): Inventaire => ({ id, ref, lotId, lotName, immeubleName, tenant, value, createdOn, template, signatureSentOn: null, archived });
   return [
     base('inv-2026-0006', 'INV-2026-0006', 'studio-b3', 'Studio B3', 'Les Tilleuls', 'Yann Le Gall', euros(4820), '2026-11-10', 'Meublé, standard'),
-    base('inv-2026-0005', 'INV-2026-0005', 'apt-c2', 'Apt C2', 'Résidence du Parc', null, euros(2350), '2026-10-27', 'Meublé, studio'),
+    base('inv-2026-0005', 'INV-2026-0005', 'studio-c2', 'Studio C2', 'Résidence du Parc', 'Moussa Diallo', euros(2350), '2026-10-27', 'Meublé, studio'),
     base('inv-2026-0004', 'INV-2026-0004', 'apt-a1', 'Apt A1', 'Les Tilleuls', 'Koffi Adjovi', euros(1180), '2026-09-14', 'Vide, standard'),
     base('inv-2026-0003', 'INV-2026-0003', 'bureau-b1', 'Bureau B1', 'Les Tilleuls', null, euros(640), '2026-08-02', 'Meublé, bureau'),
     base('inv-2026-0002', 'INV-2026-0002', 'apt-a2', 'Apt A2', 'Les Tilleuls', 'Nadège Sossou', euros(1450), '2026-06-20', 'Vide, standard'),

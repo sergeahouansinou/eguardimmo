@@ -21,7 +21,7 @@ describe('BureauPage', () => {
     expect(encaisse.textContent).toContain(`7${NBSP}770${NBSP}€`);
     expect(encaisse.textContent).toContain(`sur 8${NBSP}890${NBSP}€ appelés · 87 %`);
     expect(screen.getByRole('region', { name: 'Impayés' }).textContent).toContain('3 locataires · aucun au-delà de 30 jours');
-    expect(screen.getByRole('region', { name: "Taux d'occupation" }).textContent).toContain('8 lots loués sur 11 · 3 vacants');
+    expect(screen.getByRole('region', { name: "Taux d'occupation" }).textContent).toContain('11 lots loués sur 14 · 3 vacants');
     const cash = screen.getByRole('region', { name: 'Cash-flow net, novembre' });
     expect(cash.textContent).toContain(`+2${NBSP}640${NBSP}€`);
     expect(cash.textContent).toContain('+14 % vs octobre');

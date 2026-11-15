@@ -16,7 +16,7 @@ describe('LotsScreen', () => {
     await listed();
     const table = screen.getByRole('table', { name: 'Liste des lots' });
     expect(within(table).getByRole('link', { name: 'Apt A1' }).getAttribute('href')).toBe('/biens/apt-a1');
-    expect(screen.getByRole('tab', { name: /Lots\s*11/ })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /Lots\s*14/ })).toBeTruthy();
     expect(screen.getByRole('tab', { name: /Immeubles\s*3/ })).toBeTruthy();
     expect(screen.getByRole('tab', { name: /Archivés\s*2/ })).toBeTruthy();
   });
@@ -62,7 +62,7 @@ describe('LotsScreen', () => {
     expect(await screen.findByText('Action impossible')).toBeTruthy();
     expect(screen.getByText('Le bien « Apt A1 » est loué : mettez fin au bail avant de l’archiver.')).toBeTruthy();
     await userEvent.keyboard('{Escape}');
-    expect(screen.getByRole('tab', { name: /Lots\s*11/ })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /Lots\s*14/ })).toBeTruthy();
   });
 
   it('affiche une erreur avec reprise quand le chargement échoue', async () => {

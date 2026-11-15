@@ -190,8 +190,8 @@ export const seedEquipements: EquipementSeed[] = [
   },
   {
     row: row({
-      id: 'ancienne-chaudiere', name: 'Ancienne chaudière', detail: 'Gaz, 24 kW', family: 'chauffage', lotId: 'apt-c2', immeubleId: 'residence-du-parc',
-      placeName: 'Apt C2', room: 'Cuisine', purchasedOn: '2006-10-03', price: euros(2100), warrantyEndsOn: '2016-10-03', chargedTo: 'bailleur', archived: true,
+      id: 'ancienne-chaudiere', name: 'Ancienne chaudière', detail: 'Gaz, 24 kW', family: 'chauffage', lotId: 'studio-c2', immeubleId: 'residence-du-parc',
+      placeName: 'Studio C2', room: 'Cuisine', purchasedOn: '2006-10-03', price: euros(2100), warrantyEndsOn: '2016-10-03', chargedTo: 'bailleur', archived: true,
     }),
     rich: null,
     ...none,

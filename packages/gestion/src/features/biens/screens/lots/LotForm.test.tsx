@@ -44,7 +44,7 @@ describe('LotForm', () => {
     expect(await screen.findByText('Surface invalide')).toBeTruthy();
     expect(push).not.toHaveBeenCalled();
     const lots = (await source.lots()) as { items: unknown[] };
-    expect(lots.items).toHaveLength(13);
+    expect(lots.items).toHaveLength(16);
   });
 
   it('remonte le refus du serveur pour un nom déjà utilisé dans l’immeuble', async () => {

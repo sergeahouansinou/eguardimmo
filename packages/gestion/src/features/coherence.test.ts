@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { demoBureau, demoShell } from '../data/demo';
-import { demoEdls, demoLeases, demoReservations } from './baux/demo';
+import { buildInstallments, demoEdls, demoLeases, demoReservations } from './baux/demo';
 import type { Lease } from './baux/schemas';
 import { createDemoState } from './biens/demo/state';
 import { demoCourriers, demoNotices, demoReceipts } from './courriers/demo';
+import { slugify } from './finances/derive';
 import { createDemoFinances } from './finances/demo';
 import { demoCandidates, demoLeaseTerms, demoTenants, demoUnits } from './locataires/demo';
 import { ARREARS, LEASE_ENDS } from './outils/analytique/demoBase';
@@ -27,6 +28,7 @@ const personNames = new Set([...tenantNames, ...demoCandidates.map((candidate) =
 const currentLeaseOfUnit = (unitId: string): Lease | undefined => currentLeases.find((lease) => lease.unitId === unitId);
 const seasonalUnits = new Set(demoReservations.map((reservation) => reservation.unitId));
 const cc = (lease: Lease): number => lease.rent + lease.charges;
+const dayAfter = (date: string): string => new Date(Date.parse(`${date}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
 
 describe('cohérence inter-lots : référentiel Baux et Locataires', () => {
   it('toute référence d’un bail pointe vers une unité et des locataires existants', () => {
@@ -167,6 +169,69 @@ describe('cohérence inter-lots : Finances', () => {
     });
     expect(problems).toEqual([]);
   });
+
+  it('chaque bail en cours du référentiel a son bail financier et ses échéances de novembre', () => {
+    const problems = currentLeases.flatMap((lease) => {
+      const bail = finances.baux.find((item) => item.numero === lease.reference);
+      if (!bail) return [`${lease.reference} : aucun bail financier`];
+      const row = buildInstallments(lease).find((item) => item.month === '2026-11');
+      const own = finances.echeances.filter((item) => item.bailId === bail.id && item.echeance.startsWith('2026-11'));
+      const [call] = own;
+      if (!row || own.length !== 1 || !call) return [`${lease.reference} : ${String(own.length)} échéance(s) de novembre`];
+      return [
+        ...(call.montant === row.called ? [] : [`${lease.reference} : appelé ${String(call.montant)} au lieu de ${String(row.called)}`]),
+        ...(Math.min(call.paye, call.montant) === row.received ? [] : [`${lease.reference} : encaissé ${String(call.paye)} au lieu de ${String(row.received)}`]),
+      ];
+    });
+    expect(problems).toEqual([]);
+  });
+
+  it('les échéances financières restent dans la durée du bail et reprennent les appels de l’échéancier des baux', () => {
+    const problems = finances.echeances.flatMap((item) => {
+      const bail = finances.baux.find((entry) => entry.id === item.bailId);
+      const lease = bail && leaseOfBail(bail.numero);
+      if (!lease) return [`${item.id} : bail introuvable`];
+      const month = item.echeance.slice(0, 7);
+      const row = buildInstallments(lease).find((entry) => entry.month === month);
+      return [
+        ...(month >= lease.start.slice(0, 7) && month <= lease.end.slice(0, 7) ? [] : [`${item.id} : ${item.echeance} hors du bail ${lease.reference}`]),
+        ...(row && item.montant === cc(lease) && row.called >= item.montant ? [] : [`${item.id} : aucun appel correspondant dans l’échéancier de ${lease.reference}`]),
+      ];
+    });
+    expect(problems).toEqual([]);
+  });
+
+  it('un bail brouillon ou à venir n’a ni bail, ni échéance, ni paiement en Finances, comme dans l’échéancier des baux', () => {
+    const pending = demoLeases.filter((lease) => lease.status === 'brouillon' || lease.status === 'a_venir');
+    expect(pending.map((lease) => lease.reference)).toEqual(['BL-2026-0017', 'BL-2026-0018']);
+    const problems = pending.flatMap((lease) => {
+      const id = finances.baux.find((item) => item.numero === lease.reference)?.id;
+      return [
+        ...(id === undefined ? [] : [`${lease.reference} : bail financier`]),
+        ...(buildInstallments(lease).length === 0 ? [] : [`${lease.reference} : échéancier des baux non vide`]),
+        ...finances.echeances.filter((item) => item.bailId === slugify(lease.reference)).map((item) => `${lease.reference} : échéance ${item.id}`),
+        ...finances.paiements.filter((item) => item.bailId === slugify(lease.reference)).map((item) => `${lease.reference} : paiement ${item.id}`),
+      ];
+    });
+    expect(problems).toEqual([]);
+  });
+
+  it('un renouvellement en brouillon prolonge le bail financier du locataire sans rupture ni appel anticipé', () => {
+    const renewals = demoLeases.filter((lease) => lease.status === 'brouillon');
+    expect(renewals.map((lease) => lease.reference)).toEqual(['BL-2026-0018']);
+    const problems = renewals.flatMap((renewal) => {
+      const current = currentLeases.find((lease) => lease.unitId === renewal.unitId && lease.tenantIds[0] === renewal.tenantIds[0]);
+      if (!current) return [`${renewal.reference} : aucun bail en cours à renouveler`];
+      const bail = finances.baux.find((item) => item.numero === current.reference);
+      return [
+        ...(dayAfter(current.end) === renewal.start ? [] : [`${renewal.reference} : début ${renewal.start}, le bail en cours finit le ${current.end}`]),
+        ...(cc(current) === cc(renewal) ? [] : [`${renewal.reference} : ${String(cc(renewal))} appelés au lieu de ${String(cc(current))}`]),
+        ...(bail?.locataireId === renewal.tenantIds[0] ? [] : [`${renewal.reference} : bail financier ${String(bail?.numero)}`]),
+        ...finances.echeances.filter((item) => item.bailId === bail?.id && item.echeance >= renewal.start).map((item) => `${item.id} : appel dès ${item.echeance}`),
+      ];
+    });
+    expect(problems).toEqual([]);
+  });
 });
 
 describe('cohérence inter-lots : Biens', () => {
@@ -238,6 +303,58 @@ describe('cohérence inter-lots : Biens', () => {
       const lot = state.lots.find((item) => item.row.id === row.lotId);
       return lot?.row.tenant?.name === row.tenant && lot.row.name === row.lotName ? [] : [`${row.lotId} : ${String(row.tenant)}`];
     });
+    expect(problems).toEqual([]);
+  });
+
+  it('chaque unité longue durée du référentiel a son lot, avec le même libellé et le même immeuble', () => {
+    const buildingOf = new Map(state.immeubles.map((item) => [item.row.id, item.row.name]));
+    const problems = demoUnits
+      .filter((unit) => !seasonalUnits.has(unit.id))
+      .flatMap((unit) => {
+        const lot = state.lots.find((item) => item.row.id === unit.id);
+        if (!lot) return [`${unit.id} : aucun lot`];
+        return [
+          ...(lot.row.name === unit.label ? [] : [`${unit.id} : nom ${lot.row.name}`]),
+          ...(buildingOf.get(lot.row.immeubleId) === unit.building ? [] : [`${unit.id} : immeuble ${lot.row.immeubleId}`]),
+          ...(lot.row.archived ? [`${unit.id} : archivé`] : []),
+        ];
+      });
+    expect(problems).toEqual([]);
+  });
+
+  it('un lot vacant dont un bail est à venir affiche le loyer de ce bail', () => {
+    const problems = demoLeases
+      .filter((lease) => lease.status === 'a_venir')
+      .flatMap((lease) => {
+        const lot = state.lots.find((item) => item.row.id === lease.unitId);
+        if (!lot) return [`${lease.reference} : aucun lot ${lease.unitId}`];
+        return [
+          ...(lot.row.tenant === null ? [] : [`${lot.row.id} : occupé avant le début du bail`]),
+          ...(lot.row.rent === cc(lease) && lot.rentExcl === lease.rent && lot.charges === lease.charges ? [] : [`${lot.row.id} : loyer ${String(lot.row.rent)} au lieu de ${String(cc(lease))}`]),
+        ];
+      });
+    expect(problems).toEqual([]);
+  });
+
+  it('les tantièmes et la régularisation des charges reprennent les lots actifs de l’immeuble', () => {
+    const lots = state.lots.filter((lot) => lot.row.immeubleId === 'les-tilleuls' && !lot.row.archived);
+    const charges = state.immeubleExtras['les-tilleuls']?.charges;
+    const sum = lots.reduce((total, lot) => total + (lot.row.tantiemes ?? 0), 0);
+    expect(charges?.sharePerMille).toBe(sum);
+    expect(state.immeubleExtras['les-tilleuls']?.keys.find((key) => key.id === 'generales')?.detail).toBe(`Tantièmes, ${String(sum)} / 1 000`);
+    const rented = lots.filter((lot) => lot.row.tenant !== null).map((lot) => lot.row.id);
+    expect((charges?.regularisation ?? []).map((row) => row.lotId).sort()).toEqual(rented.sort());
+    expect(lots.map((lot) => lot.row.tantiemes).every((value) => value !== null && value > 0)).toBe(true);
+  });
+
+  it('inventaires, équipements et compteurs ne citent que des lots existants, sous leur nom', () => {
+    const lotById = new Map(state.lots.map((lot) => [lot.row.id, lot.row]));
+    const problems = [
+      ...state.inventaires.filter((item) => lotById.get(item.lotId)?.name !== item.lotName).map((item) => `inventaire ${item.ref} : ${item.lotId}`),
+      ...state.equipements.filter((item) => item.row.lotId !== null && lotById.get(item.row.lotId)?.name !== item.row.placeName).map((item) => `équipement ${item.row.id} : ${String(item.row.lotId)}`),
+      ...state.meters.filter((item) => !lotById.has(item.lotId)).map((item) => `compteur ${item.id}`),
+      ...state.readings.filter((item) => lotById.get(item.lotId)?.name !== item.lotName).map((item) => `relevé ${item.id}`),
+    ];
     expect(problems).toEqual([]);
   });
 

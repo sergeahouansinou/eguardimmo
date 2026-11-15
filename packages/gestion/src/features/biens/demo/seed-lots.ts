@@ -95,11 +95,35 @@ const lotSeeds: LotSeed[] = [
   },
   {
     row: {
+      id: 'apt-a3', name: 'Apt A3', immeubleId: 'les-tilleuls', type: 'appartement', surface: 65, rooms: 3, floor: '4e',
+      tenant: { id: 'awa-traore', name: 'Awa Traoré' }, rent: euros(890), listing: 'hors_ligne', status: 'a_jour',
+      tantiemes: 130, elevatorShares: 130, leaseEnd: '2027-01-31', leaseNote: null, archived: false,
+    },
+    elevator: true, heating: 'electrique', amenities: ['cuisine_equipee', 'balcon', 'cave'], rentExcl: euros(820), charges: euros(70),
+  },
+  {
+    row: {
       id: 'apt-b1', name: 'Apt B1', immeubleId: 'les-tilleuls', type: 'appartement', surface: 52, rooms: 2, floor: '1er',
       tenant: { id: 'clarisse-hounkpatin', name: 'Clarisse Hounkpatin' }, rent: euros(1020), listing: 'hors_ligne', status: 'retard',
       tantiemes: 104, elevatorShares: 104, leaseEnd: '2027-08-31', leaseNote: null, archived: false,
     },
     elevator: true, heating: 'electrique', amenities: ['cuisine_equipee'], rentExcl: euros(930), charges: euros(90),
+  },
+  {
+    row: {
+      id: 'apt-b2', name: 'Apt B2', immeubleId: 'les-tilleuls', type: 'appartement', surface: 71, rooms: 3, floor: '2e',
+      tenant: { id: 'fatou-bamba', name: 'Fatou Bamba' }, rent: euros(960), listing: 'hors_ligne', status: 'a_jour',
+      tantiemes: 142, elevatorShares: 142, leaseEnd: '2028-02-29', leaseNote: null, archived: false,
+    },
+    elevator: true, heating: 'electrique', amenities: ['cuisine_equipee', 'balcon', 'lave_linge'], rentExcl: euros(880), charges: euros(80),
+  },
+  {
+    row: {
+      id: 'apt-b3', name: 'Apt B3', immeubleId: 'les-tilleuls', type: 'appartement', surface: 70, rooms: 3, floor: '3e',
+      tenant: null, rent: euros(850), listing: 'en_ligne', status: 'a_louer',
+      tantiemes: 140, elevatorShares: 140, leaseEnd: null, leaseNote: null, archived: false,
+    },
+    elevator: true, heating: 'electrique', amenities: ['cuisine_equipee', 'balcon'], rentExcl: euros(780), charges: euros(70),
   },
   {
     row: {
@@ -127,11 +151,11 @@ const lotSeeds: LotSeed[] = [
   },
   {
     row: {
-      id: 'apt-c2', name: 'Apt C2', immeubleId: 'residence-du-parc', type: 'appartement', surface: 41, rooms: 2, floor: 'RDC',
-      tenant: null, rent: euros(540), listing: 'hors_ligne', status: 'travaux',
-      tantiemes: null, elevatorShares: null, leaseEnd: null, leaseNote: null, archived: false,
+      id: 'studio-c2', name: 'Studio C2', immeubleId: 'residence-du-parc', type: 'studio', surface: 28, rooms: 1, floor: 'RDC',
+      tenant: { id: 'moussa-diallo', name: 'Moussa Diallo' }, rent: euros(650), listing: 'hors_ligne', status: 'a_jour',
+      tantiemes: null, elevatorShares: null, leaseEnd: '2027-05-31', leaseNote: null, archived: false,
     },
-    elevator: false, heating: 'gaz', amenities: ['cuisine_equipee'], rentExcl: euros(490), charges: euros(50),
+    elevator: false, heating: 'gaz', amenities: ['cuisine_equipee', 'lave_linge'], rentExcl: euros(600), charges: euros(50),
   },
   {
     row: {

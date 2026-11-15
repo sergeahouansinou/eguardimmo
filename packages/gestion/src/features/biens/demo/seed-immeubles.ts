@@ -13,13 +13,13 @@ export const tilleulsExtras: ImmeubleExtras = {
     { label: 'Assurance PNO', value: 'Jusqu’au 31/12/2026' },
   ],
   keys: [
-    { id: 'generales', label: 'Charges générales', detail: 'Tantièmes, 412 / 1 000', pill: null },
-    { id: 'ascenseur', label: 'Ascenseur', detail: 'Tantièmes ascenseur, 402 / 1 000', pill: null },
+    { id: 'generales', label: 'Charges générales', detail: 'Tantièmes, 824 / 1 000', pill: null },
+    { id: 'ascenseur', label: 'Ascenseur', detail: 'Tantièmes ascenseur, 814 / 1 000', pill: null },
     { id: 'eau-froide', label: 'Eau froide', detail: 'Compteurs individuels', pill: null },
   ],
   charges: {
     year: 2026,
-    sharePerMille: 412,
+    sharePerMille: 824,
     fundPercent: 5,
     lines: [
       { id: 'syndic', label: 'Honoraires du syndic', key: 'Générales', share: euros(980), recoverablePercent: 0 },
@@ -31,15 +31,17 @@ export const tilleulsExtras: ImmeubleExtras = {
       { id: 'eau', label: 'Eau froide des parties communes', key: 'Générales', share: euros(260), recoverablePercent: 100 },
     ],
     keys: [
-      { id: 'generales', label: 'Charges générales', detail: 'Tantièmes, 412 / 1 000', pill: { label: 'Tous les lots', tone: 'neutral' } },
-      { id: 'ascenseur', label: 'Ascenseur', detail: 'Tantièmes ascenseur, 402 / 1 000', pill: { label: 'Sans le parking', tone: 'neutral' } },
+      { id: 'generales', label: 'Charges générales', detail: 'Tantièmes, 824 / 1 000', pill: { label: 'Tous les lots', tone: 'neutral' } },
+      { id: 'ascenseur', label: 'Ascenseur', detail: 'Tantièmes ascenseur, 814 / 1 000', pill: { label: 'Sans le parking', tone: 'neutral' } },
       { id: 'gardiennage', label: 'Gardiennage', detail: 'Tantièmes généraux', pill: { label: '75 % récupérable', tone: 'info' } },
       { id: 'eau', label: 'Eau froide des lots', detail: 'Compteurs divisionnaires', pill: { label: 'Au relevé', tone: 'neutral' } },
     ],
     regularisation: [
       { lotId: 'apt-a1', lotName: 'Apt A1', tenant: 'Koffi Adjovi', tantiemes: 128, provisions: euros(960), recoverable: euros(944) },
       { lotId: 'apt-a2', lotName: 'Apt A2', tenant: 'Nadège Sossou', tantiemes: 140, provisions: euros(1080), recoverable: euros(1033) },
+      { lotId: 'apt-a3', lotName: 'Apt A3', tenant: 'Awa Traoré', tantiemes: 130, provisions: euros(840), recoverable: euros(959) },
       { lotId: 'apt-b1', lotName: 'Apt B1', tenant: 'Clarisse Hounkpatin', tantiemes: 104, provisions: euros(1080), recoverable: euros(767) },
+      { lotId: 'apt-b2', lotName: 'Apt B2', tenant: 'Fatou Bamba', tantiemes: 142, provisions: euros(960), recoverable: euros(1048) },
       { lotId: 'studio-b3', lotName: 'Studio B3', tenant: 'Yann Le Gall', tantiemes: 30, provisions: euros(600), recoverable: euros(221) },
       { lotId: 'parking-p4', lotName: 'Parking P4', tenant: 'Awa Traoré', tantiemes: 10, provisions: euros(60), recoverable: euros(74) },
     ],
@@ -97,7 +99,7 @@ export const tilleulsExtras: ImmeubleExtras = {
     ],
     claims: [
       { id: 'sinistre-toiture', title: 'Infiltration par la toiture, Studio B3', detail: '11/03/2026 · assurance de l’immeuble, 860 € versés', pill: { label: 'Clos', tone: 'neutral' }, warn: false },
-      { id: 'pno', title: 'Assurance propriétaire non occupant', detail: 'Vos 5 lots · échéance 31/12/2026', pill: { label: 'À renouveler', tone: 'warning' }, warn: true },
+      { id: 'pno', title: 'Assurance propriétaire non occupant', detail: 'Vos 8 lots · échéance 31/12/2026', pill: { label: 'À renouveler', tone: 'warning' }, warn: true },
     ],
     providers: [
       { id: 'plomberie-martin', name: 'Plomberie Martin', detail: '2 interventions en 2026', trade: 'Plomberie' },

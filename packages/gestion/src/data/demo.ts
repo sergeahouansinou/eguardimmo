@@ -12,7 +12,7 @@ export const demoShell: ShellData = {
     email: 'marc.chevalier@example.com',
   },
   workspace: { name: 'Gestion Les Tilleuls', ownerName: 'Awa Diallo', role: 'admin', plan: 'Essentiel', members: 2 },
-  counts: { lots: 11, tenants: 10, unreadMessages: 2, openInterventions: 3 },
+  counts: { lots: 14, tenants: 10, unreadMessages: 2, openInterventions: 3 },
   notifications: [
     { id: 'n1', tone: 'danger', title: 'Loyer de novembre impayé', detail: 'Koffi Adjovi · 850 € · il y a 2 j', unread: true, href: '/finances/impayes' },
     { id: 'n2', tone: 'warning', title: 'Nouvelle intervention', detail: 'Fuite sous l’évier, Apt A1 · il y a 5 h', unread: true, href: '/interventions' },
@@ -26,7 +26,7 @@ export const demoBureau: BureauData = {
   currency: 'EUR',
   collection: { called: euros(8890), collected: euros(7770) },
   arrears: { amount: euros(1120), tenants: 3, beyond30Days: 0 },
-  occupancy: { rented: 8, total: 11 },
+  occupancy: { rented: 11, total: 14 },
   cashflow: { net: euros(2640), previousNet: euros(2316) },
   todos: [
     { id: 't1', category: 'finances', kind: 'impaye', tone: 'danger', urgent: true, title: 'Loyer impayé, Koffi Adjovi', detail: 'Apt A1, Les Tilleuls · 850 €', badge: { label: '12 jours', tone: 'danger' }, action: { label: 'Relancer', href: '/finances/impayes' } },

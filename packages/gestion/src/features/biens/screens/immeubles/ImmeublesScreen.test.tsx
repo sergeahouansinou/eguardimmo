@@ -74,7 +74,7 @@ describe('ImmeublesScreen', () => {
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Archiver' }));
     await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Archiver' }));
     expect(await screen.findByText('Action impossible')).toBeTruthy();
-    expect(screen.getByText('L’immeuble compte 5 biens actifs : archivez-les d’abord.')).toBeTruthy();
+    expect(screen.getByText('L’immeuble compte 8 biens actifs : archivez-les d’abord.')).toBeTruthy();
     await userEvent.keyboard('{Escape}');
     expect(screen.getByRole('tab', { name: /Actifs\s*3/ })).toBeTruthy();
   });

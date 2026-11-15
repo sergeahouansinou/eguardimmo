@@ -40,7 +40,7 @@ describe('GestionShell', () => {
     const side = screen.getByRole('navigation', { name: 'Navigation principale' });
     expect(within(side).getByRole('link', { name: 'Accueil' }).getAttribute('aria-current')).toBe('page');
     expect(await within(side).findByRole('link', { name: /Messages\s*2/ })).toBeTruthy();
-    expect(within(side).getByRole('button', { name: /Biens\s*11/ })).toBeTruthy();
+    expect(within(side).getByRole('button', { name: /Biens\s*14/ })).toBeTruthy();
   });
 
   it('reflète le compteur de messages non lus fourni par la messagerie, puis le fait baisser', async () => {
