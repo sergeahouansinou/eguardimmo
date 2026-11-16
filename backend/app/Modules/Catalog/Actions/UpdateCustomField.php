@@ -14,18 +14,20 @@ final readonly class UpdateCustomField
 {
     public function handle(CustomFieldDefinition $champ, CustomFieldChangesData $changements): CustomFieldDefinition
     {
-        $type = $changements->type ?? $champ->type;
-        $typeChange = $type !== $champ->type;
-        $vocabulaire = $typeChange || $changements->vocabulary !== null ? $changements->vocabulary?->value : $champ->vocabulary;
-        $options = $typeChange || $changements->options !== null ? $changements->options : $champ->options;
+        return DB::transaction(function () use ($champ, $changements): CustomFieldDefinition {
+            $champ = CustomFieldDefinition::query()->whereKey($champ->id)->lockForUpdate()->firstOrFail();
 
-        CustomFieldShape::assert($type, $vocabulaire, $options);
+            $type = $changements->type ?? $champ->type;
+            $typeChange = $type !== $champ->type;
+            $vocabulaire = $typeChange || $changements->vocabulary !== null ? $changements->vocabulary?->value : $champ->vocabulary;
+            $options = $typeChange || $changements->options !== null ? $changements->options : $champ->options;
 
-        if ($champ->values_recorded_at !== null && ($typeChange || $vocabulaire !== $champ->vocabulary || $this->retireDesOptions($champ, $options))) {
-            throw ErrorCode::CustomFieldTypeLocked->problem();
-        }
+            CustomFieldShape::assert($type, $vocabulaire, $options);
 
-        return DB::transaction(function () use ($champ, $changements, $type, $vocabulaire, $options): CustomFieldDefinition {
+            if ($champ->values_recorded_at !== null && ($typeChange || $vocabulaire !== $champ->vocabulary || $this->retireDesOptions($champ, $options))) {
+                throw ErrorCode::CustomFieldTypeLocked->problem();
+            }
+
             $champ->type = $type;
             $champ->vocabulary = $vocabulaire;
             $champ->options = $options;

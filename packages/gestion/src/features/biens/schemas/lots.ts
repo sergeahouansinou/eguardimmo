@@ -15,7 +15,7 @@ import {
 } from './common';
 import type { Currency } from '../../../format/money';
 
-export const LOT_TYPES = ['appartement', 'studio', 'maison', 'parking', 'bureau', 'garage'] as const;
+export const LOT_TYPES = ['appartement', 'studio', 'maison', 'parking', 'bureau', 'garage', 'cave', 'local', 'terrain', 'autre'] as const;
 export const lotTypeSchema = z.enum(LOT_TYPES);
 export type LotType = z.infer<typeof lotTypeSchema>;
 
@@ -35,13 +35,13 @@ export const lotRowSchema = z.object({
   immeubleId: idSchema,
   immeubleName: z.string().min(1),
   type: lotTypeSchema,
-  surface: z.number().positive(),
-  rooms: count,
+  surface: z.number().positive().nullable(),
+  rooms: count.nullable(),
   floor: z.string().nullable(),
   tenant: personRefSchema.nullable(),
-  rent: minor,
-  listing: listingSchema,
-  status: lotStatusSchema,
+  rent: minor.nullable(),
+  listing: listingSchema.nullable(),
+  status: lotStatusSchema.nullable(),
   tantiemes: count.nullable(),
   elevatorShares: count.nullable(),
   leaseEnd: isoDate.nullable(),
@@ -71,7 +71,7 @@ export const lotValuesSchema = z.object({
   complement: z.string(),
   postalCode: z.string().min(1),
   city: z.string().min(1),
-  surface: z.number().positive(),
+  surface: z.number().positive().nullable(),
   rooms: count.nullable(),
   floor: z.string(),
   elevator: z.boolean(),
@@ -102,16 +102,16 @@ export const lotDetailSchema = z
     photoCount: count,
     photos: z.array(photoSchema),
     brief: z.object({
-      habitableArea: z.number().positive(),
+      habitableArea: z.number().positive().nullable(),
       carrezArea: z.number().positive().nullable(),
       rooms: z.string().min(1),
       floor: z.string().min(1),
       builtYear: z.number().int().nullable(),
-      rental: z.string().min(1),
+      rental: z.string().min(1).nullable(),
       dpe: z.object({ energy: letterSchema, ghg: letterSchema }).nullable(),
-      rentCc: minor,
+      rentCc: minor.nullable(),
     }),
-    counts: z.object({ diagnostics: count, locations: count, equipements: count, documents: count }),
+    counts: z.object({ diagnostics: count.nullable(), locations: count.nullable(), equipements: count.nullable(), documents: count.nullable() }),
     caracteristiques: z.array(caracSectionSchema),
     amenityGroups: z.array(amenityGroupSchema),
     values: lotValuesSchema,
@@ -167,7 +167,7 @@ export const leaseSchema = z
     provisions: minor,
     deposit: minor,
     nextRevision: isoDate.nullable(),
-    balance: minor,
+    balance: minor.nullable(),
   })
   .nullable();
 export type LeaseData = NonNullable<z.infer<typeof leaseSchema>>;
@@ -258,17 +258,6 @@ export type LotImportRow = z.infer<typeof lotImportRowSchema>;
 const required = 'Champ requis';
 const trimmed = z.string().trim();
 
-function decimalField(message: string) {
-  return trimmed.min(1, required).transform((text, context) => {
-    const value = parseDecimal(text);
-    if (value === null || value <= 0) {
-      context.addIssue({ code: 'custom', message });
-      return z.NEVER;
-    }
-    return value;
-  });
-}
-
 function amountField(currency: Currency) {
   return trimmed.transform((text, context) => {
     if (text === '') return null;
@@ -281,32 +270,50 @@ function amountField(currency: Currency) {
   });
 }
 
-export function lotFormSchema(currency: Currency) {
-  return z.object({
-    name: trimmed.min(1, required).max(80, '80 caractères au maximum'),
-    type: lotTypeSchema,
-    immeubleId: trimmed.min(1, required),
-    address: trimmed.min(1, required),
-    complement: trimmed,
-    postalCode: trimmed.min(1, required).max(10, '10 caractères au maximum'),
-    city: trimmed.min(1, required),
-    surface: decimalField('Surface invalide'),
-    rooms: trimmed.transform((text, context) => {
-      if (text === '') return null;
-      if (!/^\d{1,2}$/.test(text)) {
-        context.addIssue({ code: 'custom', message: 'Nombre entier attendu' });
-        return z.NEVER;
-      }
-      return Number(text);
-    }),
-    floor: trimmed.max(20, '20 caractères au maximum'),
-    elevator: z.boolean(),
-    heating: heatingSchema,
-    amenities: z.array(z.string()),
-    rent: amountField(currency),
-    charges: amountField(currency),
-    photoNames: z.array(z.string()),
+export const SURFACELESS_TYPES: readonly LotType[] = ['parking', 'garage', 'cave', 'terrain', 'autre'];
+
+function optionalDecimalField(message: string) {
+  return trimmed.transform((text, context) => {
+    if (text === '') return null;
+    const value = parseDecimal(text);
+    if (value === null || value <= 0) {
+      context.addIssue({ code: 'custom', message });
+      return z.NEVER;
+    }
+    return value;
   });
+}
+
+export function lotFormSchema(currency: Currency) {
+  return z
+    .object({
+      name: trimmed.min(1, required).max(80, '80 caractères au maximum'),
+      type: lotTypeSchema,
+      immeubleId: trimmed.min(1, required),
+      address: trimmed.min(1, required),
+      complement: trimmed,
+      postalCode: trimmed.min(1, required).max(10, '10 caractères au maximum'),
+      city: trimmed.min(1, required),
+      surface: optionalDecimalField('Surface invalide'),
+      rooms: trimmed.transform((text, context) => {
+        if (text === '') return null;
+        if (!/^\d{1,2}$/.test(text)) {
+          context.addIssue({ code: 'custom', message: 'Nombre entier attendu' });
+          return z.NEVER;
+        }
+        return Number(text);
+      }),
+      floor: trimmed.max(20, '20 caractères au maximum'),
+      elevator: z.boolean(),
+      heating: heatingSchema,
+      amenities: z.array(z.string()),
+      rent: amountField(currency),
+      charges: amountField(currency),
+      photoNames: z.array(z.string()),
+    })
+    .superRefine((value, context) => {
+      if (value.surface === null && !SURFACELESS_TYPES.includes(value.type)) context.addIssue({ code: 'custom', path: ['surface'], message: required });
+    });
 }
 
 export const VALIDITIES = ['6 mois', '1 an', '3 ans', '6 ans', '10 ans', 'Illimitée'] as const;

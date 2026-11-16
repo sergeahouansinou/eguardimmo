@@ -5,6 +5,7 @@ import { Alert, Badge, Button, ConfirmDialog, EmptyState, Icon, StatCard, Table,
 import type { BadgeTone } from '@eguardimmo/ui';
 import { useState } from 'react';
 import { useLeaseLookups } from './BauxParts';
+import { FeatureUnavailable, useFeatureUnavailable } from './FeatureGate';
 import { LeaseGate } from './LeaseGate';
 import { NoticeDialog } from './NoticeDialog';
 import { useExits, useMarkReturned, useSetExitStep } from './hooks';
@@ -31,6 +32,7 @@ function Exit({ lease }: { lease: Lease }) {
   const exits = useExits();
   const lookups = useLeaseLookups();
   const [noticeOpen, setNoticeOpen] = useState(false);
+  const bodyOff = useFeatureUnavailable('exit');
   const exit = exits.data?.find((entry) => entry.leaseId === lease.id);
   const crumbs = [{ label: 'Accueil', href: links.home }, { label: 'Baux', href: bauxPaths.list }, { label: lease.reference, href: bauxPaths.detail(lease.id) }, { label: 'Sortie' }];
   const canRecord = lease.status === 'en_cours' || lease.status === 'preavis';
@@ -51,7 +53,7 @@ function Exit({ lease }: { lease: Lease }) {
         }
         actions={
           <>
-            {exit && !exit.depositReturned ? (
+            {exit && !exit.depositReturned && !bodyOff ? (
               <>
                 <LinkButton href={`${bauxPaths.newEdl}?bien=${lease.unitId}`} icon={CalendarPlus}>Planifier la visite</LinkButton>
                 <LinkButton href={links.newCourrier({ modele: 'accuse-de-reception-du-preavis', locataire: lease.tenantIds[0], bien: lease.unitId })} icon={MailCheck}>Accusé de réception</LinkButton>
@@ -77,8 +79,9 @@ function Exit({ lease }: { lease: Lease }) {
           {canRecord ? <Button onClick={() => { setNoticeOpen(true); }}>Enregistrer un préavis</Button> : <LinkButton href={bauxPaths.detail(lease.id)}>Retour au bail</LinkButton>}
         </EmptyState>
       ) : null}
-      {exit ? <ExitStats lease={lease} exit={exit} /> : null}
-      {exit ? <ExitBody lease={lease} exit={exit} onEditNotice={canRecord ? () => { setNoticeOpen(true); } : undefined} /> : null}
+      {exit && bodyOff ? <FeatureUnavailable feature="exit" /> : null}
+      {exit && !bodyOff ? <ExitStats lease={lease} exit={exit} /> : null}
+      {exit && !bodyOff ? <ExitBody lease={lease} exit={exit} onEditNotice={canRecord ? () => { setNoticeOpen(true); } : undefined} /> : null}
       <NoticeDialog key={exit?.noticeReceivedOn ?? 'nouveau'} lease={lease} exit={exit} open={noticeOpen} onOpenChange={setNoticeOpen} />
     </>
   );

@@ -1,15 +1,23 @@
 export const PASSWORD_MIN_LENGTH = 12;
 
+export const PASSWORD_PATTERNS = {
+  mixedCase: /(\p{Ll}+.*\p{Lu})|(\p{Lu}+.*\p{Ll})/u,
+  digit: /\p{N}/u,
+  symbol: /[\p{Z}\p{S}\p{P}]/u,
+} as const;
+
 export interface PasswordCheck {
-  id: "length" | "case";
+  id: "length" | "case" | "digit" | "symbol";
   label: string;
   ok: boolean;
 }
 
 export function checkPassword(value: string): PasswordCheck[] {
   return [
-    { id: "length", label: `${String(PASSWORD_MIN_LENGTH)} caractères au minimum`, ok: value.length >= PASSWORD_MIN_LENGTH },
-    { id: "case", label: "Une majuscule et un chiffre", ok: /[A-Z]/.test(value) && /\d/.test(value) },
+    { id: "length", label: `${String(PASSWORD_MIN_LENGTH)} caractères au minimum`, ok: Array.from(value).length >= PASSWORD_MIN_LENGTH },
+    { id: "case", label: "Une majuscule et une minuscule", ok: PASSWORD_PATTERNS.mixedCase.test(value) },
+    { id: "digit", label: "Un chiffre", ok: PASSWORD_PATTERNS.digit.test(value) },
+    { id: "symbol", label: "Un symbole (par exemple ! ? - _)", ok: PASSWORD_PATTERNS.symbol.test(value) },
   ];
 }
 
@@ -31,12 +39,13 @@ const STRENGTHS: Record<StrengthLevel, PasswordStrength> = {
 
 export function passwordStrength(value: string): PasswordStrength {
   if (value === "") return STRENGTHS.vide;
+  const length = Array.from(value).length;
   const points = [
-    value.length >= PASSWORD_MIN_LENGTH,
-    value.length >= 16,
-    /[A-Z]/.test(value) && /[a-z]/.test(value),
-    /\d/.test(value),
-    /[^A-Za-z0-9]/.test(value),
+    length >= PASSWORD_MIN_LENGTH,
+    length >= 16,
+    PASSWORD_PATTERNS.mixedCase.test(value),
+    PASSWORD_PATTERNS.digit.test(value),
+    PASSWORD_PATTERNS.symbol.test(value),
   ].filter(Boolean).length;
   const rulesMet = checkPassword(value).every((check) => check.ok);
   if (!rulesMet) return points <= 1 ? STRENGTHS.faible : STRENGTHS.moyen;

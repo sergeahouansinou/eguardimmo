@@ -172,6 +172,29 @@ describe('Candidats', () => {
     });
   });
 
+  it('n’envoie jamais l’identifiant d’un candidat comme destinataire d’un message', async () => {
+    const { push } = renderLot(<CandidatsPage />);
+    await screen.findByRole('table', { name: 'Candidats' });
+    await userEvent.click(screen.getByRole('button', { name: 'Plus d’actions, Léa Martin' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Envoyer un message' }));
+    expect(push).toHaveBeenLastCalledWith('/messages/nouveau');
+  });
+
+  it('écrit au locataire créé quand le candidat a été converti', async () => {
+    const { sources, push } = renderLot(<CandidatsPage />);
+    await screen.findByRole('table', { name: 'Candidats' });
+    await userEvent.click(screen.getByRole('button', { name: 'Plus d’actions, Anna Schmidt' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Créer le bail' }));
+    await waitFor(async () => {
+      const candidates = (await sources.tenants.candidates()) as { id: string; tenantId: string | null }[];
+      expect(candidates.find((candidate) => candidate.id === 'anna-schmidt')?.tenantId).not.toBeNull();
+    });
+    const converted = ((await sources.tenants.candidates()) as { id: string; tenantId: string | null }[]).find((candidate) => candidate.id === 'anna-schmidt');
+    await userEvent.click(screen.getByRole('button', { name: 'Plus d’actions, Anna Schmidt' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Envoyer un message' }));
+    expect(push).toHaveBeenLastCalledWith(`/messages/nouveau?destinataire=${converted?.tenantId ?? ''}`);
+  });
+
   it('invite un candidat et redirige vers la liste', async () => {
     const { sources, push } = renderLot(<CandidatInvitePage />);
     await userEvent.type(await screen.findByLabelText('Prénom *'), 'Omar');

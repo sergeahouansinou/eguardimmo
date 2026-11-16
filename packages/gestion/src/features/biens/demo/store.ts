@@ -64,6 +64,7 @@ export function createDemoBiensSource(options: DemoBiensOptions = {}): BiensSour
   };
 
   return {
+    unavailableInApiMode: [],
     lots: () => settle(() => buildLots(state)),
     lot: (id) => settle(() => buildLotDetail(state, id)),
     lotOccupation: (id) => settle(() => {

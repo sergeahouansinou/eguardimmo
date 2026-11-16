@@ -7,6 +7,7 @@ import { NotFoundPanel } from '../../components/NotFoundPanel';
 import { PageHeader } from '../../components/PageHeader';
 import { QueryBoundary, SkeletonRows } from '../../components/QueryState';
 import { useBiensEnvironment } from '../../environment';
+import { WhenAvailable, useFeatureUnavailable } from '../../FeatureGate';
 import { errorMessage } from '../../hooks/useCommand';
 import { useZodForm } from '../../hooks/useZodForm';
 import { toMajorInput } from '../../lib/amount';
@@ -14,7 +15,7 @@ import { HEATING_LABELS, LOT_TYPE_LABELS } from '../../lib/labels';
 import { biensPaths } from '../../paths';
 import { useBiensAction, useImmeubles, useLot, useLots } from '../../queries';
 import type { ImmeubleRow } from '../../schemas/immeubles';
-import { AMENITIES, HEATINGS, LOT_TYPES, lotFormSchema } from '../../schemas/lots';
+import { AMENITIES, HEATINGS, LOT_TYPES, SURFACELESS_TYPES, lotFormSchema } from '../../schemas/lots';
 import type { LotDetail } from '../../schemas/lots';
 import type { Currency } from '../../../../format/money';
 
@@ -43,7 +44,7 @@ function valuesOf(detail: LotDetail, currency: Currency) {
   const { values } = detail;
   return {
     ...values,
-    surface: String(values.surface).replace('.', ','),
+    surface: values.surface === null ? '' : String(values.surface).replace('.', ','),
     rooms: values.rooms === null ? '' : String(values.rooms),
     rent: values.rent === null ? '' : toMajorInput(values.rent, currency),
     charges: values.charges === null ? '' : toMajorInput(values.charges, currency),
@@ -56,6 +57,7 @@ function LotFormBody({ id, currency, immeubles, detail }: { id?: string; currenc
   const schema = useMemo(() => lotFormSchema(currency), [currency]);
   const form = useZodForm(schema, detail ? valuesOf(detail, currency) : blankValues());
   const [failure, setFailure] = useState<string | null>(null);
+  const inheritedAddress = useFeatureUnavailable('lotDetails');
   const save = useBiensAction((source, input: { values: Parameters<typeof source.createLot>[0] }) =>
     id ? source.updateLot(id, input.values).then(() => ({ id })) : source.createLot(input.values),
   );
@@ -63,7 +65,7 @@ function LotFormBody({ id, currency, immeubles, detail }: { id?: string; currenc
   const chooseImmeuble = (immeubleId: string) => {
     form.set('immeubleId', immeubleId);
     const immeuble = immeubles.find((item) => item.id === immeubleId);
-    if (immeuble && form.values.address.trim() === '') {
+    if (immeuble && (inheritedAddress || form.values.address.trim() === '')) {
       form.set('address', immeuble.address);
       form.set('postalCode', immeuble.postalCode);
       form.set('city', immeuble.city);
@@ -96,7 +98,7 @@ function LotFormBody({ id, currency, immeubles, detail }: { id?: string; currenc
         <Select
           label="Type *"
           placeholder="Choisir un type"
-          options={LOT_TYPES.map((entry) => ({ value: entry, label: LOT_TYPE_LABELS[entry] }))}
+          options={LOT_TYPES.filter((entry) => entry !== 'autre').map((entry) => ({ value: entry, label: LOT_TYPE_LABELS[entry] }))}
           value={form.values.type}
           onValueChange={(next) => {
             const type = LOT_TYPES.find((entry) => entry === next);
@@ -110,6 +112,7 @@ function LotFormBody({ id, currency, immeubles, detail }: { id?: string; currenc
             searchable
             options={immeubles.filter((item) => !item.archived).map((item) => ({ value: item.id, label: item.name, description: `${item.address}, ${item.city}` }))}
             value={form.values.immeubleId}
+            disabled={inheritedAddress && id !== undefined}
             onValueChange={chooseImmeuble}
             error={form.error('immeubleId') ? 'Choisissez l’immeuble du lot' : undefined}
           />
@@ -117,19 +120,22 @@ function LotFormBody({ id, currency, immeubles, detail }: { id?: string; currenc
       </FormSection>
       <FormSection title="Adresse">
         <FullRow>
-          <TextField label="Adresse *" placeholder="Numéro et voie" autoComplete="street-address" {...form.field('address')} />
+          <TextField label="Adresse *" placeholder="Numéro et voie" autoComplete="street-address" readOnly={inheritedAddress} hint={inheritedAddress ? 'Adresse de l’immeuble, modifiable depuis sa fiche.' : undefined} {...form.field('address')} />
         </FullRow>
-        <TextField label="Complément" placeholder="Bâtiment, étage" {...form.field('complement')} />
-        <TextField label="Code postal *" placeholder="75011" inputMode="numeric" autoComplete="postal-code" {...form.field('postalCode')} />
-        <TextField label="Ville *" placeholder="Paris" autoComplete="address-level2" {...form.field('city')} />
+        <WhenAvailable feature="lotDetails">
+          <TextField label="Complément" placeholder="Bâtiment, étage" {...form.field('complement')} />
+        </WhenAvailable>
+        <TextField label="Code postal *" placeholder="75011" inputMode="numeric" autoComplete="postal-code" readOnly={inheritedAddress} {...form.field('postalCode')} />
+        <TextField label="Ville *" placeholder="Paris" autoComplete="address-level2" readOnly={inheritedAddress} {...form.field('city')} />
       </FormSection>
       <FormSection title="Caractéristiques">
-        <TextField label="Surface, m² *" placeholder="54" inputMode="decimal" {...form.field('surface')} />
+        <TextField label={SURFACELESS_TYPES.includes(form.values.type) ? 'Surface, m²' : 'Surface, m² *'} placeholder="54" inputMode="decimal" {...form.field('surface')} />
         <TextField label="Pièces" placeholder="2" inputMode="numeric" {...form.field('rooms')} />
         <TextField label="Étage" placeholder="3" {...form.field('floor')} />
         <div className="flex items-end pb-1">
           <Switch label="Ascenseur" checked={form.values.elevator} onCheckedChange={(checked) => { form.set('elevator', checked); }} />
         </div>
+        <WhenAvailable feature="lotDetails">
         <FullRow>
           <RadioGroup
             label="Chauffage"
@@ -141,7 +147,9 @@ function LotFormBody({ id, currency, immeubles, detail }: { id?: string; currenc
             }}
           />
         </FullRow>
+        </WhenAvailable>
       </FormSection>
+      <WhenAvailable feature="lotDetails">
       <FormSection title="Équipements">
         {AMENITIES.map((item) => (
           <Checkbox
@@ -154,15 +162,20 @@ function LotFormBody({ id, currency, immeubles, detail }: { id?: string; currenc
           />
         ))}
       </FormSection>
+      </WhenAvailable>
+      <WhenAvailable feature="photos">
       <FormSection title="Photos">
         <FullRow>
           <PhotoField names={form.values.photoNames} onChange={(names) => { form.set('photoNames', names); }} />
         </FullRow>
       </FormSection>
+      </WhenAvailable>
+      <WhenAvailable feature="lotDetails">
       <FormSection title="Loyer indicatif">
         <TextField label="Loyer mensuel, € *" placeholder="820" inputMode="decimal" hint="Hors charges" {...form.field('rent')} />
         <TextField label="Charges, €" placeholder="60" inputMode="decimal" {...form.field('charges')} />
       </FormSection>
+      </WhenAvailable>
       <FormActions
         cancelHref={cancelHref}
         submitLabel={id ? 'Enregistrer les modifications' : 'Enregistrer le lot'}

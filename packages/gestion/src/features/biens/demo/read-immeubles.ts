@@ -10,7 +10,7 @@ function activeLots(state: DemoState, immeubleId: string) {
   return state.lots.filter((lot) => lot.row.immeubleId === immeubleId && !lot.row.archived);
 }
 
-export function immeubleRow(state: DemoState, record: ImmeubleRecord): ImmeubleRow {
+export function immeubleRow(state: DemoState, record: ImmeubleRecord): ImmeubleRow & { totalArea: number; repartition: NonNullable<ImmeubleRow['repartition']> } {
   const lots = activeLots(state, record.row.id);
   return {
     ...record.row,

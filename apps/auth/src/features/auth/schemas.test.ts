@@ -18,11 +18,12 @@ describe("schémas de formulaire", () => {
     expect(emailSchema.safeParse("").success).toBe(false);
   });
 
-  it("exige 12 caractères, une majuscule et un chiffre", () => {
+  it("exige 12 caractères, majuscule, minuscule, chiffre et symbole comme le serveur", () => {
     expect(newPasswordSchema.safeParse("Mot-De-Passe-2026").success).toBe(true);
     expect(newPasswordSchema.safeParse("Court1").success).toBe(false);
     expect(newPasswordSchema.safeParse("motdepassesansmajuscule1").success).toBe(false);
     expect(newPasswordSchema.safeParse("MotDePasseSansChiffre").success).toBe(false);
+    expect(newPasswordSchema.safeParse("MotDePasse2026Long").success).toBe(false);
   });
 
   it("exige un mot de passe à la connexion", () => {

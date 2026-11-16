@@ -15,6 +15,7 @@
   "dependencies": {
     "@eguardimmo/api": "workspace:*",
     "@eguardimmo/config": "workspace:*",
+    "@eguardimmo/gestion": "workspace:*",
     "@eguardimmo/messagerie": "workspace:*",
     "@eguardimmo/shell": "workspace:*",
     "@eguardimmo/tokens": "workspace:*",

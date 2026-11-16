@@ -1,9 +1,11 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { ApiError } from "@eguardimmo/api";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestEnvironment, renderWithAuth } from "../../../test/render";
 import { expectNoA11yViolations } from "../../../test/axe";
 import { resetNavigation, router, setLocation } from "../../../test/navigation";
+import { rememberVerificationEmail } from "@/lib/pendingVerification";
 import { InscriptionChoixScreen } from "./InscriptionChoixScreen";
 import { AgenceRegister, BailleurRegister, VoyageurRegister } from "./RegisterForms";
 import { ConfirmerEmailScreen, VerificationEmailScreen } from "./VerificationEmailScreens";
@@ -51,6 +53,9 @@ describe("Inscription bailleur", () => {
     await user.click(screen.getByRole("button", { name: "Créer mon espace" }));
     await waitFor(() => { expect(router.push).toHaveBeenCalledWith("/verification-email"); });
     expect(environment.store.read()).not.toBeNull();
+    expect(window.sessionStorage.length).toBe(1);
+    expect(window.sessionStorage.getItem(window.sessionStorage.key(0) ?? "")).toBe("lea.martin@example.com");
+    expect(String(router.push.mock.calls[0]?.[0])).not.toContain("lea");
   });
 
   it("refuse un mot de passe trop court et les conditions non acceptées", async () => {
@@ -59,6 +64,28 @@ describe("Inscription bailleur", () => {
     await user.click(screen.getByRole("button", { name: "Créer mon espace" }));
     expect(await screen.findByText(/au moins 12 caractères/)).toBeTruthy();
     expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it("affiche le message 422 du serveur au lieu d’une erreur générique", async () => {
+    const environment = createTestEnvironment();
+    const register = vi.fn(() =>
+      Promise.reject(new ApiError(422, "validation_failed", "Certains champs sont invalides.", { password: ["Le mot de passe doit contenir au moins un symbole."] })),
+    );
+    renderWithAuth(<BailleurRegister />, { ...environment, source: { ...environment.source, register } });
+    const user = await fillPerson("lea.martin@example.com", "Mot-De-Passe-2026");
+    await user.click(screen.getByRole("button", { name: "Créer mon espace" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("Le mot de passe doit contenir au moins un symbole.");
+    expect(screen.queryByText(/Une erreur est survenue/)).toBeNull();
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it("garde le message générique pour une panne non identifiée", async () => {
+    const environment = createTestEnvironment();
+    const register = vi.fn(() => Promise.reject(new Error("panne")));
+    renderWithAuth(<BailleurRegister />, { ...environment, source: { ...environment.source, register } });
+    const user = await fillPerson("lea.martin@example.com", "Mot-De-Passe-2026");
+    await user.click(screen.getByRole("button", { name: "Créer mon espace" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("Une erreur est survenue");
   });
 
   it("affiche l’indicateur de robustesse et permet d’afficher le mot de passe", async () => {
@@ -129,6 +156,98 @@ describe("Vérification de l’e-mail", () => {
     await waitFor(() => { expect(router.replace.mock.calls.length + router.push.mock.calls.length).toBeGreaterThan(0); });
     const target = String((router.replace.mock.calls[0] ?? router.push.mock.calls[0])?.[0]);
     expect(target).toContain("/email-verifie");
+  });
+
+  it("retire le jeton de vérification de l’URL après lecture", async () => {
+    setLocation("/verification-email/confirmer?jeton=valide");
+    const environment = createTestEnvironment();
+    const verifyEmail = vi.fn(environment.source.verifyEmail);
+    await environment.source.register({ profile: "voyageur", firstName: "A", lastName: "B", email: "a@example.com", password: "Mot-De-Passe-2026" });
+    renderWithAuth(<ConfirmerEmailScreen />, { ...environment, source: { ...environment.source, verifyEmail } });
+    await waitFor(() => { expect(verifyEmail).toHaveBeenCalledWith("valide"); });
+    expect(window.location.search).toBe("");
+    expect(window.location.href).not.toContain("jeton");
+  });
+
+  it("renvoie le message à l’adresse saisie à l’inscription, sans la mettre dans l’URL", async () => {
+    const environment = createTestEnvironment();
+    const resendVerification = vi.fn(() => Promise.resolve({ status: "sent" } as const));
+    rememberVerificationEmail("jeanne@exemple.fr");
+    environment.advance(120);
+    renderWithAuth(<VerificationEmailScreen />, { ...environment, source: { ...environment.source, resendVerification } });
+
+    expect(screen.queryByLabelText(/E-mail/)).toBeNull();
+    await userEvent.click(await screen.findByRole("button", { name: "Renvoyer le message" }));
+
+    expect(await screen.findByText("Message renvoyé.")).toBeTruthy();
+    expect(resendVerification).toHaveBeenCalledWith("jeanne@exemple.fr");
+    expect(window.location.href).not.toContain("jeanne");
+    expect(screen.getByRole("button", { name: /Renvoyer le message dans/ })).toHaveProperty("disabled", true);
+  });
+
+  it("demande l’adresse quand elle n’est plus en mémoire, la valide puis renvoie", async () => {
+    const environment = createTestEnvironment();
+    const resendVerification = vi.fn(() => Promise.resolve({ status: "sent" } as const));
+    environment.advance(120);
+    renderWithAuth(<VerificationEmailScreen />, { ...environment, source: { ...environment.source, resendVerification } });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Renvoyer le message" }));
+    expect(await screen.findByText("Saisissez votre adresse e-mail.")).toBeTruthy();
+    expect(resendVerification).not.toHaveBeenCalled();
+
+    await userEvent.type(screen.getByLabelText(/E-mail/), "jeanne@exemple.fr");
+    await userEvent.click(screen.getByRole("button", { name: "Renvoyer le message" }));
+
+    expect(await screen.findByText("Message renvoyé.")).toBeTruthy();
+    expect(resendVerification).toHaveBeenCalledWith("jeanne@exemple.fr");
+  });
+
+  it("annonce la limitation de débit avec la durée à attendre", async () => {
+    const environment = createTestEnvironment();
+    const resendVerification = vi.fn(() => Promise.resolve({ status: "rate_limited", retryAfterSeconds: 45 } as const));
+    rememberVerificationEmail("jeanne@exemple.fr");
+    environment.advance(120);
+    renderWithAuth(<VerificationEmailScreen />, { ...environment, source: { ...environment.source, resendVerification } });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Renvoyer le message" }));
+
+    expect(await screen.findByText(/Réessayez dans 45 secondes/)).toBeTruthy();
+    expect(screen.queryByText("Message renvoyé.")).toBeNull();
+  });
+
+  it("signale une adresse refusée par le serveur et une panne, sans prétendre que le message est parti", async () => {
+    const environment = createTestEnvironment();
+    rememberVerificationEmail("jeanne@exemple.fr");
+    environment.advance(120);
+    const resendVerification = vi.fn()
+      .mockRejectedValueOnce(new ApiError(422, "validation_failed", "Adresse invalide."))
+      .mockRejectedValueOnce(new ApiError(500, "server_error", "Erreur interne."));
+    renderWithAuth(<VerificationEmailScreen />, { ...environment, source: { ...environment.source, resendVerification } });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Renvoyer le message" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("Cette adresse e-mail n’est pas valide.");
+
+    await userEvent.click(screen.getByRole("button", { name: "Renvoyer le message" }));
+    await waitFor(() => { expect(screen.getByRole("alert").textContent).toContain("Réessayez dans un instant."); });
+    expect(screen.queryByText("Message renvoyé.")).toBeNull();
+  });
+
+  it("oublie l’adresse en mémoire une fois le lien confirmé", async () => {
+    setLocation("/verification-email/confirmer?jeton=valide");
+    rememberVerificationEmail("jeanne@exemple.fr");
+    const environment = createTestEnvironment();
+    renderWithAuth(<ConfirmerEmailScreen />, environment);
+    await waitFor(() => { expect(router.replace).toHaveBeenCalled(); });
+    expect(window.sessionStorage.length).toBe(0);
+  });
+
+  it("signale une panne serveur à la confirmation sans prétendre que le lien est expiré", async () => {
+    setLocation("/verification-email/confirmer?jeton=valide");
+    const environment = createTestEnvironment();
+    const verifyEmail = vi.fn(() => Promise.reject(new ApiError(500, "server_error", "Erreur interne.")));
+    renderWithAuth(<ConfirmerEmailScreen />, { ...environment, source: { ...environment.source, verifyEmail } });
+    expect((await screen.findByRole("alert")).textContent).toContain("Votre lien reste utilisable");
+    expect(router.replace).not.toHaveBeenCalled();
   });
 
   it("renvoie vers le lien expiré avec un jeton périmé", async () => {

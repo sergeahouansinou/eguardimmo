@@ -6,6 +6,7 @@ use App\Modules\Catalog\Enums\ContactCategorySemantic;
 use App\Modules\Parties\Enums\PartyKind;
 use App\Modules\Parties\PublicApi\PartyDirectory;
 use App\Shared\Http\ApiProblem;
+use Illuminate\Support\Facades\DB;
 use Tests\Feature\Parties\PartiesContext as C;
 
 beforeEach(function (): void {
@@ -89,4 +90,51 @@ it('retrouve le commissaire de justice par le sens bailiff, pas les autres caté
         ->and($trouves[0]->primaryEmail)->toBe('etude@martin-cj.fr')
         ->and($trouves[0]->categories)->toBe(['bailiff'])
         ->and(C::dans($this->org, fn () => app(PartyDirectory::class)->withCategory(ContactCategorySemantic::Insurer)))->toBe([]);
+});
+
+it('lit plusieurs parties en une fois, par identifiant, avec les mêmes données que find', function (): void {
+    $artisan = C::terme('contact_category', 'craftsman');
+    $premiere = partiesCreer($this, $this->org, ['kind' => 'company', 'company_name' => 'Ramonage du Port SARL', 'contact_category_ids' => [$artisan->id]]);
+    $this->postJson(C::url($this->org, "/{$premiere}/contact-points"), ['type' => 'email', 'value' => 'contact@ramonage.fr'])->assertCreated();
+    $seconde = partiesCreer($this, $this->org, ['kind' => 'person', 'last_name' => 'Martin']);
+
+    $trouvees = C::dans($this->org, fn () => app(PartyDirectory::class)->findMany([$premiere, $seconde, $premiere]));
+    $attendue = C::dans($this->org, fn () => app(PartyDirectory::class)->find($premiere));
+
+    expect(array_keys($trouvees))->toEqualCanonicalizing([$premiere, $seconde])
+        ->and($trouvees[$premiere])->toEqual($attendue)
+        ->and($trouvees[$premiere]->primaryEmail)->toBe('contact@ramonage.fr')
+        ->and($trouvees[$premiere]->categories)->toBe(['craftsman'])
+        ->and($trouvees[$seconde]->primaryEmail)->toBeNull()
+        ->and(C::dans($this->org, fn () => app(PartyDirectory::class)->findMany([])))->toBe([]);
+});
+
+it('lit plusieurs parties en un nombre de requêtes qui ne dépend pas du nombre de parties', function (): void {
+    $ids = [];
+    foreach (range(1, 6) as $i) {
+        $ids[] = partiesCreer($this, $this->org, ['kind' => 'person', 'last_name' => "Dupont{$i}"]);
+    }
+    $compter = function (array $lot): int {
+        return C::dans($this->org, function () use ($lot): int {
+            DB::flushQueryLog();
+            DB::enableQueryLog();
+            app(PartyDirectory::class)->findMany($lot);
+            $requetes = count(DB::getQueryLog());
+            DB::disableQueryLog();
+
+            return $requetes;
+        });
+    };
+
+    expect($compter($ids))->toBe($compter(array_slice($ids, 0, 2)));
+});
+
+it('refuse tout le lot par party_not_found dès qu\'une partie est étrangère ou inconnue', function (): void {
+    $propre = C::partie($this->org);
+    $autre = C::organisation();
+    $etrangere = C::partie($autre);
+
+    foreach ([$etrangere->id, fake()->uuid(), 'pas-un-uuid'] as $id) {
+        expect(partiesCode(fn () => C::dans($this->org, fn () => app(PartyDirectory::class)->findMany([$propre->id, $id]))))->toBe('party_not_found');
+    }
 });

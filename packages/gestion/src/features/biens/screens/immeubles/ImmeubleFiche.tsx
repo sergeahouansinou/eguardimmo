@@ -9,6 +9,7 @@ import { NotFoundPanel } from '../../components/NotFoundPanel';
 import { PageHeader } from '../../components/PageHeader';
 import { ErrorPanel } from '../../components/QueryState';
 import { useBiensEnvironment } from '../../environment';
+import { WhenAvailable } from '../../FeatureGate';
 import { IMMEUBLE_TABS, biensPaths } from '../../paths';
 import { useImmeuble } from '../../queries';
 
@@ -38,12 +39,14 @@ export function ImmeubleFiche({ id, children }: { id: string; children: ReactNod
         subtitle={detail.subtitle}
         actions={
           <>
-            <Button variant="secondary" asChild>
-              <Link href={biensPaths.immeuble(id, 'charges')}>
-                <Icon icon={ChartPie} />
-                Répartir des charges
-              </Link>
-            </Button>
+            <WhenAvailable feature="charges">
+              <Button variant="secondary" asChild>
+                <Link href={biensPaths.immeuble(id, 'charges')}>
+                  <Icon icon={ChartPie} />
+                  Répartir des charges
+                </Link>
+              </Button>
+            </WhenAvailable>
             <Button variant="secondary" asChild>
               <Link href={biensPaths.newLot}>
                 <Icon icon={Plus} />
@@ -63,7 +66,12 @@ export function ImmeubleFiche({ id, children }: { id: string; children: ReactNod
         label={`Sections de l’immeuble ${detail.immeuble.name}`}
         basePath={biensPaths.immeuble(id)}
         tabs={tabs}
-        counts={{ lots: detail.counts.lots, equipements: detail.counts.equipements, documents: detail.counts.documents, interventions: detail.counts.interventions }}
+        counts={{
+          lots: detail.counts.lots,
+          ...(detail.counts.equipements === null ? {} : { equipements: detail.counts.equipements }),
+          ...(detail.counts.documents === null ? {} : { documents: detail.counts.documents }),
+          ...(detail.counts.interventions === null ? {} : { interventions: detail.counts.interventions }),
+        }}
       >
         {children}
       </FicheTabs>

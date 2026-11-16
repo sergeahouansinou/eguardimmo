@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleLogin, handleLogout } from './login';
 import { openSession, SESSION_COOKIE } from './session';
-import { API, KEY, RELAY_KEY, call, json, sentHeaders, sentText, sessionCookieHeader, stubFetch, stubServerEnv } from './testing/helpers';
+import { API, KEY, RELAY_KEY, STREAMING, call, chunkedBody, endlessBody, json, sentHeaders, sentText, sessionCookieHeader, stubFetch, stubServerEnv } from './testing/helpers';
 
 const CREDENTIALS = { email: 'ines@eguardimmo.fr', password: 'un-mot-de-passe-long', code: '123456' };
 
@@ -47,6 +47,34 @@ describe('POST /session', () => {
     await handleLogin(login(CREDENTIALS, { headers: { 'Content-Type': 'application/json', 'x-forwarded-for': '6.6.6.6, 203.0.113.7' } }));
     expect(sentHeaders(api).get('x-console-relay-key')).toBe(RELAY_KEY);
     expect(sentHeaders(api).get('x-console-client-ip')).toBe('203.0.113.7');
+  });
+
+  it('ignore la clé de relais et l’IP envoyées par le navigateur', async () => {
+    const api = stubFetch(() => json(201, { data: { token: 't' } }));
+    const headers = { 'Content-Type': 'application/json', 'X-Console-Client-Ip': '9.9.9.9', 'X-Console-Relay-Key': 'pirate', 'x-forwarded-for': '203.0.113.7' };
+    await handleLogin(login(CREDENTIALS, { headers }));
+    await handleLogin(login(CREDENTIALS, { headers: { 'Content-Type': 'application/json', 'X-Console-Client-Ip': '9.9.9.9' } }));
+    expect(sentHeaders(api, 0).get('x-console-client-ip')).toBe('203.0.113.7');
+    expect(sentHeaders(api, 0).get('x-console-relay-key')).toBe(RELAY_KEY);
+    expect(sentHeaders(api, 1).get('x-console-client-ip')).toBeNull();
+  });
+
+  it('abandonne la lecture d’un corps chunked sans Content-Length qui dépasse le plafond', async () => {
+    const api = stubFetch(() => json(201, { data: { token: 't' } }));
+    const { body, pulled } = endlessBody(1024);
+    const response = await handleLogin(call('/session', { method: 'POST', body, ...STREAMING, headers: { 'Content-Type': 'application/json' } }));
+    expect(response.status).toBe(413);
+    expect(await response.json()).toMatchObject({ code: 'payload_too_large', status: 413 });
+    expect(api).not.toHaveBeenCalled();
+    expect(pulled()).toBeLessThan(10);
+  });
+
+  it('accepte des identifiants envoyés en plusieurs morceaux', async () => {
+    const api = stubFetch(() => json(201, { data: { token: 't' } }));
+    const text = JSON.stringify(CREDENTIALS);
+    const response = await handleLogin(call('/session', { method: 'POST', body: chunkedBody([text.slice(0, 20), text.slice(20)]), ...STREAMING, headers: { 'Content-Type': 'application/json' } }));
+    expect(response.status).toBe(204);
+    expect(sentText(api)).toBe(text);
   });
 
   it('respecte CONSOLE_TOKEN_TTL_MINUTES', async () => {
@@ -147,6 +175,7 @@ describe('DELETE /session', () => {
     expect(api.mock.calls[0]?.[0]).toBe(`${API}/api/v1/console/auth/token`);
     expect(api.mock.calls[0]?.[1]?.method).toBe('DELETE');
     expect(sentHeaders(api).get('authorization')).toBe('Bearer 9|a-revoquer');
+    expect(sentHeaders(api).get('x-console-relay-key')).toBe(RELAY_KEY);
   });
 
   it('efface le cookie et signale l’échec quand la révocation échoue', async () => {

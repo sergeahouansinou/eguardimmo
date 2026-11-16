@@ -39,6 +39,17 @@ final readonly class Parties
     }
 
     /**
+     * @param  list<string>  $ids
+     * @return array<string, Party> les parties trouvées, par identifiant
+     */
+    public function getMany(array $ids): array
+    {
+        $valides = array_values(array_filter($ids, fn (string $id): bool => Str::isUuid($id)));
+
+        return $valides === [] ? [] : Party::query()->whereIn('id', $valides)->get()->keyBy('id')->all();
+    }
+
+    /**
      * @param  Builder<Party>  $requete
      */
     private function searching(Builder $requete, string $terme): void

@@ -10,11 +10,12 @@ import { PageHeader } from '../../components/PageHeader';
 import { ErrorPanel } from '../../components/QueryState';
 import { useBiensEnvironment } from '../../environment';
 import { LOT_TABS, biensPaths, externalPaths } from '../../paths';
-import { useLot } from '../../queries';
+import { useLot, useLotLease } from '../../queries';
 
 export function LotFiche({ id, children }: { id: string; children: ReactNode }) {
   const { Link } = useBiensEnvironment();
   const query = useLot(id);
+  const lease = useLotLease(id);
   if (query.isError) return <ErrorPanel title="La fiche du lot n’a pas pu être chargée" onRetry={query.refetch} />;
   if (query.data === undefined) return <FicheSkeleton label="Chargement de la fiche du lot" />;
   const lot = query.data;
@@ -38,7 +39,7 @@ export function LotFiche({ id, children }: { id: string; children: ReactNode }) 
         actions={
           <>
             <Button variant="secondary" asChild>
-              <Link href={lot.lot.tenant ? externalPaths.leases : externalPaths.newLease(lot.lot.id)}>
+              <Link href={lot.lot.tenant ? (lease.data?.leaseHref ?? externalPaths.leases) : externalPaths.newLease(lot.lot.id)}>
                 {lot.lot.tenant ? <Icon icon={FilePenLine} /> : null}
                 {lot.lot.tenant ? 'Voir le bail' : 'Créer un bail'}
               </Link>
@@ -62,7 +63,12 @@ export function LotFiche({ id, children }: { id: string; children: ReactNode }) 
         label={`Sections du lot ${lot.lot.name}`}
         basePath={biensPaths.lot(id)}
         tabs={LOT_TABS}
-        counts={{ diagnostics: lot.counts.diagnostics, locations: lot.counts.locations, equipements: lot.counts.equipements, documents: lot.counts.documents }}
+        counts={{
+          ...(lot.counts.diagnostics === null ? {} : { diagnostics: lot.counts.diagnostics }),
+          ...(lot.counts.locations === null ? {} : { locations: lot.counts.locations }),
+          ...(lot.counts.equipements === null ? {} : { equipements: lot.counts.equipements }),
+          ...(lot.counts.documents === null ? {} : { documents: lot.counts.documents }),
+        }}
       >
         {children}
       </FicheTabs>

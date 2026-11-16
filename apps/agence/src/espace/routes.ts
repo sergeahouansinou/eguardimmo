@@ -42,6 +42,20 @@ export const agenceRoutes = {
   compteAbonnement: "/compte/abonnement",
   aide: "/aide",
   notifications: "/notifications",
+  locataireNew: "/locataires/nouveau",
+  candidats: "/locataires/candidats",
+  candidatInvitation: "/locataires/candidats/inviter",
+  etatsLieux: "/baux/etats-des-lieux",
+  etatLieuxNew: "/baux/etats-des-lieux/nouveau",
+  reservations: "/baux/reservations",
+  reservationNew: "/baux/reservations/nouvelle",
+  immeubles: "/biens/immeubles",
+  immeubleNew: "/biens/immeubles/nouveau",
+  equipements: "/biens/equipements",
+  equipementNew: "/biens/equipements/nouveau",
+  releves: "/biens/releves",
+  inventaires: "/biens/inventaires",
+  equipeInviter: "/equipe/inviter",
 } as const;
 
 export function mandantHref(id: string): string {

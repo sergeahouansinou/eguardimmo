@@ -2,7 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Modules\Documents\Enums\FileCategory;
+use App\Modules\Documents\Enums\IssuedDocumentType;
+use App\Shared\Database\Checks;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -68,7 +72,7 @@ return new class extends Migration
             $table->uuid('issuer_party_id')->nullable();
             $table->date('issued_on');
             $table->date('expires_on')->nullable();
-            $table->json('data');
+            $table->json('data')->default(new Expression('(JSON_OBJECT())'));
             $table->uuid('stored_file_id')->nullable();
             $table->uuid('replaces_id')->nullable();
             $table->uuid('created_by_user_id')->nullable();
@@ -82,6 +86,10 @@ return new class extends Migration
             $table->foreign(['organization_id', 'replaces_id'])->references(['organization_id', 'id'])->on('certificates');
         });
 
+        Checks::add('stored_files', 'category', Checks::enum('category', FileCategory::class));
+        Checks::add('issued_documents', 'type', Checks::enum('type', IssuedDocumentType::class));
+        Checks::add('certificates', 'period', 'expires_on IS NULL OR expires_on >= issued_on');
+
         foreach ($this->verrous() as $instruction) {
             DB::unprepared($instruction);
         }
@@ -89,10 +97,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (DB::getDriverName() === 'pgsql') {
-            DB::unprepared('DROP FUNCTION IF EXISTS issued_documents_fige() CASCADE');
-        }
-
         Schema::dropIfExists('certificates');
         Schema::dropIfExists('issued_documents');
         Schema::dropIfExists('document_sequences');
@@ -107,11 +111,6 @@ return new class extends Migration
         $message = 'issued_documents est figée après émission';
 
         return match (DB::getDriverName()) {
-            'pgsql' => [
-                "CREATE FUNCTION issued_documents_fige() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION '{$message}'; END $$",
-                'CREATE TRIGGER issued_documents_sans_modification BEFORE UPDATE OR DELETE ON issued_documents FOR EACH ROW EXECUTE FUNCTION issued_documents_fige()',
-                'CREATE TRIGGER issued_documents_sans_vidage BEFORE TRUNCATE ON issued_documents FOR EACH STATEMENT EXECUTE FUNCTION issued_documents_fige()',
-            ],
             'sqlite' => [
                 "CREATE TRIGGER issued_documents_sans_modification BEFORE UPDATE ON issued_documents BEGIN SELECT RAISE(ABORT, '{$message}'); END",
                 "CREATE TRIGGER issued_documents_sans_suppression BEFORE DELETE ON issued_documents BEGIN SELECT RAISE(ABORT, '{$message}'); END",

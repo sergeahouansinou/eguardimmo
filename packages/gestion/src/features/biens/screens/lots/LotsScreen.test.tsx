@@ -21,6 +21,11 @@ describe('LotsScreen', () => {
     expect(screen.getByRole('tab', { name: /Archivés\s*2/ })).toBeTruthy();
   });
 
+  it('propose le filtre « En travaux » en démonstration', async () => {
+    await listed();
+    expect(screen.getByRole('button', { name: 'En travaux' })).toBeTruthy();
+  });
+
   it('filtre par recherche et propose de réinitialiser quand rien ne correspond', async () => {
     await listed();
     await userEvent.type(screen.getByRole('searchbox', { name: 'Rechercher un lot' }), 'Adjovi');

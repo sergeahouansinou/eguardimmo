@@ -5,12 +5,14 @@ import { z } from 'zod';
 import { useClientQuery } from './kit/query';
 import { candidateSchema, tenantDetailSchema, tenantSchema, unitSchema } from './schemas';
 import type { CandidateInvite, CandidateStatus, TenantInput, TenantInvite } from './schemas';
+import { LOCATAIRES_ROOT } from '../queryRoots';
 import { useLocatairesSource } from './source';
 
 export const locatairesKeys = {
-  all: ['gestion', 'locataires'] as const,
+  all: LOCATAIRES_ROOT,
   units: ['gestion', 'locataires', 'units'] as const,
   tenants: ['gestion', 'locataires', 'tenants'] as const,
+  tenant: (id: string) => ['gestion', 'locataires', 'tenant', id] as const,
   detail: (id: string) => ['gestion', 'locataires', 'detail', id] as const,
   candidates: ['gestion', 'locataires', 'candidates'] as const,
 };
@@ -25,6 +27,11 @@ export function useTenants() {
   return useClientQuery(locatairesKeys.tenants, () => source.tenants(), z.array(tenantSchema));
 }
 
+export function useTenant(id: string | undefined) {
+  const source = useLocatairesSource();
+  return useClientQuery(locatairesKeys.tenant(id ?? ''), () => source.tenant(id ?? ''), tenantSchema.nullable(), { enabled: id !== undefined });
+}
+
 export function useTenantDetail(id: string) {
   const source = useLocatairesSource();
   return useClientQuery(locatairesKeys.detail(id), () => source.tenantDetail(id), tenantDetailSchema.nullable());
@@ -32,7 +39,8 @@ export function useTenantDetail(id: string) {
 
 export function useCandidates() {
   const source = useLocatairesSource();
-  return useClientQuery(locatairesKeys.candidates, () => source.candidates(), z.array(candidateSchema));
+  const enabled = !source.unavailableInApiMode.includes('candidates');
+  return useClientQuery(locatairesKeys.candidates, () => source.candidates(), z.array(candidateSchema), { enabled });
 }
 
 function useInvalidate() {
@@ -45,7 +53,7 @@ export function useCreateTenant() {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async (input: TenantInput) => tenantSchema.parse(await source.createTenant(input)),
-    onSuccess: invalidate,
+    onSettled: invalidate,
   });
 }
 
@@ -54,7 +62,7 @@ export function useUpdateTenant(id: string) {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async (input: TenantInput) => tenantSchema.parse(await source.updateTenant(id, input)),
-    onSuccess: invalidate,
+    onSettled: invalidate,
   });
 }
 

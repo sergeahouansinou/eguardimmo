@@ -71,6 +71,24 @@ describe('LotForm', () => {
     expect(lotDetailSchema.parse(await source.lot('apt-a1'))?.lot.name).toBe('Apt A1 bis');
   });
 
+  it('enregistre un parking sans surface mais exige la surface d’un appartement', async () => {
+    const { push, source } = renderBiens(<LotForm />, { pathname: '/biens/nouveau' });
+    await userEvent.type(await screen.findByRole('textbox', { name: 'Nom du lot *' }), 'Parking P9');
+    await userEvent.click(screen.getByRole('combobox', { name: /Immeuble/ }));
+    await userEvent.click(await screen.findByRole('option', { name: /Les Tilleuls/ }));
+    await userEvent.type(screen.getByRole('textbox', { name: 'Loyer mensuel, € *' }), '60');
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer le lot' }));
+    expect(await screen.findByText('Champ requis')).toBeTruthy();
+    expect(push).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole('combobox', { name: /Type/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Parking' }));
+    expect(screen.getByRole('textbox', { name: 'Surface, m²' })).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer le lot' }));
+    await waitFor(() => { expect(push).toHaveBeenCalledWith('/biens/parking-p9'); });
+    expect(lotDetailSchema.parse(await source.lot('parking-p9'))?.lot).toMatchObject({ name: 'Parking P9', type: 'parking' });
+  });
+
   it('indique qu’un lot est introuvable', async () => {
     renderBiens(<LotForm id="fantome" />, { pathname: '/biens/fantome/modifier' });
     expect(await screen.findByText('Ce lot est introuvable')).toBeTruthy();

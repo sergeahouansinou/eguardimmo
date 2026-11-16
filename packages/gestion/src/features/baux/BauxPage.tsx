@@ -23,50 +23,25 @@ import {
 } from '@eguardimmo/ui';
 import { FileStack } from 'lucide-react';
 import { useState } from 'react';
+import { useCourriersUnavailable } from '../courriers/FeatureGate';
 import { ReviseRentDialog } from './ReviseRentDialog';
 import { useLeaseLookups } from './BauxParts';
+import { useFeatureUnavailable } from './FeatureGate';
 import { LeaseImportDialog } from './LeaseImportDialog';
 import { LeaseRow } from './LeaseRow';
-import { useArchiveLease, useDeleteLease, useDuplicateLease, useExits, useLeases } from './hooks';
+import { useArchiveLease, useDeleteLease, useDuplicateLease, useExits, useLeases, useRenewLease } from './hooks';
+import { ALL, BALANCES, SORTS, SOON_DAYS, TYPES, WINDOWS, tabs } from './bauxListConfig';
 import { isArchivable, isRunningLease } from './leaseRules';
 import { bauxPaths } from './paths';
+import { courriersPaths } from '../courriers/paths';
 import type { Lease } from './schemas';
 import { LinkButton, ListLoading, LoadError, PageHeader, SearchInput, errorMessage, useGestionNavigation, useNotify } from '../locataires/kit';
 import type { ActionItem } from '../locataires/kit';
 import { downloadCsv, toCsv } from '../locataires/kit/csv';
-import { addDays, daysBetween, formatDateFr, todayIso } from '../locataires/kit/dates';
+import { daysBetween, formatDateFr, todayIso } from '../locataires/kit/dates';
 import { links } from '../locataires/kit/links';
 import { money } from '../locataires/kit/money';
 import { useListView } from '../locataires/kit/useListView';
-import type { ListTab } from '../locataires/kit/useListView';
-
-const tabs: ListTab<Lease>[] = [
-  { id: 'actifs', label: 'Actifs', match: isRunningLease },
-  { id: 'a_venir', label: 'À venir', match: (lease) => !lease.archived && lease.status === 'a_venir' },
-  { id: 'termines', label: 'Terminés', match: (lease) => !lease.archived && lease.status === 'termine' },
-  { id: 'brouillons', label: 'Brouillons', match: (lease) => !lease.archived && lease.status === 'brouillon' },
-  { id: 'archives', label: 'Archivés', match: (lease) => lease.archived },
-];
-
-const SORTS = [
-  { value: 'fin', label: 'Tri : fin la plus proche' },
-  { value: 'loyer', label: 'Tri : loyer décroissant' },
-  { value: 'debut', label: 'Tri : début le plus récent' },
-  { value: 'bien', label: 'Tri : bien (A à Z)' },
-];
-const WINDOWS = [30, 60, 90] as const;
-const ALL = 'tous';
-const TYPES = [
-  { value: ALL, label: 'Type : Tous' },
-  { value: 'vide', label: 'Vide' },
-  { value: 'meuble', label: 'Meublé' },
-];
-const BALANCES = [
-  { value: ALL, label: 'Solde : Tous' },
-  { value: 'impayes', label: 'Impayés' },
-  { value: 'a_jour', label: 'À jour' },
-];
-const SOON_DAYS = 60;
 
 export function BauxPage() {
   const leases = useLeases();
@@ -76,7 +51,11 @@ export function BauxPage() {
   const duplicate = useDuplicateLease();
   const remove = useDeleteLease();
   const archive = useArchiveLease();
+  const renew = useRenewLease();
   const exits = useExits();
+  const courriersOff = useCourriersUnavailable();
+  const balanceOff = useFeatureUnavailable('balance');
+  const importOff = useFeatureUnavailable('import');
 
   const [building, setBuilding] = useState(ALL);
   const [kind, setKind] = useState(ALL);
@@ -87,6 +66,7 @@ export function BauxPage() {
   const [pendingDelete, setPendingDelete] = useState<readonly Lease[]>([]);
   const [revising, setRevising] = useState<Lease | null>(null);
   const [pendingArchive, setPendingArchive] = useState<Lease | null>(null);
+  const [pendingRenew, setPendingRenew] = useState<Lease | null>(null);
   const [importing, setImporting] = useState(false);
 
   const items = leases.data ?? [];
@@ -102,18 +82,20 @@ export function BauxPage() {
       (window === null || endingWithin(lease, window)) &&
       (building === ALL || lookups.unitBuilding(lease.unitId) === building) &&
       (kind === ALL || (kind === 'meuble') === lease.furnished) &&
-      (balance === ALL || (balance === 'impayes') === (lease.balance < 0)),
+      (balanceOff || balance === ALL || (balance === 'impayes') === (lease.balance < 0)),
   });
-  const filtered = window !== null || building !== ALL || kind !== ALL || balance !== ALL;
+  const filtered = window !== null || building !== ALL || kind !== ALL || (!balanceOff && balance !== ALL);
 
-  const sorted = [...view.rows].sort((a, b) => {
+  const compare = (a: Lease, b: Lease) => {
     if (sort === 'loyer') return b.rent - a.rent;
     if (sort === 'debut') return b.start.localeCompare(a.start);
     if (sort === 'bien') return lookups.unitLabel(a.unitId).localeCompare(lookups.unitLabel(b.unitId), 'fr');
     return a.end.localeCompare(b.end);
-  });
+  };
+  const sorted = [...view.rows].sort(compare);
+  const exportable = view.filtered.filter((lease) => lease.unsupported === undefined).sort(compare);
 
-  const active = items.filter(isRunningLease);
+  const active = items.filter((lease) => isRunningLease(lease) && lease.unsupported === undefined);
   const monthlyRent = active.reduce((sum, lease) => sum + lease.rent + lease.charges, 0);
   const endingSoon = active.filter((lease) => endingWithin(lease, SOON_DAYS)).length;
   const departureOf = (lease: Lease) => exits.data?.find((entry) => entry.leaseId === lease.id)?.departure ?? lease.end;
@@ -121,10 +103,11 @@ export function BauxPage() {
   const nextNotice = notices[0];
   const visibleSelected = selected.filter((id) => sorted.some((lease) => lease.id === id));
   const selectedLeases = items.filter((lease) => visibleSelected.includes(lease.id));
-  const allSelected = sorted.length > 0 && sorted.every((lease) => selected.includes(lease.id));
+  const selectable = sorted.filter((lease) => lease.unsupported === undefined);
+  const allSelected = selectable.length > 0 && selectable.every((lease) => selected.includes(lease.id));
 
   const toggle = (id: string) => { setSelected((current) => (current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id])); };
-  const toggleAll = () => { setSelected(allSelected ? [] : sorted.map((lease) => lease.id)); };
+  const toggleAll = () => { setSelected(allSelected ? [] : selectable.map((lease) => lease.id)); };
 
   const exportCsv = (rows: readonly Lease[]) => {
     downloadCsv(
@@ -135,6 +118,18 @@ export function BauxPage() {
       ),
     );
     notify({ title: 'Export prêt', description: `${String(rows.length)} baux exportés dans baux.csv.` });
+  };
+
+  const confirmRenew = async () => {
+    const target = pendingRenew;
+    setPendingRenew(null);
+    if (!target) return;
+    try {
+      const renewed = await renew.mutateAsync(target.id);
+      notify({ title: 'Bail renouvelé', description: `${target.reference} court maintenant jusqu’au ${formatDateFr(renewed.end)}.` });
+    } catch (error) {
+      notify({ tone: 'danger', title: 'Renouvellement impossible', description: errorMessage(error) });
+    }
   };
 
   const confirmArchive = async () => {
@@ -176,18 +171,22 @@ export function BauxPage() {
       { id: 'edit', label: lease.status === 'brouillon' ? 'Poursuivre la saisie' : 'Modifier', icon: Pencil, disabled: !editable, onSelect: () => { push(bauxPaths.edit(lease.id)); } },
       { id: 'payment', label: 'Enregistrer un paiement', icon: Banknote, disabled: lease.status === 'brouillon' || lease.status === 'a_venir', onSelect: () => { push(links.newPayment({ locataire: lease.tenantIds[0] })); } },
       { id: 'schedule', label: 'Échéancier', icon: CalendarClock, disabled: lease.status === 'brouillon', onSelect: () => { push(bauxPaths.schedule(lease.id)); } },
-      { id: 'receipt', label: 'Quittances', icon: Receipt, disabled: lease.status === 'brouillon' || lease.status === 'a_venir', onSelect: () => { push('/documents/quittances'); } },
-      { id: 'notice', label: 'Avis d’échéance', icon: Receipt, disabled: lease.status === 'brouillon' || lease.status === 'a_venir', onSelect: () => { push('/documents/avis-echeance'); } },
+      ...(courriersOff
+        ? []
+        : [
+            { id: 'receipt', label: 'Quittances', icon: Receipt, disabled: lease.status === 'brouillon' || lease.status === 'a_venir', onSelect: () => { push(courriersPaths.quittances); } },
+            { id: 'notice', label: 'Avis d’échéance', icon: Receipt, disabled: lease.status === 'brouillon' || lease.status === 'a_venir', onSelect: () => { push(courriersPaths.notices); } },
+          ]),
       { id: 'revise', label: 'Réviser le loyer', icon: TrendingUp, disabled: lease.status === 'termine' || lease.status === 'brouillon', onSelect: () => { setRevising(lease); } },
       {
         id: 'renew',
         label: 'Renouveler',
         icon: RefreshCw,
-        disabled: lease.status !== 'en_cours' && lease.status !== 'preavis',
-        onSelect: () => { push(`${links.newLease({ bien: lease.unitId, locataire: lease.tenantIds[0] })}&debut=${addDays(lease.end, 1)}`); },
+        disabled: lease.status !== 'en_cours',
+        onSelect: () => { setPendingRenew(lease); },
       },
       { id: 'edl', label: 'État des lieux', icon: ClipboardCheck, disabled: lease.status === 'brouillon', onSelect: () => { push(`${bauxPaths.newEdl}?bien=${lease.unitId}`); } },
-      { id: 'letter', label: 'Générer un courrier', icon: FilePen, onSelect: () => { push(links.newCourrier({ bien: lease.unitId, locataire: lease.tenantIds[0] })); } },
+      ...(courriersOff ? [] : [{ id: 'letter', label: 'Générer un courrier', icon: FilePen, onSelect: () => { push(links.newCourrier({ bien: lease.unitId, locataire: lease.tenantIds[0] })); } }]),
       {
         id: 'duplicate',
         label: 'Dupliquer en brouillon',
@@ -226,8 +225,8 @@ export function BauxPage() {
         }
         actions={
           <>
-            <Button variant="secondary" onClick={() => { setImporting(true); }}>Importer</Button>
-            <Button variant="secondary" onClick={() => { exportCsv(items); }} disabled={!leases.data}>Exporter</Button>
+            {importOff ? null : <Button variant="secondary" onClick={() => { setImporting(true); }}>Importer</Button>}
+            <Button variant="secondary" onClick={() => { exportCsv(exportable); }} disabled={!leases.data}>Exporter</Button>
             <LinkButton href={bauxPaths.edls}>États des lieux</LinkButton>
             <LinkButton href={links.newLease()} variant="primary" icon={FilePlus}>Nouveau bail</LinkButton>
           </>
@@ -262,7 +261,7 @@ export function BauxPage() {
                 className="w-52"
               />
               <Select label="Type" hideLabel placeholder="Type : Tous" value={kind} onValueChange={(value) => { setKind(value); view.resetPage(); }} options={TYPES} className="w-40" />
-              <Select label="Solde" hideLabel placeholder="Solde : Tous" value={balance} onValueChange={(value) => { setBalance(value); view.resetPage(); }} options={BALANCES} className="w-40" />
+              {balanceOff ? null : <Select label="Solde" hideLabel placeholder="Solde : Tous" value={balance} onValueChange={(value) => { setBalance(value); view.resetPage(); }} options={BALANCES} className="w-40" />}
               <Select label="Tri" hideLabel placeholder="Trier" value={sort} onValueChange={setSort} options={SORTS} className="w-56" />
               <div role="group" aria-label="Fin de bail" className="flex flex-wrap items-center gap-1.5">
                 {WINDOWS.map((days) => (
@@ -277,14 +276,16 @@ export function BauxPage() {
               <div role="region" aria-label="Actions sur la sélection" className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-action-subtle px-3 py-2 text-body text-action-on-subtle">
                 <span>{`${String(visibleSelected.length)} ${visibleSelected.length > 1 ? 'baux sélectionnés' : 'bail sélectionné'}`}</span>
                 <span className="flex flex-wrap items-center gap-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    disabled={!selectedLeases.every((lease) => lease.status === 'en_cours' || lease.status === 'preavis')}
-                    onClick={() => { push('/documents/avis-echeance'); }}
-                  >
-                    Envoyer un avis
-                  </Button>
+                  {courriersOff ? null : (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={!selectedLeases.every((lease) => lease.status === 'en_cours' || lease.status === 'preavis')}
+                      onClick={() => { push(courriersPaths.notices); }}
+                    >
+                      Envoyer un avis
+                    </Button>
+                  )}
                   <Button variant="secondary" size="sm" onClick={() => { exportCsv(selectedLeases); }}>Exporter la sélection</Button>
                   <Button
                     variant="danger"
@@ -321,7 +322,7 @@ export function BauxPage() {
                     <TableHeaderCell numeric>Charges</TableHeaderCell>
                     <TableHeaderCell numeric>Dépôt</TableHeaderCell>
                     <TableHeaderCell>Fin</TableHeaderCell>
-                    <TableHeaderCell numeric>Solde</TableHeaderCell>
+                    {balanceOff ? null : <TableHeaderCell numeric>Solde</TableHeaderCell>}
                     <TableHeaderCell>État</TableHeaderCell>
                     <TableHeaderCell><span className="sr-only">Actions</span></TableHeaderCell>
                   </TableRow>
@@ -363,8 +364,16 @@ export function BauxPage() {
         confirmLabel="Archiver"
         onConfirm={() => { void confirmArchive(); }}
       />
+      <ConfirmDialog
+        open={pendingRenew !== null}
+        onOpenChange={(open) => { if (!open) setPendingRenew(null); }}
+        title="Renouveler ce bail ?"
+        description={pendingRenew ? `Le terme du bail ${pendingRenew.reference} sera prolongé d’une nouvelle période. Le serveur refuse le renouvellement si le terme n’est pas atteint pour un bail reconduit tacitement, ou si un préavis est enregistré.` : ''}
+        confirmLabel="Renouveler"
+        onConfirm={() => { void confirmRenew(); }}
+      />
       <ReviseRentDialog lease={revising} onClose={() => { setRevising(null); }} />
-      <LeaseImportDialog open={importing} onOpenChange={setImporting} />
+      {importOff ? null : <LeaseImportDialog open={importing} onOpenChange={setImporting} />}
     </>
   );
 }

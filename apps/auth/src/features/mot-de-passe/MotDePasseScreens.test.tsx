@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestEnvironment, renderWithAuth } from "../../../test/render";
 import { expectNoA11yViolations } from "../../../test/axe";
-import { resetNavigation, router, setLocation } from "../../../test/navigation";
+import { navigationState, resetNavigation, router, setLocation } from "../../../test/navigation";
 import { DefinirMotDePasseScreen, MotDePasseNouveauScreen, MotDePasseOublieScreen } from "./MotDePasseScreens";
 
 describe("MotDePasseOublieScreen", () => {
@@ -79,6 +79,38 @@ describe("MotDePasseNouveauScreen", () => {
     await waitFor(() => { expect(router.push).toHaveBeenCalledWith("/mot-de-passe/modifie"); });
     expect(checkResetToken).toHaveBeenCalledWith({ token: "valide", email: "marc.chevalier@example.com" });
     expect(resetPassword).toHaveBeenCalledWith({ token: "valide", email: "marc.chevalier@example.com", password: "Nouveau-Mot-2026" });
+  });
+
+  it("retire le jeton et l’e-mail de l’URL sans perdre le formulaire", async () => {
+    setLocation("/mot-de-passe/nouveau?jeton=valide&email=marc.chevalier%40example.com&suite=%2Fprofils");
+    const replaceState = vi.spyOn(window.history, "replaceState");
+    const environment = createTestEnvironment("marc");
+    const checkResetToken = vi.fn(environment.source.checkResetToken);
+    const view = renderWithAuth(<MotDePasseNouveauScreen />, { ...environment, source: { ...environment.source, checkResetToken } });
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText(/Nouveau mot de passe \*/), "Nouveau-Mot-2026");
+
+    expect(window.location.search).toBe("?suite=%2Fprofils");
+    expect(window.location.href).not.toContain("jeton");
+    expect(window.location.href).not.toContain("email");
+    expect(replaceState).toHaveBeenCalled();
+    expect(router.replace).not.toHaveBeenCalled();
+
+    navigationState.search = "suite=%2Fprofils";
+    view.rerenderWithAuth(<MotDePasseNouveauScreen />);
+    expect(screen.getByLabelText<HTMLInputElement>(/Nouveau mot de passe \*/).value).toBe("Nouveau-Mot-2026");
+    expect(router.replace).not.toHaveBeenCalled();
+    expect(checkResetToken).toHaveBeenCalledTimes(1);
+    replaceState.mockRestore();
+  });
+
+  it("ne touche pas à l’URL quand elle ne porte aucun paramètre sensible", async () => {
+    setLocation("/mot-de-passe/nouveau");
+    const replaceState = vi.spyOn(window.history, "replaceState");
+    renderWithAuth(<MotDePasseNouveauScreen />);
+    await waitFor(() => { expect(router.replace).toHaveBeenCalledWith("/lien-expire?type=reinitialisation"); });
+    expect(replaceState).not.toHaveBeenCalled();
+    replaceState.mockRestore();
   });
 
   it("refuse une confirmation différente", async () => {

@@ -1,6 +1,6 @@
 import type { Tone } from '@eguardimmo/shell';
 import type { ChargedTo, Family } from '../schemas/equipements';
-import type { Repartition } from '../schemas/immeubles';
+import type { Repartition, SiteType } from '../schemas/immeubles';
 import type { DiagnosticStatus, Heating, Listing, LotStatus, LotType } from '../schemas/lots';
 import type { MeterKind, Reason } from '../schemas/releves';
 
@@ -11,6 +11,10 @@ export const LOT_TYPE_LABELS: Record<LotType, string> = {
   parking: 'Parking',
   bureau: 'Bureau',
   garage: 'Garage ou cave',
+  cave: 'Cave',
+  local: 'Local commercial',
+  terrain: 'Terrain',
+  autre: 'Autre',
 };
 
 export const LOT_STATUS_LABELS: Record<LotStatus, { label: string; tone: Tone }> = {
@@ -22,6 +26,13 @@ export const LOT_STATUS_LABELS: Record<LotStatus, { label: string; tone: Tone }>
 };
 
 export const LISTING_LABELS: Record<Listing, string> = { en_ligne: 'En ligne', hors_ligne: 'Hors ligne' };
+
+export const SITE_TYPE_LABELS: Record<SiteType, string> = { building: 'Immeuble', house: 'Maison', complex: 'Ensemble immobilier' };
+
+export function lotStatusBadge(lot: { status: LotStatus | null; tenant: unknown }): { label: string; tone: Tone } {
+  if (lot.status !== null) return LOT_STATUS_LABELS[lot.status];
+  return lot.tenant ? { label: 'Loué', tone: 'success' } : { label: 'Libre', tone: 'neutral' };
+}
 
 export const HEATING_LABELS: Record<Heating, string> = {
   electrique: 'Électrique',

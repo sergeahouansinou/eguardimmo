@@ -23,8 +23,9 @@ return new class extends Migration
             $table->boolean('is_system')->default(false);
             $table->dateTime('archived_at', 6)->nullable();
             $table->datetimes(6);
+            $table->char('scope_key', 36)->storedAs("coalesce(organization_id, '00000000-0000-0000-0000-000000000000')");
 
-            $table->unique(['organization_id', 'vocabulary', 'key']);
+            $table->unique(['scope_key', 'vocabulary', 'key']);
             $table->index(['vocabulary', 'semantic_key']);
         });
 

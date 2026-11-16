@@ -10,6 +10,7 @@ use App\Modules\Documents\PublicApi\DocumentStore;
 use App\Shared\Http\ApiProblem;
 use App\Shared\Tenancy\MissingOrganizationContext;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\Feature\Documents\DocumentsContext as D;
 
@@ -108,4 +109,28 @@ it('n\'autorise aucune suppression avant la fin de la conservation, ni modificat
 
         expect(StoredFile::query()->count())->toBe(1);
     });
+});
+
+it('efface le fichier écrit quand la transaction de l\'appelant est annulée', function (): void {
+    $stocke = null;
+
+    try {
+        DB::transaction(function () use (&$stocke): void {
+            $stocke = D::dans($this->org, fn () => $this->store->store(FileSource::contents(D::PDF), 'bail.pdf', FileCategory::Supporting));
+            expect(Storage::disk('documents')->allFiles())->toHaveCount(1);
+
+            throw new RuntimeException('annulé par l\'appelant');
+        });
+    } catch (RuntimeException) {
+    }
+
+    expect($stocke)->not->toBeNull()
+        ->and(Storage::disk('documents')->allFiles())->toBe([])
+        ->and(DB::table('stored_files')->count())->toBe(0);
+});
+
+it('garde le fichier quand la transaction de l\'appelant aboutit', function (): void {
+    DB::transaction(fn () => D::dans($this->org, fn () => $this->store->store(FileSource::contents(D::PDF), 'bail.pdf', FileCategory::Supporting)));
+
+    expect(Storage::disk('documents')->allFiles())->toHaveCount(1);
 });

@@ -114,7 +114,7 @@ export const useVerifyBackupCode = () => useAuthMutation((s, code: string) => s.
 export const useSocialSignIn = () => useAuthMutation((s, input: SocialSignInInput) => s.socialSignIn(input));
 export const useSignOut = () => useAuthMutation((s) => s.signOut());
 export const useRegister = () => useAuthMutation((s, input: RegisterInput) => s.register(input));
-export const useResendVerification = () => useAuthMutation((s) => s.resendVerification());
+export const useResendVerification = () => useAuthMutation((s, email: string) => s.resendVerification(email));
 export const useVerifyEmail = () => useAuthMutation((s, token: string) => s.verifyEmail(token));
 export const useRequestPasswordReset = () => useAuthMutation((s, email: string) => s.requestPasswordReset(email));
 export const useResetPassword = () =>

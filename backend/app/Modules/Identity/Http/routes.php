@@ -11,15 +11,17 @@ use App\Modules\Identity\Http\Controllers\IssueMobileTokenController;
 use App\Modules\Identity\Http\Controllers\IssueSocialMobileTokenController;
 use App\Modules\Identity\Http\Controllers\ListDevicesController;
 use App\Modules\Identity\Http\Controllers\ListProfilesController;
+use App\Modules\Identity\Http\Controllers\ResendEmailVerificationController;
 use App\Modules\Identity\Http\Controllers\RevokeCurrentTokenController;
 use App\Modules\Identity\Http\Controllers\RevokeDeviceController;
 use App\Modules\Identity\Http\Controllers\ShowConsoleMeController;
 use App\Modules\Identity\Http\Controllers\ShowMeController;
 use App\Modules\Identity\Http\Controllers\ShowPasswordResetStatusController;
 use App\Modules\Identity\Http\Controllers\ShowSecurityController;
+use App\Modules\Identity\Http\Controllers\VerifyEmailFromLinkController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')->group(function (): void {
+Route::middleware(['auth:sanctum', 'no-operator-token'])->group(function (): void {
     Route::get('/me', ShowMeController::class)->name('identity.me');
     Route::delete('/me', DeleteAccountController::class)->middleware('throttle:reauth')->name('identity.me.destroy');
     Route::get('/me/security', ShowSecurityController::class)->name('identity.security');
@@ -30,6 +32,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
 });
 
 Route::middleware('throttle:auth')->group(function (): void {
+    Route::post('/auth/email/verify/{id}/{hash}', VerifyEmailFromLinkController::class)->name('identity.email.verify');
+    Route::post('/auth/email/verification-notification', ResendEmailVerificationController::class)
+        ->middleware('throttle:verification-resend')
+        ->name('identity.email.resend');
     Route::post('/auth/password-reset/status', ShowPasswordResetStatusController::class)->name('identity.password-reset.status');
     Route::post('/auth/token', IssueMobileTokenController::class)->name('identity.token.store');
     Route::post('/auth/token/two-factor', CompleteMobileTwoFactorController::class)->name('identity.token.two-factor');

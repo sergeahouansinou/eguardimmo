@@ -22,8 +22,9 @@ const CASES = [
   ["retour refusé", RetourRefuseScreen, "/retour-refuse?adresse=https%3A%2F%2Fpirate.example%2F", "Adresse de retour refusée"],
   ["session expirée", SessionExpireeScreen, "/session-expiree", "Votre session a expiré"],
   ["déconnecté", DeconnecteScreen, "/deconnecte", "Vous êtes déconnecté"],
-  ["e-mail vérifié", EmailVerifieScreen, "/email-verifie", "Adresse vérifiée"],
-  ["lien expiré", LienExpireScreen, "/lien-expire?type=verification", "Ce lien a expiré"],
+  ["e-mail vérifié", EmailVerifieScreen, "/email-verifie", "E-mail vérifié"],
+  ["lien expiré", LienExpireScreen, "/lien-expire", "Ce lien a expiré"],
+  ["lien de confirmation invalide", LienExpireScreen, "/lien-expire?type=verification", "Lien de confirmation invalide"],
   ["mot de passe modifié", MotDePasseModifieScreen, "/mot-de-passe/modifie", "Mot de passe modifié"],
   ["compte supprimé", CompteSupprimeScreen, "/compte-supprime", "Compte supprimé"],
 ] as const;
@@ -46,10 +47,24 @@ describe("écrans de statut", () => {
     expect(screen.queryByText(/secret=1/)).toBeNull();
   });
 
-  it("le lien expiré de vérification propose un nouveau message de vérification", () => {
+  it("l’e-mail vérifié renvoie vers la connexion, sans session ouverte", () => {
+    setLocation("/email-verifie");
+    renderWithAuth(<EmailVerifieScreen />);
+    expect(screen.getByText("Connectez-vous pour accéder à votre espace.")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Me connecter" }).getAttribute("href")).toBe("/connexion");
+  });
+
+  it("le lien de confirmation invalide explique la cause et propose la connexion", () => {
     setLocation("/lien-expire?type=verification");
     renderWithAuth(<LienExpireScreen />);
-    expect(screen.getByRole("link", { name: "Recevoir un nouveau lien" }).getAttribute("href")).toBe("/verification-email");
+    expect(screen.getByText(/invalide, expiré \(60 minutes\) ou déjà utilisé/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Me connecter" }).getAttribute("href")).toBe("/connexion");
+  });
+
+  it("le lien de réinitialisation expiré propose un nouveau lien", () => {
+    setLocation("/lien-expire");
+    renderWithAuth(<LienExpireScreen />);
+    expect(screen.getByRole("link", { name: "Recevoir un nouveau lien" }).getAttribute("href")).toBe("/mot-de-passe-oublie");
   });
 
   it("la déconnexion ferme la session encore ouverte puis propose de se reconnecter", async () => {

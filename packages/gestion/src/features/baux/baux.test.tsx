@@ -84,12 +84,33 @@ describe('BauxPage', () => {
     expect(push).toHaveBeenLastCalledWith('/documents/avis-echeance');
   });
 
-  it('renouvelle un bail en préremplissant le bien, le locataire et le début', async () => {
-    const { push } = renderLot(<BauxPage />);
+  it('renouvelle un bail après confirmation, sans rouvrir le formulaire de création', async () => {
+    const { push, sources } = renderLot(<BauxPage />);
     await screen.findByRole('table', { name: 'Baux' });
+    const before = (await leasesOf(sources.baux)).find((lease) => lease.id === 'apt-a1');
     await userEvent.click(screen.getByRole('button', { name: 'Plus d’actions, bail BL-2023-0007' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Renouveler' }));
-    expect(push).toHaveBeenLastCalledWith('/baux/nouveau?bien=apt-a1&locataire=koffi-adjovi&debut=2029-04-01');
+    const dialog = await screen.findByRole('dialog');
+    expect(norm(dialog.textContent)).toContain('Renouveler ce bail ?');
+    expect(push).not.toHaveBeenCalled();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Renouveler' }));
+    await waitFor(async () => { expect((await leasesOf(sources.baux)).find((lease) => lease.id === 'apt-a1')?.end).not.toBe(before?.end); });
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it('exporte la liste filtrée, pas tous les baux', async () => {
+    const blobs: Blob[] = [];
+    URL.createObjectURL = vi.fn((blob: Blob) => { blobs.push(blob); return 'blob:baux'; });
+    URL.revokeObjectURL = vi.fn();
+    renderLot(<BauxPage />);
+    await screen.findByRole('table', { name: 'Baux' });
+    await userEvent.click(screen.getByRole('combobox', { name: /^Type/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Meublé' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Exporter' }));
+    const csv = await blobs[0]?.text();
+    expect(csv).toContain('BL-2025-0002');
+    expect(csv).not.toContain('BL-2023-0007');
+    expect(csv?.trim().split('\r\n')).toHaveLength(dataRows(screen.getByRole('table', { name: 'Baux' })).length + 1);
   });
 
   it('filtre les baux qui se terminent dans 90 jours', async () => {

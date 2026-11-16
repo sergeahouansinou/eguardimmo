@@ -105,12 +105,21 @@ final readonly class PostJournalEntry
         return $entree->load('lines.account');
     }
 
+    /**
+     * Sous verrou, le snapshot de la transaction peut dater d'avant le commit du concurrent : lignes et comptes se relisent alors par lecture courante.
+     */
     private function existante(string $cle, bool $verrou): ?JournalEntry
     {
-        return JournalEntry::query()->with('lines.account')
+        $entree = JournalEntry::query()
             ->where('idempotency_key', $cle)
             ->when($verrou, fn ($requete) => $requete->lockForUpdate())
             ->first();
+
+        $entree?->load($verrou
+            ? ['lines' => fn ($lignes) => $lignes->sharedLock(), 'lines.account' => fn ($comptes) => $comptes->sharedLock()]
+            : ['lines.account']);
+
+        return $entree;
     }
 
     private function rejouer(JournalEntry $existante, string $empreinte): PostedEntryData

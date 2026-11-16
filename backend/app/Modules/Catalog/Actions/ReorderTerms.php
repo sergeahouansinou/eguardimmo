@@ -9,6 +9,7 @@ use App\Modules\Catalog\Enums\ErrorCode;
 use App\Modules\Catalog\Enums\VocabularyKey;
 use App\Modules\Catalog\Models\TermOverride;
 use App\Modules\Catalog\Queries\VisibleTerms;
+use App\Modules\Catalog\Support\ConcurrentWrite;
 use Illuminate\Support\Facades\DB;
 
 final readonly class ReorderTerms
@@ -24,7 +25,7 @@ final readonly class ReorderTerms
      */
     public function handle(VocabularyKey $vocabulaire, array $ids): array
     {
-        return DB::transaction(function () use ($vocabulaire, $ids): array {
+        return ConcurrentWrite::replayOnce(fn (): array => DB::transaction(function () use ($vocabulaire, $ids): array {
             $courantes = [];
 
             foreach ($this->valeurs->resolved($vocabulaire, includeInactive: true) as $donnee) {
@@ -46,7 +47,7 @@ final readonly class ReorderTerms
             }
 
             return $this->valeurs->resolved($vocabulaire, includeInactive: true);
-        });
+        }));
     }
 
     private function placer(VocabularyKey $vocabulaire, string $id, int $position, bool $plateforme): void

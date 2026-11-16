@@ -7,6 +7,7 @@ namespace App\Modules\Accounting\Queries;
 use App\Modules\Accounting\Data\LeaseStatementData;
 use App\Modules\Accounting\Data\StatementLineData;
 use App\Modules\Accounting\Enums\AccountRole;
+use App\Modules\Accounting\Enums\ErrorCode;
 use App\Modules\Accounting\Enums\ItemType;
 use App\Modules\Accounting\Enums\Journal;
 use App\Modules\Accounting\Enums\Side;
@@ -20,6 +21,8 @@ use Money\Money;
 
 final class Balances
 {
+    public const RELEVE_LIGNES_MAX = 1000;
+
     public function account(AccountRole $role, Currency $currency, ?CarbonImmutable $asOf): Money
     {
         return $this->solde($this->lignes($role, $currency), $currency, $role->normalSide(), $asOf);
@@ -68,7 +71,12 @@ final class Balances
                 'journal_entries.id as entry_id', 'journal_entries.fiscal_year', 'journal_entries.number',
                 'journal_entries.journal', 'journal_entries.entry_date', 'journal_entries.label',
             ])
+            ->limit(self::RELEVE_LIGNES_MAX + 1)
             ->toBase()->get();
+
+        if ($rows->count() > self::RELEVE_LIGNES_MAX) {
+            throw ErrorCode::StatementTooLong->problem();
+        }
 
         foreach ($rows as $row) {
             $debit = MoneyColumns::money($row->debit, $currency);

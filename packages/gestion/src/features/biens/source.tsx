@@ -2,6 +2,7 @@
 
 import { createContext, use } from 'react';
 import type { ReactNode } from 'react';
+import type { BiensFeature } from './capabilities';
 import type { Owner } from './schemas/common';
 import type { EquipementValues } from './schemas/equipements';
 import type { ImmeubleValues } from './schemas/immeubles';
@@ -39,6 +40,7 @@ export interface OperationInput {
 }
 
 export interface BiensSource {
+  readonly unavailableInApiMode: readonly BiensFeature[];
   lots: () => Promise<unknown>;
   lot: (id: string) => Promise<unknown>;
   lotOccupation: (id: string) => Promise<unknown>;

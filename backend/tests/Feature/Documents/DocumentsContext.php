@@ -15,6 +15,7 @@ use App\Modules\Organizations\Enums\MemberStatus;
 use App\Modules\Organizations\Enums\OrganizationKind;
 use App\Modules\Organizations\Models\Organization;
 use App\Modules\Organizations\Models\OrganizationMember;
+use App\Modules\Parties\Models\Party;
 use App\Shared\Tenancy\CurrentOrganization;
 use Closure;
 use Illuminate\Http\UploadedFile;
@@ -51,6 +52,11 @@ final class DocumentsContext
         ]));
 
         return $compte;
+    }
+
+    public static function partie(Organization $organisation): string
+    {
+        return self::dans($organisation, fn (): string => Party::factory()->company()->create()->id);
     }
 
     public static function semer(): void

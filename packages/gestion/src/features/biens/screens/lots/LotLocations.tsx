@@ -7,6 +7,7 @@ import { DataTable } from '../../components/DataTable';
 import { EntryList, Panel, StatGrid } from '../../components/Panels';
 import { QueryBoundary, SkeletonRows } from '../../components/QueryState';
 import { useBiensEnvironment } from '../../environment';
+import { WhenAvailable } from '../../FeatureGate';
 import { useListState } from '../../hooks/useListState';
 import { formatDate, formatDuration } from '../../lib/dates';
 import { occupationStats } from '../../lib/occupationStats';
@@ -121,6 +122,7 @@ export function LotLocations({ id }: { id: string }) {
                 </p>
               </Panel>
             ) : null}
+            <WhenAvailable feature="etatsDesLieux">
             <Panel
               title="États des lieux"
               action={
@@ -140,6 +142,7 @@ export function LotLocations({ id }: { id: string }) {
                 }))}
               />
             </Panel>
+            </WhenAvailable>
           </>
         );
       }}

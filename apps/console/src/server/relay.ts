@@ -1,8 +1,10 @@
 import { rejectForeignOrigin } from './origin';
 import { noStoreHeaders, problems } from './problem';
 import { readServerEnv } from './env';
+import type { ServerEnv } from './env';
 import { clearedSessionCookie, currentSession, readSealedCookie } from './session';
-import { callApi } from './upstream';
+import { callApi, upstreamHeaders } from './upstream';
+import { readBoundedBody } from './body';
 
 const PREFIX = '/api/v1/console/';
 const SEGMENT = /^[A-Za-z0-9_~-]+(?:\.[A-Za-z0-9_~-]+)*$/;
@@ -23,8 +25,8 @@ function resolveTarget(request: Request): Target {
   return { path: `${PREFIX}${segments.join('/')}${url.search}` };
 }
 
-function forwardedHeaders(request: Request, token: string): Headers {
-  const headers = new Headers({ Accept: 'application/json', Authorization: `Bearer ${token}` });
+function forwardedHeaders(env: ServerEnv, request: Request, token: string): Headers {
+  const headers = upstreamHeaders(env, request, { Authorization: `Bearer ${token}` });
   for (const name of FORWARDED_REQUEST_HEADERS) {
     const value = request.headers.get(name);
     if (value !== null) headers.set(name, value);
@@ -34,10 +36,9 @@ function forwardedHeaders(request: Request, token: string): Headers {
 
 async function readBody(request: Request): Promise<ArrayBuffer | undefined | Response> {
   if (request.method === 'GET' || request.method === 'HEAD') return undefined;
-  if (Number(request.headers.get('content-length') ?? 0) > MAX_BODY_BYTES) return problems.tooLarge();
-  const body = await request.arrayBuffer();
-  if (body.byteLength > MAX_BODY_BYTES) return problems.tooLarge();
-  return body.byteLength === 0 ? undefined : body;
+  const body = await readBoundedBody(request, MAX_BODY_BYTES);
+  if (body === null) return problems.tooLarge();
+  return body.byteLength === 0 ? undefined : body.buffer;
 }
 
 export async function handleRelay(request: Request): Promise<Response> {
@@ -55,7 +56,7 @@ export async function handleRelay(request: Request): Promise<Response> {
   const body = await readBody(request);
   if (body instanceof Response) return body;
 
-  const upstream = await callApi(env, target.path, { method: request.method, headers: forwardedHeaders(request, session.token), body });
+  const upstream = await callApi(env, target.path, { method: request.method, headers: forwardedHeaders(env, request, session.token), body });
   if (!upstream) return problems.unreachable();
   if (upstream.status >= 300 && upstream.status < 400) {
     await upstream.body?.cancel();

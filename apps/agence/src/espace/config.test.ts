@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createDemoData } from "@/features/portefeuille/demo";
 import { indexPortefeuille, isOperational, mandatState } from "@/features/portefeuille/selectors";
-import { accountMenu, addMenu, bottomItems, buildNavigation, buildSearchPages, helpMenu, plannedScreens } from "./config";
+import { accountMenu, addMenu, apiOnlyPages, bottomItems, buildNavigation, buildSearchPages, helpMenu, plannedScreens } from "./config";
 import { demoShell } from "./demo";
 import { agenceRoutes, bailHref, bienHref, locataireHref, mandantHref, mandatHref, mandatTerminationHref } from "./routes";
 
@@ -118,10 +118,20 @@ function staticRoutes(dir: string, prefix = ""): string[] {
 describe("recherche des pages livrées", () => {
   const hrefs = new Set(buildSearchPages().map((page) => page.href));
 
-  it("propose chaque page statique de l'espace", () => {
-    const routes = ["/", ...staticRoutes(join(process.cwd(), "src/app/(espace)"))];
+  const apiOnly = new Set(apiOnlyPages.map(([href]) => href));
+  const routes = ["/", ...staticRoutes(join(process.cwd(), "src/app/(espace)"))];
+
+  it("propose chaque page statique de l'espace de démonstration", () => {
     expect(routes.length).toBeGreaterThan(30);
-    for (const route of routes) expect(hrefs.has(route), route).toBe(true);
+    for (const route of routes.filter((candidate) => !apiOnly.has(candidate))) expect(hrefs.has(route), route).toBe(true);
+    for (const href of apiOnly) expect(hrefs.has(href), href).toBe(false);
+  });
+
+  it("propose en mode api chaque page statique, sans aucune fiche de démonstration", () => {
+    const pages = buildSearchPages({ records: false });
+    const apiHrefs = new Set(pages.map((page) => page.href));
+    for (const route of routes) expect(apiHrefs.has(route), route).toBe(true);
+    expect(pages.some((page) => /^(Mandant|Lot|Locataire), /.test(page.label))).toBe(false);
   });
 
   it("propose les pages citées par les menus", () => {

@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Modules\Parties\Enums\IdentifierScheme;
+use App\Shared\Database\Checks;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -24,7 +27,7 @@ return new class extends Migration
             $table->json('address')->nullable();
             $table->string('language', 5)->default('fr');
             $table->uuid('user_id')->nullable();
-            $table->json('custom_fields');
+            $table->json('custom_fields')->default(new Expression('(JSON_OBJECT())'));
             $table->unsignedInteger('lock_version')->default(1);
             $table->dateTime('anonymized_at', 6)->nullable();
             $table->dateTime('archived_at', 6)->nullable();
@@ -42,7 +45,7 @@ return new class extends Migration
             $table->foreignUuid('contact_category_term_id')->constrained('terms');
             $table->datetimes(6);
 
-            $table->unique(['party_id', 'contact_category_term_id']);
+            $table->unique(['party_id', 'contact_category_term_id'], 'party_contact_categories_unique');
             $table->index('contact_category_term_id');
             $table->foreign(['organization_id', 'party_id'])->references(['organization_id', 'id'])->on('parties');
         });
@@ -73,7 +76,7 @@ return new class extends Migration
             $table->char('value_hash', 64)->nullable();
             $table->datetimes(6);
 
-            $table->unique(['organization_id', 'scheme', 'country', 'value_hash']);
+            $table->unique(['organization_id', 'scheme', 'country', 'value_hash'], 'party_identifiers_unique');
             $table->index('party_id');
             $table->foreign(['organization_id', 'party_id'])->references(['organization_id', 'id'])->on('parties');
         });
@@ -100,7 +103,8 @@ return new class extends Migration
             DB::statement("ALTER TABLE parties ADD CONSTRAINT parties_kind_check CHECK (kind IN ('person', 'company'))");
             DB::statement("ALTER TABLE contact_points ADD CONSTRAINT contact_points_type_check CHECK (type IN ('email', 'phone'))");
             DB::statement('ALTER TABLE contact_points ADD CONSTRAINT contact_points_primary_check CHECK ((is_primary = 1) = (primary_slot IS NOT NULL))');
-            DB::statement("ALTER TABLE party_identifiers ADD CONSTRAINT party_identifiers_country_check CHECK (country REGEXP '^[A-Z]{2}$')");
+            DB::statement(Checks::statement('party_identifiers', 'country', Checks::uppercase('country', 2)));
+            DB::statement(Checks::statement('party_identifiers', 'scheme', Checks::enum('scheme', IdentifierScheme::class)));
             DB::statement('ALTER TABLE bank_accounts ADD CONSTRAINT bank_accounts_period_check CHECK (valid_to IS NULL OR valid_to >= valid_from)');
         }
     }

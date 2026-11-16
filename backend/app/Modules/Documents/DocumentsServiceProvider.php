@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Documents;
 
+use App\Modules\Documents\Console\SweepOrphanFilesCommand;
 use App\Modules\Documents\Models\Certificate;
 use App\Modules\Documents\Models\IssuedDocument;
 use App\Modules\Documents\Models\StoredFile;
@@ -25,5 +26,9 @@ final class DocumentsServiceProvider extends ServiceProvider
             'issued_document' => IssuedDocument::class,
             'certificate' => Certificate::class,
         ]);
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([SweepOrphanFilesCommand::class]);
+        }
     }
 }

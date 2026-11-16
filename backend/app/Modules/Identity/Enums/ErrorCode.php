@@ -20,8 +20,10 @@ enum ErrorCode: string
     case EmailUnverified = 'email_unverified';
     case SpaceForbidden = 'space_forbidden';
     case OperatorTokenRequired = 'operator_token_required';
+    case OperatorTokenForbidden = 'operator_token_forbidden';
     case ReauthenticationRequired = 'reauthentication_required';
     case NoTokenToRevoke = 'no_token_to_revoke';
+    case EmailVerificationLinkInvalid = 'email_verification_link_invalid';
 
     private const RETRY_AFTER_SECONDES = 30;
 
@@ -40,7 +42,7 @@ enum ErrorCode: string
             self::EmailRequired, self::InvalidIdToken, self::NoTokenToRevoke => 422,
             self::ProviderUnavailable => 503,
             self::ProviderError => 502,
-            self::InvalidState, self::EmailUnverified, self::SpaceForbidden, self::OperatorTokenRequired, self::ReauthenticationRequired => 403,
+            self::InvalidState, self::EmailUnverified, self::SpaceForbidden, self::OperatorTokenRequired, self::OperatorTokenForbidden, self::ReauthenticationRequired, self::EmailVerificationLinkInvalid => 403,
         };
     }
 
@@ -59,8 +61,10 @@ enum ErrorCode: string
             self::EmailUnverified => 'Adresse e-mail non vérifiée',
             self::SpaceForbidden => 'Espace non autorisé',
             self::OperatorTokenRequired => 'Jeton console requis',
+            self::OperatorTokenForbidden => 'Jeton console non autorisé',
             self::ReauthenticationRequired => 'Confirmation requise',
             self::NoTokenToRevoke => 'Aucun jeton à révoquer',
+            self::EmailVerificationLinkInvalid => 'Lien de confirmation invalide',
         };
     }
 
@@ -79,8 +83,10 @@ enum ErrorCode: string
             self::EmailUnverified => 'Confirmez votre adresse e-mail pour accéder à cet espace.',
             self::SpaceForbidden => 'Vous n\'avez pas accès à cet espace.',
             self::OperatorTokenRequired => 'Un jeton console est requis.',
+            self::OperatorTokenForbidden => 'Un jeton console ne donne accès qu\'à la console.',
             self::ReauthenticationRequired => 'Confirmez votre identité pour continuer.',
             self::NoTokenToRevoke => 'Cette requête utilise une session : aucun jeton à révoquer.',
+            self::EmailVerificationLinkInvalid => 'Ce lien est invalide, expiré ou déjà utilisé.',
         };
     }
 }

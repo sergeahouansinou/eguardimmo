@@ -8,6 +8,7 @@ use App\Modules\Catalog\Enums\ContactCategorySemantic;
 use App\Modules\Catalog\Enums\VocabularyKey;
 use App\Modules\Catalog\PublicApi\TermDirectory;
 use App\Modules\Parties\Data\PartyData;
+use App\Modules\Parties\Enums\ErrorCode;
 use App\Modules\Parties\Models\ContactPoint;
 use App\Modules\Parties\Models\Party;
 use App\Modules\Parties\Models\PartyContactCategory;
@@ -24,6 +25,28 @@ final readonly class PartySummaries
         $partie = $this->parties->get($id);
 
         return $this->toData([$partie])[0];
+    }
+
+    /**
+     * @param  list<string>  $ids
+     * @return array<string, PartyData> par identifiant
+     */
+    public function many(array $ids): array
+    {
+        $ids = array_values(array_unique($ids));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $parties = $this->parties->getMany($ids);
+        $donnees = [];
+
+        foreach ($this->toData(array_map(fn (string $id): Party => $parties[$id] ?? throw ErrorCode::PartyNotFound->problem(), $ids)) as $donnee) {
+            $donnees[$donnee->id] = $donnee;
+        }
+
+        return $donnees;
     }
 
     /**

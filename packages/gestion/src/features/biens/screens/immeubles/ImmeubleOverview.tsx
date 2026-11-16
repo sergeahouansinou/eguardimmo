@@ -7,6 +7,7 @@ import { EntryList, FactList, Panel } from '../../components/Panels';
 import { PhotosPanel } from '../../components/PhotosPanel';
 import { QueryBoundary, SkeletonCard } from '../../components/QueryState';
 import { useBiensEnvironment } from '../../environment';
+import { WhenAvailable, useFeatureUnavailable } from '../../FeatureGate';
 import { useCommand } from '../../hooks/useCommand';
 import { useListState } from '../../hooks/useListState';
 import { formatNumber } from '../../lib/amount';
@@ -30,6 +31,7 @@ function SeeAll({ href, count }: { href: string; count: number }) {
 function LotsCard({ id }: { id: string }) {
   const lots = useLots();
   const list = useListState({ key: 'name', direction: 'asc' }, 5);
+  const noTantiemes = useFeatureUnavailable('copropriete');
   return (
     <QueryBoundary query={lots} errorTitle="Les lots n’ont pas pu être chargés" skeleton={<SkeletonCard label="Chargement des lots" lines={5} />}>
       {(data) => {
@@ -39,7 +41,7 @@ function LotsCard({ id }: { id: string }) {
             <DataTable
               label="Vos lots dans l’immeuble"
               rows={items}
-              columns={lotColumns(data.currency, false)}
+              columns={lotColumns(data.currency, false, !noTantiemes)}
               getId={(row) => row.id}
               list={list}
               footer={false}
@@ -133,7 +135,9 @@ export function ImmeubleOverview({ id }: { id: string }) {
       {(detail) =>
         detail === null ? null : (
           <>
-            <PhotosPanel photos={detail.photos} count={detail.photoCount} pending={addPhotos.isPending} onAdd={(names) => { addPhotos.execute({ names }); }} />
+            <WhenAvailable feature="photos">
+              <PhotosPanel photos={detail.photos} count={detail.photoCount} pending={addPhotos.isPending} onAdd={(names) => { addPhotos.execute({ names }); }} />
+            </WhenAvailable>
             <TwoColumns>
               <Panel title="En bref">
                 <FactList
@@ -146,6 +150,7 @@ export function ImmeubleOverview({ id }: { id: string }) {
               </Panel>
               {detail.immeuble.copropriete && detail.coproSummary.length > 0 ? <CoproCard detail={detail} /> : null}
               <LotsCard id={id} />
+              <WhenAvailable feature="charges">
               <Panel
                 title="Clés de répartition"
                 action={
@@ -160,8 +165,13 @@ export function ImmeubleOverview({ id }: { id: string }) {
                   items={detail.keys.map((key) => ({ id: key.id, title: key.label, detail: key.detail, badge: key.pill }))}
                 />
               </Panel>
-              <CommonEquipementsCard id={id} />
-              <DocumentsCard id={id} />
+              </WhenAvailable>
+              <WhenAvailable feature="equipements">
+                <CommonEquipementsCard id={id} />
+              </WhenAvailable>
+              <WhenAvailable feature="documents">
+                <DocumentsCard id={id} />
+              </WhenAvailable>
             </TwoColumns>
             {detail.immeuble.archived ? <Badge tone="neutral">Immeuble archivé</Badge> : null}
           </>

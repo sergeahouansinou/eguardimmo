@@ -4,6 +4,7 @@ import { Button } from '@eguardimmo/ui';
 import { FactList, Panel } from '../../components/Panels';
 import { QueryBoundary, SkeletonRows } from '../../components/QueryState';
 import { useBiensEnvironment } from '../../environment';
+import { WhenAvailable } from '../../FeatureGate';
 import { biensPaths } from '../../paths';
 import { useLot } from '../../queries';
 
@@ -38,6 +39,7 @@ export function LotCarac({ id }: { id: string }) {
                 ))}
               </Panel>
             ))}
+            <WhenAvailable feature="lotDetails">
             <Panel
               title="Équipements et prestations"
               action={
@@ -60,6 +62,7 @@ export function LotCarac({ id }: { id: string }) {
                 </section>
               ))}
             </Panel>
+            </WhenAvailable>
           </>
         )
       }

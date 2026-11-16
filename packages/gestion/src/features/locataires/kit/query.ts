@@ -9,11 +9,13 @@ export function useClientQuery<T>(
   key: readonly unknown[],
   load: () => Promise<unknown>,
   schema: z.ZodType<T>,
+  { enabled = true }: { enabled?: boolean } = {},
 ): ClientQuery<T> {
   return useAfterHydration(
     useQuery({
       queryKey: key,
       queryFn: async () => schema.parse(await load()),
+      enabled,
     }),
   );
 }

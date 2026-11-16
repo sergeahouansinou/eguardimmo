@@ -24,12 +24,13 @@ export function createTestEnvironment(sessionAccountId: string | null = null): T
 
 export function renderWithAuth(ui: ReactElement, environment: TestEnvironment = createTestEnvironment()) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const view = render(
+  const wrap = (content: ReactElement) => (
     <QueryClientProvider client={client}>
       <AuthSourceProvider source={environment.source}>
-        <TooltipProvider>{ui}</TooltipProvider>
+        <TooltipProvider>{content}</TooltipProvider>
       </AuthSourceProvider>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
-  return { ...view, environment };
+  const view = render(wrap(ui));
+  return { ...view, environment, rerenderWithAuth: (content: ReactElement) => { view.rerender(wrap(content)); } };
 }

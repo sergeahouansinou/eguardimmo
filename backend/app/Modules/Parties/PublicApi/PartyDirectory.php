@@ -24,6 +24,17 @@ final readonly class PartyDirectory
     }
 
     /**
+     * Comme find(), pour plusieurs parties en quelques requêtes ; lève party_not_found si l'une est hors de l'organisation courante.
+     *
+     * @param  list<string>  $ids
+     * @return array<string, PartyData> par identifiant
+     */
+    public function findMany(array $ids): array
+    {
+        return $this->resumes->many($ids);
+    }
+
+    /**
      * Parties actives qui portent une catégorie de contact de ce sens (ex. `bailiff` pour le commissaire de justice).
      *
      * @return list<PartyData>

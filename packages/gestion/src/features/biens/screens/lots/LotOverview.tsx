@@ -1,5 +1,6 @@
 'use client';
 
+import { WhenAvailable } from '../../FeatureGate';
 import { useCommand } from '../../hooks/useCommand';
 import { PhotosPanel } from '../../components/PhotosPanel';
 import { QueryBoundary, SkeletonCard } from '../../components/QueryState';
@@ -23,14 +24,20 @@ export function LotOverview({ id }: { id: string }) {
         lot === null ? null : (
           <>
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-              <PhotosPanel photos={lot.photos} count={lot.photoCount} pending={addPhotos.isPending} onAdd={(names) => { addPhotos.execute({ names }); }} />
+              <WhenAvailable feature="photos">
+                <PhotosPanel photos={lot.photos} count={lot.photoCount} pending={addPhotos.isPending} onAdd={(names) => { addPhotos.execute({ names }); }} />
+              </WhenAvailable>
               <LotBrief lot={lot} />
               <OccupationCard id={id} />
               <LeaseCard id={id} />
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <DiagnosticsCard id={id} />
-              <EquipementsCard id={id} />
+              <WhenAvailable feature="diagnostics">
+                <DiagnosticsCard id={id} />
+              </WhenAvailable>
+              <WhenAvailable feature="equipements">
+                <EquipementsCard id={id} />
+              </WhenAvailable>
               <SuiviCard id={id} />
             </div>
           </>

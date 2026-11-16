@@ -1,5 +1,6 @@
 'use client';
 
+import type { BauxFeature } from './capabilities';
 import { createCollection, NotFoundError } from '../locataires/kit/collection';
 import { addDays, addMonths, todayIso } from '../locataires/kit/dates';
 import { nextSequence, uniqueSlug } from '../locataires/kit/ids';
@@ -26,6 +27,8 @@ export interface ReturnContext {
 }
 
 export interface BauxSource {
+  readonly unavailableInApiMode: readonly BauxFeature[];
+  readonly derivesOccupancy: boolean;
   leases: () => Promise<unknown>;
   installments: (leaseId: string) => Promise<unknown>;
   extras: (leaseId: string) => Promise<unknown>;
@@ -56,6 +59,7 @@ export interface BauxSource {
   sendReservationConfirmation: (id: string) => Promise<unknown>;
   remindReservation: (id: string) => Promise<unknown>;
   reviseRent: (leaseId: string, rent: string) => Promise<unknown>;
+  renewLease: (leaseId: string) => Promise<unknown>;
   saveEdlSurvey: (id: string, survey: unknown) => Promise<unknown>;
   prepareExitEdl: (id: string) => Promise<unknown>;
   attestations: () => Promise<unknown>;
@@ -155,6 +159,8 @@ export function createDemoBauxSource(): BauxSource {
   };
 
   return {
+    unavailableInApiMode: [],
+    derivesOccupancy: false,
     leases: () => Promise.resolve(leases.all()),
     installments: (leaseId) => Promise.resolve(buildInstallments(requireLease(leaseId))),
     extras: (leaseId) => Promise.resolve(buildExtras(requireLease(leaseId))),
@@ -486,6 +492,11 @@ export function createDemoBauxSource(): BauxSource {
       const rent = parseEuros(rentText);
       if (rent === lease.rent) return Promise.reject(new Error('Le nouveau loyer est identique au loyer actuel.'));
       return Promise.resolve(leases.patch(leaseId, { rent, nextRevision: lease.nextRevision ? addMonths(lease.nextRevision, 12) : addMonths(todayIso(), 12) }));
+    },
+    renewLease: (leaseId) => {
+      const lease = requireLease(leaseId);
+      if (lease.status !== 'en_cours') return Promise.reject(new Error('Seul un bail en cours peut être renouvelé.'));
+      return Promise.resolve(leases.patch(leaseId, { end: addDays(addMonths(addDays(lease.end, 1), lease.durationMonths), -1) }));
     },
     saveEdlSurvey: (id, raw) => {
       const current = edls.find(id);

@@ -7,6 +7,7 @@ export type { ConfirmDialogProps } from './ConfirmDialog';
 export { DataTable, SortTh, Td, Th } from './DataTable';
 export type { SortDirection } from './DataTable';
 export { DEMO_MONTH, DEMO_NOW, DEMO_TODAY, euros } from './demoClock';
+export { realToday, useReferenceDay } from './referenceDay';
 export { dismissFlash, FlashAlert, pushFlash } from './flash';
 export { PageHeader } from './PageHeader';
 export type { PageHeaderProps } from './PageHeader';

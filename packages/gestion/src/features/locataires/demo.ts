@@ -49,6 +49,7 @@ const base: Omit<Tenant, 'id' | 'firstName' | 'lastName' | 'phone' | 'email' | '
   idExpiry: null,
   idFileName: null,
   ibanLast4: null,
+  idLast4: null,
   status: 'actif',
   state: 'a_jour',
   balance: 0,
@@ -108,6 +109,7 @@ const koffiDetail: TenantDetail = {
     { id: 'attestation-assurance', tone: 'warning', title: 'Attestation d’assurance', detail: 'À renouveler le 31/03/2027' },
   ],
   documentsCount: 7,
+  guarantors: [],
   leases: [
     { id: 'apt-a1', tone: 'success', title: 'Apt A1, Les Tilleuls', detail: 'Location vide · 01/04/2023 → 31/03/2029 · 850 € CC', badge: { label: 'En cours', tone: 'success' }, href: '/baux/apt-a1' },
   ],

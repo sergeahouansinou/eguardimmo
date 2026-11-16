@@ -7,10 +7,11 @@ import { EntryList, Panel, StatGrid } from '../../components/Panels';
 import { QueryBoundary, SkeletonRows } from '../../components/QueryState';
 import { RowActions } from '../../components/RowActions';
 import { useBiensEnvironment } from '../../environment';
+import { WhenAvailable, useFeatureUnavailable } from '../../FeatureGate';
 import { useListState } from '../../hooks/useListState';
 import { formatArea, formatNumber } from '../../lib/amount';
 import { formatDate } from '../../lib/dates';
-import { LOT_STATUS_LABELS, LOT_TYPE_LABELS } from '../../lib/labels';
+import { LOT_TYPE_LABELS, lotStatusBadge } from '../../lib/labels';
 import { plural } from '../../lib/text';
 import { biensPaths } from '../../paths';
 import { useImmeuble, useLots } from '../../queries';
@@ -20,7 +21,7 @@ import type { Currency } from '../../../../format/money';
 
 const leaseEndLabel = (lot: LotRow): string => (lot.leaseEnd ? formatDate(lot.leaseEnd) : (lot.leaseNote ?? '—'));
 
-export function lotColumns(currency: Currency, full: boolean): Column<LotRow>[] {
+export function lotColumns(currency: Currency, full: boolean, withTantiemes = true): Column<LotRow>[] {
   const base: Column<LotRow>[] = [
     {
       id: 'name',
@@ -31,17 +32,17 @@ export function lotColumns(currency: Currency, full: boolean): Column<LotRow>[] 
     },
     { id: 'type', header: 'Type', sortBy: (row) => LOT_TYPE_LABELS[row.type], cell: (row) => LOT_TYPE_LABELS[row.type] },
     ...(full ? [{ id: 'floor', header: 'Étage', sortBy: (row: LotRow) => row.floor, cell: (row: LotRow) => row.floor ?? '—' }] : []),
-    { id: 'surface', header: 'Surface', numeric: true, sortBy: (row) => row.surface, cell: (row) => formatArea(row.surface) },
-    { id: 'tantiemes', header: 'Tantièmes', numeric: true, sortBy: (row) => row.tantiemes, cell: (row) => (row.tantiemes === null ? '—' : formatNumber(row.tantiemes)) },
+    { id: 'surface', header: 'Surface', numeric: true, sortBy: (row) => row.surface, cell: (row) => (row.surface === null ? '—' : formatArea(row.surface)) },
+    ...(withTantiemes ? [{ id: 'tantiemes', header: 'Tantièmes', numeric: true, sortBy: (row: LotRow) => row.tantiemes, cell: (row: LotRow) => (row.tantiemes === null ? '—' : formatNumber(row.tantiemes)) }] : []),
     ...(full ? [{ id: 'elevator', header: 'Ascenseur', numeric: true, sortBy: (row: LotRow) => row.elevatorShares, cell: (row: LotRow) => (row.elevatorShares === null ? '—' : formatNumber(row.elevatorShares)) }] : []),
     { id: 'tenant', header: 'Locataire', sortBy: (row) => row.tenant?.name ?? null, cell: (row) => row.tenant?.name ?? <span className="text-fg-subtle">Sans locataire</span> },
     ...(full ? [{ id: 'leaseEnd', header: 'Fin de bail', sortBy: (row: LotRow) => row.leaseEnd, cell: leaseEndLabel }] : []),
-    { id: 'rent', header: 'Loyer CC', numeric: true, sortBy: (row) => row.rent, cell: (row) => formatMoney(row.rent, currency) },
+    { id: 'rent', header: 'Loyer CC', numeric: true, sortBy: (row) => row.rent, cell: (row) => (row.rent === null ? '—' : formatMoney(row.rent, currency)) },
     {
       id: 'status',
       header: 'Statut',
-      sortBy: (row) => LOT_STATUS_LABELS[row.status].label,
-      cell: (row) => <Badge tone={LOT_STATUS_LABELS[row.status].tone}>{LOT_STATUS_LABELS[row.status].label}</Badge>,
+      sortBy: (row) => lotStatusBadge(row).label,
+      cell: (row) => <Badge tone={lotStatusBadge(row).tone}>{lotStatusBadge(row).label}</Badge>,
     },
   ];
   if (!full) return base;
@@ -70,14 +71,16 @@ export function ImmeubleLots({ id }: { id: string }) {
   const lots = useLots();
   const immeuble = useImmeuble(id);
   const list = useListState({ key: 'name', direction: 'asc' });
+  const noTantiemes = useFeatureUnavailable('copropriete');
   return (
     <QueryBoundary query={lots} errorTitle="Les lots n’ont pas pu être chargés" skeleton={<SkeletonRows rows={6} label="Chargement des lots" />}>
       {(data) => {
         const items = data.items.filter((lot) => lot.immeubleId === id && !lot.archived);
         const housing = items.filter((lot) => lot.type !== 'parking');
-        const area = Math.round(items.reduce((sum, lot) => sum + lot.surface, 0) * 10) / 10;
-        const housingArea = Math.round(housing.reduce((sum, lot) => sum + lot.surface, 0) * 10) / 10;
-        const rents = items.reduce((sum, lot) => sum + lot.rent, 0);
+        const totalOf = (rows: readonly LotRow[]) => (rows.some((lot) => lot.surface === null) ? null : Math.round(rows.reduce((sum, lot) => sum + (lot.surface ?? 0), 0) * 10) / 10);
+        const area = totalOf(items);
+        const housingArea = totalOf(housing);
+        const rents = items.some((lot) => lot.rent === null) ? null : items.reduce((sum, lot) => sum + (lot.rent ?? 0), 0);
         const rented = items.filter((lot) => lot.tenant !== null);
         const notices = items.filter((lot) => lot.status === 'preavis');
         const noticeEnd = notices.map((lot) => lot.leaseEnd).filter((date) => date !== null).sort()[0];
@@ -90,11 +93,11 @@ export function ImmeubleLots({ id }: { id: string }) {
               <StatCard label="Vos lots" value={items.length}>
                 <span className="text-caption text-fg-subtle">{`${plural(housing.length, 'logement')}, ${plural(items.length - housing.length, 'parking')}`}</span>
               </StatCard>
-              <StatCard label="Surface totale" value={formatArea(area)}>
-                <span className="text-caption text-fg-subtle">{`Hors parking ${formatArea(housingArea)}`}</span>
+              <StatCard label="Surface totale" value={area === null ? '—' : formatArea(area)}>
+                <span className="text-caption text-fg-subtle">{housingArea === null ? 'Surface non renseignée sur certains lots' : `Hors parking ${formatArea(housingArea)}`}</span>
               </StatCard>
-              <StatCard label="Loyers mensuels" value={formatMoney(rents, data.currency)}>
-                <span className="text-caption text-fg-subtle">Charges comprises</span>
+              <StatCard label="Loyers mensuels" value={rents === null ? '—' : formatMoney(rents, data.currency)}>
+                <span className="text-caption text-fg-subtle">{rents === null ? 'Non disponible' : 'Charges comprises'}</span>
               </StatCard>
               <StatCard label="Occupation" value={`${String(occupancy)} %`}>
                 <span className="text-caption text-fg-subtle">
@@ -113,12 +116,13 @@ export function ImmeubleLots({ id }: { id: string }) {
               <DataTable
                 label="Lots de l’immeuble"
                 rows={items}
-                columns={lotColumns(data.currency, true)}
+                columns={lotColumns(data.currency, true, !noTantiemes)}
                 getId={(row) => row.id}
                 list={list}
                 empty={<p className="text-body text-fg-muted">Aucun lot rattaché à cet immeuble. Ajoutez le premier lot pour suivre ses loyers.</p>}
               />
             </Panel>
+            <WhenAvailable feature="copropriete">
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <Panel title="Tantièmes généraux par lot">
                 <EntryList
@@ -149,6 +153,7 @@ export function ImmeubleLots({ id }: { id: string }) {
                 </Panel>
               ) : null}
             </div>
+            </WhenAvailable>
           </>
         );
       }}

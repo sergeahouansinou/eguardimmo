@@ -260,3 +260,57 @@ it('fournit un schéma pour le DPE et la garantie financière de la plateforme',
         ->and($dpe->metadata['default_validity_months'])->toBe(120)
         ->and($garantie->metadata['data_schema']['guaranteed_amount']['type'])->toBe('integer');
 });
+
+it('refuse un schéma de données dont required n\'est pas strictement booléen', function (): void {
+    $this->actingAs($this->titulaire);
+    $url = C::url($this->org, '/vocabularies/certificate_type/terms');
+
+    foreach ([1, '1', 'true', 0, 'oui'] as $i => $required) {
+        $this->postJson($url, ['key' => "requis_{$i}", 'labels' => ['fr' => 'Faux'], 'metadata' => ['data_schema' => ['x' => ['type' => 'string', 'required' => $required]]]])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('metadata.data_schema.x.required');
+    }
+
+    $this->postJson($url, ['key' => 'requis_vrai', 'labels' => ['fr' => 'Vrai'], 'metadata' => ['data_schema' => ['x' => ['type' => 'string', 'required' => true]]]])
+        ->assertCreated()
+        ->assertJsonPath('data.metadata.data_schema.x.required', true);
+});
+
+it('refuse un nom de champ de schéma hors de ^[a-z][a-z0-9_]{0,62}$', function (): void {
+    $this->actingAs($this->titulaire);
+    $url = C::url($this->org, '/vocabularies/certificate_type/terms');
+
+    foreach (['a.b', '*', 'Majuscule', '1abc', 'a-b', str_repeat('a', 64)] as $i => $nom) {
+        $this->postJson($url, ['key' => "nom_{$i}", 'labels' => ['fr' => 'Faux'], 'metadata' => ['data_schema' => [$nom => ['type' => 'string']]]])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('metadata.data_schema');
+    }
+
+    $this->postJson($url, ['key' => 'nom_ok', 'labels' => ['fr' => 'Ok'], 'metadata' => ['data_schema' => [str_repeat('a', 63) => ['type' => 'string'], 'champ_2' => ['type' => 'date']]]])
+        ->assertCreated();
+});
+
+it('refuse des bornes min et max qui rendent le type inutilisable', function (): void {
+    $this->actingAs($this->titulaire);
+    $url = C::url($this->org, '/vocabularies/certificate_type/terms');
+
+    $refuses = [
+        ['type' => 'integer', 'min' => 10, 'max' => 5],
+        ['type' => 'number', 'min' => 1.5, 'max' => 1.4],
+        ['type' => 'boolean', 'min' => 0],
+        ['type' => 'date', 'max' => 3],
+        ['type' => 'integer', 'min' => 1.5],
+        ['type' => 'string', 'min' => -1],
+        ['type' => 'string', 'enum' => ['A'], 'min' => 1],
+        ['type' => 'boolean', 'enum' => ['A']],
+    ];
+
+    foreach ($refuses as $i => $definition) {
+        $this->postJson($url, ['key' => "bornes_{$i}", 'labels' => ['fr' => 'Faux'], 'metadata' => ['data_schema' => ['x' => $definition]]])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('metadata.data_schema');
+    }
+
+    $this->postJson($url, ['key' => 'bornes_ok', 'labels' => ['fr' => 'Ok'], 'metadata' => ['data_schema' => ['x' => ['type' => 'integer', 'min' => 5, 'max' => 5], 'y' => ['type' => 'string', 'min' => 0, 'max' => 20]]]])
+        ->assertCreated();
+});

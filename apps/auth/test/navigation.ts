@@ -18,6 +18,7 @@ export function setLocation(path: string): void {
   const [pathname = "/", search = ""] = path.split("?");
   navigationState.pathname = pathname;
   navigationState.search = search;
+  if (typeof window !== "undefined") window.history.replaceState(null, "", search === "" ? pathname : `${pathname}?${search}`);
 }
 
 export function resetNavigation(): void {

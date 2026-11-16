@@ -7,12 +7,13 @@ namespace App\Modules\Identity\Notifications;
 use App\Modules\Identity\Support\Hub;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Auth\CanResetPassword;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use SensitiveParameter;
 
-final class ResetPasswordNotification extends Notification implements ShouldQueue
+final class ResetPasswordNotification extends Notification implements ShouldBeEncrypted, ShouldQueue
 {
     use Queueable;
 

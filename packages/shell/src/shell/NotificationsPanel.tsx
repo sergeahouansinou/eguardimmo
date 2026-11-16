@@ -71,7 +71,9 @@ export function NotificationsPanel({ notifications, config, Link, onNavigate }: 
         ) : null}
         <ul className="flex max-h-[360px] flex-col overflow-y-auto">
           {visible.length === 0 ? (
-            <li className="px-3 py-6 text-center text-body text-fg-subtle">Aucune notification non lue.</li>
+            <li className="px-3 py-6 text-center text-body text-fg-subtle">
+              {filter === 'non-lues' ? 'Aucune notification non lue.' : 'Aucune notification.'}
+            </li>
           ) : (
             visible.map((item) => (
               <li key={item.id}>

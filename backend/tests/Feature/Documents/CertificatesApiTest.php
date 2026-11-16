@@ -113,6 +113,14 @@ it('refuse un schéma de type invalide au lieu de l\'ignorer', function (): void
         ->assertUnprocessable()->assertJsonPath('code', 'certificate_schema_invalid');
 });
 
+it('refuse à l\'exécution un schéma stocké dont le nom de champ contient un joker', function (): void {
+    $this->actingAs($this->titulaire);
+    $type = D::typePropre($this->org, 'joker', ['data_schema' => ['*' => ['type' => 'string'], 'a.b' => ['type' => 'string']]]);
+
+    $this->postJson($this->url, ($this->corps)('gas', ['certificate_type_term_id' => $type, 'expires_on' => '2030-01-01', 'values' => ['x' => 'a']]))
+        ->assertUnprocessable()->assertJsonPath('code', 'certificate_schema_invalid');
+});
+
 it('laisse l\'échéance vide quand le type n\'a pas de durée : toujours valide', function (): void {
     $this->actingAs($this->titulaire);
 
@@ -168,7 +176,7 @@ it('inclut dans le filtre « valide » les pièces sans échéance', function ()
 
 it('renouvelle par une nouvelle pièce qui remplace la précédente, une seule fois', function (): void {
     $this->actingAs($this->titulaire);
-    $ancienne = $this->postJson($this->url, ($this->corps)('boiler_service', ['reference' => 'CH-2025', 'expires_on' => '2026-06-10', 'issuer_party_id' => $emetteur = fake()->uuid()]))->json('data.id');
+    $ancienne = $this->postJson($this->url, ($this->corps)('boiler_service', ['reference' => 'CH-2025', 'expires_on' => '2026-06-10', 'issuer_party_id' => $emetteur = D::partie($this->org)]))->json('data.id');
 
     $nouvelle = $this->postJson("{$this->url}/{$ancienne}/renew", ['reference' => 'CH-2026', 'issued_on' => '2026-06-05'])
         ->assertCreated()
@@ -223,4 +231,17 @@ it('refuse un DPE sans classe énergétique ou avec une classe hors schéma', fu
 
     $this->postJson($this->url, [...($this->corps)('energy_performance'), 'values' => []])->assertUnprocessable()->assertJsonValidationErrors('values.energy_class');
     $this->postJson($this->url, [...($this->corps)('energy_performance'), 'values' => ['energy_class' => 'Z']])->assertUnprocessable()->assertJsonValidationErrors('values.energy_class');
+});
+
+it('refuse un émetteur inconnu ou d\'une autre organisation : 404 party_not_found, rien d\'écrit', function (): void {
+    $this->actingAs($this->titulaire);
+    $etrangere = D::partie(D::organisation());
+
+    foreach ([$etrangere, fake()->uuid()] as $emetteur) {
+        $this->postJson($this->url, ($this->corps)('boiler_service', ['issuer_party_id' => $emetteur]))->assertNotFound()->assertJsonPath('code', 'party_not_found');
+    }
+
+    expect(DB::table('certificates')->count())->toBe(0);
+
+    $this->postJson($this->url, ($this->corps)('boiler_service', ['issuer_party_id' => D::partie($this->org)]))->assertCreated();
 });

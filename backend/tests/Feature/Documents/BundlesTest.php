@@ -97,3 +97,13 @@ it('refuse le fichier d\'une autre organisation, un identifiant inconnu et un pa
         ->and($essai([], []))->toBe('bundle_empty')
         ->and(Storage::disk('documents')->allFiles())->toHaveCount(1);
 });
+
+it('refuse un fichier dont le contenu ne correspond plus à l\'empreinte enregistrée', function (): void {
+    $bail = D::dans($this->org, fn () => $this->store->store(FileSource::contents(D::PDF."% bail\n"), 'Bail.pdf', FileCategory::Supporting));
+    $chemin = D::dans($this->org, fn () => StoredFile::query()->findOrFail($bail->id)->path);
+    Storage::disk('documents')->put($chemin, D::PDF."% altéré\n");
+
+    $appel = fn () => D::dans($this->org, fn () => $this->bundles->zip([$bail->id], [], 'Dossier'));
+
+    expect(fn () => $appel())->toThrow(ApiProblem::class);
+});

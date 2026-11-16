@@ -9,6 +9,7 @@ import {
   testBottomItems,
   testNavigation,
   testPages,
+  testShell,
 } from '../../test/fixtures';
 import { TestLink, renderWithSource } from '../../test/render';
 import { filterPages } from './CommandPalette';
@@ -180,6 +181,47 @@ describe('SpaceShell', () => {
     const { container } = renderShell({}, '/impayes');
     await screen.findByRole('button', { name: 'Notifications, 1 non lues' });
     await expectNoA11yViolations(container);
+  });
+});
+
+describe('SpaceShell avec un compte sans notification ni propriétaire', () => {
+  function renderMinimal() {
+    const source = createTestSource();
+    const bare = { ...testShell, workspace: { name: 'Espace test', role: 'admin' }, counts: {}, notifications: [] };
+    return renderWithSource(
+      <SpaceShell
+        spaceLabel="Espace démo"
+        logoSrc="/logo.png"
+        currentPath="/"
+        linkComponent={TestLink}
+        onNavigate={vi.fn()}
+        railStorageKey="eg-nav-test"
+        navigation={testNavigation}
+        bottomItems={testBottomItems}
+        accountMenu={{ ...testAccountMenu, switchSpace: { href: '/choix-du-profil' } }}
+        notifications={{ allHref: '/notifications' }}
+        searchPages={testPages}
+      >
+        <h1>Contenu</h1>
+      </SpaceShell>,
+      { ...source, shell: () => Promise.resolve(bare) },
+    );
+  }
+
+  it('masque « Espace de … » quand le propriétaire n’est pas fourni', async () => {
+    renderMinimal();
+    await userEvent.click(await screen.findByRole('button', { name: 'Compte, espace de travail Espace test' }));
+    const menu = await screen.findByRole('menu');
+    expect(within(menu).getByRole('menuitem', { name: "Changer d'espace" })).toBeTruthy();
+    expect(within(menu).queryByText(/Espace de /)).toBeNull();
+  });
+
+  it('dit « Aucune notification » quand la liste est vide', async () => {
+    renderMinimal();
+    await userEvent.click(await screen.findByRole('button', { name: 'Notifications' }));
+    const panel = await screen.findByRole('dialog', { name: 'Notifications' });
+    expect(within(panel).getByText('Aucune notification.')).toBeTruthy();
+    expect(within(panel).getByRole('button', { name: 'Tout marquer comme lu' }).hasAttribute('disabled')).toBe(true);
   });
 });
 

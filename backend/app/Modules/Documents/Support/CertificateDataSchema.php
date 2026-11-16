@@ -15,6 +15,8 @@ use Illuminate\Validation\ValidationException;
  */
 final class CertificateDataSchema
 {
+    private const NOM_CHAMP = '/^[a-z][a-z0-9_]{0,62}$/';
+
     private const TYPES = [
         'string' => ['string', 'max:500'],
         'integer' => ['integer'],
@@ -24,7 +26,7 @@ final class CertificateDataSchema
     ];
 
     /**
-     * @param  array<string, mixed>  $schema
+     * @param  array<array-key, mixed>  $schema
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      *
@@ -35,6 +37,10 @@ final class CertificateDataSchema
         $regles = [];
 
         foreach ($schema as $champ => $definition) {
+            if (! is_string($champ) || preg_match(self::NOM_CHAMP, $champ) !== 1) {
+                throw ErrorCode::CertificateSchemaInvalid->problem();
+            }
+
             $regles["values.{$champ}"] = self::rules($definition);
         }
 

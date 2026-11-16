@@ -47,6 +47,7 @@ export const biensPaths = {
 
 export const externalPaths = {
   leases: '/baux',
+  lease: (id: string) => `/baux/${id}`,
   newLease: (lotId: string) => `/baux/nouveau?bien=${encodeURIComponent(lotId)}`,
   tenant: (id: string) => `/locataires/${id}`,
   newIntervention: '/interventions/nouvelle',

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as api from "./responses.fixtures";
 import { UNAVAILABLE_MESSAGE } from "./index";
-import { emptyJson, noContent, problem, setup, validation } from "./testing";
+import { emptyJson, json, problem, setup, validation } from "./testing";
 
 const bailleur = {
   profile: "bailleur",
@@ -48,40 +48,45 @@ describe("source API : inscription et vérification de l’e-mail", () => {
     });
   });
 
-  it("renvoie l’e-mail de vérification pour la session ouverte", async () => {
+  it("renvoie le lien de vérification sans session, avec l’adresse dans le corps et jamais dans l’URL", async () => {
     const { source, call } = setup([emptyJson(202)]);
 
-    expect(await source.resendVerification()).toEqual({ status: "sent" });
-    expect(call(0).url.pathname).toBe("/auth/email/verification-notification");
+    expect(await source.resendVerification("jeanne@exemple.fr")).toEqual({ status: "sent" });
+    expect(call(0).url.pathname).toBe("/api/v1/auth/email/verification-notification");
+    expect(call(0).url.search).toBe("");
+    expect(call(0).method).toBe("POST");
+    expect(call(0).body).toEqual({ email: "jeanne@exemple.fr" });
   });
 
-  it("signale 429, refuse sans session (401) et n’annonce pas un envoi quand l’adresse est déjà vérifiée (204)", async () => {
-    expect(await setup([problem(429, "too_many_requests", { retryAfter: 45 })]).source.resendVerification()).toEqual({
+  it("traduit 429 en limitation de débit et propage 422 et les pannes serveur", async () => {
+    expect(await setup([problem(429, "too_many_requests", { retryAfter: 45 })]).source.resendVerification("a@exemple.fr")).toEqual({
       status: "rate_limited",
       retryAfterSeconds: 45,
     });
-    await expect(setup([problem(401, "unauthenticated")]).source.resendVerification()).rejects.toMatchObject({ status: 401 });
-    await expect(setup([noContent()]).source.resendVerification()).rejects.toThrow("déjà confirmée");
+    await expect(setup([validation({ email: ["Adresse invalide."] })]).source.resendVerification("a@exemple.fr")).rejects.toMatchObject({ status: 422 });
+    await expect(setup([problem(500, "server_error")]).source.resendVerification("a@exemple.fr")).rejects.toMatchObject({ status: 500 });
   });
 
-  it("confirme l’adresse en appelant le lien signé tel qu’émis par le serveur", async () => {
-    const { source, call } = setup([noContent()]);
+  it("confirme l’adresse en postant le lien signé tel qu’émis par le serveur, sans session", async () => {
+    const { source, call } = setup([json(200, { message: "Adresse e-mail vérifiée. Vous pouvez vous connecter." })]);
 
     expect(await source.verifyEmail(api.SIGNED_VERIFY_URL)).toEqual({ status: "verified" });
-    expect(call(0).url.pathname).toBe(`/auth/email/verify/${api.IDS.user}/da39a3ee5e6b4b0d3255bfef95601890afd80709`);
+    expect(call(0).url.pathname).toBe(`/api/v1/auth/email/verify/${api.IDS.user}/da39a3ee5e6b4b0d3255bfef95601890afd80709`);
     expect(call(0).url.search).toBe(new URL(api.SIGNED_VERIFY_URL).search);
-    expect(call(0).method).toBe("GET");
+    expect(call(0).method).toBe("POST");
   });
 
-  it("traduit 403 (lien expiré ou altéré) en lien expiré et propage 401", async () => {
-    expect(await setup([problem(403, "forbidden")]).source.verifyEmail(api.SIGNED_VERIFY_URL)).toEqual({ status: "expired" });
-    await expect(setup([problem(401, "unauthenticated")]).source.verifyEmail(api.SIGNED_VERIFY_URL)).rejects.toMatchObject({ status: 401 });
+  it("traduit 403 (lien invalide, expiré ou déjà utilisé) en lien expiré et propage les autres erreurs", async () => {
+    expect(await setup([problem(403, "email_verification_link_invalid")]).source.verifyEmail(api.SIGNED_VERIFY_URL)).toEqual({ status: "expired" });
+    await expect(setup([problem(429, "too_many_requests", { retryAfter: 30 })]).source.verifyEmail(api.SIGNED_VERIFY_URL)).rejects.toMatchObject({ status: 429 });
+    await expect(setup([problem(500, "server_error")]).source.verifyEmail(api.SIGNED_VERIFY_URL)).rejects.toMatchObject({ status: 500 });
   });
 
   it.each([
     ["un jeton quelconque", "abc123"],
     ["un hôte étranger", api.SIGNED_VERIFY_URL.replace("api.test", "pirate.test")],
     ["un autre chemin de l’API", "https://api.test/api/v1/me?expires=1&signature=2"],
+    ["l’ancien chemin de session", api.SIGNED_VERIFY_URL.replace("/api/v1/auth", "/auth")],
   ])("refuse sans appel réseau %s", async (_label, link) => {
     const { source, fetchImpl } = setup([]);
 

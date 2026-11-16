@@ -8,6 +8,7 @@ use App\Modules\Accounting\Enums\AccountRole;
 use App\Modules\Accounting\Enums\ItemType;
 use App\Modules\Accounting\PublicApi\Ledger;
 use App\Modules\Accounting\PublicApi\LedgerReader;
+use App\Modules\Accounting\Queries\Balances;
 use App\Shared\Http\ApiProblem;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -112,4 +113,21 @@ it('isole les organisations dans la PublicApi', function (): void {
         ->and($depuisAutre[1]->equals(Money::EUR(0)))->toBeTrue()
         ->and($depuisAutre[2]->lines)->toBe([])
         ->and(fn () => comptaDans($autre, fn () => app(Ledger::class)->reverse($ecriture->id, CarbonImmutable::parse('2026-11-05'))))->toThrow(ApiProblem::class);
+});
+
+it('refuse un relevé de plus de lignes que le plafond au lieu de le tronquer', function (): void {
+    $modele = (array) DB::table('journal_lines')->where('lease_id', $this->bail)->orderBy('position')->first();
+    $lignes = [];
+
+    foreach (range(1, Balances::RELEVE_LIGNES_MAX) as $i) {
+        $lignes[] = [...$modele, 'id' => (string) Str::uuid7(), 'position' => 100 + $i];
+    }
+
+    foreach (array_chunk($lignes, 200) as $lot) {
+        DB::table('journal_lines')->insert($lot);
+    }
+
+    $appel = fn () => ($this->lecture)(fn (LedgerReader $l) => $l->leaseStatement($this->bail, new Currency('EUR'), CarbonImmutable::parse('2026-01-01'), CarbonImmutable::parse('2026-12-31')));
+
+    expect($appel)->toThrow(ApiProblem::class);
 });

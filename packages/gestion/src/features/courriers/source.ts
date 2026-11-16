@@ -19,6 +19,7 @@ export function createDemoCourriersSource(): CourriersSource {
   const notices = createCollection('Avis d’échéance', demoNotices);
 
   return {
+    unavailableInApiMode: false,
     ...createTemplatesSource(templates, courriers),
     ...createCourriersSource(courriers),
     ...createSignaturesSource(signatures),

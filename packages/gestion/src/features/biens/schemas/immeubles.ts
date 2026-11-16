@@ -13,8 +13,8 @@ export const immeubleRowSchema = z.object({
   city: z.string().min(1),
   country: z.string().min(1),
   lots: count,
-  totalArea: z.number().nonnegative(),
-  repartition: repartitionSchema,
+  totalArea: z.number().nonnegative().nullable(),
+  repartition: repartitionSchema.nullable(),
   copropriete: z.boolean(),
   archived: z.boolean(),
 });
@@ -23,6 +23,10 @@ export type ImmeubleRow = z.infer<typeof immeubleRowSchema>;
 export const immeublesSchema = z.object({ items: z.array(immeubleRowSchema) });
 export type ImmeublesData = z.infer<typeof immeublesSchema>;
 
+export const SITE_TYPES = ['building', 'house', 'complex'] as const;
+export const siteTypeSchema = z.enum(SITE_TYPES);
+export type SiteType = z.infer<typeof siteTypeSchema>;
+
 export const immeubleValuesSchema = z.object({
   name: z.string().min(1),
   address: z.string().min(1),
@@ -30,6 +34,7 @@ export const immeubleValuesSchema = z.object({
   city: z.string().min(1),
   country: z.string().min(1),
   repartition: repartitionSchema,
+  siteType: siteTypeSchema.optional(),
   photoNames: z.array(z.string()),
 });
 export type ImmeubleValues = z.infer<typeof immeubleValuesSchema>;
@@ -45,7 +50,7 @@ export const immeubleDetailSchema = z
     facts: z.array(z.object({ id: idSchema, label: z.string().min(1), value: z.string() })),
     tantiemes: z.object({ sum: count, total: count }),
     totalLots: count.nullable(),
-    counts: z.object({ lots: count, equipements: count, documents: count, interventions: count }),
+    counts: z.object({ lots: count, equipements: count.nullable(), documents: count.nullable(), interventions: count.nullable() }),
     coproSummary: z.array(factRowSchema),
     keys: z.array(z.object({ id: idSchema, label: z.string().min(1), detail: z.string(), pill: badgeSchema.nullable() })),
     values: immeubleValuesSchema,
@@ -147,5 +152,6 @@ export const immeubleFormSchema = z.object({
   city: trimmed.min(1, required),
   country: trimmed.min(1, required),
   repartition: repartitionSchema,
+  siteType: siteTypeSchema.optional(),
   photoNames: z.array(z.string()),
 });

@@ -1,13 +1,13 @@
 "use client";
 
-import { EquipeApiProvider, GestionShell } from "@eguardimmo/gestion";
-import { OrganizationGate } from "@eguardimmo/shell";
+import { GestionShell } from "@eguardimmo/gestion";
 import { SupportWidget, useInboxStats } from "@eguardimmo/messagerie";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { MessagerieSpaceProvider } from "@/features/messagerie/SpaceProvider";
-import { apiEnv, dataSource } from "@/lib/env";
+import { ApiRouteGate } from "./ApiRouteGate";
+import { BailleurData } from "./BailleurData";
 
 function BailleurShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -22,18 +22,8 @@ function BailleurShell({ children }: { children: ReactNode }) {
       onNavigate={(href) => { router.push(href); }}
       unreadMessages={unread}
     >
-      {children}
+      <ApiRouteGate>{children}</ApiRouteGate>
     </GestionShell>
-  );
-}
-
-function BailleurData({ children }: { children: ReactNode }) {
-  if (dataSource === "demo") return children;
-  const env = apiEnv();
-  return (
-    <OrganizationGate apiUrl={env.NEXT_PUBLIC_API_URL} authUrl={env.NEXT_PUBLIC_AUTH_URL} kind="individual">
-      <EquipeApiProvider>{children}</EquipeApiProvider>
-    </OrganizationGate>
   );
 }
 

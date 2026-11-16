@@ -37,6 +37,37 @@ final readonly class VisibleTerms
         return $this->query()->where('vocabulary', $vocabulaire->value)->find($id);
     }
 
+    /**
+     * @param  list<string>  $ids
+     * @return array<string, Term> les valeurs trouvées, par identifiant
+     */
+    public function findMany(array $ids, VocabularyKey $vocabulaire): array
+    {
+        $valides = array_values(array_filter($ids, fn (string $id): bool => Str::isUuid($id)));
+
+        if ($valides === []) {
+            return [];
+        }
+
+        return $this->query()->where('vocabulary', $vocabulaire->value)->whereIn('id', $valides)->get()->keyBy('id')->all();
+    }
+
+    /**
+     * @param  list<Term>  $valeurs
+     * @return array<string, TermData> par identifiant
+     */
+    public function many(array $valeurs): array
+    {
+        $surcharges = $this->overrides(array_map(fn (Term $v): string => $v->id, $valeurs));
+        $donnees = [];
+
+        foreach ($valeurs as $valeur) {
+            $donnees[$valeur->id] = $this->toData($valeur, $surcharges[$valeur->id] ?? null);
+        }
+
+        return $donnees;
+    }
+
     public function get(string $id): ?Term
     {
         return Str::isUuid($id) ? $this->query()->find($id) : null;

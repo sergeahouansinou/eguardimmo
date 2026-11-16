@@ -3,7 +3,7 @@
 import { Mail } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Spinner, TextField } from "@eguardimmo/ui";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { AuthCard, AuthHeading } from "@/components/AuthCard";
@@ -25,6 +25,9 @@ import { useReturnContext } from "@/features/auth/useReturnContext";
 import { useSessionGuard } from "@/features/espaces/useSessionGuard";
 import { formatDuration } from "@/lib/format";
 import { ROUTES } from "@/lib/routes";
+import { useConsumedParams } from "@/lib/useConsumedParams";
+
+const RESET_LINK_PARAMS = ["jeton", "email"] as const;
 
 export function MotDePasseOublieScreen() {
   const router = useRouter();
@@ -164,9 +167,7 @@ function ResetPasswordForm({ token, email }: { token: string; email: string }) {
 
 export function MotDePasseNouveauScreen() {
   const router = useRouter();
-  const params = useSearchParams();
-  const token = params.get("jeton") ?? "";
-  const email = params.get("email") ?? "";
+  const { jeton: token, email } = useConsumedParams(RESET_LINK_PARAMS);
   const check = useResetTokenCheck(token, email);
   const expired = token === "" || check.data?.status === "expired";
 

@@ -72,7 +72,9 @@ export function AccountMenu({ shell, config, onNavigate }: AccountMenuProps) {
           >
             <span className="flex flex-col">
               <b className="truncate text-[13px] leading-4 font-medium">{workspace.name}</b>
-              <span className="truncate text-[11px] leading-[14px] text-fg-subtle">Espace de {workspace.ownerName}</span>
+              {workspace.ownerName ? (
+                <span className="truncate text-[11px] leading-[14px] text-fg-subtle">Espace de {workspace.ownerName}</span>
+              ) : null}
             </span>
           </MenuItem>
         ) : null}

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Catalog\Enums;
 
+use App\Modules\Catalog\Support\DataSchemaRules;
+
 enum VocabularyKey: string
 {
     case LegalForm = 'legal_form';
@@ -60,7 +62,7 @@ enum VocabularyKey: string
     /**
      * Règles de validation de chaque clé de `metadata` ; toute autre clé est refusée.
      *
-     * @return array<string, list<string>>
+     * @return array<string, list<mixed>>
      */
     public function metadataRules(): array
     {
@@ -70,10 +72,10 @@ enum VocabularyKey: string
                 'default_validity_months' => ['nullable', 'integer', 'min:1', 'max:600'],
                 'reminder_days' => ['nullable', 'integer', 'min:0', 'max:730'],
                 'retention_years' => ['nullable', 'integer', 'min:0', 'max:50'],
-                'data_schema' => ['nullable', 'array', 'max:20'],
+                'data_schema' => ['nullable', 'array', 'max:20', DataSchemaRules::schema()],
                 'data_schema.*' => ['array'],
                 'data_schema.*.type' => ['required', 'string', 'in:string,integer,number,boolean,date'],
-                'data_schema.*.required' => ['sometimes', 'boolean'],
+                'data_schema.*.required' => ['sometimes', DataSchemaRules::required()],
                 'data_schema.*.enum' => ['sometimes', 'array', 'min:1', 'max:50'],
                 'data_schema.*.enum.*' => ['string', 'max:100'],
                 'data_schema.*.min' => ['sometimes', 'numeric'],

@@ -2,8 +2,13 @@ import { z } from 'zod';
 
 const KEY_BYTES = 32;
 
-const serverEnvSchema = z.object({
-  CONSOLE_API_URL: z.url().transform((value) => value.replace(/\/+$/, '')),
+const HTTPS_REQUIRED = "L'URL de l'API doit utiliser https:// en production.";
+
+const serverEnvSchema = (production: boolean) => z.object({
+  CONSOLE_API_URL: z
+    .url()
+    .refine((value) => !production || value.startsWith('https://'), HTTPS_REQUIRED)
+    .transform((value) => value.replace(/\/+$/, '')),
   CONSOLE_SESSION_SECRET: z
     .base64()
     .transform((value) => Buffer.from(value, 'base64'))
@@ -13,12 +18,12 @@ const serverEnvSchema = z.object({
   CONSOLE_TRUSTED_PROXY_HOPS: z.coerce.number().int().min(1).max(5).default(1),
 });
 
-export type ServerEnv = z.infer<typeof serverEnvSchema>;
+export type ServerEnv = z.infer<ReturnType<typeof serverEnvSchema>>;
 
 export function parseServerEnv(source: Record<string, string | undefined>): ServerEnv | null {
   const ttl = source.CONSOLE_TOKEN_TTL_MINUTES;
   const hops = source.CONSOLE_TRUSTED_PROXY_HOPS;
-  const parsed = serverEnvSchema.safeParse({
+  const parsed = serverEnvSchema(source.NODE_ENV === 'production').safeParse({
     CONSOLE_API_URL: source.CONSOLE_API_URL,
     CONSOLE_SESSION_SECRET: source.CONSOLE_SESSION_SECRET,
     CONSOLE_TOKEN_TTL_MINUTES: ttl === '' ? undefined : ttl,

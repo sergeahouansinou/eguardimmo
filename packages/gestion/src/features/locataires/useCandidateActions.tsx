@@ -60,7 +60,7 @@ export function useCandidateActions(): { actionsFor: (candidate: Candidate, incl
       onSelect: () => { void change(candidate, 'confirme', 'Candidat confirmé'); },
     },
     { id: 'lease', label: 'Créer le bail', icon: FilePlus, disabled: candidate.status !== 'confirme', onSelect: () => { void createLease(candidate); } },
-    { id: 'message', label: 'Envoyer un message', icon: MessageSquare, onSelect: () => { push(links.newMessage(candidate.id)); } },
+    { id: 'message', label: 'Envoyer un message', icon: MessageSquare, onSelect: () => { push(links.newMessage(candidate.tenantId ?? undefined)); } },
     { id: 'refuse', label: 'Refuser', icon: X, tone: 'danger', separatorBefore: true, disabled: candidate.status === 'refuse', onSelect: () => { setRefusing(candidate); } },
   ];
 

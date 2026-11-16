@@ -25,7 +25,7 @@ use App\Modules\Messaging\Http\Controllers\ReplyMyTicketController;
 use App\Modules\Messaging\Http\Controllers\ShowMyTicketController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum', 'verified'])->prefix('support')->group(function (): void {
+Route::middleware(['auth:sanctum', 'no-operator-token', 'verified'])->prefix('support')->group(function (): void {
     Route::get('/tickets', ListMyTicketsController::class)->name('messaging.support.tickets.index');
     Route::post('/tickets', OpenTicketController::class)->middleware('throttle:10,1')->name('messaging.support.tickets.store');
     Route::get('/tickets/{ticket}', ShowMyTicketController::class)->whereUuid('ticket')->name('messaging.support.tickets.show');

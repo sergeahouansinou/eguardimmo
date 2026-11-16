@@ -41,7 +41,7 @@ export const recoveryCodesResponse = [
   "m4Nq7vXz0R-e3Kt8Cl1Pj",
 ];
 
-export const SIGNED_VERIFY_URL = `https://api.test/auth/email/verify/${IDS.user}/da39a3ee5e6b4b0d3255bfef95601890afd80709?expires=1795000000&signature=5f4dcc3b5aa765d61d8327deb882cf99e3b0c44298fc1c149afbf4c8996fb924`;
+export const SIGNED_VERIFY_URL = `https://api.test/api/v1/auth/email/verify/${IDS.user}/da39a3ee5e6b4b0d3255bfef95601890afd80709?expires=1795000000&signature=5f4dcc3b5aa765d61d8327deb882cf99e3b0c44298fc1c149afbf4c8996fb924`;
 
 export const resetStatusValid = { data: { status: "valid" } };
 export const resetStatusExpired = { data: { status: "expired" } };

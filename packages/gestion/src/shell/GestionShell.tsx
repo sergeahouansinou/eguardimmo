@@ -9,7 +9,7 @@ import { addMenu, buildNavigation, helpMenu } from '../navigation/routes';
 import {
   SEARCH_NOTE,
   SEARCH_PLACEHOLDER,
-  accountMenu,
+  accountMenu as buildAccountMenu,
   bottomItems,
   notifications,
   searchPages,
@@ -36,6 +36,7 @@ export interface GestionShellProps {
 
 export function GestionShell({ children, unreadMessages, ...props }: GestionShellProps) {
   const { onNavigate } = props;
+  const accountMenu = useMemo(() => buildAccountMenu(), []);
   const navigation = useMemo(
     () => (counts: ShellCounts | undefined) =>
       buildNavigation(unreadMessages === undefined ? counts : { ...counts, unreadMessages }),

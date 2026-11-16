@@ -18,18 +18,20 @@ return new class extends Migration
             $table->char('color', 7)->nullable();
             $table->datetimes(6);
 
+            $table->unique(['organization_id', 'id']);
             $table->unique(['organization_id', 'slug']);
         });
 
         Schema::create('taggings', function (Blueprint $table): void {
             $table->uuid('id')->primary();
             $table->foreignUuid('organization_id')->constrained('organizations');
-            $table->foreignUuid('tag_id')->constrained('tags');
+            $table->uuid('tag_id');
             $table->uuidMorphs('taggable');
             $table->datetimes(6);
 
             $table->unique(['tag_id', 'taggable_type', 'taggable_id']);
             $table->index(['organization_id', 'taggable_type', 'taggable_id']);
+            $table->foreign(['organization_id', 'tag_id'])->references(['organization_id', 'id'])->on('tags');
         });
     }
 

@@ -131,6 +131,9 @@ importers:
       '@eguardimmo/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@eguardimmo/gestion':
+        specifier: workspace:*
+        version: link:../../packages/gestion
       '@eguardimmo/messagerie':
         specifier: workspace:*
         version: link:../../packages/messagerie

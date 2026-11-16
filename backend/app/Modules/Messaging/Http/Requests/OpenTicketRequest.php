@@ -25,7 +25,7 @@ final class OpenTicketRequest extends FormRequest
     {
         return [
             'space' => ['required', Rule::enum(RequesterSpace::class)],
-            'organization_id' => ['nullable', 'uuid'],
+            'organization_id' => ['nullable', 'uuid', Rule::requiredIf(fn (): bool => $this->input('space') === RequesterSpace::Organization->value)],
             'category' => ['required', Rule::enum(TicketCategory::class)],
             'subject' => ['required', 'string', 'max:140'],
             ...MessageInput::rules(),

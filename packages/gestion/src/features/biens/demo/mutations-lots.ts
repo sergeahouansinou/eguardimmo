@@ -29,7 +29,7 @@ function apply(record: LotRecord, values: LotValues): void {
   record.row.name = values.name;
   record.row.type = values.type;
   record.row.immeubleId = values.immeubleId;
-  record.row.surface = values.surface;
+  record.row.surface = values.surface ?? record.row.surface;
   record.row.rooms = values.rooms ?? 0;
   record.row.floor = values.floor === '' ? null : values.floor;
   record.row.rent = rentExcl + charges;

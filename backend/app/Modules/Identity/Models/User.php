@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Identity\Models;
 
 use App\Modules\Identity\Database\Factories\UserFactory;
+use App\Modules\Identity\Enums\IntendedProfile;
 use App\Modules\Identity\Enums\SocialProvider;
 use App\Modules\Identity\Notifications\ResetPasswordNotification;
 use App\Modules\Identity\Notifications\VerifyEmailNotification;
@@ -36,6 +37,7 @@ use Laravel\Sanctum\TransientToken;
  * @property Carbon|null $two_factor_confirmed_at
  * @property Carbon|null $last_login_at
  * @property Carbon|null $previous_login_at
+ * @property IntendedProfile|null $intended_profile
  * @property Carbon|null $deleted_at
  * @property-read Operator|null $operator
  */
@@ -134,6 +136,7 @@ final class User extends Authenticatable implements MustVerifyEmail
             'two_factor_confirmed_at' => 'datetime',
             'last_login_at' => 'datetime',
             'previous_login_at' => 'datetime',
+            'intended_profile' => IntendedProfile::class,
             'password' => 'hashed',
         ];
     }

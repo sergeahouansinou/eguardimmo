@@ -1,5 +1,6 @@
 'use client';
 
+import { Alert } from '@eguardimmo/ui';
 import type { ReactNode } from 'react';
 import { useLeases } from './hooks';
 import { bauxPaths } from './paths';
@@ -32,6 +33,14 @@ export function LeaseGate({ id, title, children }: { id: string; title: string; 
       <>
         <PageHeader crumbs={[...crumbs, { label: 'Introuvable' }]} title="Bail introuvable" />
         <NotFoundPanel title="Ce bail n’existe pas" description="Il a peut-être été supprimé ou le lien est incorrect." backHref={bauxPaths.list} backLabel="Retour aux baux" />
+      </>
+    );
+  }
+  if (lease.unsupported !== undefined) {
+    return (
+      <>
+        <PageHeader crumbs={[...crumbs, { label: lease.reference }]} title={lease.reference} />
+        <Alert tone="warning" title="Ce bail n’est pas affichable">{lease.unsupported}</Alert>
       </>
     );
   }

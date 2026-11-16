@@ -16,7 +16,7 @@ export const AS_OF = '2026-11-13';
 export const CURRENCY = 'EUR' as const;
 
 export interface ImmeubleRecord {
-  row: Omit<ImmeubleRow, 'lots' | 'totalArea'>;
+  row: Omit<ImmeubleRow, 'lots' | 'totalArea' | 'repartition'> & { repartition: NonNullable<ImmeubleRow['repartition']> };
   tantiemesTotal: number;
   builtYear: number | null;
   levels: string | null;
@@ -40,7 +40,13 @@ export interface LotRichDetail {
 }
 
 export interface LotRecord {
-  row: Omit<LotRow, 'immeubleName'>;
+  row: Omit<LotRow, 'immeubleName' | 'surface' | 'rooms' | 'rent' | 'listing' | 'status'> & {
+    surface: number;
+    rooms: number;
+    rent: number;
+    listing: NonNullable<LotRow['listing']>;
+    status: NonNullable<LotRow['status']>;
+  };
   street: string;
   complement: string;
   postalCode: string;

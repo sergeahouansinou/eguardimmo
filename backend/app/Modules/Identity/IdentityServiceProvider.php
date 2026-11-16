@@ -18,20 +18,24 @@ use App\Modules\Identity\Http\Middleware\EnforceAbsoluteSession;
 use App\Modules\Identity\Http\Middleware\EnsureLoginNotLocked;
 use App\Modules\Identity\Http\Middleware\EnsureRecentReauthentication;
 use App\Modules\Identity\Http\Middleware\EnsureSpace;
+use App\Modules\Identity\Http\Middleware\RefuseOperatorToken;
 use App\Modules\Identity\Models\Operator;
 use App\Modules\Identity\Models\PersonalAccessToken;
 use App\Modules\Identity\Models\SocialIdentity;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Models\UserDevice;
 use App\Modules\Identity\PublicApi\ProfileRegistry;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Fortify;
@@ -50,6 +54,10 @@ final class IdentityServiceProvider extends ServiceProvider
         'user-password.update',
     ];
 
+    private const RENVOIS_PAR_ADRESSE_PAR_MINUTE = 1;
+
+    private const RENVOIS_PAR_ADRESSE_PAR_HEURE = 5;
+
     public function register(): void
     {
         $this->app->singleton(ProfileRegistry::class);
@@ -67,6 +75,7 @@ final class IdentityServiceProvider extends ServiceProvider
 
         $this->configurerFortify();
         $this->configurerRoutes();
+        $this->configurerLimiteRenvoi();
         $this->enregistrerProfils();
 
         Event::listen(SocialiteWasCalled::class, [AppleExtendSocialite::class, 'handle']);
@@ -92,6 +101,7 @@ final class IdentityServiceProvider extends ServiceProvider
         /** @var Router $routeur */
         $routeur = $this->app->make(Router::class);
         $routeur->aliasMiddleware('space', EnsureSpace::class);
+        $routeur->aliasMiddleware('no-operator-token', RefuseOperatorToken::class);
         $routeur->aliasMiddleware('reauthenticated', EnsureRecentReauthentication::class);
 
         $noyau = $this->app->make(HttpKernel::class);
@@ -113,6 +123,20 @@ final class IdentityServiceProvider extends ServiceProvider
                     $route->middleware(EnsureLoginNotLocked::class);
                 }
             }
+        });
+    }
+
+    private function configurerLimiteRenvoi(): void
+    {
+        // Limite par adresse, quelle que soit l'IP : la clé est hachée, l'adresse n'apparaît ni en cache ni en journal.
+        RateLimiter::for('verification-resend', function (Request $request): array {
+            $email = Str::lower(trim((string) $request->string('email')));
+            $cle = $email === '' ? 'ip:'.$request->ip() : 'email:'.hash('sha256', $email);
+
+            return [
+                Limit::perMinute(self::RENVOIS_PAR_ADRESSE_PAR_MINUTE)->by('verification-resend:'.$cle),
+                Limit::perHour(self::RENVOIS_PAR_ADRESSE_PAR_HEURE)->by('verification-resend-heure:'.$cle),
+            ];
         });
     }
 

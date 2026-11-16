@@ -4,6 +4,8 @@ import { useAfterHydration } from '@eguardimmo/shell';
 import type { ClientQuery } from '@eguardimmo/shell';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ZodType } from 'zod';
+import { BIENS_ROOT, OCCUPANCY_ROOTS } from '../queryRoots';
+import { isStaleVersion } from './errors';
 import { documentsSchema } from './schemas/common';
 import type { DocumentsData, Owner } from './schemas/common';
 import { equipementDetailSchema, equipementIntervSchema, equipementsSchema } from './schemas/equipements';
@@ -40,7 +42,7 @@ import { useBiensSource } from './source';
 import type { BiensSource } from './source';
 
 export const biensKeys = {
-  all: ['biens'] as const,
+  all: BIENS_ROOT,
   lots: ['biens', 'lots'] as const,
   lot: (id: string) => ['biens', 'lot', id] as const,
   lotPart: (part: string, id: string) => ['biens', 'lot', id, part] as const,
@@ -167,8 +169,10 @@ export function useDocuments(owner: Owner): BiensQuery<DocumentsData> {
 export function useBiensAction<Args, Result>(run: (source: BiensSource, args: Args) => Promise<Result>) {
   const source = useBiensSource();
   const client = useQueryClient();
+  const refresh = () => Promise.all(OCCUPANCY_ROOTS.map((queryKey) => client.invalidateQueries({ queryKey })));
   return useMutation({
     mutationFn: (args: Args) => run(source, args),
-    onSuccess: () => client.invalidateQueries({ queryKey: biensKeys.all }),
+    onSuccess: refresh,
+    onError: (error) => (isStaleVersion(error) ? refresh() : undefined),
   });
 }

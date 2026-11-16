@@ -6,6 +6,7 @@ namespace App\Modules\Accounting\Support;
 
 use App\Modules\Accounting\Enums\AccountRole;
 use App\Modules\Accounting\Models\Account;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 final class ChartOfAccounts
 {
@@ -21,11 +22,21 @@ final class ChartOfAccounts
             ->toBase()->pluck('id', 'role')->all();
 
         foreach ($roles as $role) {
-            $ids[$role->value] ??= Account::query()
-                ->createOrFirst(['role' => $role->value], ['code' => $role->defaultCode(), 'label' => $role->label()])
-                ->id;
+            $ids[$role->value] ??= $this->create($role);
         }
 
         return $ids;
+    }
+
+    /**
+     * Le compte créé en parallèle est invisible du snapshot de la transaction : la relecture se fait par lecture verrouillée.
+     */
+    private function create(AccountRole $role): string
+    {
+        try {
+            return Account::query()->create(['role' => $role->value, 'code' => $role->defaultCode(), 'label' => $role->label()])->id;
+        } catch (UniqueConstraintViolationException $erreur) {
+            return Account::query()->where('role', $role->value)->lockForUpdate()->firstOr(fn (): never => throw $erreur)->id;
+        }
     }
 }

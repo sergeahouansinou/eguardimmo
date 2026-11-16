@@ -2,7 +2,8 @@
 
 import { Button, Card, CardTitle, RadioGroup, Select, TextField } from '@eguardimmo/ui';
 import type { z } from 'zod';
-import { useCreateTenant, useTenants, useUpdateTenant } from './hooks';
+import { FeatureUnavailable, useFeatureUnavailable } from './FeatureGate';
+import { useCreateTenant, useTenant, useUpdateTenant } from './hooks';
 import { FileDrop, ListLoading, LoadError, NotFoundPanel, PageHeader, errorMessage, noticeAfterNavigation, useGestionNavigation, useNotify } from './kit';
 import { links } from './kit/links';
 import { useZodForm } from './kit/useZodForm';
@@ -24,6 +25,7 @@ const EMPTY: FormValues = {
   idDocType: '',
   idExpiry: '',
   idFileName: '',
+  idNumber: '',
 };
 
 const fromTenant = (tenant: Tenant): FormValues => ({
@@ -38,6 +40,7 @@ const fromTenant = (tenant: Tenant): FormValues => ({
   idDocType: tenant.idDocType ?? '',
   idExpiry: tenant.idExpiry ?? '',
   idFileName: tenant.idFileName ?? '',
+  idNumber: '',
 });
 
 const civilityOptions = [{ value: 'M.', label: 'M.' }, { value: 'Mme', label: 'Mme' }];
@@ -48,12 +51,12 @@ const docOptions = [
 ];
 
 export function LocataireFormPage({ id }: { id?: string }) {
-  const tenants = useTenants();
+  const query = useTenant(id);
   if (id === undefined) return <TenantForm />;
-  if (tenants.isError) return <LoadError title="Le locataire n’a pas pu être chargé" />;
-  if (!tenants.data) return <ListLoading label="Chargement du locataire" />;
-  const tenant = tenants.data.find((entry) => entry.id === id);
-  if (!tenant) {
+  if (query.isError) return <LoadError title="Le locataire n’a pas pu être chargé" />;
+  if (query.data === undefined) return <ListLoading label="Chargement du locataire" />;
+  const tenant = query.data;
+  if (tenant === null) {
     return (
       <>
         <PageHeader crumbs={[{ label: 'Locataires', href: locatairesPaths.list }, { label: 'Introuvable' }]} title="Locataire introuvable" />
@@ -67,6 +70,8 @@ export function LocataireFormPage({ id }: { id?: string }) {
 function TenantForm({ tenant }: { tenant?: Tenant }) {
   const { push } = useGestionNavigation();
   const notify = useNotify();
+  const identityExtrasOff = useFeatureUnavailable('identityExtras');
+  const attachmentOff = useFeatureUnavailable('idAttachment');
   const create = useCreateTenant();
   const update = useUpdateTenant(tenant?.id ?? '');
   const form = useZodForm(tenantInputSchema, tenant ? fromTenant(tenant) : EMPTY);
@@ -90,7 +95,7 @@ function TenantForm({ tenant }: { tenant?: Tenant }) {
     }
   };
 
-  const bind = (name: 'firstName' | 'lastName' | 'companyName' | 'email' | 'phone' | 'birthDate' | 'idExpiry') => ({
+  const bind = (name: 'firstName' | 'lastName' | 'companyName' | 'email' | 'phone' | 'birthDate' | 'idExpiry' | 'idNumber') => ({
     value: form.values[name],
     error: form.error(name),
     onChange: (event: { target: { value: string } }) => { form.setValue(name, event.target.value); },
@@ -128,8 +133,10 @@ function TenantForm({ tenant }: { tenant?: Tenant }) {
               <TextField label="Raison sociale *" placeholder="Ex. SCI Les Tilleuls" {...bind('companyName')} />
             ) : (
               <>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <Select label="Civilité" placeholder="Civilité" value={form.values.civility} onValueChange={(value) => { form.setValue('civility', value === 'Mme' ? 'Mme' : 'M.'); }} options={civilityOptions} />
+                <div className={identityExtrasOff ? 'grid grid-cols-1 gap-3 sm:grid-cols-2' : 'grid grid-cols-1 gap-3 sm:grid-cols-3'}>
+                  {identityExtrasOff ? null : (
+                    <Select label="Civilité" placeholder="Civilité" value={form.values.civility} onValueChange={(value) => { form.setValue('civility', value === 'Mme' ? 'Mme' : 'M.'); }} options={civilityOptions} />
+                  )}
                   <TextField label="Prénom *" placeholder="Ex. Koffi" {...bind('firstName')} />
                   <TextField label="Nom *" placeholder="Ex. Adjovi" {...bind('lastName')} />
                 </div>
@@ -153,18 +160,33 @@ function TenantForm({ tenant }: { tenant?: Tenant }) {
                 value={form.values.idDocType}
                 onValueChange={(value) => { form.setValue('idDocType', value === 'passeport' || value === 'cni' || value === 'titre_sejour' ? value : ''); }}
                 options={docOptions}
+                error={form.error('idDocType')}
               />
-              <TextField label="Date d’expiration" type="date" placeholder="jj/mm/aaaa" {...bind('idExpiry')} />
+              {attachmentOff ? (
+                <TextField
+                  label="Numéro de la pièce"
+                  placeholder="Ex. 12AB34567"
+                  autoComplete="off"
+                  hint={tenant?.idLast4 ? `Numéro enregistré se terminant par ${tenant.idLast4}. Laissez vide pour le conserver.` : 'Seuls les 4 derniers caractères restent visibles ensuite.'}
+                  {...bind('idNumber')}
+                />
+              ) : (
+                <TextField label="Date d’expiration" type="date" placeholder="jj/mm/aaaa" {...bind('idExpiry')} />
+              )}
             </div>
-            <FileDrop
-              title="Joindre la pièce d’identité"
-              hint="PDF ou image, 10 Mo au maximum. Stockage privé."
-              accept="application/pdf,image/*"
-              allowedTypes={['application/pdf', 'image/*']}
-              maxBytes={10 * 1_048_576}
-              fileName={form.values.idFileName}
-              onFile={(name) => { form.setValue('idFileName', name); }}
-            />
+            {attachmentOff ? (
+              <FeatureUnavailable feature="idAttachment" />
+            ) : (
+              <FileDrop
+                title="Joindre la pièce d’identité"
+                hint="PDF ou image, 10 Mo au maximum. Stockage privé."
+                accept="application/pdf,image/*"
+                allowedTypes={['application/pdf', 'image/*']}
+                maxBytes={10 * 1_048_576}
+                fileName={form.values.idFileName}
+                onFile={(name) => { form.setValue('idFileName', name); }}
+              />
+            )}
           </Card>
         </div>
         <aside className="flex min-w-0 flex-col gap-3">

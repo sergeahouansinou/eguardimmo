@@ -2,6 +2,7 @@
 
 import { createContext, use } from "react";
 import type { ReactNode } from "react";
+import { dataSource } from "@/lib/env";
 import { createComptesRendusDemo } from "./comptes-rendus/demo";
 import type { ComptesRendusSource } from "./comptes-rendus/source";
 import { createCompteDemo } from "./compte/demo";
@@ -50,6 +51,7 @@ const SourceContext = createContext<AgenceSource | null>(null);
 let defaultSource: AgenceSource | null = null;
 
 function getDefaultSource(): AgenceSource {
+  if (dataSource === "api") throw new Error("Aucune source agence n’est montée en mode api : l’écran ne peut pas retomber sur les données de démonstration.");
   defaultSource ??= createDemoSource();
   return defaultSource;
 }

@@ -8,11 +8,7 @@ export function generateStaticParams() {
   return RAPPORT_TYPES.map(({ slug }) => ({ slug }));
 }
 
-export async function generateMetadata({ params }: PageProps<"/rapports/[slug]/apercu">): Promise<Metadata> {
-  const { slug } = await params;
-  const rapport = findRapport(slug);
-  return { title: rapport ? `${rapport.label}, aperçu PDF` : "Rapport introuvable" };
-}
+export const metadata: Metadata = { title: "Aperçu du rapport" };
 
 export default function Page({ params }: PageProps<"/rapports/[slug]/apercu">) {
   return (

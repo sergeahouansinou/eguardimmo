@@ -1,22 +1,22 @@
 "use client";
 
-import { BiensProviders, createDemoBiensSource } from "@eguardimmo/gestion/biens";
+import { BiensRoot as GestionBiensRoot } from "@eguardimmo/gestion/biens";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { ReactNode } from "react";
+import { dataSource } from "@/lib/env";
 
 export function BiensRoot({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [source] = useState(() => createDemoBiensSource());
   const environment = useMemo(
     () => ({ Link, pathname, push: (href: string) => { router.push(href); } }),
     [pathname, router],
   );
   return (
-    <BiensProviders source={source} environment={environment}>
+    <GestionBiensRoot mode={dataSource} environment={environment}>
       {children}
-    </BiensProviders>
+    </GestionBiensRoot>
   );
 }

@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Modules\Accounting\Enums\ItemType;
+use App\Modules\Accounting\Enums\Journal;
+use App\Modules\Accounting\Enums\SourceType;
+use App\Shared\Database\Checks;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -60,6 +64,7 @@ return new class extends Migration
             $table->datetimes(6);
 
             $table->unique(['journal_entry_id', 'position']);
+            $table->index(['organization_id', 'account_id']);
             $table->index(['organization_id', 'account_id', 'lease_id']);
             $table->index(['organization_id', 'account_id', 'party_id']);
             $table->index(['organization_id', 'item_type', 'item_id']);
@@ -67,11 +72,12 @@ return new class extends Migration
             $table->foreign(['organization_id', 'account_id'])->references(['organization_id', 'id'])->on('accounts');
         });
 
-        if (in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
-            DB::statement('ALTER TABLE journal_lines ADD CONSTRAINT journal_lines_amount_check CHECK ((debit > 0 AND credit = 0) OR (debit = 0 AND credit > 0))');
-            DB::statement("ALTER TABLE journal_lines ADD CONSTRAINT journal_lines_currency_check CHECK (currency REGEXP '^[A-Z]{3}$')");
-            DB::statement('ALTER TABLE journal_lines ADD CONSTRAINT journal_lines_item_check CHECK ((item_type IS NULL) = (item_id IS NULL))');
-        }
+        Checks::add('journal_entries', 'journal', Checks::enum('journal', Journal::class));
+        Checks::add('journal_entries', 'source_type', Checks::enum('source_type', SourceType::class));
+        Checks::add('journal_lines', 'amount', '(debit > 0 AND credit = 0) OR (debit = 0 AND credit > 0)');
+        Checks::add('journal_lines', 'currency', Checks::uppercase('currency', 3));
+        Checks::add('journal_lines', 'item', '(item_type IS NULL) = (item_id IS NULL)');
+        Checks::add('journal_lines', 'item_type', Checks::enum('item_type', ItemType::class, nullable: true));
 
         foreach (['journal_entries', 'journal_lines'] as $table) {
             foreach ($this->verrous($table) as $instruction) {

@@ -52,3 +52,27 @@ export function sentBody(spy: ReturnType<typeof stubFetch>, index = 0): string {
   if (!(body instanceof ArrayBuffer)) throw new Error('Corps transmis absent ou inattendu.');
   return Buffer.from(body).toString('utf8');
 }
+
+export function endlessBody(chunkBytes: number): { body: ReadableStream<Uint8Array>; pulled: () => number } {
+  let pulls = 0;
+  const chunk = new Uint8Array(chunkBytes).fill(97);
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      pulls += 1;
+      controller.enqueue(chunk);
+    },
+  });
+  return { body, pulled: () => pulls };
+}
+
+export function chunkedBody(parts: readonly string[]): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const part of parts) controller.enqueue(encoder.encode(part));
+      controller.close();
+    },
+  });
+}
+
+export const STREAMING = { duplex: 'half' } as const;

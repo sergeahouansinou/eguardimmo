@@ -148,29 +148,39 @@ export function EmailVerifieScreen() {
     <StatusScreen
       icon={BadgeCheck}
       tone="success"
-      title="Adresse vérifiée"
-      description="Votre compte est prêt. Vous pouvez accéder à votre espace."
+      title="E-mail vérifié"
+      description="Connectez-vous pour accéder à votre espace."
     >
-      <ButtonLink href={context.returnTo.status === "ok" ? context.to(ROUTES.continuer) : ROUTES.profils}>
-        Accéder à mon espace
-      </ButtonLink>
+      <ButtonLink href={context.to(ROUTES.connexion)}>Me connecter</ButtonLink>
     </StatusScreen>
   );
 }
 
 export function LienExpireScreen() {
   const type = useSearchParams().get("type");
-  const verification = type === "verification";
+  if (type === "verification") {
+    return (
+      <StatusScreen
+        icon={Clock}
+        tone="warning"
+        title="Lien de confirmation invalide"
+        description="Ce lien est invalide, expiré (60 minutes) ou déjà utilisé. Si vous avez déjà confirmé votre adresse, connectez-vous."
+      >
+        <ButtonLink href={ROUTES.connexion}>Me connecter</ButtonLink>
+        <AltLine>
+          Pas encore de confirmation ? <TextLink href={ROUTES.verificationEmail}>Revenir à la vérification</TextLink>
+        </AltLine>
+      </StatusScreen>
+    );
+  }
   return (
     <StatusScreen
       icon={Clock}
       tone="warning"
       title="Ce lien a expiré"
-      description="Les liens de vérification et de réinitialisation ne sont valables qu’un temps limité et une seule fois."
+      description="Les liens de réinitialisation ne sont valables qu’un temps limité et une seule fois."
     >
-      <ButtonLink href={verification ? ROUTES.verificationEmail : ROUTES.motDePasseOublie}>
-        Recevoir un nouveau lien
-      </ButtonLink>
+      <ButtonLink href={ROUTES.motDePasseOublie}>Recevoir un nouveau lien</ButtonLink>
       <AltLine>
         <TextLink href={ROUTES.connexion}>Retour à la connexion</TextLink>
       </AltLine>

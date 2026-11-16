@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Shared\Audit;
 
 use App\Shared\Http\AssignRequestId;
+use App\Shared\Http\ConsoleRelay;
 use App\Shared\Tenancy\CurrentOrganization;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -47,7 +48,7 @@ final readonly class RecordAudit
             'metadata' => self::utf8($metadata),
             'request_id' => $this->identifiantDeRequete(),
             'route' => $route instanceof Route ? $route->getName() : null,
-            'ip' => $this->request->ip(),
+            'ip' => ConsoleRelay::ipClient($this->request),
             'user_agent' => $this->userAgent(),
         ]);
     }

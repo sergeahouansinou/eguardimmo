@@ -6,23 +6,28 @@ namespace App\Modules\Catalog\Actions;
 
 use App\Modules\Catalog\Enums\ErrorCode;
 use App\Modules\Catalog\Models\Tag;
+use App\Modules\Catalog\Support\TagSlug;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 final readonly class UpdateTag
 {
     public function handle(Tag $etiquette, string $name, ?string $color): Tag
     {
-        $slug = Str::slug($name);
+        $slug = TagSlug::of($name);
 
-        return DB::transaction(function () use ($etiquette, $name, $color, $slug): Tag {
-            if (Tag::query()->where('slug', $slug)->whereKeyNot($etiquette->id)->exists()) {
-                throw ErrorCode::TagNameTaken->problem();
-            }
+        try {
+            return DB::transaction(function () use ($etiquette, $name, $color, $slug): Tag {
+                if (Tag::query()->where('slug', $slug)->whereKeyNot($etiquette->id)->exists()) {
+                    throw ErrorCode::TagNameTaken->problem();
+                }
 
-            $etiquette->forceFill(['name' => $name, 'slug' => $slug, 'color' => $color])->save();
+                $etiquette->forceFill(['name' => $name, 'slug' => $slug, 'color' => $color])->save();
 
-            return $etiquette;
-        });
+                return $etiquette;
+            });
+        } catch (UniqueConstraintViolationException) {
+            throw ErrorCode::TagNameTaken->problem();
+        }
     }
 }

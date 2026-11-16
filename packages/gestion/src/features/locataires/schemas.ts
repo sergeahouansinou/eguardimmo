@@ -1,5 +1,6 @@
 import { toneSchema } from '@eguardimmo/shell';
 import { z } from 'zod';
+import { CURRENCIES } from '../../format/money';
 
 const slug = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/);
 const minor = z.number().int();
@@ -20,7 +21,7 @@ export const unitFullLabel = (unit: Pick<Unit, 'label' | 'building'>): string =>
 export const TENANT_KINDS = ['particulier', 'societe'] as const;
 export const tenantKindSchema = z.enum(TENANT_KINDS);
 export const tenantStatusSchema = z.enum(['actif', 'invite', 'archive']);
-export const tenantStateSchema = z.enum(['a_jour', 'retard', 'preavis', 'invitation']);
+export const tenantStateSchema = z.enum(['a_jour', 'retard', 'preavis', 'invitation', 'en_cours', 'sans_bail']);
 export const ID_DOC_TYPES = ['passeport', 'cni', 'titre_sejour'] as const;
 export const idDocTypeSchema = z.enum(ID_DOC_TYPES);
 export const CIVILITIES = ['M.', 'Mme'] as const;
@@ -41,7 +42,8 @@ export const tenantSchema = z.object({
   idExpiry: isoDate.nullable(),
   idFileName: z.string().nullable(),
   ibanLast4: z.string().nullable(),
-  since: isoDate,
+  idLast4: z.string().nullable(),
+  since: isoDate.or(z.literal('')),
   unitId: slug.nullable(),
   status: tenantStatusSchema,
   state: tenantStateSchema,
@@ -81,6 +83,7 @@ export const tenantInputSchema = z
     idDocType: z.union([idDocTypeSchema, z.literal('')]),
     idExpiry: z.union([isoDate, z.literal('')]),
     idFileName: z.string(),
+    idNumber: text,
   })
   .superRefine((value, context) => {
     if (value.kind === 'particulier') {
@@ -91,6 +94,9 @@ export const tenantInputSchema = z
       }
     } else if (value.companyName === '') {
       context.addIssue({ code: 'custom', path: ['companyName'], message: 'Renseignez la raison sociale' });
+    }
+    if (value.idNumber !== '' && value.idDocType === '') {
+      context.addIssue({ code: 'custom', path: ['idDocType'], message: 'Choisissez le type de pièce' });
     }
   });
 export type TenantInput = z.infer<typeof tenantInputSchema>;
@@ -109,6 +115,7 @@ const detailTone = toneSchema;
 export const tenantDetailSchema = z.object({
   tenantId: slug,
   rent: minor,
+  rentCurrency: z.enum(CURRENCIES).optional(),
   nextNoticeOn: isoDate.nullable(),
   leaseEnd: isoDate.nullable(),
   onTime: z.object({ onTime: count, total: count }),
@@ -128,6 +135,7 @@ export const tenantDetailSchema = z.object({
   activitiesCount: count,
   documents: z.array(tenantDetailRow.extend({ tone: detailTone })),
   documentsCount: count,
+  guarantors: z.array(tenantDetailRow.extend({ tone: detailTone })),
   leases: z.array(tenantDetailRow.extend({ tone: detailTone, badge: z.object({ label: z.string(), tone: detailTone }), href: z.string() })),
   messages: z.array(tenantDetailRow.extend({ tone: detailTone, badge: z.object({ label: z.string(), tone: detailTone }).optional() })),
   messagesCount: count,

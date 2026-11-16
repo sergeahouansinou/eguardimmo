@@ -7,6 +7,7 @@ namespace App\Modules\Properties\Support;
 use App\Modules\Catalog\Enums\UnitTypeSemantic;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Validator as Validateur;
 
 /**
  * Schéma minimal des caractéristiques d'un lot, par sens système du type de lot (ADR 0020).
@@ -69,7 +70,7 @@ final class UnitCharacteristics
         }
 
         $validateur = Validator::make(['characteristics' => $valeurs], $regles);
-        $validateur->after(function ($validateur) use ($valeurs, $schema): void {
+        $validateur->after(function (Validateur $validateur) use ($valeurs, $schema): void {
             foreach (array_keys(array_diff_key($valeurs, $schema)) as $cle) {
                 $validateur->errors()->add("characteristics.{$cle}", 'Cette caractéristique n\'existe pas pour ce type de lot.');
             }

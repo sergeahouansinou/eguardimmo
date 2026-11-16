@@ -1,5 +1,13 @@
 import type { NextConfig } from "next";
-import { securityHeadersForAllRoutes } from "@eguardimmo/config/next/security-headers";
+import { contentSecurityPolicy, securityHeadersWithPolicy } from "@eguardimmo/config/next/security-headers";
+
+const development = process.env.NODE_ENV === "development";
+
+const policy = contentSecurityPolicy({
+  "script-src": ["'self'", "'unsafe-inline'", ...(development ? ["'unsafe-eval'"] : [])],
+  "style-src": ["'self'", "'unsafe-inline'"],
+  "connect-src": ["'self'", ...(development ? ["ws:", "wss:"] : [])],
+});
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
@@ -15,7 +23,7 @@ const nextConfig: NextConfig = {
       },
     },
   },
-  headers: securityHeadersForAllRoutes,
+  headers: securityHeadersWithPolicy(policy),
 };
 
 export default nextConfig;

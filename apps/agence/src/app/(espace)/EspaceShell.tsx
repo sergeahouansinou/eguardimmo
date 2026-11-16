@@ -10,7 +10,9 @@ import type { ReactNode } from "react";
 import {
   RAIL_STORAGE_KEY,
   SEARCH_NOTE,
+  SEARCH_NOTE_API,
   SEARCH_PLACEHOLDER,
+  SEARCH_PLACEHOLDER_API,
   SPACE_LABEL,
   accountMenu,
   addMenu,
@@ -20,11 +22,13 @@ import {
   helpMenu,
   notifications,
 } from "@/espace/config";
+import { dataSource } from "@/lib/env";
+import { ApiRouteGate } from "./ApiRouteGate";
 
 export function EspaceShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const searchPages = useMemo(() => buildSearchPages(), []);
+  const searchPages = useMemo(() => buildSearchPages({ records: dataSource === "demo" }), []);
   const unread = useInboxStats().data?.unread;
   const navigation = useMemo(
     () => (counts: ShellCounts | undefined) =>
@@ -45,12 +49,12 @@ export function EspaceShell({ children }: { children: ReactNode }) {
         accountMenu={accountMenu}
         notifications={notifications}
         searchPages={searchPages}
-        searchPlaceholder={SEARCH_PLACEHOLDER}
-        searchNote={SEARCH_NOTE}
+        searchPlaceholder={dataSource === "demo" ? SEARCH_PLACEHOLDER : SEARCH_PLACEHOLDER_API}
+        searchNote={dataSource === "demo" ? SEARCH_NOTE : SEARCH_NOTE_API}
         addMenu={addMenu}
         helpMenu={helpMenu}
       >
-        {children}
+        <ApiRouteGate>{children}</ApiRouteGate>
       </SpaceShell>
       <SupportWidget />
     </>

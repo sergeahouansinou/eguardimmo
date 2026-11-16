@@ -88,6 +88,7 @@ final readonly class ResolveSocialLogin
             'name' => $this->nom($profil),
             'email' => Str::lower(trim($profil->email)),
             'email_verified_at' => $profil->emailVerified ? now() : null,
+            'intended_profile' => $intention->profile,
         ])->save();
 
         $this->rattacher($user, $profil);

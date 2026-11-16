@@ -11,6 +11,7 @@ use App\Modules\Documents\Models\StoredFile;
 use App\Modules\Documents\Support\CertificateDataSchema;
 use App\Modules\Documents\Support\CertificateTypes;
 use App\Modules\Documents\Support\SubjectGuard;
+use App\Modules\Parties\PublicApi\PartyDirectory;
 use Illuminate\Support\Facades\DB;
 
 final readonly class CreateCertificate
@@ -18,11 +19,17 @@ final readonly class CreateCertificate
     public function __construct(
         private SubjectGuard $sujets,
         private CertificateTypes $types,
+        private PartyDirectory $parties,
     ) {}
 
     public function handle(NewCertificateData $data): Certificate
     {
         $this->sujets->ensure($data->subject);
+
+        if ($data->issuerPartyId !== null) {
+            $this->parties->find($data->issuerPartyId);
+        }
+
         $type = $this->types->assignable($data->certificateTypeTermId);
         $valeurs = CertificateDataSchema::validate($this->types->dataSchema($type), $data->data);
         $mois = $this->types->defaultValidityMonths($type);

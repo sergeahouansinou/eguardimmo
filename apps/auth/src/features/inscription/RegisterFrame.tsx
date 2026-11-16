@@ -1,5 +1,6 @@
 "use client";
 
+import { ApiError, ApiUnreachableError } from "@eguardimmo/api";
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -13,7 +14,19 @@ import type { RegisterInput } from "@/features/auth/source";
 import { useSocialOutcome } from "@/features/connexion/SocialOutcome";
 import { useReturnContext } from "@/features/auth/useReturnContext";
 import { formatDuration } from "@/lib/format";
+import { rememberVerificationEmail } from "@/lib/pendingVerification";
 import { ROUTES } from "@/lib/routes";
+
+const GENERIC_PROBLEM = "Une erreur est survenue. Réessayez dans un instant.";
+
+export function registrationProblem(error: unknown): string {
+  if (error instanceof ApiUnreachableError) return error.message;
+  if (error instanceof ApiError && error.status === 422) {
+    const messages = [...new Set(Object.values(error.fieldErrors).flat())];
+    if (messages.length > 0) return messages.join(" ");
+  }
+  return GENERIC_PROBLEM;
+}
 
 export function useRegistration(profile: RegisterProfile) {
   const router = useRouter();
@@ -31,9 +44,10 @@ export function useRegistration(profile: RegisterProfile) {
         setProblem(`Trop de demandes. Réessayez dans ${formatDuration(result.retryAfterSeconds)}.`);
         return;
       }
+      rememberVerificationEmail(input.email);
       router.push(context.to(ROUTES.verificationEmail));
-    } catch {
-      setProblem("Une erreur est survenue. Réessayez dans un instant.");
+    } catch (error) {
+      setProblem(registrationProblem(error));
     }
   };
 

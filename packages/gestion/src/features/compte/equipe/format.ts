@@ -1,11 +1,10 @@
-import { DEMO_TODAY } from '../../outils/kit';
 import { formatDate, formatTime, isoDay } from '../shared/dates';
 import type { Member } from './schemas';
 
-export function lastLoginLabel(member: Member): string {
+export function lastLoginLabel(member: Member, today: string): string {
   if (member.online) return 'En ligne';
   if (member.lastLogin === null) return 'Jamais';
-  return isoDay(member.lastLogin) === DEMO_TODAY ? `Aujourd'hui, ${formatTime(member.lastLogin)}` : formatDate(member.lastLogin);
+  return isoDay(member.lastLogin) === today ? `Aujourd'hui, ${formatTime(member.lastLogin)}` : formatDate(member.lastLogin);
 }
 
 export function scopeLabel(member: Pick<Member, 'scope'>): string {

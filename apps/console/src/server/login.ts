@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { rejectForeignOrigin } from './origin';
 import { noStoreHeaders, problem, problems } from './problem';
-import { callApi } from './upstream';
-import { clientIp } from './clientIp';
+import { callApi, upstreamHeaders } from './upstream';
+import { readBoundedBody } from './body';
 import { readServerEnv } from './env';
 import type { ServerEnv } from './env';
 import { clearedSessionCookie, currentSession, sealSession, sessionCookie } from './session';
@@ -32,13 +32,11 @@ function invalidCredentials(fields: readonly string[] = ['email']): Response {
 }
 
 async function readCredentials(request: Request): Promise<z.infer<typeof credentialsSchema> | Response> {
-  const declared = Number(request.headers.get('content-length') ?? 0);
-  if (declared > MAX_BODY_BYTES) return problems.tooLarge();
-  const text = await request.text();
-  if (text.length > MAX_BODY_BYTES) return problems.tooLarge();
+  const body = await readBoundedBody(request, MAX_BODY_BYTES);
+  if (body === null) return problems.tooLarge();
   let json: unknown;
   try {
-    json = JSON.parse(text);
+    json = JSON.parse(new TextDecoder().decode(body));
   } catch {
     return problem({ status: 400, code: 'bad_request', title: 'Requête invalide' });
   }
@@ -67,12 +65,9 @@ export async function handleLogin(request: Request): Promise<Response> {
   const credentials = await readCredentials(request);
   if (credentials instanceof Response) return credentials;
 
-  const headers = new Headers({ Accept: 'application/json', 'Content-Type': 'application/json', 'X-Console-Relay-Key': env.CONSOLE_RELAY_KEY });
-  const ip = clientIp(request, env.CONSOLE_TRUSTED_PROXY_HOPS);
-  if (ip) headers.set('X-Console-Client-Ip', ip);
   const upstream = await callApi(env, '/api/v1/console/auth/token', {
     method: 'POST',
-    headers,
+    headers: upstreamHeaders(env, request, { 'Content-Type': 'application/json' }),
     body: JSON.stringify(credentials),
   });
   if (!upstream) return problems.unreachable();
@@ -101,7 +96,7 @@ export async function handleLogout(request: Request): Promise<Response> {
 
   const upstream = await callApi(env, '/api/v1/console/auth/token', {
     method: 'DELETE',
-    headers: { Accept: 'application/json', Authorization: `Bearer ${session.token}` },
+    headers: upstreamHeaders(env, request, { Authorization: `Bearer ${session.token}` }),
   });
   if (upstream) await upstream.body?.cancel();
   if (upstream && (upstream.ok || upstream.status === 401)) return new Response(null, { status: 204, headers: noStoreHeaders(cleared) });

@@ -5,6 +5,7 @@ import { OccupationTimeline } from '../../components/OccupationTimeline';
 import { EntryList, FactList, Panel } from '../../components/Panels';
 import { QueryBoundary, SkeletonCard } from '../../components/QueryState';
 import { useBiensEnvironment } from '../../environment';
+import { WhenAvailable, useFeatureUnavailable } from '../../FeatureGate';
 import { formatDate } from '../../lib/dates';
 import { formatNumber } from '../../lib/amount';
 import { initialsOf } from '../../lib/text';
@@ -118,7 +119,7 @@ export function LeaseCard({ id }: { id: string }) {
                   { label: 'Provisions sur charges', value: formatMoney(lease.provisions, lease.currency) },
                   { label: 'Dépôt de garantie', value: formatMoney(lease.deposit, lease.currency) },
                   ...(lease.nextRevision ? [{ label: 'Prochaine révision IRL', value: formatDate(lease.nextRevision) }] : []),
-                  { label: 'Solde locataire', value: formatMoney(lease.balance, lease.currency, { signed: true }), ...(lease.balance < 0 ? { badge: { label: 'Impayé', tone: 'danger' as const } } : {}) },
+                  ...(lease.balance === null ? [] : [{ label: 'Solde locataire', value: formatMoney(lease.balance, lease.currency, { signed: true }), ...(lease.balance < 0 ? { badge: { label: 'Impayé', tone: 'danger' as const } } : {}) }]),
                 ]}
               />
             </>
@@ -190,43 +191,62 @@ export function EquipementsCard({ id }: { id: string }) {
   );
 }
 
-export function SuiviCard({ id }: { id: string }) {
+function SuiviInterventions({ id }: { id: string }) {
   const suivi = useLotSuivi(id);
+  return (
+    <QueryBoundary query={suivi} errorTitle="Le suivi n’a pas pu être chargé" skeleton={<SkeletonCard label="Chargement du suivi" lines={2} />}>
+      {(data) => (
+        <section aria-label="Interventions en cours">
+          <h3 className="text-caption font-medium text-fg-subtle">Interventions</h3>
+          <EntryList
+            label="Interventions du lot"
+            empty="Aucune intervention en cours."
+            items={data.interventions.map((item) => ({ id: item.id, title: item.title, detail: item.detail, badge: item.status, href: externalPaths.interventions }))}
+          />
+        </section>
+      )}
+    </QueryBoundary>
+  );
+}
+
+function SuiviReleves({ id }: { id: string }) {
   const readings = useReadings();
   const latest = readings.data
     ? [...new Map(readings.data.items.filter((item) => item.lotId === id && !item.archived).sort((a, b) => a.date.localeCompare(b.date)).map((item) => [item.meterId, item])).values()]
     : [];
   return (
+    <QueryBoundary query={readings} errorTitle="Les relevés n’ont pas pu être chargés" skeleton={<SkeletonCard label="Chargement des relevés" lines={2} />}>
+      {() => (
+        <section aria-label="Derniers relevés">
+          <h3 className="text-caption font-medium text-fg-subtle">Relevés</h3>
+          <EntryList
+            label="Derniers relevés du lot"
+            empty="Aucun relevé de compteur."
+            items={latest.map((item) => ({
+              id: item.id,
+              title: `${METER_LABELS[item.kind]}, ${formatNumber(item.index, 1)} ${item.unit}`,
+              detail: `Relevé du ${formatDate(item.date)}`,
+              href: biensPaths.lot(id, 'compteurs'),
+            }))}
+          />
+        </section>
+      )}
+    </QueryBoundary>
+  );
+}
+
+export function SuiviCard({ id }: { id: string }) {
+  const noInterventions = useFeatureUnavailable('interventions');
+  const noReleves = useFeatureUnavailable('releves');
+  if (noInterventions && noReleves) return null;
+  return (
     <Panel title="Suivi">
-      <QueryBoundary query={suivi} errorTitle="Le suivi n’a pas pu être chargé" skeleton={<SkeletonCard label="Chargement du suivi" lines={2} />}>
-        {(data) => (
-          <section aria-label="Interventions en cours">
-            <h3 className="text-caption font-medium text-fg-subtle">Interventions</h3>
-            <EntryList
-              label="Interventions du lot"
-              empty="Aucune intervention en cours."
-              items={data.interventions.map((item) => ({ id: item.id, title: item.title, detail: item.detail, badge: item.status, href: externalPaths.interventions }))}
-            />
-          </section>
-        )}
-      </QueryBoundary>
-      <QueryBoundary query={readings} errorTitle="Les relevés n’ont pas pu être chargés" skeleton={<SkeletonCard label="Chargement des relevés" lines={2} />}>
-        {() => (
-          <section aria-label="Derniers relevés">
-            <h3 className="text-caption font-medium text-fg-subtle">Relevés</h3>
-            <EntryList
-              label="Derniers relevés du lot"
-              empty="Aucun relevé de compteur."
-              items={latest.map((item) => ({
-                id: item.id,
-                title: `${METER_LABELS[item.kind]}, ${formatNumber(item.index, 1)} ${item.unit}`,
-                detail: `Relevé du ${formatDate(item.date)}`,
-                href: biensPaths.lot(id, 'compteurs'),
-              }))}
-            />
-          </section>
-        )}
-      </QueryBoundary>
+      <WhenAvailable feature="interventions">
+        <SuiviInterventions id={id} />
+      </WhenAvailable>
+      <WhenAvailable feature="releves">
+        <SuiviReleves id={id} />
+      </WhenAvailable>
     </Panel>
   );
 }

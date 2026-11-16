@@ -11,6 +11,7 @@ use App\Modules\Documents\Models\StoredFile;
 use App\Shared\Tenancy\CurrentOrganization;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -46,11 +47,6 @@ final readonly class StoredFileWriter
         }
     }
 
-    public function forget(StoredFile $fichier): void
-    {
-        Storage::disk($fichier->disk)->delete($fichier->path);
-    }
-
     private function store(string $chemin, string $nom, FileCategory $categorie, ?DocumentSubject $sujet, ?CarbonInterface $conservation): StoredFile
     {
         $probleme = FileInspector::problem($chemin, $categorie);
@@ -78,6 +74,14 @@ final readonly class StoredFileWriter
         if (! $ecrit) {
             throw new RuntimeException('Écriture du fichier impossible.');
         }
+
+        DB::afterRollBack(function () use ($stocke): void {
+            try {
+                Storage::disk(self::DISK)->delete($stocke);
+            } catch (Throwable $erreur) {
+                report($erreur);
+            }
+        });
 
         try {
             return StoredFile::query()->create([

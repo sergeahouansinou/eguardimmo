@@ -35,4 +35,19 @@ describe('configuration serveur', () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     expect(parseServerEnv({})).toBeNull();
   });
+
+  it('exige https pour l’URL de l’API en production, localhost compris', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const base = { CONSOLE_SESSION_SECRET: KEY, CONSOLE_RELAY_KEY: RELAY, NODE_ENV: 'production' };
+    expect(parseServerEnv({ ...base, CONSOLE_API_URL: 'http://api.example.com' })).toBeNull();
+    expect(parseServerEnv({ ...base, CONSOLE_API_URL: 'http://localhost:8000' })).toBeNull();
+    expect(String(error.mock.calls[0]?.[0])).toContain('CONSOLE_API_URL');
+    expect(parseServerEnv({ ...base, CONSOLE_API_URL: 'https://api.example.com/' })?.CONSOLE_API_URL).toBe('https://api.example.com');
+  });
+
+  it('permet http hors production', () => {
+    const base = { CONSOLE_SESSION_SECRET: KEY, CONSOLE_RELAY_KEY: RELAY, CONSOLE_API_URL: 'http://localhost:8000' };
+    expect(parseServerEnv({ ...base, NODE_ENV: 'development' })?.CONSOLE_API_URL).toBe('http://localhost:8000');
+    expect(parseServerEnv({ ...base, NODE_ENV: 'test' })?.CONSOLE_API_URL).toBe('http://localhost:8000');
+  });
 });

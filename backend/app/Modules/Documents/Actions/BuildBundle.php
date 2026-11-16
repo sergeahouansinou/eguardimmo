@@ -103,14 +103,30 @@ final readonly class BuildBundle
     private function copier(StoredFile $fichier, string $destination): void
     {
         $flux = Storage::disk($fichier->disk)->readStream($fichier->path);
-        $sortie = fopen($destination, 'wb');
 
-        if (! is_resource($flux) || $sortie === false) {
+        if (! is_resource($flux)) {
             throw ErrorCode::FileUnavailable->problem();
         }
 
-        stream_copy_to_stream($flux, $sortie);
-        fclose($flux);
-        fclose($sortie);
+        $sortie = fopen($destination, 'wb');
+
+        if ($sortie === false) {
+            fclose($flux);
+
+            throw new RuntimeException('Fichier temporaire impossible à écrire.');
+        }
+
+        try {
+            stream_copy_to_stream($flux, $sortie);
+        } finally {
+            fclose($flux);
+            fclose($sortie);
+        }
+
+        if (! hash_equals($fichier->sha256, (string) hash_file('sha256', $destination))) {
+            report(new RuntimeException("Empreinte du fichier stocké {$fichier->id} différente de celle enregistrée."));
+
+            throw ErrorCode::FileUnavailable->problem();
+        }
     }
 }

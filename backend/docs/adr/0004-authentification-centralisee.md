@@ -53,8 +53,24 @@ Statut : accepté (2026-11-13), révisé le même jour : la console sort du hub 
   - les e-mails pointent vers les pages du hub : `/mot-de-passe/nouveau?jeton=…&email=…` pour la réinitialisation, `/verification-email/confirmer?jeton=<lien signé de l'API>` pour la vérification. Le hub n'appelle que le lien signé de son propre domaine d'API ;
   - `POST /api/v1/auth/password-reset/status` (`throttle:auth`, public) répond `valid` ou `expired` sans consommer le jeton. Il répond pareil, au même coût de calcul, pour un compte inconnu, un mauvais jeton et un jeton expiré ;
   - `GET /api/v1/me/security` (session requise) donne la 2FA (activée, codes de secours restants sur 8), la présence d'un mot de passe, les comptes Google et Apple liés, les appareils mobiles et la fin de la confirmation récente. Les secrets ne sortent jamais ;
-  - l'inscription n'ouvre pas de session : elle répond pareil que l'adresse existe ou non, une session ouverte révélerait l'existence du compte. Le renvoi du lien de vérification et le clic sur ce lien demandent donc une connexion préalable ;
+  - l'inscription n'ouvre pas de session : elle répond pareil que l'adresse existe ou non, une session ouverte révélerait l'existence du compte. Le renvoi du lien de vérification demande donc une connexion préalable ; le clic sur le lien n'en demande plus (amendement du 2026-11-16 ci-dessous) ;
   - Fortify ne distingue pas un défi 2FA expiré d'un code faux : les deux répondent 422.
+
+### Vérification de l'e-mail sans session (amendement du 2026-11-16)
+- Constat : la route Fortify `verification.verify` exige `auth:web`, or l'inscription n'ouvre aucune session : le lien reçu par e-mail échouait en 401.
+- `POST /api/v1/auth/email/verify/{id}/{hash}` (public, `throttle:auth`, nom `identity.email.verify`) : le lien de l'e-mail pointe toujours vers le hub (`/verification-email/confirmer?jeton=<lien signé>`), qui rappelle ce lien signé en POST. Le lien est signé et expire au bout de 60 minutes ; le `hash` est `sha1` de l'adresse.
+- Un lien signé détenu prouve la possession de la boîte e-mail : la vérification n'ouvre **aucune session** et ne révèle rien. Signature falsifiée ou expirée, compte inconnu ou supprimé, hash faux, adresse déjà confirmée : même réponse 403 `email_verification_link_invalid`.
+- L'adresse est marquée vérifiée et `Illuminate\Auth\Events\Verified` est émis dans la même transaction que la vérification : si un listener échoue, l'adresse reste non vérifiée et le lien reste utilisable. Les listeners de `Verified` sont donc synchrones et atomiques avec elle.
+- La route Fortify `verification.verify` (session requise) subsiste pour les anciens e-mails ; elle émet le même événement.
+- Le renvoi du lien (`verification.send`) exige toujours une session : un renvoi public demanderait l'adresse e-mail en entrée et son propre limiteur anti-énumération ; il n'est pas ouvert.
+- **Option écartée** : ouvrir une session à la vérification. Cela rouvre l'énumération (un lien valide dirait « ce compte existe ») et fait de tout lien intercepté un jeton de connexion.
+
+### Organisation du bailleur autonome (amendement du 2026-11-16, décision de l'utilisateur)
+- L'intention d'inscription (`IntendedProfile`) est stockée dans `users.intended_profile` (nullable) à l'inscription par e-mail ou par Google/Apple ; Identity l'expose aux autres modules par `PublicApi\RegistrationIntents`.
+- Organizations écoute `Verified` : un compte inscrit comme `individual_landlord` reçoit **automatiquement** une organisation `individual` (nom du compte, pays `FR`, titulaire `owner`). Le prénom est le premier mot du nom du compte, le nom le reste ; un mot seul sert aux deux.
+- Idempotent : sous verrou de la ligne `users`, rien n'est créé si le compte est déjà créateur d'une organisation `individual`. Agence, voyageur et comptes sans intention enregistrée ne créent rien.
+- Les comptes déjà vérifiés avant ce changement n'ont pas d'intention enregistrée : aucune organisation n'est créée rétroactivement.
+- Un compte Google/Apple inscrit comme bailleur est vérifié dès sa création sans événement `Verified` : son organisation n'est pas encore créée automatiquement (à traiter à part).
 
 ## Options écartées
 

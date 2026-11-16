@@ -1,5 +1,6 @@
 'use client';
 
+import type { LocatairesFeature } from './capabilities';
 import { createCollection, NotFoundError } from './kit/collection';
 import { formatDateFr, todayIso } from './kit/dates';
 import { money } from './kit/money';
@@ -10,8 +11,10 @@ import { candidateInviteSchema, candidateStatusSchema, tenantInputSchema, tenant
 import type { CandidateStatus, Tenant, TenantDetail } from './schemas';
 
 export interface LocatairesSource {
+  readonly unavailableInApiMode: readonly LocatairesFeature[];
   units: () => Promise<unknown>;
   tenants: () => Promise<unknown>;
+  tenant: (id: string) => Promise<unknown>;
   tenantDetail: (id: string) => Promise<unknown>;
   createTenant: (input: unknown) => Promise<unknown>;
   updateTenant: (id: string, input: unknown) => Promise<unknown>;
@@ -58,6 +61,7 @@ function genericDetail(tenant: Tenant): TenantDetail {
     activitiesCount: overdueSince ? 1 : 0,
     documents: [],
     documentsCount: 0,
+    guarantors: [],
     leases: tenant.unitId && terms
       ? [{ id: tenant.unitId, tone: 'success', title: tenant.unitId, detail: `${terms.start} → ${terms.end}`, badge: { label: 'En cours', tone: 'success' }, href: `/baux/${tenant.unitId}` }]
       : [],
@@ -79,8 +83,10 @@ export function createDemoLocatairesSource(): LocatairesSource {
   };
 
   return {
+    unavailableInApiMode: [],
     units: () => Promise.resolve(units.all()),
     tenants: () => Promise.resolve(tenants.all()),
+    tenant: (id) => Promise.resolve(tenants.find(id) ?? null),
     tenantDetail: (id) => {
       const tenant = tenants.find(id);
       if (!tenant) return Promise.resolve(null);
@@ -113,6 +119,7 @@ export function createDemoLocatairesSource(): LocatairesSource {
           idExpiry: values.idExpiry === '' ? null : values.idExpiry,
           idFileName: values.idFileName === '' ? null : values.idFileName,
           ibanLast4: null,
+          idLast4: null,
           since: todayIso(),
           unitId: null,
           status: 'actif',
@@ -179,6 +186,7 @@ export function createDemoLocatairesSource(): LocatairesSource {
           idExpiry: null,
           idFileName: null,
           ibanLast4: null,
+          idLast4: null,
           since: todayIso(),
           unitId: values.unitId === '' ? null : values.unitId,
           status: 'invite',
@@ -257,6 +265,7 @@ export function createDemoLocatairesSource(): LocatairesSource {
         idExpiry: null,
         idFileName: null,
         ibanLast4: null,
+        idLast4: null,
         since: todayIso(),
         unitId: null,
         status: 'actif',

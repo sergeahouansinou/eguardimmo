@@ -8,6 +8,8 @@ export const tenantStateBadge: Record<TenantState, { label: string; tone: BadgeT
   preavis: { label: 'Préavis donné', tone: 'warning' },
   a_jour: { label: 'À jour', tone: 'success' },
   invitation: { label: 'Invitation envoyée', tone: 'info' },
+  en_cours: { label: 'Bail en cours', tone: 'info' },
+  sans_bail: { label: 'Sans bail', tone: 'neutral' },
 };
 
 export function TenantStateBadge({ state }: { state: TenantState }) {

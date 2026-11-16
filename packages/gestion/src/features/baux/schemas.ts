@@ -12,13 +12,15 @@ const yearMonth = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
 export const LEASE_STATUSES = ['brouillon', 'a_venir', 'en_cours', 'preavis', 'termine'] as const;
 export const leaseStatusSchema = z.enum(LEASE_STATUSES);
 export type LeaseStatus = z.infer<typeof leaseStatusSchema>;
-export const PAYMENT_METHODS = ['virement', 'prelevement', 'cheque'] as const;
+export const PAYMENT_METHODS = ['virement', 'prelevement', 'cheque', 'carte', 'especes'] as const;
 export const paymentMethodSchema = z.enum(PAYMENT_METHODS);
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>;
 export const paymentMethodLabel: Record<PaymentMethod, string> = {
   virement: 'Virement',
   prelevement: 'Prélèvement',
   cheque: 'Chèque',
+  carte: 'Carte bancaire',
+  especes: 'Espèces',
 };
 
 export const leaseSchema = z.object({
@@ -47,6 +49,7 @@ export const leaseSchema = z.object({
   balance: minor,
   note: z.string(),
   archived: z.boolean(),
+  unsupported: z.string().optional(),
 });
 export type Lease = z.infer<typeof leaseSchema>;
 

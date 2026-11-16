@@ -10,6 +10,10 @@ use finfo;
 
 final class FileInspector
 {
+    private const TAILLE_BLOC = 65536;
+
+    private const CHEVAUCHEMENT = 4;
+
     /**
      * Le type vient du contenu, jamais du nom ni de l'en-tête du client.
      */
@@ -41,11 +45,38 @@ final class FileInspector
 
     /**
      * Refuse un polyglotte (en-tête PDF ou image suivi de code PHP), que `finfo` ne distingue pas d'un vrai fichier.
+     * Lecture en flux : la fin de chaque bloc est reportée sur le suivant pour attraper une balise à cheval.
      */
     private static function containsPhp(string $chemin): bool
     {
-        $contenu = (string) file_get_contents($chemin);
+        $flux = fopen($chemin, 'rb');
 
-        return preg_match('/<\?(php|=)/i', $contenu) === 1;
+        if ($flux === false) {
+            return true;
+        }
+
+        try {
+            $reste = '';
+
+            while (! feof($flux)) {
+                $bloc = fread($flux, self::TAILLE_BLOC);
+
+                if ($bloc === false) {
+                    return true;
+                }
+
+                $zone = $reste.$bloc;
+
+                if (preg_match('/<\?(php|=)/i', $zone) === 1) {
+                    return true;
+                }
+
+                $reste = substr($zone, -self::CHEVAUCHEMENT);
+            }
+        } finally {
+            fclose($flux);
+        }
+
+        return false;
     }
 }

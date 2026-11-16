@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Catalog\Actions;
 
 use App\Modules\Catalog\Models\Term;
+use App\Modules\Catalog\Support\ConcurrentWrite;
 use App\Modules\Catalog\Support\PlatformTerms;
 use Illuminate\Support\Facades\DB;
 
@@ -14,6 +15,11 @@ use Illuminate\Support\Facades\DB;
 final readonly class SeedPlatformTerms
 {
     public function handle(): void
+    {
+        ConcurrentWrite::replayOnce(fn () => $this->semer());
+    }
+
+    private function semer(): void
     {
         $positions = [];
 

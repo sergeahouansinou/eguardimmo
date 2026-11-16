@@ -8,9 +8,11 @@ use Illuminate\Support\Str;
 
 final class FileNames
 {
+    private const CARACTERES_BIDI = '/[\x{200E}\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}]/u';
+
     public static function display(string $nom): string
     {
-        $propre = trim((string) preg_replace('/[\x00-\x1F\x7F\/\\\\]/u', '', mb_scrub($nom, 'UTF-8')));
+        $propre = trim((string) preg_replace(self::CARACTERES_BIDI, '', (string) preg_replace('/[\x00-\x1F\x7F\/\\\\]/u', '', mb_scrub($nom, 'UTF-8'))));
 
         return Str::limit($propre === '' ? 'document' : $propre, 250, '');
     }
@@ -20,7 +22,7 @@ final class FileNames
         $nom = mb_scrub($nom, 'UTF-8');
         $dernier = preg_split('/[\/\\\\]/', $nom);
         $base = is_array($dernier) ? (string) end($dernier) : $nom;
-        $propre = trim(ltrim((string) preg_replace('/[\x00-\x1F\x7F:*?"<>|]/u', '', $base), '.'));
+        $propre = trim(ltrim((string) preg_replace(self::CARACTERES_BIDI, '', (string) preg_replace('/[\x00-\x1F\x7F:*?"<>|]/u', '', $base)), '.'));
 
         return Str::limit($propre === '' ? 'fichier' : $propre, 200, '');
     }

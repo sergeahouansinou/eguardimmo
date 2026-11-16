@@ -32,11 +32,13 @@ final readonly class RegisterUser
 
         try {
             $user = DB::transaction(function () use ($donnees, $email, $hash): User {
-                $user = User::query()->create([
+                $user = new User;
+                $user->forceFill([
                     'name' => trim($donnees->name),
                     'email' => $email,
                     'password' => $hash,
-                ]);
+                    'intended_profile' => $donnees->intendedProfile,
+                ])->save();
 
                 UserRegistered::dispatch($user->id, $donnees->intendedProfile);
 

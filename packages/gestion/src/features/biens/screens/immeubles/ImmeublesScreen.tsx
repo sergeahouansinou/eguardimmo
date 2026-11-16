@@ -9,6 +9,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { QueryBoundary, SkeletonRows } from '../../components/QueryState';
 import { RowActions } from '../../components/RowActions';
 import { useBiensEnvironment } from '../../environment';
+import { useFeatureUnavailable } from '../../FeatureGate';
 import { useCommand } from '../../hooks/useCommand';
 import { useListState } from '../../hooks/useListState';
 import { formatArea } from '../../lib/amount';
@@ -28,6 +29,7 @@ export function ImmeublesScreen() {
   const [city, setCity] = useState('');
   const [archiving, setArchiving] = useState<ImmeubleRow | null>(null);
   const [removing, setRemoving] = useState<ImmeubleRow | null>(null);
+  const noDelete = useFeatureUnavailable('suppression');
   const list = useListState({ key: 'name', direction: 'asc' });
 
   const archive = useCommand((source, input: { id: string; archived: boolean }) => source.setImmeubleArchived(input.id, input.archived), {
@@ -56,12 +58,12 @@ export function ImmeublesScreen() {
     },
     { id: 'address', header: 'Adresse', sortBy: (row) => row.address, cell: (row) => `${row.address}, ${row.postalCode} ${row.city}` },
     { id: 'lots', header: 'Lots', numeric: true, sortBy: (row) => row.lots, cell: (row) => row.lots },
-    { id: 'area', header: 'Surface totale', numeric: true, sortBy: (row) => row.totalArea, cell: (row) => formatArea(row.totalArea) },
+    { id: 'area', header: 'Surface totale', numeric: true, sortBy: (row) => row.totalArea, cell: (row) => (row.totalArea === null ? '—' : formatArea(row.totalArea)) },
     {
       id: 'repartition',
       header: 'Répartition',
       sortBy: (row) => row.repartition,
-      cell: (row) => (row.repartition === 'tantiemes' ? 'Tantièmes, 1 000 millièmes' : `${REPARTITION_LABELS[row.repartition]} habitable`),
+      cell: (row) => (row.repartition === null ? '—' : row.repartition === 'tantiemes' ? 'Tantièmes, 1 000 millièmes' : `${REPARTITION_LABELS[row.repartition]} habitable`),
     },
     {
       id: 'actions',
@@ -74,7 +76,7 @@ export function ImmeublesScreen() {
             items={[
               { id: 'restore', label: 'Restaurer', icon: ArchiveRestore, onSelect: () => { archive.execute({ id: row.id, archived: false }); } },
               { id: 'open', label: 'Ouvrir', icon: Building2, href: biensPaths.immeuble(row.id) },
-              { id: 'delete', label: 'Supprimer', icon: Trash2, tone: 'danger', separatorBefore: true, onSelect: () => { setRemoving(row); } },
+              ...(noDelete ? [] : [{ id: 'delete', label: 'Supprimer', icon: Trash2, tone: 'danger' as const, separatorBefore: true, onSelect: () => { setRemoving(row); } }]),
             ]}
           />
         ) : (
@@ -88,7 +90,7 @@ export function ImmeublesScreen() {
               { id: 'charges', label: 'Répartition des charges', icon: Split, href: biensPaths.immeuble(row.id, 'charges') },
               { id: 'documents', label: 'Documents', icon: FileText, href: biensPaths.immeuble(row.id, 'documents') },
               { id: 'archive', label: 'Archiver', icon: Archive, separatorBefore: true, onSelect: () => { setArchiving(row); } },
-              { id: 'delete', label: 'Supprimer', icon: Trash2, tone: 'danger', onSelect: () => { setRemoving(row); } },
+              ...(noDelete ? [] : [{ id: 'delete', label: 'Supprimer', icon: Trash2, tone: 'danger' as const, onSelect: () => { setRemoving(row); } }]),
             ]}
           />
         ),

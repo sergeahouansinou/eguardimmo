@@ -15,7 +15,7 @@ use App\Modules\Organizations\Http\Controllers\Organization\UpdateMemberControll
 use App\Modules\Organizations\Http\Controllers\Organization\UpdateSecurityController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum', 'verified'])->group(function (): void {
+Route::middleware(['auth:sanctum', 'no-operator-token', 'verified'])->group(function (): void {
     Route::post('/organizations', CreateOrganizationController::class)->middleware('throttle:6,1')->name('organizations.store');
     Route::post('/invitations/acceptance', AcceptInvitationController::class)->middleware('throttle:auth')->name('organizations.invitations.accept');
 });

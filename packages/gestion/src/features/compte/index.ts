@@ -10,3 +10,4 @@ export { EquipeSourceProvider } from './equipe/source';
 export { ComptePage } from './compte/ComptePage';
 export { AbonnementPage } from './compte/AbonnementPage';
 export { ExportPage } from './export/ExportPage';
+export { SecuriteCommunePage } from './securite/SecuriteCommunePage';

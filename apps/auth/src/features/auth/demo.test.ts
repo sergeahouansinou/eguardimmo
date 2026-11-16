@@ -113,9 +113,9 @@ describe("démo : mots de passe et inscription", () => {
     const { source, advance } = createTestEnvironment();
     await source.register({ profile: "voyageur", firstName: "A", lastName: "B", email: "a@example.com", password: "Mot-De-Passe-2026" });
     expect(await source.getVerificationStatus()).toEqual({ resendAvailableInSeconds: 60 });
-    expect(await source.resendVerification()).toMatchObject({ status: "rate_limited" });
+    expect(await source.resendVerification("a@example.com")).toMatchObject({ status: "rate_limited" });
     advance(61);
-    expect(await source.resendVerification()).toEqual({ status: "sent" });
+    expect(await source.resendVerification("a@example.com")).toEqual({ status: "sent" });
   });
 
   it("n’active une invitation qu’une seule fois", async () => {

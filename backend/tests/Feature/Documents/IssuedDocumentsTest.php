@@ -50,7 +50,7 @@ it('émet une pièce : fichier PDF, empreinte du PDF, instantané et version du 
 
     $ligne = D::dans($this->org, fn () => IssuedDocument::query()->findOrFail($piece->id));
 
-    expect($ligne->snapshot)->toBe($piece->snapshot)
+    expect($ligne->snapshot)->toEqual($piece->snapshot)
         ->and($ligne->stored_file_id)->toBe($piece->file->id)
         ->and(Storage::disk('documents')->allFiles())->toHaveCount(1);
 });
@@ -121,4 +121,29 @@ it('cloisonne les pièces émises et leurs fichiers par organisation', function 
 
     expect(D::dans($this->autre, fn () => IssuedDocument::query()->count()))->toBe(0)
         ->and(D::dans($this->autre, fn () => StoredFile::query()->count()))->toBe(0);
+});
+
+it('efface le PDF écrit quand la transaction de l\'appelant est annulée après l\'émission', function (): void {
+    documentsEmettre($this, $this->org);
+
+    try {
+        DB::transaction(function (): void {
+            documentsEmettre($this, $this->org, IssuedDocumentType::Invoice, 'Marie Curie');
+
+            throw new RuntimeException('annulé par l\'appelant');
+        });
+    } catch (RuntimeException) {
+    }
+
+    expect(Storage::disk('documents')->allFiles())->toHaveCount(1)
+        ->and(DB::table('stored_files')->count())->toBe(1);
+});
+
+it('n\'écrit le PDF qu\'avant de prendre le numéro : un échec à l\'insertion n\'en laisse aucun', function (): void {
+    IssuedDocument::creating(fn (): never => throw new RuntimeException('refus'));
+
+    expect(fn () => documentsEmettre($this, $this->org))->toThrow(RuntimeException::class)
+        ->and(Storage::disk('documents')->allFiles())->toBe([])
+        ->and(DB::table('stored_files')->count())->toBe(0)
+        ->and(DB::table('document_sequences')->count())->toBe(0);
 });

@@ -27,45 +27,59 @@ export const bottomItems: BottomItem[] = [
   { id: 'finances', label: 'Finances', icon: Wallet, href: '/finances' },
 ];
 
-export const accountMenu: AccountMenuConfig = {
-  roleLabels: { admin: 'Admin', gestionnaire: 'Gestionnaire', agent: 'Agent' },
-  switchSpace: { href: authUrl('/profils') },
-  signOut: { href: authUrl('/deconnecte') },
-  groups: [
-    {
-      id: 'compte',
-      label: 'Mon compte',
-      items: [
-        { id: 'mon-compte', label: 'Mon compte', href: accountRoutes.account, icon: User },
-        { id: 'securite', label: 'Connexion et sécurité', href: accountRoutes.security, icon: ShieldCheck },
-        {
-          id: 'abonnement',
-          label: 'Abonnement',
-          href: accountRoutes.subscription,
-          icon: CreditCard,
-          meta: (shell) => shell.workspace.plan,
-        },
-        { id: 'export', label: 'Exporter mes données', href: accountRoutes.export, icon: Download },
-      ],
-    },
-    {
-      id: 'espace',
-      label: 'Espace',
-      items: [
-        { id: 'reglages', label: 'Réglages', href: accountRoutes.settings, icon: Settings },
-        {
-          id: 'equipe',
-          label: 'Équipe',
-          href: accountRoutes.team,
-          icon: Users,
-          meta: ({ workspace }) => (workspace.members === undefined ? undefined : `${String(workspace.members)} membres`),
-        },
-        { id: 'journal', label: "Journal d'activité", href: accountRoutes.journal, icon: History },
-      ],
-    },
-  ],
-  footerItems: [{ id: 'aide', label: "Centre d'aide", href: accountRoutes.help, icon: LifeBuoy }],
+const roleLabels = {
+  owner: 'Titulaire',
+  admin: 'Admin',
+  manager: 'Gestionnaire',
+  accountant: 'Comptable',
+  gestionnaire: 'Gestionnaire',
+  agent: 'Agent',
 };
+
+const accountGroups: AccountMenuConfig['groups'] = [
+  {
+    id: 'compte',
+    label: 'Mon compte',
+    items: [
+      { id: 'mon-compte', label: 'Mon compte', href: accountRoutes.account, icon: User },
+      { id: 'securite', label: 'Connexion et sécurité', href: accountRoutes.security, icon: ShieldCheck },
+      {
+        id: 'abonnement',
+        label: 'Abonnement',
+        href: accountRoutes.subscription,
+        icon: CreditCard,
+        meta: (shell) => shell.workspace.plan,
+      },
+      { id: 'export', label: 'Exporter mes données', href: accountRoutes.export, icon: Download },
+    ],
+  },
+  {
+    id: 'espace',
+    label: 'Espace',
+    items: [
+      { id: 'reglages', label: 'Réglages', href: accountRoutes.settings, icon: Settings },
+      {
+        id: 'equipe',
+        label: 'Équipe',
+        href: accountRoutes.team,
+        icon: Users,
+        meta: ({ workspace }) => (workspace.members === undefined ? undefined : `${String(workspace.members)} membres`),
+      },
+      { id: 'journal', label: "Journal d'activité", href: accountRoutes.journal, icon: History },
+    ],
+  },
+];
+
+// Évalué au rendu et non à l'import : une adresse d'application manquante ne doit pas empêcher de charger le module.
+export function accountMenu(): AccountMenuConfig {
+  return {
+    roleLabels,
+    switchSpace: { href: authUrl('/profils') },
+    signOut: { href: authUrl('/deconnecte') },
+    groups: accountGroups,
+    footerItems: [{ id: 'aide', label: "Centre d'aide", href: accountRoutes.help, icon: LifeBuoy }],
+  };
+}
 
 export const notifications: NotificationsConfig = {
   allHref: accountRoutes.notifications,

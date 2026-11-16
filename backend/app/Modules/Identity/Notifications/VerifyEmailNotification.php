@@ -41,7 +41,7 @@ final class VerifyEmailNotification extends Notification implements ShouldQueue
         $id = $notifiable instanceof MustVerifyEmail && method_exists($notifiable, 'getKey') ? $notifiable->getKey() : null;
         $email = $notifiable instanceof MustVerifyEmail ? $notifiable->getEmailForVerification() : '';
 
-        $lienApi = URL::temporarySignedRoute('verification.verify', now()->addMinutes(self::VALIDITE_MINUTES), [
+        $lienApi = URL::temporarySignedRoute('identity.email.verify', now()->addMinutes(self::VALIDITE_MINUTES), [
             'id' => $id,
             'hash' => hash('sha1', $email),
         ]);

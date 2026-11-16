@@ -19,11 +19,11 @@ export function lotsToCsv(lots: readonly LotRow[], currency: Currency): string {
     lot.name,
     lot.immeubleName,
     LOT_TYPE_LABELS[lot.type],
-    String(lot.surface).replace('.', ','),
-    lot.rooms,
+    lot.surface === null ? '' : String(lot.surface).replace('.', ','),
+    lot.rooms ?? '',
     lot.tenant?.name ?? '',
-    toMajorInput(lot.rent, currency),
-    lot.listing === 'en_ligne' ? 'En ligne' : 'Hors ligne',
+    lot.rent === null ? '' : toMajorInput(lot.rent, currency),
+    lot.listing === null ? '' : lot.listing === 'en_ligne' ? 'En ligne' : 'Hors ligne',
     lot.archived ? 'Oui' : 'Non',
   ]);
   return toCsv([header, ...rows]);

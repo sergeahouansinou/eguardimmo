@@ -9,6 +9,7 @@ use App\Modules\Catalog\Enums\ErrorCode;
 use App\Modules\Catalog\Models\Term;
 use App\Modules\Catalog\Models\TermOverride;
 use App\Modules\Catalog\Queries\VisibleTerms;
+use App\Modules\Catalog\Support\ConcurrentWrite;
 use Illuminate\Support\Facades\DB;
 
 final readonly class OverrideTerm
@@ -26,7 +27,7 @@ final readonly class OverrideTerm
             throw ErrorCode::TermNotPlatform->problem();
         }
 
-        return DB::transaction(function () use ($valeur, $labels, $hidden, $position): TermData {
+        return ConcurrentWrite::replayOnce(fn (): TermData => DB::transaction(function () use ($valeur, $labels, $hidden, $position): TermData {
             $existante = TermOverride::query()->where('term_id', $valeur->id)->first();
 
             if ($labels === null && ! $hidden && $position === null) {
@@ -41,6 +42,6 @@ final readonly class OverrideTerm
             );
 
             return $this->valeurs->one($valeur);
-        });
+        }));
     }
 }

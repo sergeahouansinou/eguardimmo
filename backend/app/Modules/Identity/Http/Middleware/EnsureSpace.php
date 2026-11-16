@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Identity\Http\Middleware;
 
-use App\Modules\Identity\Actions\IssueConsoleToken;
 use App\Modules\Identity\Enums\ErrorCode;
 use App\Modules\Identity\Enums\Space;
-use App\Modules\Identity\Models\PersonalAccessToken;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\PublicApi\ProfileRegistry;
 use Closure;
@@ -36,8 +34,12 @@ final readonly class EnsureSpace
 
         $cible = Space::from($espace);
 
+        if ($cible !== Space::Operator && RefuseOperatorToken::porteLaCapaciteOperateur($user)) {
+            throw ErrorCode::OperatorTokenForbidden->problem();
+        }
+
         $autorise = $cible === Space::Operator
-            ? $this->estJetonOperateur($user) && $user->isActiveOperator() && $user->hasConfirmedTwoFactor()
+            ? RefuseOperatorToken::porteLaCapaciteOperateur($user) && $user->isActiveOperator() && $user->hasConfirmedTwoFactor()
             : $this->profils->has($user->id, $cible);
 
         if (! $autorise) {
@@ -45,14 +47,5 @@ final readonly class EnsureSpace
         }
 
         return $next($request);
-    }
-
-    private function estJetonOperateur(User $user): bool
-    {
-        $jeton = $user->currentAccessToken();
-
-        return $jeton instanceof PersonalAccessToken
-            && is_array($jeton->abilities)
-            && in_array(IssueConsoleToken::CAPACITE, $jeton->abilities, true);
     }
 }

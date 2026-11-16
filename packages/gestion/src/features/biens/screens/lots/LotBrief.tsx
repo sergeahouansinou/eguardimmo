@@ -17,13 +17,13 @@ interface Fact {
 function factsOf(lot: LotDetail): Fact[] {
   const { brief } = lot;
   return [
-    { icon: Ruler, label: 'Surface habitable', value: formatArea(brief.habitableArea) },
+    { icon: Ruler, label: 'Surface habitable', value: brief.habitableArea === null ? 'Non renseignée' : formatArea(brief.habitableArea) },
     ...(brief.carrezArea ? [{ icon: Scan, label: 'Surface Carrez', value: formatArea(brief.carrezArea) }] : []),
     { icon: DoorOpen, label: 'Pièces', value: brief.rooms },
     { icon: ArrowUpDown, label: 'Étage', value: brief.floor },
     ...(brief.builtYear ? [{ icon: Calendar, label: 'Construction', value: String(brief.builtYear) }] : []),
-    { icon: KeyRound, label: 'Location', value: brief.rental },
-    { icon: Wallet, label: 'Loyer charges comprises', value: formatMoney(brief.rentCc, lot.currency) },
+    ...(brief.rental === null ? [] : [{ icon: KeyRound, label: 'Location', value: brief.rental }]),
+    ...(brief.rentCc === null ? [] : [{ icon: Wallet, label: 'Loyer charges comprises', value: formatMoney(brief.rentCc, lot.currency) }]),
   ];
 }
 

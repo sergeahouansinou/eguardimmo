@@ -1,0 +1,38 @@
+export const BIENS_FEATURES = [
+  'equipements',
+  'releves',
+  'inventaires',
+  'documents',
+  'diagnostics',
+  'finances',
+  'charges',
+  'copropriete',
+  'interventions',
+  'photos',
+  'annonces',
+  'import',
+  'duplication',
+  'suppression',
+  'lotDetails',
+  'etatsDesLieux',
+] as const;
+export type BiensFeature = (typeof BIENS_FEATURES)[number];
+
+export const biensFeatureLabel: Record<BiensFeature, string> = {
+  equipements: 'Équipements, entretien et journal',
+  releves: 'Relevés de compteurs',
+  inventaires: 'Inventaires',
+  documents: 'Documents',
+  diagnostics: 'Diagnostics',
+  finances: 'Finances du lot',
+  charges: 'Charges et clés de répartition',
+  copropriete: 'Copropriété et tantièmes',
+  interventions: 'Interventions',
+  photos: 'Photos',
+  annonces: 'Annonces',
+  import: 'Import de lots en masse',
+  duplication: 'Duplication de lots',
+  suppression: 'Suppression définitive',
+  lotDetails: 'Adresse propre, chauffage, prestations et loyer indicatif du lot',
+  etatsDesLieux: 'États des lieux du lot',
+};

@@ -157,3 +157,11 @@ it('signale un contenu disparu du disque sans le journaliser comme téléchargé
 
     expect(AuditLog::query()->where('action', 'documents.file.downloaded')->count())->toBe(0);
 });
+
+it('refuse une catégorie inconnue, non téléversable ou mal formée en 422 au lieu de 500', function (mixed $categorie): void {
+    $this->actingAs($this->titulaire);
+
+    $this->postJson($this->url, ['file' => D::pdf(), 'category' => $categorie])->assertUnprocessable()->assertJsonValidationErrors('category');
+
+    expect(StoredFile::withoutGlobalScopes()->count())->toBe(0);
+})->with(['inconnue' => 'inexistante', 'non téléversable' => 'issued', 'tableau' => [['supporting']]]);

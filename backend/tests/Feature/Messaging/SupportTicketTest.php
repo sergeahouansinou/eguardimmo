@@ -79,6 +79,19 @@ it('refuse de rattacher une demande à une organisation dont on n\'est pas membr
     expect(SupportTicket::query()->findOrFail($id)->organization_name)->toBe('Mes biens');
 });
 
+it('exige l\'organisation quand la demande est faite depuis l\'espace organisation', function (): void {
+    $titulaire = User::factory()->create();
+    app(CreateOrganization::class)->handle($titulaire, new NewOrganizationData(OrganizationKind::Individual, 'Mes biens', 'FR'), 'A', 'B');
+    $corps = ['space' => 'organization', 'category' => 'billing', 'subject' => 'X', 'body' => 'Y'];
+
+    $this->actingAs($titulaire)->postJson('/api/v1/support/tickets', $corps)
+        ->assertUnprocessable()->assertJsonPath('code', 'validation_failed')->assertJsonValidationErrors('organization_id');
+    $this->postJson('/api/v1/support/tickets', [...$corps, 'organization_id' => null])
+        ->assertUnprocessable()->assertJsonValidationErrors('organization_id');
+
+    expect(SupportTicket::query()->count())->toBe(0);
+});
+
 it('cache la demande d\'un autre compte et ses pièces jointes', function (): void {
     $auteur = User::factory()->create();
     $id = ouvrirDemande($this, $auteur);

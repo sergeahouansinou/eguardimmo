@@ -42,6 +42,8 @@ export const SPACE_LABEL = "Espace agence sous mandat";
 export const RAIL_STORAGE_KEY = "eg-nav-agence";
 export const SEARCH_PLACEHOLDER = "Rechercher, ex. : Marc Chevalier, Apt 12, Impayés";
 export const SEARCH_NOTE = "La recherche porte sur les pages, les mandants, les lots et les locataires.";
+export const SEARCH_PLACEHOLDER_API = "Rechercher une page, ex. : Impayés";
+export const SEARCH_NOTE_API = "La recherche porte sur les pages. Mandants, biens et locataires s’y ajouteront avec leurs écrans.";
 
 export function buildNavigation(counts?: ShellCounts): ShellNavigation {
   return {
@@ -96,7 +98,14 @@ export const bottomItems: BottomItem[] = [
 ];
 
 export const accountMenu: AccountMenuConfig = {
-  roleLabels: { admin: "Administrateur", gestionnaire: "Gestionnaire", comptable: "Comptable" },
+  roleLabels: {
+    admin: "Administrateur",
+    gestionnaire: "Gestionnaire",
+    comptable: "Comptable",
+    owner: "Titulaire",
+    manager: "Gestionnaire",
+    accountant: "Comptable",
+  },
   switchSpace: { href: authUrl("/profils") },
   signOut: { href: authUrl("/deconnecte") },
   groups: [
@@ -207,11 +216,30 @@ export const deliveredPages: readonly (readonly [href: string, label: string])[]
   [r.aide, "Centre d'aide"],
 ];
 
-export function buildSearchPages(): PageResult[] {
-  const pages = new Map<string, string>(deliveredPages);
+export const apiOnlyPages: readonly (readonly [href: string, label: string])[] = [
+  [r.locataireNew, "Nouveau locataire"],
+  [r.candidats, "Candidats locataires"],
+  [r.candidatInvitation, "Inviter un candidat"],
+  [r.etatsLieux, "États des lieux"],
+  [r.etatLieuxNew, "Nouvel état des lieux"],
+  [r.reservations, "Réservations"],
+  [r.reservationNew, "Nouvelle réservation"],
+  [r.immeubles, "Immeubles"],
+  [r.immeubleNew, "Nouvel immeuble"],
+  [r.equipements, "Équipements"],
+  [r.equipementNew, "Nouvel équipement"],
+  [r.releves, "Relevés de compteurs"],
+  [r.inventaires, "Inventaires"],
+  [r.equipeInviter, "Inviter un membre"],
+];
+
+export function buildSearchPages(options: { records: boolean } = { records: true }): PageResult[] {
+  const pages = new Map<string, string>(options.records ? deliveredPages : [...deliveredPages, ...apiOnlyPages]);
   for (const [href, label] of plannedScreens) if (!pages.has(href)) pages.set(href, label);
+  const labelled = Array.from(pages, ([href, label]) => ({ href, label }));
+  if (!options.records) return labelled;
   return [
-    ...Array.from(pages, ([href, label]) => ({ href, label })),
+    ...labelled,
     ...demoMandants.map((mandant) => ({ href: mandantHref(mandant.id), label: `Mandant, ${mandant.name}` })),
     ...demoBiens.map((bien) => ({ href: bienHref(bien.id), label: `Lot, ${bien.name}, ${bien.street}` })),
     ...demoLocataires.filter((locataire) => !locataire.archived && locataire.id !== "chloe-martin").map((locataire) => ({ href: locataireHref(locataire.id), label: `Locataire, ${locataire.name}` })),

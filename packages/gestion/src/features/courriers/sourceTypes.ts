@@ -3,6 +3,7 @@ import type { CourrierStatus } from './schemas';
 export type TemplateMode = 'actif' | 'brouillon';
 
 export interface CourriersSource {
+  readonly unavailableInApiMode: boolean;
   templates: () => Promise<unknown>;
   createTemplate: (input: unknown, mode?: TemplateMode) => Promise<unknown>;
   updateTemplate: (id: string, input: unknown, mode?: TemplateMode) => Promise<unknown>;

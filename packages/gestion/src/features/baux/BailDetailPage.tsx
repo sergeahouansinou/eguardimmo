@@ -5,6 +5,7 @@ import { Alert, Badge, Card, StatCard, Tab, TabList, TabPanel, Tabs } from '@egu
 import { useState } from 'react';
 import { LatestInstallments, LeaseParties, LeasePreview } from './BailResume';
 import { LeaseStatusBadge, leasePeriod, useLeaseLookups } from './BauxParts';
+import { FeatureUnavailable, useFeatureUnavailable } from './FeatureGate';
 import { LeaseGate } from './LeaseGate';
 import { useEdls, useExits, useInstallments, useLeaseExtras } from './hooks';
 import { bauxPaths } from './paths';
@@ -29,6 +30,9 @@ function LeaseSheet({ lease }: { lease: Lease }) {
   const exits = useExits();
   const installments = useInstallments(lease.id);
   const [tab, setTab] = useState('resume');
+  const extrasOff = useFeatureUnavailable('extras');
+  const balanceOff = useFeatureUnavailable('balance');
+  const edlOff = useFeatureUnavailable('edl');
 
   const exit = exits.data?.find((entry) => entry.leaseId === lease.id);
   const unitEdls = (edls.data ?? []).filter((edl) => edl.unitId === lease.unitId && !edl.archived);
@@ -59,7 +63,7 @@ function LeaseSheet({ lease }: { lease: Lease }) {
         }
       />
 
-      {lease.balance < 0 ? (
+      {!balanceOff && lease.balance < 0 ? (
         <Alert tone="danger" title={`${money(-lease.balance)} d’impayé sur ce bail.`}>
           <div className="mt-1 flex flex-wrap gap-2">
             <LinkButton href={links.newCourrier({ modele: 'relance-de-loyer-impaye', locataire: lease.tenantIds[0], bien: lease.unitId })} variant="primary" size="sm" icon={BellRing}>Relancer</LinkButton>
@@ -77,9 +81,11 @@ function LeaseSheet({ lease }: { lease: Lease }) {
         <StatCard label="Loyer charges comprises" value={money(lease.rent + lease.charges)}>
           <span className="text-caption text-fg-subtle">{`${money(lease.rent)} + ${money(lease.charges)} de charges`}</span>
         </StatCard>
-        <StatCard label="Solde du compte" value={money(lease.balance)} tone={lease.balance < 0 ? 'danger' : 'default'}>
-          <span className="text-caption text-fg-subtle">{lease.balance < 0 ? 'Loyer en retard' : 'À jour'}</span>
-        </StatCard>
+        {balanceOff ? null : (
+          <StatCard label="Solde du compte" value={money(lease.balance)} tone={lease.balance < 0 ? 'danger' : 'default'}>
+            <span className="text-caption text-fg-subtle">{lease.balance < 0 ? 'Loyer en retard' : 'À jour'}</span>
+          </StatCard>
+        )}
         <StatCard label="Prochaine révision" value={lease.nextRevision ? formatDateFr(lease.nextRevision) : '—'}>
           <span className="text-caption text-fg-subtle">{lease.nextRevision ? lease.revisionNote || `Indice ${lease.revisionIndex}` : 'Aucune révision prévue'}</span>
         </StatCard>
@@ -94,14 +100,14 @@ function LeaseSheet({ lease }: { lease: Lease }) {
         <Tabs value={tab} onValueChange={setTab} defaultValue="resume">
           <TabList aria-label="Sections du bail">
             <Tab value="resume">Résumé</Tab>
-            <Tab value="documents" count={extras.data?.documents.length ?? 0}>Documents</Tab>
-            <Tab value="edl" count={unitEdls.length}>États des lieux</Tab>
-            <Tab value="historique" count={extras.data?.history.length ?? 0}>Historique</Tab>
+            <Tab value="documents" count={extrasOff ? undefined : (extras.data?.documents.length ?? 0)}>Documents</Tab>
+            <Tab value="edl" count={edlOff ? undefined : unitEdls.length}>États des lieux</Tab>
+            <Tab value="historique" count={extrasOff ? undefined : (extras.data?.history.length ?? 0)}>Historique</Tab>
           </TabList>
           <TabPanel value={tab} className="pt-2">
-            {extras.isError ? <LoadError title="Le détail du bail n’a pas pu être chargé" /> : null}
-            {extras.isPending ? <ListLoading label="Chargement du bail" /> : null}
-            {extras.data && tab === 'resume' ? (
+            {extrasOff ? null : extras.isError ? <LoadError title="Le détail du bail n’a pas pu être chargé" /> : null}
+            {extrasOff ? null : extras.isPending ? <ListLoading label="Chargement du bail" /> : null}
+            {(extras.data ?? extrasOff) && tab === 'resume' ? (
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                 <SectionCard id="bail-conditions" title="Conditions">
                   <DescriptionList
@@ -123,7 +129,7 @@ function LeaseSheet({ lease }: { lease: Lease }) {
                       { term: 'Période', detail: leasePeriod(lease) },
                       { term: 'Durée', detail: `${String(lease.durationMonths)} mois, ${lease.legalNote}` },
                       { term: 'Reconduction', detail: lease.tacitNote },
-                      { term: 'Dépôt de garantie', detail: `${money(lease.deposit)}${lease.depositReceivedOn ? `, reçu le ${formatDateFr(lease.depositReceivedOn)}` : ', non reçu'}` },
+                      { term: 'Dépôt de garantie', detail: `${money(lease.deposit)}${balanceOff ? '' : lease.depositReceivedOn ? `, reçu le ${formatDateFr(lease.depositReceivedOn)}` : ', non reçu'}` },
                     ]}
                   />
                 </SectionCard>
@@ -140,21 +146,29 @@ function LeaseSheet({ lease }: { lease: Lease }) {
                     ]}
                   />
                 </SectionCard>
-                <SectionCard id="bail-actions" title="Actions à venir">
-                  {extras.data.actions.length === 0 ? (
-                    <NoRows>Aucune action en attente.</NoRows>
-                  ) : (
-                    <ul>
-                      {extras.data.actions.map((action) => (
-                        <ItemRow key={action.id} icon={CircleAlert} tone={action.tone} title={action.title} detail={action.detail} badge={action.badge} />
-                      ))}
-                    </ul>
-                  )}
-                </SectionCard>
+                {extras.data ? (
+                  <SectionCard id="bail-actions" title="Actions à venir">
+                    {extras.data.actions.length === 0 ? (
+                      <NoRows>Aucune action en attente.</NoRows>
+                    ) : (
+                      <ul>
+                        {extras.data.actions.map((action) => (
+                          <ItemRow key={action.id} icon={CircleAlert} tone={action.tone} title={action.title} detail={action.detail} badge={action.badge} />
+                        ))}
+                      </ul>
+                    )}
+                  </SectionCard>
+                ) : (
+                  <FeatureUnavailable feature="extras" />
+                )}
                 <LeaseParties lease={lease} />
                 {installments.data ? <LatestInstallments lease={lease} installments={installments.data} /> : null}
-                <LeasePreview id="bail-apercu-documents" title="Documents du bail" icon={FileText} entries={extras.data.documents} onSeeAll={() => { setTab('documents'); }} />
-                <LeasePreview id="bail-apercu-historique" title="Historique du bail" icon={CalendarClock} entries={extras.data.history} onSeeAll={() => { setTab('historique'); }} />
+                {extras.data ? (
+                  <>
+                    <LeasePreview id="bail-apercu-documents" title="Documents du bail" icon={FileText} entries={extras.data.documents} onSeeAll={() => { setTab('documents'); }} />
+                    <LeasePreview id="bail-apercu-historique" title="Historique du bail" icon={CalendarClock} entries={extras.data.history} onSeeAll={() => { setTab('historique'); }} />
+                  </>
+                ) : null}
                 {lease.note === '' ? null : (
                   <SectionCard id="bail-note" title="Note">
                     <p className="text-body text-fg-muted">{lease.note}</p>
@@ -162,6 +176,7 @@ function LeaseSheet({ lease }: { lease: Lease }) {
                 )}
               </div>
             ) : null}
+            {extrasOff && (tab === 'documents' || tab === 'historique') ? <FeatureUnavailable feature="extras" /> : null}
             {extras.data && tab === 'documents' ? (
               <SectionCard
                 id="bail-documents"
@@ -183,7 +198,8 @@ function LeaseSheet({ lease }: { lease: Lease }) {
                 </ul>
               </SectionCard>
             ) : null}
-            {tab === 'edl' ? (
+            {edlOff && tab === 'edl' ? <FeatureUnavailable feature="edl" /> : null}
+            {!edlOff && tab === 'edl' ? (
               <SectionCard
                 id="bail-edl"
                 title="États des lieux du bien"

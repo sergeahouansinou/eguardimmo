@@ -10,11 +10,15 @@ use App\Modules\Accounting\Enums\AccountRole;
 use App\Modules\Accounting\Enums\ItemType;
 use App\Modules\Accounting\Enums\Journal;
 use App\Modules\Accounting\Enums\SourceType;
+use App\Modules\Accounting\Models\Account;
 use App\Modules\Accounting\Models\JournalEntry;
 use App\Modules\Accounting\PublicApi\Ledger;
+use App\Modules\Accounting\Support\ChartOfAccounts;
 use App\Shared\Http\ApiProblem;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Money\Currency;
@@ -193,3 +197,47 @@ it('interdit en base une ligne qui pointe vers le compte d\'une autre organisati
 
     DB::table('journal_lines')->insert([...$ligne, 'id' => (string) Str::uuid7(), 'position' => 9, 'account_id' => $compteEtranger]);
 })->throws(QueryException::class);
+
+it('rejoue l\'écriture d\'un concurrent avec ses lignes et ses comptes quand la clé est prise pendant l\'écriture', function (): void {
+    $donnees = comptaLoyer('race:1', Money::EUR(70000));
+    $premiere = comptaPoster($this->org, $donnees);
+    $masquer = true;
+
+    JournalEntry::addGlobalScope('invisible-au-snapshot', function (Builder $requete) use (&$masquer): void {
+        if ($masquer) {
+            $requete->where('idempotency_key', '!=', 'race:1');
+        }
+    });
+    JournalEntry::creating(function () use (&$masquer): never {
+        $masquer = false;
+
+        throw new UniqueConstraintViolationException('sqlite', 'insert into "journal_entries"', [], new PDOException('UNIQUE constraint failed'));
+    });
+
+    $rejouee = comptaPoster($this->org, $donnees);
+
+    expect($rejouee->replayed)->toBeTrue()
+        ->and($rejouee->id)->toBe($premiere->id)
+        ->and($rejouee->lines)->toHaveCount(2)
+        ->and($rejouee->lines[0]->accountCode)->toBe(AccountRole::TenantReceivable->defaultCode());
+});
+
+it('relit par verrou le compte créé en parallèle au lieu d\'échouer sur la contrainte d\'unicité', function (): void {
+    $creer = true;
+    $concurrent = (string) Str::uuid7();
+
+    Account::creating(function () use (&$creer, $concurrent): void {
+        if ($creer) {
+            $creer = false;
+            DB::table('accounts')->insert([
+                'id' => $concurrent, 'organization_id' => $this->org->id, 'code' => AccountRole::Bank->defaultCode(),
+                'label' => 'Banque', 'role' => AccountRole::Bank->value, 'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+    });
+
+    $ids = comptaDans($this->org, fn (): array => app(ChartOfAccounts::class)->idsFor([AccountRole::Bank]));
+
+    expect($ids)->toBe([AccountRole::Bank->value => $concurrent])
+        ->and(DB::table('accounts')->where('organization_id', $this->org->id)->count())->toBe(1);
+});

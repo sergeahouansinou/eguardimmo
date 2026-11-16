@@ -28,6 +28,32 @@ final readonly class TermDirectory
     }
 
     /**
+     * Comme find(), pour plusieurs valeurs en deux requêtes. Lève term_not_found si l'une est hors du référentiel
+     * ou d'une autre organisation.
+     *
+     * @param  list<string>  $ids
+     * @return array<string, TermData> par identifiant
+     */
+    public function findMany(array $ids, VocabularyKey $vocabulary): array
+    {
+        $ids = array_values(array_unique($ids));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $trouvees = $this->valeurs->findMany($ids, $vocabulary);
+
+        foreach ($ids as $id) {
+            if (! isset($trouvees[$id])) {
+                throw ErrorCode::TermNotFound->problem();
+            }
+        }
+
+        return $this->valeurs->many(array_values($trouvees));
+    }
+
+    /**
      * Comme find(), pour une nouvelle affectation : une valeur archivée ou masquée est refusée.
      */
     public function findAssignable(string $id, VocabularyKey $vocabulary): TermData

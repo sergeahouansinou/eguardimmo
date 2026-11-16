@@ -22,6 +22,7 @@ export interface ListView<T> {
   pageSize: number;
   total: number;
   rows: T[];
+  filtered: T[];
   counts: Record<string, number>;
 }
 
@@ -73,6 +74,7 @@ export function useListView<T>({
     pageSize,
     total: filtered.length,
     rows: filtered.slice((current - 1) * pageSize, current * pageSize),
+    filtered,
     counts,
   };
 }

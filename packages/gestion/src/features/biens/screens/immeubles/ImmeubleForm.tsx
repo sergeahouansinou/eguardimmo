@@ -7,16 +7,17 @@ import { NotFoundPanel } from '../../components/NotFoundPanel';
 import { PageHeader } from '../../components/PageHeader';
 import { QueryBoundary, SkeletonRows } from '../../components/QueryState';
 import { useBiensEnvironment } from '../../environment';
+import { WhenAvailable } from '../../FeatureGate';
 import { errorMessage } from '../../hooks/useCommand';
 import { useZodForm } from '../../hooks/useZodForm';
-import { REPARTITION_LABELS } from '../../lib/labels';
+import { REPARTITION_LABELS, SITE_TYPE_LABELS } from '../../lib/labels';
 import { formatNumber } from '../../lib/amount';
 import { biensPaths } from '../../paths';
 import { useBiensAction, useImmeuble } from '../../queries';
-import { REPARTITIONS, immeubleFormSchema } from '../../schemas/immeubles';
+import { REPARTITIONS, SITE_TYPES, immeubleFormSchema } from '../../schemas/immeubles';
 import type { ImmeubleDetail } from '../../schemas/immeubles';
 
-const BLANK = { name: '', address: '', postalCode: '', city: '', country: 'France', repartition: 'tantiemes' as const, photoNames: [] as string[] };
+const BLANK = { name: '', address: '', postalCode: '', city: '', country: 'France', repartition: 'tantiemes' as const, siteType: 'building' as const, photoNames: [] as string[] };
 
 function ImmeubleFormBody({ id, detail }: { id?: string; detail: ImmeubleDetail | null }) {
   const { push } = useBiensEnvironment();
@@ -52,12 +53,25 @@ function ImmeubleFormBody({ id, detail }: { id?: string; detail: ImmeubleDetail 
           <TextField label="Nom de l’immeuble *" placeholder="Les Tilleuls" {...form.field('name')} />
         </FullRow>
         <FullRow>
+          <Select
+            label="Type de bien"
+            placeholder="Choisir un type"
+            options={SITE_TYPES.map((entry) => ({ value: entry, label: SITE_TYPE_LABELS[entry] }))}
+            value={form.values.siteType ?? 'building'}
+            onValueChange={(next) => {
+              const siteType = SITE_TYPES.find((entry) => entry === next);
+              if (siteType) form.set('siteType', siteType);
+            }}
+          />
+        </FullRow>
+        <FullRow>
           <TextField label="Adresse *" placeholder="12 rue des Lilas" autoComplete="street-address" {...form.field('address')} />
         </FullRow>
         <TextField label="Code postal *" placeholder="75011" inputMode="numeric" autoComplete="postal-code" {...form.field('postalCode')} />
         <TextField label="Ville *" placeholder="Paris" autoComplete="address-level2" {...form.field('city')} />
         <TextField label="Pays *" placeholder="France" autoComplete="country-name" {...form.field('country')} />
       </FormSection>
+      <WhenAvailable feature="charges">
       <FormSection title="Répartition des charges">
         <FullRow>
           <Select
@@ -79,11 +93,14 @@ function ImmeubleFormBody({ id, detail }: { id?: string; detail: ImmeubleDetail 
           </Alert>
         </FullRow>
       </FormSection>
+      </WhenAvailable>
+      <WhenAvailable feature="photos">
       <FormSection title="Photo de l’immeuble">
         <FullRow>
           <PhotoField names={form.values.photoNames} onChange={(names) => { form.set('photoNames', names); }} />
         </FullRow>
       </FormSection>
+      </WhenAvailable>
       <FormActions
         cancelHref={id ? biensPaths.immeuble(id) : biensPaths.immeubles}
         submitLabel={id ? 'Enregistrer les modifications' : 'Enregistrer l’immeuble'}

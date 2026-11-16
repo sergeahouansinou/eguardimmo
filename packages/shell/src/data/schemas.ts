@@ -15,7 +15,7 @@ export const shellSchema = z.object({
   }),
   workspace: z.object({
     name: z.string().min(1),
-    ownerName: z.string().min(1),
+    ownerName: z.string().min(1).optional(),
     role: z.string().min(1),
     plan: z.string().min(1).optional(),
     members: count.optional(),

@@ -38,7 +38,9 @@ final class UploadFileRequest extends FormRequest
 
     public function category(): FileCategory
     {
-        return $this->filled('category') ? FileCategory::from((string) $this->validated('category')) : FileCategory::Supporting;
+        $demandee = $this->input('category');
+
+        return (is_string($demandee) ? FileCategory::tryFrom($demandee) : null) ?? FileCategory::Supporting;
     }
 
     public function source(): FileSource

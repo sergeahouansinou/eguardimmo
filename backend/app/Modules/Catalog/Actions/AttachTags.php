@@ -8,6 +8,7 @@ use App\Modules\Catalog\Enums\ErrorCode;
 use App\Modules\Catalog\Models\Tag;
 use App\Modules\Catalog\Models\Tagging;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -30,8 +31,19 @@ final readonly class AttachTags
             }
 
             foreach ($ids as $id) {
-                Tagging::query()->firstOrCreate(['tag_id' => $id, 'taggable_type' => $taggableType, 'taggable_id' => $taggableId]);
+                $this->attacher($id, $taggableType, $taggableId);
             }
         });
+    }
+
+    /**
+     * Une pose simultanée de la même étiquette a déjà produit l'état voulu : l'unicité violée n'est pas une erreur.
+     */
+    private function attacher(string $tagId, string $taggableType, string $taggableId): void
+    {
+        try {
+            Tagging::query()->firstOrCreate(['tag_id' => $tagId, 'taggable_type' => $taggableType, 'taggable_id' => $taggableId]);
+        } catch (UniqueConstraintViolationException) {
+        }
     }
 }

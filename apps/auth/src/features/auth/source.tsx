@@ -97,7 +97,7 @@ export interface AuthSource {
   signOut: () => Promise<void>;
   register: (input: RegisterInput) => Promise<RequestResult>;
   getVerificationStatus: () => Promise<unknown>;
-  resendVerification: () => Promise<RequestResult>;
+  resendVerification: (email: string) => Promise<RequestResult>;
   verifyEmail: (token: string) => Promise<{ status: "verified" } | { status: "expired" }>;
   requestPasswordReset: (email: string) => Promise<RequestResult>;
   checkResetToken: (input: { token: string; email: string }) => Promise<{ status: "valid" } | { status: "expired" }>;

@@ -2,6 +2,7 @@
 
 import { createContext, use } from "react";
 import { addDays, addMonths, formatDay, yearMonth } from "@/lib/dates";
+import { dataSource } from "@/lib/env";
 import { formatEuros, formatRate } from "@/lib/money";
 import { createDemoData } from "./demo";
 import { INVITATION_BASE_URL, avisId } from "./demoExtra";
@@ -511,6 +512,7 @@ let fallback: PortefeuilleSource | undefined;
 export function usePortefeuilleSource(): PortefeuilleSource {
   const provided = use(SourceContext);
   if (provided) return provided;
+  if (dataSource === "api") throw new Error("Aucune source du portefeuille n’est montée en mode api : l’écran ne peut pas retomber sur les données de démonstration.");
   fallback ??= createDemoSource();
   return fallback;
 }

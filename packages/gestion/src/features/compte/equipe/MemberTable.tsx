@@ -3,7 +3,7 @@
 import { Ellipsis, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { Avatar, Badge, Button, Icon, IconButton, Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from '@eguardimmo/ui';
 import type { LinkComponent } from '@eguardimmo/ui';
-import { DataTable, Td, Th } from '../../outils/kit';
+import { DataTable, Td, Th, useReferenceDay } from '../../outils/kit';
 import { lastLoginLabel, scopeLabel } from './format';
 import { deactivationBlock, fullName, removalBlock, roleChangeBlock } from './rules';
 import { ROLE_LABELS } from './schemas';
@@ -88,6 +88,7 @@ export interface MemberTableProps {
 }
 
 export function MemberTable({ Link, rows, members, onAction }: MemberTableProps) {
+  const today = useReferenceDay();
   return (
     <DataTable caption="Membres de l'équipe">
       <thead>
@@ -127,7 +128,7 @@ export function MemberTable({ Link, rows, members, onAction }: MemberTableProps)
               <Td>
                 <TwoFactor member={member} />
               </Td>
-              <Td>{lastLoginLabel(member)}</Td>
+              <Td>{lastLoginLabel(member, today)}</Td>
               <Td>
                 <StatusBadge status={member.status} />
               </Td>

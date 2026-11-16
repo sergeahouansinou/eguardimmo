@@ -9,11 +9,12 @@ import { PageHeader } from '../../components/PageHeader';
 import { QueryBoundary, SkeletonRows } from '../../components/QueryState';
 import { RowActions } from '../../components/RowActions';
 import { useBiensEnvironment } from '../../environment';
+import { useFeatureUnavailable } from '../../FeatureGate';
 import { useCommand } from '../../hooks/useCommand';
 import { useListState } from '../../hooks/useListState';
 import { formatArea, formatNumber } from '../../lib/amount';
 import { downloadFile } from '../../lib/files';
-import { LISTING_LABELS, LOT_STATUS_LABELS, LOT_TYPE_LABELS } from '../../lib/labels';
+import { LISTING_LABELS, LOT_TYPE_LABELS, lotStatusBadge } from '../../lib/labels';
 import { lotsToCsv } from '../../lib/lotCsv';
 import { matches, plural } from '../../lib/text';
 import { biensPaths, externalPaths } from '../../paths';
@@ -58,6 +59,11 @@ export function LotsScreen() {
   const [archiving, setArchiving] = useState<LotRow[] | null>(null);
   const [removing, setRemoving] = useState<LotRow | null>(null);
   const list = useListState({ key: 'name', direction: 'asc' });
+  const noListing = useFeatureUnavailable('annonces');
+  const noImport = useFeatureUnavailable('import');
+  const noDuplicate = useFeatureUnavailable('duplication');
+  const noDelete = useFeatureUnavailable('suppression');
+  const noWorks = useFeatureUnavailable('interventions');
 
   const archive = useCommand((source, input: { ids: string[]; archived: boolean }) => source.setLotsArchived(input.ids, input.archived), {
     success: (_result, input) => (input.archived ? plural(input.ids.length, 'bien archivé', 'biens archivés') : plural(input.ids.length, 'bien restauré', 'biens restaurés')),
@@ -97,8 +103,8 @@ export function LotsScreen() {
     },
     { id: 'immeuble', header: 'Immeuble', sortBy: (row) => row.immeubleName, cell: (row) => row.immeubleName },
     { id: 'type', header: 'Type', sortBy: (row) => LOT_TYPE_LABELS[row.type], cell: (row) => LOT_TYPE_LABELS[row.type] },
-    { id: 'surface', header: 'Surface', numeric: true, sortBy: (row) => row.surface, cell: (row) => formatArea(row.surface) },
-    { id: 'rooms', header: 'Pièces', numeric: true, sortBy: (row) => row.rooms, cell: (row) => formatNumber(row.rooms) },
+    { id: 'surface', header: 'Surface', numeric: true, sortBy: (row) => row.surface, cell: (row) => (row.surface === null ? '—' : formatArea(row.surface)) },
+    { id: 'rooms', header: 'Pièces', numeric: true, sortBy: (row) => row.rooms, cell: (row) => (row.rooms === null ? '—' : formatNumber(row.rooms)) },
     {
       id: 'tenant',
       header: 'Locataire',
@@ -112,18 +118,22 @@ export function LotsScreen() {
           <span className="text-fg-subtle">Sans locataire</span>
         ),
     },
-    { id: 'rent', header: 'Loyer', numeric: true, sortBy: (row) => row.rent, cell: (row) => formatMoney(row.rent, currency) },
-    {
-      id: 'listing',
-      header: 'Annonce',
-      sortBy: (row) => row.listing,
-      cell: (row) => <Badge tone={row.listing === 'en_ligne' ? 'info' : 'neutral'}>{LISTING_LABELS[row.listing]}</Badge>,
-    },
+    { id: 'rent', header: 'Loyer', numeric: true, sortBy: (row) => row.rent, cell: (row) => (row.rent === null ? '—' : formatMoney(row.rent, currency)) },
+    ...(noListing
+      ? []
+      : [
+          {
+            id: 'listing',
+            header: 'Annonce',
+            sortBy: (row: LotRow) => row.listing,
+            cell: (row: LotRow) => (row.listing === null ? '—' : <Badge tone={row.listing === 'en_ligne' ? 'info' : 'neutral'}>{LISTING_LABELS[row.listing]}</Badge>),
+          },
+        ]),
     {
       id: 'status',
       header: 'État',
-      sortBy: (row) => LOT_STATUS_LABELS[row.status].label,
-      cell: (row) => <Badge tone={LOT_STATUS_LABELS[row.status].tone}>{LOT_STATUS_LABELS[row.status].label}</Badge>,
+      sortBy: (row) => lotStatusBadge(row).label,
+      cell: (row) => <Badge tone={lotStatusBadge(row).tone}>{lotStatusBadge(row).label}</Badge>,
     },
     {
       id: 'actions',
@@ -138,23 +148,27 @@ export function LotsScreen() {
               ? [
                   { id: 'restore', label: 'Restaurer', icon: ArchiveRestore, onSelect: () => { archive.execute({ ids: [row.id], archived: false }); } },
                   { id: 'open', label: 'Fiche du lot', icon: Home, href: biensPaths.lot(row.id) },
-                  { id: 'delete', label: 'Supprimer', icon: Trash2, tone: 'danger', separatorBefore: true, onSelect: () => { setRemoving(row); } },
+                  ...(noDelete ? [] : [{ id: 'delete', label: 'Supprimer', icon: Trash2, tone: 'danger' as const, separatorBefore: true, onSelect: () => { setRemoving(row); } }]),
                 ]
               : [
                   { id: 'edit', label: 'Modifier le lot', icon: Pencil, href: biensPaths.editLot(row.id) },
                   { id: 'open', label: 'Fiche du lot', icon: Home, href: biensPaths.lot(row.id) },
                   ...(row.tenant ? [] : [{ id: 'lease', label: 'Créer un bail', icon: FilePlus, href: externalPaths.newLease(row.id) }]),
-                  {
-                    id: 'listing',
-                    label: row.listing === 'en_ligne' ? 'Retirer l’annonce' : 'Publier l’annonce',
-                    icon: row.listing === 'en_ligne' ? GlobeLock : Globe,
-                    onSelect: () => { publish.execute({ id: row.id, listing: row.listing === 'en_ligne' ? 'hors_ligne' : 'en_ligne' }); },
-                  },
+                  ...(noListing
+                    ? []
+                    : [
+                        {
+                          id: 'listing',
+                          label: row.listing === 'en_ligne' ? 'Retirer l’annonce' : 'Publier l’annonce',
+                          icon: row.listing === 'en_ligne' ? GlobeLock : Globe,
+                          onSelect: () => { publish.execute({ id: row.id, listing: row.listing === 'en_ligne' ? 'hors_ligne' : 'en_ligne' }); },
+                        },
+                      ]),
                   { id: 'readings', label: 'Relevés de compteurs', icon: Gauge, href: biensPaths.lot(row.id, 'compteurs') },
                   { id: 'documents', label: 'Documents', icon: FileText, href: biensPaths.lot(row.id, 'documents') },
-                  { id: 'duplicate', label: 'Dupliquer', icon: Copy, separatorBefore: true, onSelect: () => { duplicate.execute(row.id); } },
-                  { id: 'archive', label: 'Archiver', icon: Archive, onSelect: () => { setArchiving([row]); } },
-                  { id: 'delete', label: 'Supprimer', icon: Trash2, tone: 'danger', onSelect: () => { setRemoving(row); } },
+                  ...(noDuplicate ? [] : [{ id: 'duplicate', label: 'Dupliquer', icon: Copy, separatorBefore: true, onSelect: () => { duplicate.execute(row.id); } }]),
+                  { id: 'archive', label: 'Archiver', icon: Archive, separatorBefore: noDuplicate, onSelect: () => { setArchiving([row]); } },
+                  ...(noDelete ? [] : [{ id: 'delete', label: 'Supprimer', icon: Trash2, tone: 'danger' as const, onSelect: () => { setRemoving(row); } }]),
                 ]
           }
         />
@@ -174,9 +188,11 @@ export function LotsScreen() {
         }
         actions={
           <>
-            <Button variant="secondary" onClick={() => { setImporting(true); }}>
-              Importer
-            </Button>
+            {noImport ? null : (
+              <Button variant="secondary" onClick={() => { setImporting(true); }}>
+                Importer
+              </Button>
+            )}
             <Button variant="secondary" asChild>
               <Link href={biensPaths.newImmeuble}>Ajouter un immeuble</Link>
             </Button>
@@ -236,9 +252,9 @@ export function LotsScreen() {
                 </div>
                 <Select label="Immeuble" hideLabel placeholder="Immeuble : tous" options={[{ value: '', label: 'Tous les immeubles' }, ...immeubleOptions]} value={immeuble} onValueChange={(next) => { setImmeuble(next); restart(); }} className="w-44" />
                 <Select label="Type" hideLabel placeholder="Type : tous" options={[{ value: '', label: 'Tous les types' }, ...LOT_TYPES.map((entry) => ({ value: entry, label: LOT_TYPE_LABELS[entry] }))]} value={type} onValueChange={(next) => { setType(next); restart(); }} className="w-40" />
-                <Select label="Annonce" hideLabel placeholder="Annonce : toutes" options={[{ value: '', label: 'Toutes les annonces' }, { value: 'en_ligne', label: 'En ligne' }, { value: 'hors_ligne', label: 'Hors ligne' }]} value={listing} onValueChange={(next) => { setListing(next); restart(); }} className="w-44" />
+                {noListing ? null : <Select label="Annonce" hideLabel placeholder="Annonce : toutes" options={[{ value: '', label: 'Toutes les annonces' }, { value: 'en_ligne', label: 'En ligne' }, { value: 'hors_ligne', label: 'Hors ligne' }]} value={listing} onValueChange={(next) => { setListing(next); restart(); }} className="w-44" />}
                 <div role="group" aria-label="Filtrer par disponibilité" className="flex gap-1.5">
-                  {AVAILABILITY.map((item) => (
+                  {AVAILABILITY.filter((item) => item.id !== 'travaux' || !noWorks).map((item) => (
                     <Chip
                       key={item.id}
                       pressed={availability.includes(item.id)}

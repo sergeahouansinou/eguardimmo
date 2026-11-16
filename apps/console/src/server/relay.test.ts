@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleRelay } from './relay';
-import { API, call, json, sentBody, sentHeaders, sessionCookieHeader, stubFetch, stubServerEnv } from './testing/helpers';
+import { API, RELAY_KEY, STREAMING, call, chunkedBody, endlessBody, json, sentBody, sentHeaders, sessionCookieHeader, stubFetch, stubServerEnv } from './testing/helpers';
 
 const get = (path: string, init: Parameters<typeof call>[1] = {}) => call(path, { cookie: sessionCookieHeader('5|operateur'), ...init });
 
@@ -58,6 +58,25 @@ describe('relais /api/v1/console/*', () => {
     expect(sent.get('accept-language')).toBe('fr-FR');
     expect(sent.get('if-none-match')).toBe('"abc"');
     expect(api.mock.calls[0]?.[1]).toMatchObject({ redirect: 'manual', credentials: 'omit' });
+  });
+
+  it('envoie la clé de relais et l’IP calculée côté serveur sur chaque appel relayé', async () => {
+    const api = stubFetch(() => json(200, {}));
+    await handleRelay(get('/api/v1/console/me', { headers: { 'X-Forwarded-For': '6.6.6.6, 203.0.113.7' } }));
+    await handleRelay(get('/api/v1/console/support/tickets/1/messages', { method: 'POST', body: '{}', headers: { 'X-Forwarded-For': '198.51.100.9' } }));
+    for (const index of [0, 1]) expect(sentHeaders(api, index).get('x-console-relay-key')).toBe(RELAY_KEY);
+    expect(sentHeaders(api, 0).get('x-console-client-ip')).toBe('203.0.113.7');
+    expect(sentHeaders(api, 1).get('x-console-client-ip')).toBe('198.51.100.9');
+  });
+
+  it('ignore la clé de relais et l’IP envoyées par le navigateur', async () => {
+    const api = stubFetch(() => json(200, {}));
+    await handleRelay(get('/api/v1/console/me', { headers: { 'X-Console-Client-Ip': '9.9.9.9', 'X-Console-Relay-Key': 'pirate', 'X-Forwarded-For': '203.0.113.7' } }));
+    await handleRelay(get('/api/v1/console/me', { headers: { 'X-Console-Client-Ip': '9.9.9.9', 'X-Console-Relay-Key': 'pirate' } }));
+    expect(sentHeaders(api, 0).get('x-console-client-ip')).toBe('203.0.113.7');
+    expect(sentHeaders(api, 0).get('x-console-relay-key')).toBe(RELAY_KEY);
+    expect(sentHeaders(api, 1).get('x-console-client-ip')).toBeNull();
+    expect(sentHeaders(api, 1).get('x-console-relay-key')).toBe(RELAY_KEY);
   });
 
   it('refuse les chemins hors des segments sûrs', async () => {
@@ -124,6 +143,23 @@ describe('relais /api/v1/console/*', () => {
     const response = await handleRelay(get('/api/v1/console/support/tickets/1/messages', { method: 'POST', body: '{}', headers: { 'Content-Length': String(60 * 1024 * 1024) } }));
     expect(response.status).toBe(413);
     expect(api).not.toHaveBeenCalled();
+  });
+
+  it('abandonne la lecture d’un corps chunked sans Content-Length qui dépasse le plafond', async () => {
+    const api = stubFetch(() => json(200, {}));
+    const { body, pulled } = endlessBody(1024 * 1024);
+    const response = await handleRelay(get('/api/v1/console/support/tickets/1/messages', { method: 'POST', body, ...STREAMING }));
+    expect(response.status).toBe(413);
+    expect(await response.json()).toMatchObject({ code: 'payload_too_large', status: 413 });
+    expect(api).not.toHaveBeenCalled();
+    expect(pulled()).toBeLessThan(60);
+  });
+
+  it('accepte un corps chunked sous le plafond', async () => {
+    const api = stubFetch(() => json(201, {}));
+    const response = await handleRelay(get('/api/v1/console/support/tickets/1/messages', { method: 'POST', body: chunkedBody(['{"body":', '"Bonjour"}']), ...STREAMING }));
+    expect(response.status).toBe(201);
+    expect(sentBody(api)).toBe('{"body":"Bonjour"}');
   });
 
   it('renvoie statut, type, Content-Disposition, Retry-After et flux binaire sans mise en cache', async () => {

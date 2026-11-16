@@ -46,7 +46,7 @@ final readonly class LedgerReader
     }
 
     /**
-     * Compte locataire d'un bail entre deux dates comptables incluses.
+     * Compte locataire d'un bail entre deux dates comptables incluses ; lève statement_too_long au-delà de `Balances::RELEVE_LIGNES_MAX` lignes.
      */
     public function leaseStatement(string $leaseId, Currency $currency, CarbonImmutable $from, CarbonImmutable $to): LeaseStatementData
     {

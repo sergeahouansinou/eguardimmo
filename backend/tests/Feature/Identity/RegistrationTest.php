@@ -91,3 +91,15 @@ it('limite l\'inscription par throttle:auth', function (): void {
 
     $this->postJson('/auth/register', inscription())->assertTooManyRequests();
 });
+
+it('renvoie des messages de validation lisibles en français, jamais une clé de traduction', function (): void {
+    $this->postJson('/auth/register', inscription(['password' => 'court', 'password_confirmation' => 'court']))
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.password.0', 'Le champ mot de passe doit contenir au moins 8 caractères.');
+});
+
+it('enregistre l\'intention d\'inscription du compte', function (): void {
+    $this->postJson('/auth/register', inscription(['intended_profile' => 'individual_landlord']))->assertStatus(202);
+
+    expect(User::query()->sole()->intended_profile?->value)->toBe('individual_landlord');
+});

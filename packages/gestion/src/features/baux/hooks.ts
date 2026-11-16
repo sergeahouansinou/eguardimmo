@@ -2,9 +2,9 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
-import { locatairesKeys } from '../locataires/hooks';
 import { useClientQuery } from '../locataires/kit/query';
 import { useLocatairesSource } from '../locataires/source';
+import { BAUX_ROOT, OCCUPANCY_ROOTS } from '../queryRoots';
 import {
   attestationSchema,
   edlSchema,
@@ -18,10 +18,12 @@ import {
 import type { EdlInput, EdlStatus, ExitStep, LeaseInput, NoticeInput, ReservationInput, SurveyRoom } from './schemas';
 import type { LeaseImportRow } from './leaseImportSchema';
 import { useBauxSource } from './source';
+import { isLeaseStaleVersion } from './api/apiErrors';
+import type { BauxFeature } from './capabilities';
 import type { ReturnContext } from './source';
 
 export const bauxKeys = {
-  all: ['gestion', 'baux'] as const,
+  all: BAUX_ROOT,
   leases: ['gestion', 'baux', 'leases'] as const,
   installments: (id: string) => ['gestion', 'baux', 'installments', id] as const,
   extras: (id: string) => ['gestion', 'baux', 'extras', id] as const,
@@ -32,6 +34,10 @@ export const bauxKeys = {
   attestations: ['gestion', 'baux', 'attestations'] as const,
 };
 
+function useAvailable(feature: BauxFeature): boolean {
+  return !useBauxSource().unavailableInApiMode.includes(feature);
+}
+
 export function useLeases() {
   const source = useBauxSource();
   return useClientQuery(bauxKeys.leases, () => source.leases(), z.array(leaseSchema));
@@ -39,12 +45,14 @@ export function useLeases() {
 
 export function useInstallments(leaseId: string) {
   const source = useBauxSource();
-  return useClientQuery(bauxKeys.installments(leaseId), () => source.installments(leaseId), z.array(installmentSchema));
+  const enabled = useAvailable('schedule');
+  return useClientQuery(bauxKeys.installments(leaseId), () => source.installments(leaseId), z.array(installmentSchema), { enabled });
 }
 
 export function useLeaseExtras(leaseId: string) {
   const source = useBauxSource();
-  return useClientQuery(bauxKeys.extras(leaseId), () => source.extras(leaseId), leaseExtrasSchema);
+  const enabled = useAvailable('extras');
+  return useClientQuery(bauxKeys.extras(leaseId), () => source.extras(leaseId), leaseExtrasSchema, { enabled });
 }
 
 export function useExits() {
@@ -54,22 +62,26 @@ export function useExits() {
 
 export function useEdls() {
   const source = useBauxSource();
-  return useClientQuery(bauxKeys.edls, () => source.edls(), z.array(edlSchema));
+  const enabled = useAvailable('edl');
+  return useClientQuery(bauxKeys.edls, () => source.edls(), z.array(edlSchema), { enabled });
 }
 
 export function useEdlTemplates() {
   const source = useBauxSource();
-  return useClientQuery(bauxKeys.edlTemplates, () => source.edlTemplates(), z.array(edlTemplateSchema));
+  const enabled = useAvailable('edl');
+  return useClientQuery(bauxKeys.edlTemplates, () => source.edlTemplates(), z.array(edlTemplateSchema), { enabled });
 }
 
 export function useReservations() {
   const source = useBauxSource();
-  return useClientQuery(bauxKeys.reservations, () => source.reservations(), z.array(reservationSchema));
+  const enabled = useAvailable('reservations');
+  return useClientQuery(bauxKeys.reservations, () => source.reservations(), z.array(reservationSchema), { enabled });
 }
 
 export function useAttestations() {
   const source = useBauxSource();
-  return useClientQuery(bauxKeys.attestations, () => source.attestations(), z.array(attestationSchema));
+  const enabled = useAvailable('attestations');
+  return useClientQuery(bauxKeys.attestations, () => source.attestations(), z.array(attestationSchema), { enabled });
 }
 
 function useInvalidate() {
@@ -77,45 +89,49 @@ function useInvalidate() {
   return () => client.invalidateQueries({ queryKey: bauxKeys.all });
 }
 
+function useInvalidateOccupancy() {
+  const client = useQueryClient();
+  return () => Promise.all(OCCUPANCY_ROOTS.map((queryKey) => client.invalidateQueries({ queryKey })));
+}
+
+function useRefreshOnStale() {
+  const invalidate = useInvalidateOccupancy();
+  return (error: unknown) => (isLeaseStaleVersion(error) ? invalidate() : undefined);
+}
+
 export function useCreateLease() {
   const source = useBauxSource();
   const tenants = useLocatairesSource();
-  const client = useQueryClient();
-  const invalidate = useInvalidate();
+  const invalidate = useInvalidateOccupancy();
   return useMutation({
     mutationFn: async (input: LeaseInput) => {
       const lease = leaseSchema.parse(await source.createLease(input));
-      if (lease.status !== 'brouillon') await tenants.assignTenantUnit(lease.tenantIds, lease.unitId);
+      if (lease.status !== 'brouillon' && !source.derivesOccupancy) await tenants.assignTenantUnit(lease.tenantIds, lease.unitId);
       return lease;
     },
-    onSuccess: async () => {
-      await invalidate();
-      await client.invalidateQueries({ queryKey: locatairesKeys.all });
-    },
+    onSuccess: invalidate,
   });
 }
 
 export function useUpdateLease(id: string) {
   const source = useBauxSource();
   const tenants = useLocatairesSource();
-  const client = useQueryClient();
-  const invalidate = useInvalidate();
+  const invalidate = useInvalidateOccupancy();
+  const refreshOnStale = useRefreshOnStale();
   return useMutation({
     mutationFn: async (input: LeaseInput) => {
       const lease = leaseSchema.parse(await source.updateLease(id, input));
-      if (lease.status !== 'brouillon') await tenants.assignTenantUnit(lease.tenantIds, lease.unitId);
+      if (lease.status !== 'brouillon' && !source.derivesOccupancy) await tenants.assignTenantUnit(lease.tenantIds, lease.unitId);
       return lease;
     },
-    onSuccess: async () => {
-      await invalidate();
-      await client.invalidateQueries({ queryKey: locatairesKeys.all });
-    },
+    onSuccess: invalidate,
+    onError: refreshOnStale,
   });
 }
 
 export function useDuplicateLease() {
   const source = useBauxSource();
-  const invalidate = useInvalidate();
+  const invalidate = useInvalidateOccupancy();
   return useMutation({
     mutationFn: async (id: string) => leaseSchema.parse(await source.duplicateLease(id)),
     onSuccess: invalidate,
@@ -124,13 +140,13 @@ export function useDuplicateLease() {
 
 export function useDeleteLease() {
   const source = useBauxSource();
-  const invalidate = useInvalidate();
+  const invalidate = useInvalidateOccupancy();
   return useMutation({ mutationFn: (id: string) => source.deleteLease(id), onSuccess: invalidate });
 }
 
 export function useArchiveLease() {
   const source = useBauxSource();
-  const invalidate = useInvalidate();
+  const invalidate = useInvalidateOccupancy();
   return useMutation({
     mutationFn: async ({ id, archived }: { id: string; archived: boolean }) => leaseSchema.parse(await source.setLeaseArchived(id, archived)),
     onSuccess: invalidate,
@@ -140,8 +156,7 @@ export function useArchiveLease() {
 export function useImportLeases() {
   const source = useBauxSource();
   const tenants = useLocatairesSource();
-  const client = useQueryClient();
-  const invalidate = useInvalidate();
+  const invalidate = useInvalidateOccupancy();
   return useMutation({
     mutationFn: async (inputs: readonly LeaseImportRow[]) => {
       const created = z.array(leaseSchema).parse(await source.importLeases(inputs));
@@ -150,19 +165,18 @@ export function useImportLeases() {
       }
       return created;
     },
-    onSuccess: async () => {
-      await invalidate();
-      await client.invalidateQueries({ queryKey: locatairesKeys.all });
-    },
+    onSuccess: invalidate,
   });
 }
 
 export function useRecordNotice(leaseId: string) {
   const source = useBauxSource();
-  const invalidate = useInvalidate();
+  const invalidate = useInvalidateOccupancy();
+  const refreshOnStale = useRefreshOnStale();
   return useMutation({
     mutationFn: async (input: NoticeInput) => exitSchema.parse(await source.recordNotice(leaseId, input)),
     onSuccess: invalidate,
+    onError: refreshOnStale,
   });
 }
 
@@ -179,8 +193,7 @@ export function useSetExitStep(leaseId: string) {
 export function useMarkReturned(leaseId: string) {
   const source = useBauxSource();
   const tenants = useLocatairesSource();
-  const client = useQueryClient();
-  const invalidate = useInvalidate();
+  const invalidate = useInvalidateOccupancy();
   return useMutation({
     mutationFn: async (context: ReturnContext) => {
       const attestation = attestationSchema.parse(await source.markReturned(leaseId, context));
@@ -197,10 +210,7 @@ export function useMarkReturned(leaseId: string) {
       }
       return attestation;
     },
-    onSuccess: async () => {
-      await invalidate();
-      await client.invalidateQueries({ queryKey: locatairesKeys.all });
-    },
+    onSuccess: invalidate,
   });
 }
 
@@ -277,12 +287,25 @@ export function useReservationMail() {
   });
 }
 
+export function useRenewLease() {
+  const source = useBauxSource();
+  const invalidate = useInvalidateOccupancy();
+  const refreshOnStale = useRefreshOnStale();
+  return useMutation({
+    mutationFn: async (leaseId: string) => leaseSchema.parse(await source.renewLease(leaseId)),
+    onSuccess: invalidate,
+    onError: refreshOnStale,
+  });
+}
+
 export function useReviseRent() {
   const source = useBauxSource();
-  const invalidate = useInvalidate();
+  const invalidate = useInvalidateOccupancy();
+  const refreshOnStale = useRefreshOnStale();
   return useMutation({
     mutationFn: async ({ leaseId, rent }: { leaseId: string; rent: string }) => leaseSchema.parse(await source.reviseRent(leaseId, rent)),
     onSuccess: invalidate,
+    onError: refreshOnStale,
   });
 }
 

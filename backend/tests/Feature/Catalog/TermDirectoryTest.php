@@ -12,6 +12,7 @@ use App\Modules\Catalog\Models\Term;
 use App\Modules\Catalog\PublicApi\TermDirectory;
 use App\Shared\Http\ApiProblem;
 use App\Shared\Tenancy\MissingOrganizationContext;
+use Illuminate\Support\Facades\DB;
 use Tests\Feature\Catalog\CatalogContext as C;
 
 beforeEach(function (): void {
@@ -107,4 +108,44 @@ it('cherche par sens système et liste avec les surcharges, sans archivées ni m
             ->and($contacts[5]->label())->toBe('Étude notariale')
             ->and($this->annuaire->bySemanticKey(VocabularyKey::LeaseComponent, 'rent'))->toHaveCount(1);
     });
+});
+
+it('résout plusieurs valeurs en deux requêtes, par identifiant, avec les mêmes données que find', function (): void {
+    $propre = catalogueCreerValeur($this->org);
+    $autreValeur = catalogueCreerValeur($this->org, 'ramonage_bis');
+    $plateforme = Term::query()->whereNull('organization_id')->where('key', 'maintenance')->firstOrFail();
+
+    C::dans($this->org, function () use ($propre, $autreValeur, $plateforme): void {
+        $requetes = 0;
+        DB::listen(function () use (&$requetes): void {
+            $requetes++;
+        });
+        $trouvees = $this->annuaire->findMany([$propre->id, $autreValeur->id, $plateforme->id, $propre->id], VocabularyKey::ExpenseCategory);
+        $comptees = $requetes;
+
+        expect(array_keys($trouvees))->toEqualCanonicalizing([$propre->id, $autreValeur->id, $plateforme->id])
+            ->and($trouvees[$propre->id])->toEqual($this->annuaire->find($propre->id, VocabularyKey::ExpenseCategory))
+            ->and($trouvees[$plateforme->id]->isPlatform)->toBeTrue()
+            ->and($comptees)->toBeLessThanOrEqual(2)
+            ->and($this->annuaire->findMany([], VocabularyKey::ExpenseCategory))->toBe([]);
+    });
+});
+
+it('refuse tout le lot par term_not_found dès qu\'une valeur est étrangère, d\'un autre référentiel ou inconnue', function (): void {
+    $propre = catalogueCreerValeur($this->org);
+    $etrangere = catalogueCreerValeur($this->autre);
+    $plateforme = Term::query()->whereNull('organization_id')->where('key', 'bailiff')->firstOrFail();
+
+    C::dans($this->org, function () use ($propre, $etrangere, $plateforme): void {
+        expect(catalogueRefus(fn () => $this->annuaire->findMany([$propre->id, $etrangere->id], VocabularyKey::ExpenseCategory)))->toBe('term_not_found')
+            ->and(catalogueRefus(fn () => $this->annuaire->findMany([$propre->id, $plateforme->id], VocabularyKey::ExpenseCategory)))->toBe('term_not_found')
+            ->and(catalogueRefus(fn () => $this->annuaire->findMany([$propre->id, fake()->uuid()], VocabularyKey::ExpenseCategory)))->toBe('term_not_found')
+            ->and(catalogueRefus(fn () => $this->annuaire->findMany([$propre->id, 'pas-un-uuid'], VocabularyKey::ExpenseCategory)))->toBe('term_not_found');
+    });
+});
+
+it('exige un contexte d\'organisation pour résoudre plusieurs valeurs', function (): void {
+    $plateforme = Term::query()->whereNull('organization_id')->where('key', 'bailiff')->firstOrFail();
+
+    expect(fn () => $this->annuaire->findMany([$plateforme->id], VocabularyKey::ContactCategory))->toThrow(MissingOrganizationContext::class);
 });

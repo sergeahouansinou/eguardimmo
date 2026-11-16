@@ -14,6 +14,7 @@ enum ErrorCode: string
     case IdempotencyKeyReused = 'idempotency_key_reused';
     case EntryAlreadyReversed = 'entry_already_reversed';
     case EntryIsReversal = 'entry_is_reversal';
+    case StatementTooLong = 'statement_too_long';
 
     public function problem(?string $detail = null): ApiProblem
     {
@@ -24,7 +25,7 @@ enum ErrorCode: string
     {
         return match ($this) {
             self::EntryNotFound => 404,
-            self::EntryUnbalanced, self::EntryInvalid => 422,
+            self::EntryUnbalanced, self::EntryInvalid, self::StatementTooLong => 422,
             self::IdempotencyKeyReused, self::EntryAlreadyReversed, self::EntryIsReversal => 409,
         };
     }
@@ -38,6 +39,7 @@ enum ErrorCode: string
             self::IdempotencyKeyReused => 'Clé d\'idempotence déjà utilisée',
             self::EntryAlreadyReversed => 'Écriture déjà contre-passée',
             self::EntryIsReversal => 'Contre-passation non contre-passable',
+            self::StatementTooLong => 'Relevé trop long',
         };
     }
 
@@ -50,6 +52,7 @@ enum ErrorCode: string
             self::IdempotencyKeyReused => 'Cette clé d\'idempotence a déjà servi pour une écriture différente.',
             self::EntryAlreadyReversed => 'Cette écriture a déjà été contre-passée à une autre date.',
             self::EntryIsReversal => 'Une contre-passation ne se contre-passe pas : passez une nouvelle écriture.',
+            self::StatementTooLong => 'Ce relevé dépasse le nombre de lignes affichables : réduisez la période.',
         };
     }
 }

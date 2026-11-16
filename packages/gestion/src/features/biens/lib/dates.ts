@@ -61,3 +61,7 @@ export function addMonths(iso: string, months: number): string {
   const text = (value: number, width = 2) => String(value).padStart(width, '0');
   return `${text(targetYear, 4)}-${text(targetMonth)}-${text(Math.min(day, lastDay))}`;
 }
+
+export function todayIso(now: Date = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
