@@ -27,6 +27,14 @@ describe('AttachmentChip', () => {
     expect(onRemove).toHaveBeenCalledOnce();
   });
 
+  it('garde au bouton de téléchargement une zone cliquable de 24 px sans agrandir la pastille', () => {
+    render(<AttachmentChip name="devis.pdf" sizeBytes={2048} mimeType="application/pdf" onOpen={vi.fn()} />);
+    const button = screen.getByRole('button', { name: 'Télécharger devis.pdf' });
+    expect(button.className).toContain('min-h-6');
+    expect(button.className).toContain('py-1');
+    expect(button.className).toContain('-my-1');
+  });
+
   it('n’affiche pas de bouton de retrait en lecture seule', () => {
     render(<AttachmentChip name="photo.jpg" sizeBytes={1_468_006} mimeType="image/jpeg" />);
     expect(screen.queryByRole('button')).toBeNull();

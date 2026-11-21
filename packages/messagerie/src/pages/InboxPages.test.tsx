@@ -1,9 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { expectNoA11yViolations } from '../../test/axe';
 import { FIXED_NOW, brokenSource, renderMessagerie } from '../../test/render';
 import { createDemoMessagerieSource } from '../data/demo';
+import type { MessagerieSource } from '../data/source';
 import { conversationListSchema } from '../data/schemas';
 import { ConversationPage } from './ConversationPage';
 import { InboxPage } from './InboxPage';
@@ -91,6 +92,28 @@ describe('ConversationPage', () => {
     await source.setConversationArchived('c-relance', true);
     await userEvent.click(await screen.findByRole('button', { name: 'Désarchiver' }));
     await waitFor(() => { expect(screen.getByRole('button', { name: 'Archiver' })).toBeTruthy(); });
+  });
+
+  it('télécharge une pièce jointe de la conversation quand la source le permet', async () => {
+    const download = vi.fn<NonNullable<MessagerieSource['downloadConversationAttachment']>>(() => Promise.resolve());
+    const source = { ...createDemoMessagerieSource({ space: 'locataire', now: () => FIXED_NOW }), downloadConversationAttachment: download };
+    renderMessagerie(<ConversationPage conversationId="c-assurance" />, { source });
+    await userEvent.click(await screen.findByRole('button', { name: 'Télécharger attestation-assurance-2026.pdf' }));
+    expect(download).toHaveBeenCalledWith(expect.objectContaining({ name: 'attestation-assurance-2026.pdf' }));
+  });
+
+  it('affiche l’échec d’un téléchargement sans le masquer', async () => {
+    const download = vi.fn<NonNullable<MessagerieSource['downloadConversationAttachment']>>(() => Promise.reject(new Error('La pièce n’est plus disponible.')));
+    const source = { ...createDemoMessagerieSource({ space: 'locataire', now: () => FIXED_NOW }), downloadConversationAttachment: download };
+    renderMessagerie(<ConversationPage conversationId="c-assurance" />, { source });
+    await userEvent.click(await screen.findByRole('button', { name: 'Télécharger attestation-assurance-2026.pdf' }));
+    expect((await screen.findByRole('alert')).textContent).toContain('La pièce n’est plus disponible.');
+  });
+
+  it('laisse la pièce non cliquable quand la source n’offre pas de téléchargement', async () => {
+    renderMessagerie(<ConversationPage conversationId="c-assurance" />);
+    await screen.findByText('attestation-assurance-2026.pdf');
+    expect(screen.queryByRole('button', { name: /Télécharger/ })).toBeNull();
   });
 
   it('signale une conversation introuvable', async () => {

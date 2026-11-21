@@ -7,8 +7,9 @@ import { Composer } from '../components/Composer';
 import { ConversationThread } from '../components/ConversationThread';
 import { ErrorBlock, LoadingBlock, PageHeader, RoleBadge } from '../components/parts';
 import { useMessagerieConfig } from '../config';
+import { useMessagerieSource } from '../data/source';
 import { useConversation, useReplyToConversation, useSetConversationArchived, useSetConversationRead } from '../data/queries';
-import type { ConversationDetail } from '../data/schemas';
+import type { Attachment, ConversationDetail } from '../data/schemas';
 import { errorMessage } from '../lib/errors';
 
 function ConversationBody({ conversation }: { conversation: ConversationDetail }) {
@@ -16,12 +17,20 @@ function ConversationBody({ conversation }: { conversation: ConversationDetail }
   const reply = useReplyToConversation(conversation.id);
   const { mutate: setRead } = useSetConversationRead();
   const archive = useSetConversationArchived();
+  const { downloadConversationAttachment } = useMessagerieSource();
   const [failure, setFailure] = useState<string | null>(null);
   const copy = profile.conversation;
 
   useEffect(() => {
     if (conversation.unread) setRead({ id: conversation.id, read: true });
   }, [conversation.id, conversation.unread, setRead]);
+
+  const openAttachment = downloadConversationAttachment
+    ? (attachment: Attachment) => {
+        setFailure(null);
+        downloadConversationAttachment(attachment).catch((error: unknown) => { setFailure(errorMessage(error)); });
+      }
+    : undefined;
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
@@ -52,7 +61,12 @@ function ConversationBody({ conversation }: { conversation: ConversationDetail }
       {failure ? <Alert tone="danger" title="Action impossible">{failure}</Alert> : null}
       <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="flex min-w-0 flex-col gap-3">
-          <ConversationThread messages={conversation.messages} participants={conversation.participants} viewerId={conversation.viewerId} />
+          <ConversationThread
+            messages={conversation.messages}
+            participants={conversation.participants}
+            viewerId={conversation.viewerId}
+            {...(openAttachment ? { onOpenAttachment: openAttachment } : {})}
+          />
           <Composer
             label="Votre réponse"
             placeholder={copy.replyPlaceholder}

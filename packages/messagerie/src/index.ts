@@ -1,6 +1,7 @@
 export { MessagerieProvider, useMessagerieConfig } from './config';
 export type { MessagerieConfig, MessagerieProviderProps, MessagerieRoutes } from './config';
 export {
+  agenceApiProfile,
   agenceProfile,
   bailleurProfile,
   consoleProfile,
@@ -13,7 +14,7 @@ export type { InboxTabConfig, MessagerieProfile } from './profiles';
 export { createDemoMessagerieSource, demoSeeds } from './data/demo';
 export type { DemoMessagerieSource, DemoSourceOptions, MessagerieSpace } from './data/demo';
 export { createApiMessagerieSource } from './data/api';
-export type { ApiMessagerieSourceDependencies, ApiMessagerieSourceOptions } from './data/api';
+export type { ApiMessagerieSourceOptions } from './data/api';
 export { MessagerieSourceProvider, useMessagerieSource } from './data/source';
 export type { MessagerieSource } from './data/source';
 export {
@@ -107,3 +108,9 @@ export { NewMessagePage } from './pages/NewMessagePage';
 export { CampaignsPage, NewCampaignPage } from './pages/CampaignPages';
 export { SupportBoardPage, TicketPage } from './pages/SupportPages';
 export { HelpPage } from './pages/HelpPage';
+
+export * from './external';
+export * from './support';
+
+export * from './campaigns';
+export * from './announcements';

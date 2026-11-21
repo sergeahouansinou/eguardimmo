@@ -21,8 +21,9 @@ import {
 import { useMessagerieConfig } from '../config';
 import type { TicketPatch } from '../data/inputs';
 import { useReplyToTicket, useStaff, useTicket, useUpdateTicket } from '../data/queries';
+import { useMessagerieSource } from '../data/source';
 import { ticketPrioritySchema } from '../data/schemas';
-import type { TicketDetail as TicketDetailData } from '../data/schemas';
+import type { Attachment, TicketDetail as TicketDetailData } from '../data/schemas';
 import { formatDateTime } from '../lib/dates';
 import { errorMessage } from '../lib/errors';
 import { Composer } from './Composer';
@@ -53,6 +54,7 @@ function TicketDetailBody({ ticket }: { ticket: TicketDetailData }) {
   const staff = useStaff();
   const update = useUpdateTicket(ticket.id);
   const reply = useReplyToTicket(ticket.id);
+  const { downloadTicketAttachment } = useMessagerieSource();
   const [notice, setNotice] = useState<string | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
 
@@ -64,6 +66,13 @@ function TicketDetailBody({ ticket }: { ticket: TicketDetailData }) {
       onError: (error) => { setFailure(errorMessage(error)); },
     });
   };
+
+  const openAttachment = downloadTicketAttachment
+    ? (attachment: Attachment) => {
+        setFailure(null);
+        downloadTicketAttachment(attachment).catch((error: unknown) => { setFailure(errorMessage(error)); });
+      }
+    : undefined;
 
   const resolved = ticket.status === 'resolu';
 
@@ -131,7 +140,13 @@ function TicketDetailBody({ ticket }: { ticket: TicketDetailData }) {
       {failure ? <Alert tone="danger" title="Action impossible">{failure}</Alert> : null}
       <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex min-w-0 flex-col gap-3">
-          <ConversationThread messages={ticket.messages} participants={ticket.participants} viewerId={ticket.viewerId} label="Échanges du ticket" />
+          <ConversationThread
+            messages={ticket.messages}
+            participants={ticket.participants}
+            viewerId={ticket.viewerId}
+            label="Échanges du ticket"
+            {...(openAttachment ? { onOpenAttachment: openAttachment } : {})}
+          />
           <Composer
             allowInternal
             label="Votre réponse"

@@ -1,0 +1,15 @@
+export { StaffMessagerieProvider, useOptionalStaffConfig, useStaffConfig } from './context';
+export type { StaffConfig, StaffMessagerieProviderProps, StaffProof, StaffRoutes, StaffSection } from './context';
+export { createStaffApiSource } from './api/source';
+export type { StaffApiSourceOptions } from './api/source';
+export { describeStaffFailure, staffErrorMessage } from './api/errors';
+export type { StaffMessagerieSource } from './source';
+export { staffCapabilities } from './model';
+export type { OrganizationKind, StaffCapabilities, StaffKind, StaffRole, StaffUnread } from './model';
+export { StaffInboxPage } from './pages/InboxPage';
+export { StaffThreadPage } from './pages/ThreadPage';
+export { StaffSectionNav } from './components/SectionNav';
+export { StaffWriteButton } from './components/WriteButton';
+export type { StaffWriteButtonProps } from './components/WriteButton';
+export type { StaffWriteLink, StaffWriteTarget } from './components/ComposeDialog';
+export { useOptionalStaffUnread, totalUnread } from './unread';

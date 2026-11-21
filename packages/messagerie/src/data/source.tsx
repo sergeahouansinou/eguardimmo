@@ -2,6 +2,7 @@
 
 import { createContext, use } from 'react';
 import type { ReactNode } from 'react';
+import type { Attachment } from './schemas';
 import type {
   CampaignQuery,
   ConversationQuery,
@@ -23,6 +24,7 @@ export interface MessagerieSource {
   createConversation: (input: NewConversationInput) => Promise<unknown>;
   setConversationRead: (id: string, read: boolean) => Promise<void>;
   setConversationArchived: (id: string, archived: boolean) => Promise<void>;
+  downloadConversationAttachment?: (attachment: Pick<Attachment, 'id' | 'name'>) => Promise<void>;
 
   listCampaigns: (query: CampaignQuery) => Promise<unknown>;
   getCampaign: (id: string) => Promise<unknown>;
@@ -37,6 +39,7 @@ export interface MessagerieSource {
   updateTicket: (id: string, patch: TicketPatch) => Promise<unknown>;
   replyToTicket: (id: string, input: ReplyInput) => Promise<unknown>;
   requestTicketAccess: (id: string, reason: string) => Promise<unknown>;
+  downloadTicketAttachment?: (attachment: Pick<Attachment, 'id' | 'name'>) => Promise<void>;
 
   supportStatus: () => Promise<unknown>;
   listMyTickets: () => Promise<unknown>;

@@ -1,11 +1,12 @@
 'use client';
 
-import { Mail, Siren } from 'lucide-react';
+import { LifeBuoy, Mail, Siren } from 'lucide-react';
 import { useState } from 'react';
 import { Button, Card, CardTitle, Icon, TextField } from '@eguardimmo/ui';
 import { useMessagerieConfig } from '../config';
 import { useHelpCenter } from '../data/queries';
 import type { HelpContactRow } from '../data/schemas';
+import { useOptionalSupportConfig } from '../support/context';
 import { ContactSupportDialog } from './ContactSupportDialog';
 import { FaqAccordion, filterHelp } from './FaqAccordion';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from './parts';
@@ -20,6 +21,19 @@ function ContactRows({ rows }: { rows: HelpContactRow[] }) {
         </div>
       ))}
     </dl>
+  );
+}
+
+function ContactSupportAction() {
+  const support = useOptionalSupportConfig();
+  if (support === null) return <ContactSupportDialog />;
+  return (
+    <Button asChild>
+      <support.Link href={support.routes.newRequest}>
+        <Icon icon={LifeBuoy} />
+        Écrire au support
+      </support.Link>
+    </Button>
   );
 }
 
@@ -70,7 +84,7 @@ export function HelpCenter() {
                 </Link>
               </Button>
             ) : null}
-            {profile.help.supportTicket ? <ContactSupportDialog /> : null}
+            {profile.help.supportTicket ? <ContactSupportAction /> : null}
           </div>
         </Card>
         {data.emergencyTitle && data.emergency.length > 0 ? (

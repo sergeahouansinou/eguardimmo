@@ -1,0 +1,16 @@
+export { ExternalMessagerieProvider, useExternalConfig } from './context';
+export type { ExternalConfig, ExternalMessagerieProviderProps, ExternalRoutes } from './context';
+export { createExternalApiSource } from './api/source';
+export type { ExternalApiSourceOptions } from './api/source';
+export type { ExternalMessagerieSource } from './source';
+export { describeThreadFailure, isFinalFailure, threadErrorMessage } from './api/errors';
+export type { ThreadFailure, ThreadFailureKind } from './api/errors';
+export { NOT_A_NOTICE_TEXT } from './copy';
+export { ThreadInbox } from './components/ThreadInbox';
+export type { InboxScope } from './components/ThreadInbox';
+export { ExternalInboxPage } from './pages/InboxPage';
+export { ExternalNewThreadPage } from './pages/NewThreadPage';
+export { ExternalThreadPage } from './pages/ThreadPage';
+export { externalKeys, useComposeOptions, useUnreadMessages } from './queries';
+export type * from './model';
+export * from './staff';

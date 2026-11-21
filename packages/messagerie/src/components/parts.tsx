@@ -82,8 +82,8 @@ export function PageHeader({ title, subtitle, breadcrumb, actions, className }: 
       {breadcrumb ? <Breadcrumb items={breadcrumb} Link={Link} /> : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h1 className="text-page-title text-fg">{title}</h1>
-          {subtitle ? <p className="text-body text-fg-muted">{subtitle}</p> : null}
+          <h1 className="text-page-title text-fg [overflow-wrap:anywhere]">{title}</h1>
+          {subtitle ? <p className="text-body text-fg-muted [overflow-wrap:anywhere]">{subtitle}</p> : null}
         </div>
         {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
       </div>

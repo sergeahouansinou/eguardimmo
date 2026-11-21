@@ -17,71 +17,6 @@ const pagination = z.object({ total: count, current_page: z.number().int().posit
 
 const envelope = <T extends z.ZodType>(schema: T) => z.object({ data: schema });
 
-const ticketSpace = z.enum(['tenant', 'owner', 'organization', 'marketplace']);
-const ticketStatus = z.enum(['open', 'waiting', 'resolved']);
-const ticketPriority = z.enum(['high', 'normal', 'low']);
-const ticketCategory = z.enum(['messaging', 'billing', 'account', 'documents', 'other']);
-
-export type ApiTicketSpace = z.infer<typeof ticketSpace>;
-export type ApiTicketStatus = z.infer<typeof ticketStatus>;
-export type ApiTicketPriority = z.infer<typeof ticketPriority>;
-export type ApiTicketCategory = z.infer<typeof ticketCategory>;
-
-const ticketSummary = z.object({
-  id,
-  reference: z.string().min(1),
-  subject: z.string().min(1),
-  organization: z.string().nullable(),
-  space: ticketSpace,
-  requester: personRef,
-  assignee: personRef.nullable(),
-  priority: ticketPriority,
-  status: ticketStatus,
-  category: ticketCategory,
-  created_at: isoDateTime,
-  updated_at: isoDateTime,
-  message_count: count,
-});
-
-const supportMessage = z.object({
-  id,
-  author: z.object({ id, name: z.string().min(1), support: z.boolean() }),
-  body: z.string(),
-  internal: z.boolean(),
-  sent_at: isoDateTime,
-  attachments: z.array(attachment),
-});
-
-const ticketDetail = ticketSummary.extend({
-  first_response_at: isoDateTime.nullable(),
-  messages: z.array(supportMessage),
-  access: z.object({ reason: z.string(), granted_at: isoDateTime, expires_at: isoDateTime }).nullable(),
-});
-
-export type ApiTicketSummary = z.infer<typeof ticketSummary>;
-export type ApiTicketDetail = z.infer<typeof ticketDetail>;
-
-export const ticketSummaryListSchema = z.object({ data: z.array(ticketSummary) });
-export const ticketDetailResponseSchema = envelope(ticketDetail);
-
-export const consoleTicketListSchema = z.object({
-  data: z.array(ticketSummary),
-  meta: pagination,
-  counts: z.object({ open: count, waiting: count, resolved: count, all: count }),
-});
-
-export const ticketStatsResponseSchema = envelope(
-  z.object({
-    open: count,
-    open_high: count,
-    waiting: count,
-    resolved_30d: count,
-    first_response_minutes: count.nullable(),
-  }),
-);
-
-export const staffResponseSchema = envelope(z.array(personRef));
-
 const conversationSummary = z.object({
   id,
   subject: z.string().min(1),
@@ -119,3 +54,7 @@ export const conversationDetailResponseSchema = envelope(conversationDetail);
 export const conversationStatsResponseSchema = envelope(z.object({ unread: count, stale: count }));
 
 export const recipientsResponseSchema = envelope(z.array(z.object({ id, name: z.string().min(1), role: z.string() })));
+
+export const supportStatusResponseSchema = envelope(
+  z.object({ online: z.boolean(), hours_label: z.string().min(1), response_label: z.string().min(1) }),
+);

@@ -4,7 +4,12 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./testing": "./src/external/testing.ts",
+    "./announcements-testing": "./src/announcements/testing.ts",
+    "./campaigns-testing": "./src/campaigns/testing.ts",
+    "./support-testing": "./src/support/testing.ts",
+    "./support-console-testing": "./src/support/console/testing.ts"
   },
   "scripts": {
     "lint": "eslint .",

@@ -200,6 +200,32 @@ export const agenceProfile: MessagerieProfile = {
   },
 };
 
+export const agenceApiProfile: MessagerieProfile = {
+  ...agenceProfile,
+  inbox: {
+    ...agenceProfile.inbox,
+    subtitle: 'Conversations internes de l’équipe de gestion.',
+    searchPlaceholder: 'Ex. Camille Martin, reversement',
+    tabs: [
+      { id: 'all', label: 'Toutes' },
+      { id: 'unread', label: 'Non lues' },
+      { id: 'archived', label: 'Archivées' },
+    ],
+    listTitle: 'counterpart',
+    emptyHint: 'Écrivez à un membre de l’équipe depuis « Nouveau message ».',
+  },
+  conversation: { ...agenceProfile.conversation, subtitle: (name) => `Avec ${name}`, replyPlaceholder: 'Ex. Je m’en occupe lundi.' },
+  compose: {
+    ...agenceProfile.compose,
+    subtitle: 'Le message est adressé à un membre de votre équipe.',
+    recipientPlaceholder: 'Rechercher un membre de l’équipe',
+    linkLabel: null,
+    linkPlaceholder: '',
+    subjectPlaceholder: 'Ex. Dossier Studio 4',
+    bodyPlaceholder: 'Ex. Bonjour, peux-tu relancer le plombier ?',
+  },
+};
+
 export const bailleurProfile: MessagerieProfile = {
   space: 'bailleur',
   inbox: {

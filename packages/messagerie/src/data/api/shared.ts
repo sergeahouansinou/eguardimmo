@@ -8,7 +8,7 @@ export interface ApiMessagerieSourceOptions {
   client: ApiClient;
   organizationId: string | null;
   space: MessagerieSpace;
-  viewerId?: string;
+  fetchImpl?: typeof fetch;
 }
 
 export const STALE_HOURS = 48;

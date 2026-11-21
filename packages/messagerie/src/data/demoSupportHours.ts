@@ -2,7 +2,7 @@ const PARIS = 'Europe/Paris';
 const OPENING_HOUR = 9;
 const CLOSING_HOUR = 18;
 
-export function isSupportOnline(now: Date): boolean {
+export function isDemoSupportOnline(now: Date): boolean {
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone: PARIS,
     weekday: 'short',

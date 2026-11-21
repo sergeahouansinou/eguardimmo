@@ -15,11 +15,13 @@ export interface AttachmentChipProps {
   sizeBytes: number;
   mimeType: string;
   onRemove?: () => void;
+  onOpen?: () => void;
   className?: string;
 }
 
-export function AttachmentChip({ name, sizeBytes, mimeType, onRemove, className }: AttachmentChipProps) {
+export function AttachmentChip({ name, sizeBytes, mimeType, onRemove, onOpen, className }: AttachmentChipProps) {
   const glyph = mimeType.startsWith('image/') ? Image : FileText;
+  const size = formatFileSize(sizeBytes);
   return (
     <span
       className={cx(
@@ -29,8 +31,19 @@ export function AttachmentChip({ name, sizeBytes, mimeType, onRemove, className 
       )}
     >
       <Icon icon={glyph} size={14} className="text-fg-subtle" />
-      <span className="min-w-0 truncate">{name}</span>
-      <span className="shrink-0 text-fg-subtle">{formatFileSize(sizeBytes)}</span>
+      {onOpen ? (
+        <button
+          type="button"
+          aria-label={`Télécharger ${name}`}
+          onClick={onOpen}
+          className="-my-1 min-h-6 min-w-0 truncate py-1 underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          {name}
+        </button>
+      ) : (
+        <span className="min-w-0 truncate">{name}</span>
+      )}
+      <span className="shrink-0 text-fg-subtle">{size}</span>
       {onRemove ? <IconButton label={`Retirer ${name}`} icon={X} size="xs" onClick={onRemove} /> : null}
     </span>
   );

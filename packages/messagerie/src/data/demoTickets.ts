@@ -1,4 +1,4 @@
-import { isSupportOnline } from '../lib/hours';
+import { isDemoSupportOnline } from './demoSupportHours';
 import { accessReasonSchema, replyInputSchema, supportTicketInputSchema } from './inputs';
 import type { CreateSupportTicketInput, ReplyInput, TicketPatch, TicketQuery } from './inputs';
 import { ticketPrioritySchema, ticketStatusSchema } from './schemas';
@@ -141,7 +141,7 @@ export function ticketHandlers(context: DemoContext) {
 
     supportStatus: () =>
       run(() => ({
-        online: isSupportOnline(context.now()),
+        online: isDemoSupportOnline(context.now()),
         hoursLabel: state.support.hoursLabel,
         responseLabel: state.support.responseLabel,
       })),

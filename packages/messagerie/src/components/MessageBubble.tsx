@@ -1,7 +1,7 @@
 import { Lock } from 'lucide-react';
 import { Avatar, Icon, cx } from '@eguardimmo/ui';
 import { formatDateTime } from '../lib/dates';
-import type { Message, Participant } from '../data/schemas';
+import type { Attachment, Message, Participant } from '../data/schemas';
 import { AttachmentChip } from './attachments';
 import { RichText } from './RichText';
 
@@ -9,9 +9,10 @@ export interface MessageBubbleProps {
   message: Message;
   author: Participant | undefined;
   own: boolean;
+  onOpenAttachment?: (attachment: Attachment) => void;
 }
 
-export function MessageBubble({ message, author, own }: MessageBubbleProps) {
+export function MessageBubble({ message, author, own, onOpenAttachment }: MessageBubbleProps) {
   const name = author?.name ?? 'Participant inconnu';
   return (
     <li className={cx('flex min-w-0 gap-2', own && 'flex-row-reverse')}>
@@ -44,7 +45,12 @@ export function MessageBubble({ message, author, own }: MessageBubbleProps) {
           <ul aria-label="Pièces jointes" className="flex flex-wrap gap-1.5">
             {message.attachments.map((attachment) => (
               <li key={attachment.id} className="flex max-w-full min-w-0">
-                <AttachmentChip name={attachment.name} sizeBytes={attachment.sizeBytes} mimeType={attachment.mimeType} />
+                <AttachmentChip
+                  name={attachment.name}
+                  sizeBytes={attachment.sizeBytes}
+                  mimeType={attachment.mimeType}
+                  {...(onOpenAttachment ? { onOpen: () => { onOpenAttachment(attachment); } } : {})}
+                />
               </li>
             ))}
           </ul>
