@@ -106,7 +106,7 @@ function NavGroup({ section, currentPath, Link }: { section: NavSection; current
         aria-controls={listId}
         onClick={() => { setOpen((value) => !value); }}
         className={cx(
-          'flex w-full items-center justify-between pt-0.5 pr-2 pb-1 pl-2.5 text-left text-[11px] leading-4 font-semibold tracking-[0.06em] text-nav-muted uppercase',
+          'flex min-h-6 w-full items-center justify-between pt-0.5 pr-2 pb-1 pl-2.5 text-left text-[11px] leading-4 font-semibold tracking-[0.06em] text-nav-muted uppercase',
           navFocus,
         )}
       >

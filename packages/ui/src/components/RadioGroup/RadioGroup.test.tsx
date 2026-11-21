@@ -29,4 +29,10 @@ describe('RadioGroup', () => {
     render(<RadioGroup label="Chauffage" options={options} value="" error="Champ requis" onValueChange={() => undefined} />);
     expect(screen.getByText('Champ requis')).toBeTruthy();
   });
+
+  it('donne à chaque choix une zone cliquable d’au moins 24 px', () => {
+    render(<RadioGroup label="Chauffage" options={options} value="gaz" onValueChange={() => undefined} />);
+    expect(screen.getByText('Gaz').className).toContain('min-h-6');
+    expect(screen.getByText('Gaz').parentElement?.className).toContain('min-h-6');
+  });
 });

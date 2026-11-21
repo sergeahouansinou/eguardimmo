@@ -3,11 +3,14 @@ import { ApiUnreachableError, toApiError } from './errors';
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type Query = Record<string, string | number | boolean | null | undefined>;
 export type Body = Record<string, unknown> | FormData;
+export interface RequestOptions {
+  headers?: Readonly<Record<string, string>>;
+}
 
 export interface ApiClient {
   readonly baseUrl: string;
   get: (path: string, query?: Query) => Promise<unknown>;
-  post: (path: string, body?: Body) => Promise<unknown>;
+  post: (path: string, body?: Body, options?: RequestOptions) => Promise<unknown>;
   put: (path: string, body?: Body) => Promise<unknown>;
   patch: (path: string, body?: Body) => Promise<unknown>;
   delete: (path: string) => Promise<unknown>;
@@ -49,11 +52,12 @@ export function createApiClient({ baseUrl, fetchImpl = (...args) => fetch(...arg
     await csrfReady;
   };
 
-  const request = async (method: Method, path: string, body?: Body, query?: Query): Promise<unknown> => {
+  const request = async (method: Method, path: string, body?: Body, query?: Query, options?: RequestOptions): Promise<unknown> => {
     if (method !== 'GET') await ensureCsrf();
     const headers: Record<string, string> = { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
     const token = readCookie(XSRF_COOKIE);
     if (token && method !== 'GET') headers['X-XSRF-TOKEN'] = token;
+    Object.assign(headers, options?.headers);
     let payload: BodyInit | undefined;
     if (body instanceof FormData) payload = body;
     else if (body !== undefined) {
@@ -76,7 +80,7 @@ export function createApiClient({ baseUrl, fetchImpl = (...args) => fetch(...arg
   return {
     baseUrl,
     get: (path, query) => request('GET', path, undefined, query),
-    post: (path, body) => request('POST', path, body),
+    post: (path, body, options) => request('POST', path, body, undefined, options),
     put: (path, body) => request('PUT', path, body),
     patch: (path, body) => request('PATCH', path, body),
     delete: (path) => request('DELETE', path),

@@ -22,6 +22,21 @@ describe('Badge', () => {
     expect(screen.getByText('État').className).toContain(expected);
   });
 
+  it('reste sur une ligne de 20 px par défaut, et se coupe sur plusieurs lignes avec wrap', () => {
+    render(
+      <>
+        <Badge>Court</Badge>
+        <Badge wrap>Mandat MANDAT-2026-TRES-LONGUE-REFERENCE-SANS-ESPACE</Badge>
+      </>,
+    );
+    expect(screen.getByText('Court').className).toContain('whitespace-nowrap');
+    const wrapped = screen.getByText(/Mandat MANDAT-2026/);
+    expect(wrapped.className).toContain('[overflow-wrap:anywhere]');
+    expect(wrapped.className).toContain('max-w-full');
+    expect(wrapped.className).not.toContain('whitespace-nowrap');
+    expect(wrapped.className).not.toMatch(/(^| )h-5( |$)/);
+  });
+
   it('transmet les attributs natifs', () => {
     render(<Badge data-testid="badge">Payé</Badge>);
     expect(screen.getByTestId('badge').textContent).toBe('Payé');

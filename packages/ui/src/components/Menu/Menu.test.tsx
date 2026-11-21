@@ -16,7 +16,7 @@ function Exemple({ onLogout }: { onLogout: () => void }) {
       </MenuTrigger>
       <MenuContent>
         <MenuLabel>Mon compte</MenuLabel>
-        <MenuItem meta="Essentiel">Abonnement</MenuItem>
+        <MenuItem meta="Silver">Abonnement</MenuItem>
         <MenuSeparator />
         <MenuSegmented
           label="Apparence"
@@ -41,7 +41,7 @@ describe('Menu', () => {
     render(<Exemple onLogout={onLogout} />);
     await userEvent.click(screen.getByRole('button', { name: 'Compte' }));
     expect(await screen.findByRole('menu', { name: 'Compte' })).toBeTruthy();
-    expect(screen.getByRole('menuitem', { name: /Abonnement/ }).textContent).toContain('Essentiel');
+    expect(screen.getByRole('menuitem', { name: /Abonnement/ }).textContent).toContain('Silver');
     await userEvent.click(screen.getByRole('menuitem', { name: 'Se déconnecter' }));
     expect(onLogout).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('menu')).toBeNull();

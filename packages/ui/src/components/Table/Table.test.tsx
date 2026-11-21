@@ -38,8 +38,48 @@ describe('Table', () => {
     expect(within(row).getByRole('cell', { name: '850 €' }).className).toContain('tabular-nums');
   });
 
+  it('donne aux liens de cellule une zone cliquable d’au moins 24 px', () => {
+    render(
+      <Table aria-label="Baux">
+        <TableBody>
+          <TableRow>
+            <TableCell>
+              <a href="/baux/1">Bail 1</a>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>,
+    );
+    const cell = screen.getByRole('link', { name: 'Bail 1' }).closest('td');
+    expect(cell?.className).toContain('[&_a]:min-h-6');
+    expect(cell?.className).toContain('[&_a]:py-1.5');
+  });
+
   it('n’a aucune violation axe', async () => {
     const { container } = render(<Sample />);
     await expectNoA11yViolations(container);
+  });
+
+  it('rend la zone de défilement atteignable au clavier quand un libellé est fourni', () => {
+    render(
+      <Table aria-label="Loyers" scrollLabel="Loyers, défilement horizontal">
+        <TableBody>
+          <TableRow>
+            <TableCell>Koffi Adjovi</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>,
+    );
+
+    const region = screen.getByRole('region', { name: 'Loyers, défilement horizontal' });
+    expect(region.getAttribute('tabindex')).toBe('0');
+    expect(within(region).getByRole('table', { name: 'Loyers' })).toBeTruthy();
+  });
+
+  it('ne rend la zone de défilement ni focalisable ni nommée sans libellé', () => {
+    const { container } = render(<Sample />);
+
+    expect(container.querySelector('[tabindex]')).toBeNull();
+    expect(screen.queryByRole('region')).toBeNull();
   });
 });

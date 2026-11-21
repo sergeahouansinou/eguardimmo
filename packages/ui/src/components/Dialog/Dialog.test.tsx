@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { expectNoA11yViolations } from '../../../test/axe';
@@ -52,5 +53,29 @@ describe('Dialog, focus initial', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: 'Rechercher' }));
     expect(document.activeElement).toBe(await screen.findByRole('textbox', { name: 'Rechercher' }));
+  });
+});
+
+describe('Dialog, retour du focus', () => {
+  it('rend le focus au bouton qui a ouvert un dialogue piloté par l’état, sans déclencheur', async () => {
+    function Piloté() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => { setOpen(true); }}>Retirer</button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogContent title="Confirmer" description="Retirer le partage ?">
+              <button type="button" data-autofocus>Annuler</button>
+            </DialogContent>
+          </Dialog>
+        </>
+      );
+    }
+    render(<Piloté />);
+    const opener = screen.getByRole('button', { name: 'Retirer' });
+    await userEvent.click(opener);
+    await screen.findByRole('dialog');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => { expect(document.activeElement).toBe(opener); });
   });
 });

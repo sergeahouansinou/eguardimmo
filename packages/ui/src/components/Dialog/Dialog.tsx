@@ -36,15 +36,27 @@ export function DialogContent({
   className,
   children,
   onOpenAutoFocus,
+  onCloseAutoFocus,
   ...props
 }: DialogContentProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const openedFrom = useRef<HTMLElement | null>(null);
   const focusInitial = (event: Event) => {
     onOpenAutoFocus?.(event);
     if (event.defaultPrevented) return;
     event.preventDefault();
+    openedFrom.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const target = contentRef.current?.querySelector<HTMLElement>('[data-autofocus]') ?? contentRef.current;
     target?.focus();
+  };
+  const restoreFocus = (event: Event) => {
+    onCloseAutoFocus?.(event);
+    if (event.defaultPrevented) return;
+    const origin = openedFrom.current;
+    if (origin?.isConnected && origin !== document.body) {
+      event.preventDefault();
+      origin.focus();
+    }
   };
   return (
     <DialogPrimitive.Portal>
@@ -55,6 +67,7 @@ export function DialogContent({
         ref={contentRef}
         tabIndex={-1}
         onOpenAutoFocus={focusInitial}
+        onCloseAutoFocus={restoreFocus}
         className={cx(
           'fixed z-50 flex flex-col outline-none overflow-hidden border border-line bg-surface text-fg',
           placementClasses[placement],

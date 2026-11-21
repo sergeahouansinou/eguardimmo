@@ -13,14 +13,16 @@ const toneClasses: Record<BadgeTone, string> = {
 
 export interface BadgeProps extends ComponentProps<'span'> {
   tone?: BadgeTone;
+  wrap?: boolean;
 }
 
-export function Badge({ tone = 'neutral', className, ...props }: BadgeProps) {
+export function Badge({ tone = 'neutral', wrap = false, className, ...props }: BadgeProps) {
   return (
     <span
       {...props}
       className={cx(
-        'inline-flex h-5 items-center gap-1 rounded-full px-1.5 text-caption whitespace-nowrap',
+        'inline-flex items-center gap-1 rounded-full px-1.5 text-caption',
+        wrap ? 'max-w-full min-h-5 py-0.5 [overflow-wrap:anywhere]' : 'h-5 whitespace-nowrap',
         toneClasses[tone],
         className,
       )}

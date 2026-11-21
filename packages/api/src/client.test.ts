@@ -30,6 +30,19 @@ describe('client API', () => {
     expect(init.body).toBe('{"name":"A"}');
   });
 
+  it('ajoute les en-têtes demandés à une écriture sans toucher à ceux du client', async () => {
+    const fetchImpl = vi.fn(() => Promise.resolve(json(201, { data: {} })));
+    const client = createApiClient({ baseUrl: 'https://api.test', fetchImpl: fetchImpl, readCookie: () => 'x' });
+
+    await client.post('/api/v1/tenant/interventions', { title: 'Fuite' }, { headers: { 'Idempotency-Key': 'cle-0001-abcdef' } });
+    await client.post('/api/v1/tenant/interventions', { title: 'Fuite' });
+
+    const [, avec] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    const [, sans] = fetchImpl.mock.calls[1] as unknown as [string, RequestInit];
+    expect(avec.headers).toMatchObject({ 'Idempotency-Key': 'cle-0001-abcdef', 'X-XSRF-TOKEN': 'x', Accept: 'application/json' });
+    expect(sans.headers).not.toHaveProperty('Idempotency-Key');
+  });
+
   it('traduit un problème RFC 9457 en ApiError', async () => {
     const client = createApiClient({
       baseUrl: 'https://api.test',
@@ -52,6 +65,17 @@ describe('client API', () => {
     const error = (await client.post('/x').catch((caught: unknown) => caught)) as ApiError;
     expect(error.firstFieldError()).toBe('Trop de tentatives.');
     expect(error.retryAfterSeconds).toBe(30);
+  });
+
+  it('conserve les membres d’extension du problème, hors membres standard', async () => {
+    const client = createApiClient({
+      baseUrl: 'https://api.test',
+      fetchImpl: () => Promise.resolve(json(409, { type: 'x', title: 'Doublon', status: 409, detail: 'd', code: 'party_possible_duplicate', request_id: 'r', candidates: [{ id: 'a', display_name: 'A', reasons: ['email'] }] })),
+      readCookie: () => 'x',
+    });
+
+    const error = (await client.post('/x').catch((caught: unknown) => caught)) as ApiError;
+    expect(error.extensions).toEqual({ candidates: [{ id: 'a', display_name: 'A', reasons: ['email'] }] });
   });
 
   it('signale un serveur injoignable sans le confondre avec une réponse', async () => {

@@ -1,9 +1,10 @@
 import type { ComponentProps } from 'react';
 import { cx } from '../../lib/cx';
 
-export function Table({ className, ...props }: ComponentProps<'table'>) {
+export function Table({ className, scrollLabel, ...props }: ComponentProps<'table'> & { scrollLabel?: string }) {
+  const scroll = scrollLabel === undefined ? {} : { role: 'region', 'aria-label': scrollLabel, tabIndex: 0 };
   return (
-    <div className="relative min-w-0 overflow-x-auto">
+    <div {...scroll} className="relative min-w-0 overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
       <table {...props} className={cx('w-full border-collapse text-body text-fg-muted', className)} />
     </div>
   );
@@ -55,7 +56,7 @@ export function TableCell({
     <td
       {...props}
       className={cx(
-        'h-9 px-2 whitespace-nowrap',
+        'h-9 px-2 whitespace-nowrap [&_a]:min-h-6 [&_a]:py-1.5',
         numeric && 'text-right tabular-nums',
         strong && 'font-medium text-fg',
         className,

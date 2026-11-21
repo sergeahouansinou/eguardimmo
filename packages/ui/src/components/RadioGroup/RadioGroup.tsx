@@ -25,7 +25,7 @@ export function RadioGroup({ label, options, value, onValueChange, error, classN
         {options.map((option) => {
           const id = `${name}-${option.value}`;
           return (
-            <span key={option.value} className="inline-flex items-center gap-2">
+            <span key={option.value} className="inline-flex min-h-6 items-center gap-2">
               <input
                 id={id}
                 type="radio"
@@ -36,7 +36,7 @@ export function RadioGroup({ label, options, value, onValueChange, error, classN
                 onChange={() => { onValueChange(option.value); }}
                 className="size-4 cursor-pointer accent-action focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed"
               />
-              <label htmlFor={id} className="text-body text-fg">
+              <label htmlFor={id} className="inline-flex min-h-6 cursor-pointer items-center text-body text-fg">
                 {option.label}
               </label>
             </span>

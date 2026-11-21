@@ -56,6 +56,11 @@ describe('SideNav déplié', () => {
     expect(screen.getByRole('link', { name: 'Lots' }).getAttribute('aria-current')).toBeNull();
   });
 
+  it('garde à l’intitulé de groupe une zone cliquable d’au moins 24 px', () => {
+    render(<SideNav label="Navigation" sections={sections} currentPath="/" />);
+    expect(screen.getByRole('button', { name: 'Principal' }).className).toContain('min-h-6');
+  });
+
   it('replie un groupe par son intitulé', async () => {
     render(<SideNav label="Navigation" sections={sections} currentPath="/" />);
     await userEvent.click(screen.getByRole('button', { name: 'Principal' }));
