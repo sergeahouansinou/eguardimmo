@@ -28,17 +28,19 @@ describe('CSP de la console', () => {
     expect(directive(policy, 'form-action')).toEqual(["'self'"]);
     expect(directive(policy, 'object-src')).toEqual(["'none'"]);
     expect(directive(policy, 'frame-ancestors')).toEqual(["'none'"]);
-    expect(directive(policy, 'img-src')).toEqual(["'self'", 'data:']);
+    expect(directive(policy, 'img-src')).toEqual(["'self'", 'data:', 'blob:']);
     expect(directive(policy, 'connect-src')).toEqual(["'self'"]);
     expect(directive(policy, 'script-src')).toEqual(["'self'", "'unsafe-inline'"]);
     expect(directive(policy, 'style-src')).toEqual(["'self'", "'unsafe-inline'"]);
+    expect(directive(policy, 'frame-src')).toEqual(["'none'"]);
+    expect(policy).toContain('; upgrade-insecure-requests');
     expect(policy).not.toContain('unsafe-eval');
     expect(policy).not.toMatch(/https?:|\*/);
   });
 
-  it('en développement : autorise eval et les websockets du rechargement à chaud', async () => {
+  it('en développement : autorise eval et les websockets locaux du rechargement à chaud', async () => {
     const policy = await policyFor('development');
     expect(directive(policy, 'script-src')).toContain("'unsafe-eval'");
-    expect(directive(policy, 'connect-src')).toEqual(["'self'", 'ws:', 'wss:']);
+    expect(directive(policy, 'connect-src')).toEqual(["'self'", 'ws://localhost:*', 'ws://127.0.0.1:*']);
   });
 });

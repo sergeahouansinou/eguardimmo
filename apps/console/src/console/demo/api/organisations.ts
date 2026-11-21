@@ -7,19 +7,23 @@ import {
   organisationListSchema,
   organisationModulesSchema,
   paginate,
+  planServes,
   suspendInputSchema,
   updateOrganisationInputSchema,
 } from '../../schemas';
 import type { OrganisationDetail, OrganisationRow } from '../../schemas';
 import { MODULE_GROUP_LABELS, listQuerySchema, organisationFiltersSchema } from '../../schemas';
 import type { OrganisationsApi } from '../../source';
-import { formatDecimal, formatInteger } from '@/lib/format';
+import { formatDecimal } from '@/lib/format';
 import { MODULE_SEEDS } from '../catalog';
 import { addDays, parisDay } from '../clock';
 import { requireFound } from '../context';
 import type { DemoContext } from '../context';
 import { slug } from '../organisations';
 import type { OrgRecord } from '../organisations';
+
+const formatStorage = (mb: number): string => (mb < 1000 ? `${String(mb)} Mo` : `${formatDecimal(mb / 1000)} Go`);
+const usageText = (value: number, max: number | null, unbounded: string): string => `${String(value)} sur ${max === null ? unbounded : String(max)}`;
 
 const dateFr = (day: string) => `${day.slice(8, 10)}/${day.slice(5, 7)}/${day.slice(0, 4)}`;
 
@@ -115,7 +119,7 @@ export function organisationsApi(ctx: DemoContext): OrganisationsApi {
       const orgEvents = ctx.audit.events
         .filter((event) => event.organisationId === org.id)
         .sort((left, right) => Date.parse(right.at) - Date.parse(left.at));
-      const storageText = `${formatDecimal(org.usage.storageMb / 1000)} sur ${String(plan.limits.storageGb)} Go`;
+      const storageText = `${formatStorage(org.usage.storageMb)} sur ${formatStorage(plan.limits.storageMb)}`;
       const detail: OrganisationDetail = {
         organisation: toOrganisationRow(org, ctx),
         holder: org.holder,
@@ -127,10 +131,10 @@ export function organisationsApi(ctx: DemoContext): OrganisationsApi {
         includedUsers: plan.limits.users,
         modules: { enabled: enabled.size, total: MODULE_SEEDS.length, disabled },
         usage: [
-          { id: 'users', label: 'Utilisateurs', value: org.users.length, max: plan.limits.users, text: `${String(org.users.length)} sur ${String(plan.limits.users)}` },
-          { id: 'lots', label: 'Lots', value: org.usage.lots, max: plan.limits.lots, text: `${String(org.usage.lots)} sur ${String(plan.limits.lots)}` },
-          { id: 'storage', label: 'Stockage', value: org.usage.storageMb, max: plan.limits.storageGb * 1000, text: storageText },
-          { id: 'emails', label: 'E-mails du mois', value: org.usage.emailsMonth, max: plan.limits.emailsMonth, text: `${formatInteger(org.usage.emailsMonth)} sur ${formatInteger(plan.limits.emailsMonth)}` },
+          { id: 'users', label: 'Utilisateurs', value: org.users.length, max: plan.limits.users, text: usageText(org.users.length, plan.limits.users, 'selon le plan') },
+          { id: 'lots', label: 'Lots', value: org.usage.lots, max: plan.limits.lots, text: usageText(org.usage.lots, plan.limits.lots, 'illimité') },
+          { id: 'storage', label: 'Stockage', value: org.usage.storageMb, max: plan.limits.storageMb, text: storageText },
+          { id: 'signatures', label: 'Signatures du mois', value: org.usage.signaturesMonth, max: plan.limits.signaturesMonth, text: usageText(org.usage.signaturesMonth, plan.limits.signaturesMonth, 'selon le plan') },
         ],
         users: org.users,
         lastActivity: org.lastActivity,
@@ -176,7 +180,7 @@ export function organisationsApi(ctx: DemoContext): OrganisationsApi {
     create: (rawInput) => {
       const input = createOrganisationInputSchema.parse(rawInput);
       const plan = requireFound(ctx.state.plans.find((candidate) => candidate.id === input.planId), 'Plan');
-      if (plan.audience !== input.type) throw new ConsoleError('invalid', `Le plan ${plan.name} ne s’adresse pas à ce type d’organisation.`);
+      if (!planServes(plan, input.type)) throw new ConsoleError('invalid', `Le plan ${plan.name} ne s’adresse pas à ce type d’organisation.`);
       const id = slug(input.name);
       if (ctx.state.orgs.some((org) => org.id === id)) throw new ConsoleError('conflict', 'Une organisation porte déjà ce nom.');
       const day = today();
@@ -195,7 +199,7 @@ export function organisationsApi(ctx: DemoContext): OrganisationsApi {
         activity: 'Organisation créée par l’opérateur, invitation en attente',
         creation: `${dateFr(day)}, par l’opérateur`,
         users: [{ id: `${id}-u1`, name: holderName, role: 'Titulaire', lastLoginAt: ctx.clock().toISOString() }],
-        usage: { lots: 0, storageMb: 0, emailsMonth: 0 },
+        usage: { lots: 0, storageMb: 0, signaturesMonth: 0 },
         lastActivity: { at: ctx.clock().toISOString(), by: holderName },
         moduleOverrides: {},
         accesses: [],
@@ -276,7 +280,7 @@ export function organisationsApi(ctx: DemoContext): OrganisationsApi {
     changePlan: (id, planId) => {
       const org = findOrg(ctx, id);
       const plan = requireFound(ctx.state.plans.find((candidate) => candidate.id === planId), 'Plan');
-      if (plan.audience !== org.type) throw new ConsoleError('invalid', `Le plan ${plan.name} ne s’adresse pas à ce type d’organisation.`);
+      if (!planServes(plan, org.type)) throw new ConsoleError('invalid', `Le plan ${plan.name} ne s’adresse pas à ce type d’organisation.`);
       if (org.planId === plan.id) throw new ConsoleError('conflict', 'L’organisation est déjà sur ce plan.');
       const previous = requireFound(ctx.state.plans.find((candidate) => candidate.id === org.planId), 'Plan');
       org.planId = plan.id;

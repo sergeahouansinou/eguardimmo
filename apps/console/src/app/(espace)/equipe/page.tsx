@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
-import { EquipeScreen } from '@/features/equipe/EquipeScreen';
+import { EquipeScreen as DemoEquipeScreen } from '@/features/equipe/EquipeScreen';
+import { dataSource } from '@/lib/env';
+import { EquipeScreen } from '@/screens/exploitation/EquipeScreen';
 
 export const metadata: Metadata = { title: 'Équipe opérateur' };
 
 export default function Page() {
-  return <EquipeScreen />;
+  return dataSource === 'api' ? <EquipeScreen /> : <DemoEquipeScreen />;
 }

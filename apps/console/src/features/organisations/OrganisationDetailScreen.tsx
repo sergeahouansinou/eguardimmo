@@ -182,7 +182,7 @@ function Summary({ detail, onEdit, onSeeUsers }: { detail: OrganisationDetail; o
     {
       label: 'Utilisateurs',
       value: formatInteger(organisation.userCount),
-      caption: `sur ${formatInteger(detail.includedUsers)} inclus dans le plan`,
+      caption: detail.includedUsers === null ? 'plusieurs inclus dans le plan' : `sur ${formatInteger(detail.includedUsers)} inclus dans le plan`,
     },
     {
       label: 'Modules activés',

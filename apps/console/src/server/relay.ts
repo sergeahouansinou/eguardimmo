@@ -42,10 +42,10 @@ async function readBody(request: Request): Promise<ArrayBuffer | undefined | Res
 }
 
 export async function handleRelay(request: Request): Promise<Response> {
-  const foreign = rejectForeignOrigin(request);
-  if (foreign) return foreign;
   const env = readServerEnv();
   if (!env) return problems.notConfigured();
+  const foreign = rejectForeignOrigin(request, env.CONSOLE_PUBLIC_ORIGIN);
+  if (foreign) return foreign;
 
   const session = currentSession(request, env.CONSOLE_SESSION_SECRET);
   if (!session) {

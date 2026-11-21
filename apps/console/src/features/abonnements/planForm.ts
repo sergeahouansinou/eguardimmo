@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { organisationTypeSchema, planInputSchema } from '@/console/schemas';
+import { planAudienceSchema, planInputSchema } from '@/console/schemas';
 import type { PlanInput } from '@/console/schemas';
-import { wholeNumber } from '@/lib/formFields';
+import { optionalWholeNumber, wholeNumber } from '@/lib/formFields';
 import { parseEurosToMinor } from '@/lib/format';
 
 const euros = (label: string) =>
@@ -25,15 +25,18 @@ export const planFormSchema = z.object({
     .string()
     .trim()
     .regex(/^[a-z][a-z0-9-]{1,30}$/, 'Code en minuscules, chiffres et tirets (2 à 31 caractères).'),
-  audience: organisationTypeSchema,
+  audience: planAudienceSchema,
   description: z.string().trim().max(200, '200 caractères au plus.'),
   monthly: euros('Prix mensuel'),
   yearly: euros('Prix annuel'),
   trialDays: whole('Essai', 0, 90),
-  users: whole('Utilisateurs', 1, 10_000),
-  lots: whole('Lots', 1, 100_000),
-  storageGb: whole('Stockage', 1, 100_000),
-  emailsMonth: whole('E-mails', 1, 10_000_000),
+  users: optionalWholeNumber('Utilisateurs', 1, 10_000),
+  lots: optionalWholeNumber('Lots', 1, 100_000),
+  tenants: optionalWholeNumber('Locataires', 1, 1_000_000),
+  leases: optionalWholeNumber('Baux', 1, 1_000_000),
+  inspections: optionalWholeNumber('États des lieux', 1, 1_000_000),
+  storageMb: whole('Stockage', 1, 100_000_000),
+  signaturesMonth: optionalWholeNumber('Signatures', 1, 1_000_000),
   publicSignup: z.boolean(),
 });
 
@@ -49,7 +52,15 @@ export function toPlanInput(values: PlanFormValues, moduleIds: string[]): PlanIn
     monthlyMinor: values.monthly,
     yearlyMinor: values.yearly,
     trialDays: values.trialDays,
-    limits: { users: values.users, lots: values.lots, storageGb: values.storageGb, emailsMonth: values.emailsMonth },
+    limits: {
+      users: values.users,
+      lots: values.lots,
+      tenants: values.tenants,
+      leases: values.leases,
+      inspections: values.inspections,
+      storageMb: values.storageMb,
+      signaturesMonth: values.signaturesMonth,
+    },
     moduleIds,
     publicSignup: values.publicSignup,
   });

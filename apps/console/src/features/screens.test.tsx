@@ -41,7 +41,7 @@ const SCREENS: readonly [string, () => ReactElement][] = [
   ['module, détail', () => <ModuleDetailScreen id="messagerie" />],
   ['abonnements', () => <AbonnementsScreen />],
   ['plan, création', () => <PlanFormScreen />],
-  ['plan, édition', () => <PlanFormScreen planId="essentiel" />],
+  ['plan, édition', () => <PlanFormScreen planId="silver" />],
   ['journal d’audit', () => <AuditScreen />],
   ['événement d’audit', () => <AuditDetailScreen id="evt-2026-204518" />],
   ['RGPD', () => <RgpdScreen />],

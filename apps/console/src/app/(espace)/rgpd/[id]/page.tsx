@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import { RgpdDetailScreen } from '@/features/rgpd/RgpdDetailScreen';
+import { RgpdDetailScreen as DemoRgpdDetailScreen } from '@/features/rgpd/RgpdDetailScreen';
+import { dataSource } from '@/lib/env';
+import { RgpdDetailScreen } from '@/screens/rgpd/RgpdDetailScreen';
 import { IdParam } from '@/ui/IdParam';
 
 export const metadata: Metadata = { title: 'Demande RGPD' };
@@ -9,5 +11,5 @@ export function generateStaticParams() {
 }
 
 export default function Page({ params }: PageProps<'/rgpd/[id]'>) {
-  return <IdParam params={params}>{(id) => <RgpdDetailScreen id={id} />}</IdParam>;
+  return <IdParam params={params}>{(id) => (dataSource === 'api' ? <RgpdDetailScreen id={id} /> : <DemoRgpdDetailScreen id={id} />)}</IdParam>;
 }

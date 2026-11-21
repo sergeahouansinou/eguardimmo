@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
 import { errorMessage } from '@/console/hooks/core';
 import { useChangePlan, useUpdateOrganisation } from '@/console/hooks/mutations';
 import { useSubscriptions } from '@/console/hooks/queries';
-import { updateOrganisationInputSchema } from '@/console/schemas';
+import { planServes, updateOrganisationInputSchema } from '@/console/schemas';
+import { usersLabel } from '@/features/abonnements/limits';
 import type { OrganisationDetail } from '@/console/schemas';
 import { formatEuros } from '@/lib/format';
 import { useZodForm } from '@/lib/useZodForm';
@@ -30,11 +31,11 @@ function ChangePlanForm({ open, onOpenChange, detail }: DialogProps) {
   const [planId, setPlanId] = useState(detail.organisation.planId);
   const [failure, setFailure] = useState<string | null>(null);
   const options = (plans.data?.plans ?? [])
-    .filter((plan) => plan.audience === detail.organisation.type)
+    .filter((plan) => planServes(plan, detail.organisation.type))
     .map((plan) => ({
       value: plan.id,
       label: plan.name,
-      description: `${formatEuros(plan.monthlyMinor)} HT par mois · ${String(plan.limits.users)} utilisateurs`,
+      description: `${formatEuros(plan.monthlyMinor)} HT par mois · ${usersLabel(plan.limits.users)}`,
       trailing: plan.id === detail.organisation.planId ? <Badge tone="info">Plan actuel</Badge> : undefined,
     }));
   return (

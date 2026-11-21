@@ -1,5 +1,6 @@
 'use client';
 
+import { csvDocument } from '@eguardimmo/shell';
 import { Button, Icon, Select, StatCard, Tab, TabList, TabPanel, Tabs, TextField } from '@eguardimmo/ui';
 import { Building2, Download, Plus } from 'lucide-react';
 import Link from 'next/link';
@@ -85,10 +86,13 @@ export function OrganisationsScreen() {
         rows.push(...result.rows);
         if (rows.length >= result.total || result.rows.length === 0) break;
       }
-      const lines = rows.map((row) =>
-        [row.name, ORGANISATION_TYPE_LABELS[row.type], row.planName, String(row.userCount), row.state, row.createdOn].join(';'),
+      downloadTextFile(
+        'organisations.csv',
+        csvDocument([
+          ['Organisation', 'Type', 'Plan', 'Utilisateurs', 'État', 'Création'],
+          ...rows.map((row) => [row.name, ORGANISATION_TYPE_LABELS[row.type], row.planName, row.userCount, row.state, row.createdOn]),
+        ]),
       );
-      downloadTextFile('organisations.csv', ['Organisation;Type;Plan;Utilisateurs;État;Création', ...lines].join('\n'));
       notify.success('Export prêt', `${String(rows.length)} organisations dans organisations.csv.`);
     } catch {
       notify.error('Export impossible', 'Réessayez dans un instant.');

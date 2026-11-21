@@ -1,5 +1,6 @@
 'use client';
 
+import { csvDocument } from '@eguardimmo/shell';
 import { Badge, Button, Icon, ProgressBar, StatCard } from '@eguardimmo/ui';
 import { Download, Plus } from 'lucide-react';
 import Link from 'next/link';
@@ -15,7 +16,7 @@ import { EmptyLine, ListRow, Section } from '@/ui/Section';
 import { useNotify } from '@/ui/notify';
 
 function PlanPrice({ plan }: { plan: PlanRow }) {
-  return <span className="tabular-nums">{plan.monthlyMinor === 0 ? 'Gratuit' : `${formatEuros(plan.monthlyMinor)} / mois`}</span>;
+  return <span className="tabular-nums">{`${formatEuros(plan.monthlyMinor)} / mois · ${formatEuros(plan.yearlyMinor)} / an`}</span>;
 }
 
 export function AbonnementsScreen() {
@@ -61,10 +62,13 @@ function Content({ data }: { data: SubscriptionsOverview }) {
   const maxRevenue = revenue[0]?.mrrMinor ?? 1;
 
   const exportCsv = () => {
-    const lines = data.plans.map((plan) =>
-      [plan.name, plan.tagline, plan.monthlyMinor, plan.organisations, plan.trials, plan.mrrMinor].join(';'),
+    downloadTextFile(
+      'abonnements.csv',
+      csvDocument([
+        ['Plan', 'Description', 'Prix mensuel (centimes)', 'Organisations', 'Essais', 'Revenu mensuel (centimes)'],
+        ...data.plans.map((plan) => [plan.name, plan.tagline, plan.monthlyMinor, plan.organisations, plan.trials, plan.mrrMinor]),
+      ]),
     );
-    downloadTextFile('abonnements.csv', ['Plan;Description;Prix mensuel (centimes);Organisations;Essais;Revenu mensuel (centimes)', ...lines].join('\n'));
     notify.success('Export prêt', 'Les plans sont dans abonnements.csv.');
   };
 
@@ -125,7 +129,7 @@ function Content({ data }: { data: SubscriptionsOverview }) {
               </li>
             ))}
           </ul>
-          <p className="pt-3 text-caption text-fg-subtle">Les essais et le plan Propriétaire ne génèrent pas de revenu.</p>
+          <p className="pt-3 text-caption text-fg-subtle">Les essais, le plan Gratuit et le plan Propriétaire ne génèrent pas de revenu.</p>
         </Section>
         <div className="flex flex-col gap-4">
           <Section

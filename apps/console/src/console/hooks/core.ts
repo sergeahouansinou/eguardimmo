@@ -2,6 +2,7 @@
 
 import { shellKeys, useAfterHydration } from '@eguardimmo/shell';
 import type { ClientQuery } from '@eguardimmo/shell';
+import { ApiError } from '@eguardimmo/api';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
 import { ConsoleError } from '../schemas';
@@ -26,7 +27,7 @@ export function useConsoleQuery<T>(
     queryKey: [CONSOLE_KEY, ...key],
     queryFn: async () => schema.parse(await load(source)),
     placeholderData: keepPrevious ? keepPreviousData : undefined,
-    retry: (failures, error) => !(error instanceof ConsoleError) && failures < 1,
+    retry: (failures, error) => !(error instanceof ConsoleError) && !(error instanceof ApiError && error.status < 500) && failures < 1,
   });
   const base = useAfterHydration(query);
   return {

@@ -32,7 +32,9 @@ export interface DataTableProps<T> {
 export function DataTable<T>({ label, columns, rows, rowKey, rowLink, rowActions, groupLabel, Link }: DataTableProps<T>) {
   const hasAction = rowLink !== undefined || rowActions !== undefined;
   return (
-    <div className="overflow-x-auto max-sm:overflow-visible">
+    // Région défilante : le focus clavier est la seule façon de la parcourir sans souris (WCAG 2.1.1).
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+    <div role="region" aria-label={`Défilement du tableau : ${label}`} tabIndex={0} className="overflow-x-auto max-sm:overflow-visible focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
       <table aria-label={label} className="w-full border-collapse text-left text-body max-sm:block">
         <thead className="max-sm:sr-only">
           <tr className="border-b border-line">

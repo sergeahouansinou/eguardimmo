@@ -1,20 +1,36 @@
 import { z } from 'zod';
 import { count, idSchema, isoDateSchema, minorSchema } from './common';
-import { organisationTypeSchema } from './organisations';
+
+const optionalLimit = (max: number) => z.number().int().min(1).max(max).nullable();
 
 export const planLimitsSchema = z.object({
-  users: z.number().int().min(1).max(10_000),
-  lots: z.number().int().min(1).max(100_000),
-  storageGb: z.number().int().min(1).max(100_000),
-  emailsMonth: z.number().int().min(1).max(10_000_000),
+  users: optionalLimit(10_000),
+  lots: optionalLimit(100_000),
+  tenants: optionalLimit(1_000_000),
+  leases: optionalLimit(1_000_000),
+  inspections: optionalLimit(1_000_000),
+  storageMb: z.number().int().min(1).max(100_000_000),
+  signaturesMonth: optionalLimit(1_000_000),
 });
 export type PlanLimits = z.infer<typeof planLimitsSchema>;
+
+export const planAudienceSchema = z.enum(['organisation', 'proprietaire']);
+export type PlanAudience = z.infer<typeof planAudienceSchema>;
+
+export const PLAN_AUDIENCE_LABELS: Record<PlanAudience, string> = {
+  organisation: 'Bailleurs et agences',
+  proprietaire: 'Propriétaires',
+};
+
+export function planServes(plan: { audience: PlanAudience }, type: string): boolean {
+  return plan.audience === (type === 'proprietaire' ? 'proprietaire' : 'organisation');
+}
 
 export const planSchema = z.object({
   id: idSchema,
   code: z.string().regex(/^[a-z][a-z0-9-]{1,30}$/),
   name: z.string().min(1),
-  audience: organisationTypeSchema,
+  audience: planAudienceSchema,
   tagline: z.string(),
   description: z.string(),
   monthlyMinor: minorSchema,
@@ -32,7 +48,7 @@ export const planInputSchema = z.object({
     .string()
     .trim()
     .regex(/^[a-z][a-z0-9-]{1,30}$/, 'Code en minuscules, chiffres et tirets (2 à 31 caractères).'),
-  audience: organisationTypeSchema,
+  audience: planAudienceSchema,
   description: z.string().trim().max(200),
   monthlyMinor: z.number().int().min(0).max(100_000_00),
   yearlyMinor: z.number().int().min(0).max(1_000_000_00),

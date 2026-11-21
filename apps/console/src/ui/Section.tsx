@@ -84,12 +84,12 @@ export function KeyValueList({ items, labelWidth = 'sm:grid-cols-[140px_minmax(0
   );
 }
 
-export function UsageBar({ label, value, max, text }: { label: string; value: number; max: number; text: string }) {
-  const percent = max === 0 ? 0 : Math.round((value / max) * 100);
+export function UsageBar({ label, value, max, text }: { label: string; value: number; max: number | null; text: string }) {
+  const percent = max === null || max === 0 ? 0 : Math.round((value / max) * 100);
   return (
     <div className="grid grid-cols-[104px_minmax(0,1fr)] items-center gap-x-3 gap-y-0.5 sm:grid-cols-[104px_minmax(0,1fr)_auto]">
       <span className="text-body text-fg-muted">{label}</span>
-      <ProgressBar value={percent} label={`${label} : ${text}`} className="h-2" />
+      {max === null ? <span aria-hidden="true" /> : <ProgressBar value={percent} label={`${label} : ${text}`} className="h-2" />}
       <b className="col-span-2 text-right text-body-strong tabular-nums sm:col-span-1">{text}</b>
     </div>
   );

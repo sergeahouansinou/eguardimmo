@@ -63,13 +63,13 @@ export const organisationDetailSchema = z.object({
   activity: z.string(),
   creation: z.string(),
   planMonthlyMinor: minorSchema,
-  includedUsers: count,
+  includedUsers: count.nullable(),
   modules: z.object({
     enabled: count,
     total: count,
     disabled: z.array(z.object({ id: idSchema, name: z.string(), reason: z.string() })),
   }),
-  usage: z.array(z.object({ id: z.string(), label: z.string(), value: count, max: count, text: z.string() })),
+  usage: z.array(z.object({ id: z.string(), label: z.string(), value: count, max: count.nullable(), text: z.string() })),
   users: z.array(
     z.object({
       id: idSchema,

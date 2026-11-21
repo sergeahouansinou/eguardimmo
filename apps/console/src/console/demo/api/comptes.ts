@@ -11,6 +11,7 @@ import {
   paginate,
   suspendInputSchema,
 } from '../../schemas';
+import { csvLine } from '@eguardimmo/shell';
 import type { ComptesApi } from '../../source';
 import { buildAccountDetail, toAccountRow } from '../comptes';
 import type { AccountRecord } from '../comptes';
@@ -70,7 +71,7 @@ export function comptesApi(ctx: DemoContext): ComptesApi {
           (tab === '' || account.state === tab),
       );
       const lines = accounts.map((account) =>
-        [account.name, account.email, account.profiles.map((kind) => PROFILE_LABELS[kind]).join(' + '), account.twoFactor ? 'Oui' : 'Non', account.state].join(';'),
+        csvLine([account.name, account.email, account.profiles.map((kind) => PROFILE_LABELS[kind]).join(' + '), account.twoFactor ? 'Oui' : 'Non', account.state]),
       );
       ctx.audit.record({
         type: 'export',

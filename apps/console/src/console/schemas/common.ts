@@ -55,8 +55,8 @@ export function matchesQuery(query: string, ...fields: string[]): boolean {
 export class ConsoleError extends Error {
   readonly code: 'not_found' | 'conflict' | 'invalid' | 'forbidden';
 
-  constructor(code: ConsoleError['code'], message: string) {
-    super(message);
+  constructor(code: ConsoleError['code'], message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = 'ConsoleError';
     this.code = code;
   }

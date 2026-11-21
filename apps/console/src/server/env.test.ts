@@ -38,7 +38,7 @@ describe('configuration serveur', () => {
 
   it('exige https pour l’URL de l’API en production, localhost compris', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    const base = { CONSOLE_SESSION_SECRET: KEY, CONSOLE_RELAY_KEY: RELAY, NODE_ENV: 'production' };
+    const base = { CONSOLE_SESSION_SECRET: KEY, CONSOLE_RELAY_KEY: RELAY, NODE_ENV: 'production', CONSOLE_PUBLIC_ORIGIN: 'https://console.example.com' };
     expect(parseServerEnv({ ...base, CONSOLE_API_URL: 'http://api.example.com' })).toBeNull();
     expect(parseServerEnv({ ...base, CONSOLE_API_URL: 'http://localhost:8000' })).toBeNull();
     expect(String(error.mock.calls[0]?.[0])).toContain('CONSOLE_API_URL');
@@ -49,5 +49,32 @@ describe('configuration serveur', () => {
     const base = { CONSOLE_SESSION_SECRET: KEY, CONSOLE_RELAY_KEY: RELAY, CONSOLE_API_URL: 'http://localhost:8000' };
     expect(parseServerEnv({ ...base, NODE_ENV: 'development' })?.CONSOLE_API_URL).toBe('http://localhost:8000');
     expect(parseServerEnv({ ...base, NODE_ENV: 'test' })?.CONSOLE_API_URL).toBe('http://localhost:8000');
+  });
+
+  describe('origine publique de la console', () => {
+    const base = { CONSOLE_API_URL: 'https://api.example.com', CONSOLE_SESSION_SECRET: KEY, CONSOLE_RELAY_KEY: RELAY };
+
+    it('est obligatoire en production : sans elle la configuration est refusée', () => {
+      const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      expect(parseServerEnv({ ...base, NODE_ENV: 'production' })).toBeNull();
+      expect(String(error.mock.calls[0]?.[0])).toContain('CONSOLE_PUBLIC_ORIGIN');
+      expect(parseServerEnv({ ...base, NODE_ENV: 'production', CONSOLE_PUBLIC_ORIGIN: '' })).toBeNull();
+    });
+
+    it('doit utiliser https en production', () => {
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      expect(parseServerEnv({ ...base, NODE_ENV: 'production', CONSOLE_PUBLIC_ORIGIN: 'http://console.example.com' })).toBeNull();
+      expect(parseServerEnv({ ...base, NODE_ENV: 'production', CONSOLE_PUBLIC_ORIGIN: 'https://console.example.com/' })?.CONSOLE_PUBLIC_ORIGIN).toBe('https://console.example.com');
+    });
+
+    it('reste facultative hors production et se ramène à l’origine', () => {
+      expect(parseServerEnv({ ...base, NODE_ENV: 'development' })?.CONSOLE_PUBLIC_ORIGIN).toBeUndefined();
+      expect(parseServerEnv({ ...base, NODE_ENV: 'development', CONSOLE_PUBLIC_ORIGIN: 'http://localhost:3050/chemin?x=1' })?.CONSOLE_PUBLIC_ORIGIN).toBe('http://localhost:3050');
+    });
+
+    it('refuse un schéma autre que http(s)', () => {
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      expect(parseServerEnv({ ...base, NODE_ENV: 'development', CONSOLE_PUBLIC_ORIGIN: 'ftp://console.example.com' })).toBeNull();
+    });
   });
 });

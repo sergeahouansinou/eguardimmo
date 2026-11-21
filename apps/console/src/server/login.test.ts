@@ -112,6 +112,25 @@ describe('POST /session', () => {
     expect(api).not.toHaveBeenCalled();
   });
 
+  it('compare l’Origin à CONSOLE_PUBLIC_ORIGIN et non aux en-têtes de la requête', async () => {
+    vi.stubEnv('CONSOLE_PUBLIC_ORIGIN', 'https://console.eguardimmo.fr');
+    const api = stubFetch(() => json(201, { data: { token: '7|jeton-secret' } }));
+    expect((await handleLogin(login(CREDENTIALS, { origin: 'http://localhost:3050' }))).status).toBe(403);
+    expect(api).not.toHaveBeenCalled();
+    expect((await handleLogin(login(CREDENTIALS, { origin: 'https://console.eguardimmo.fr' }))).status).toBe(204);
+  });
+
+  it('échoue fermé en production quand CONSOLE_PUBLIC_ORIGIN est absente', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('CONSOLE_API_URL', 'https://api.example.com');
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const api = stubFetch(() => json(201, { data: { token: '7|jeton-secret' } }));
+    const response = await handleLogin(login());
+    expect(response.status).toBe(503);
+    expect(response.headers.get('set-cookie')).toBeNull();
+    expect(api).not.toHaveBeenCalled();
+  });
+
   it('refuse un corps incomplet ou illisible sans appeler l’API', async () => {
     const api = stubFetch(() => json(201, { data: { token: 't' } }));
     const missing = await handleLogin(login({ email: 'ines@eguardimmo.fr', password: 'x' }));

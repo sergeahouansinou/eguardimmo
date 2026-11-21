@@ -9,8 +9,8 @@ import { Controller } from 'react-hook-form';
 import { errorMessage } from '@/console/hooks/core';
 import { useCreatePlan, useUpdatePlan } from '@/console/hooks/mutations';
 import { useModules, usePlan } from '@/console/hooks/queries';
-import { ORGANISATION_TYPE_LABELS } from '@/console/schemas';
-import type { ModuleRow, OrganisationType, Plan, PlanDetail } from '@/console/schemas';
+import { PLAN_AUDIENCE_LABELS } from '@/console/schemas';
+import type { ModuleRow, Plan, PlanAudience, PlanDetail } from '@/console/schemas';
 import { formatEuros, formatInteger, minorToInput } from '@/lib/format';
 import { useZodForm } from '@/lib/useZodForm';
 import { PageHeader } from '@/ui/PageHeader';
@@ -20,9 +20,9 @@ import { useNotify } from '@/ui/notify';
 import { planFormSchema, toPlanInput } from './planForm';
 import type { PlanFormInput } from './planForm';
 
-const AUDIENCE_OPTIONS = (Object.keys(ORGANISATION_TYPE_LABELS) as OrganisationType[]).map((value) => ({
+const AUDIENCE_OPTIONS = (Object.keys(PLAN_AUDIENCE_LABELS) as PlanAudience[]).map((value) => ({
   value,
-  label: ORGANISATION_TYPE_LABELS[value],
+  label: PLAN_AUDIENCE_LABELS[value],
 }));
 
 export function PlanFormScreen({ planId }: { planId?: string }) {
@@ -59,20 +59,25 @@ function EditPlan({ planId, modules }: { planId: string; modules: ReturnType<typ
   );
 }
 
+const limitToInput = (limit: number | null): string => (limit === null ? '' : String(limit));
+
 function initialValues(plan: Plan | null): PlanFormInput {
   if (!plan) {
     return {
       name: '',
       code: '',
-      audience: 'agence',
+      audience: 'organisation',
       description: '',
       monthly: '',
       yearly: '',
-      trialDays: '14',
+      trialDays: '15',
       users: '',
       lots: '',
-      storageGb: '',
-      emailsMonth: '',
+      tenants: '',
+      leases: '',
+      inspections: '',
+      storageMb: '',
+      signaturesMonth: '',
       publicSignup: true,
     };
   }
@@ -84,10 +89,13 @@ function initialValues(plan: Plan | null): PlanFormInput {
     monthly: minorToInput(plan.monthlyMinor),
     yearly: minorToInput(plan.yearlyMinor),
     trialDays: String(plan.trialDays),
-    users: String(plan.limits.users),
-    lots: String(plan.limits.lots),
-    storageGb: String(plan.limits.storageGb),
-    emailsMonth: String(plan.limits.emailsMonth),
+    users: limitToInput(plan.limits.users),
+    lots: limitToInput(plan.limits.lots),
+    tenants: limitToInput(plan.limits.tenants),
+    leases: limitToInput(plan.limits.leases),
+    inspections: limitToInput(plan.limits.inspections),
+    storageMb: String(plan.limits.storageMb),
+    signaturesMonth: limitToInput(plan.limits.signaturesMonth),
     publicSignup: plan.publicSignup,
   };
 }
@@ -192,7 +200,7 @@ function PlanForm({ modules, detail }: { modules: ModuleRow[]; detail: PlanDetai
           />
           <TextField
             label="Description"
-            placeholder="Mandats, reversements et comptes rendus pour les agences"
+            placeholder="2 à 5 lots, plusieurs utilisateurs, 10 signatures par mois"
             error={formState.errors.description?.message}
             {...register('description')}
           />
@@ -200,17 +208,20 @@ function PlanForm({ modules, detail }: { modules: ModuleRow[]; detail: PlanDetai
       </Section>
       <Section id="tarifs" title="Tarifs">
         <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-3">
-          <TextField label="Prix mensuel HT * (€)" inputMode="decimal" placeholder="199,00" error={formState.errors.monthly?.message} {...register('monthly')} />
-          <TextField label="Prix annuel HT * (€)" inputMode="decimal" placeholder="1 990,00" error={formState.errors.yearly?.message} {...register('yearly')} />
-          <TextField label="Essai gratuit, jours" inputMode="numeric" placeholder="30" error={formState.errors.trialDays?.message} {...register('trialDays')} />
+          <TextField label="Prix mensuel HT * (€)" inputMode="decimal" placeholder="4,90" error={formState.errors.monthly?.message} {...register('monthly')} />
+          <TextField label="Prix annuel HT * (€)" inputMode="decimal" placeholder="58,00" error={formState.errors.yearly?.message} {...register('yearly')} />
+          <TextField label="Essai gratuit, jours" inputMode="numeric" placeholder="15" error={formState.errors.trialDays?.message} {...register('trialDays')} />
         </div>
       </Section>
       <Section id="limites" title="Limites incluses">
         <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2">
-          <TextField label="Utilisateurs *" inputMode="numeric" placeholder="15" error={formState.errors.users?.message} {...register('users')} />
-          <TextField label="Lots sous gestion *" inputMode="numeric" placeholder="100" error={formState.errors.lots?.message} {...register('lots')} />
-          <TextField label="Stockage, Go *" inputMode="numeric" placeholder="50" error={formState.errors.storageGb?.message} {...register('storageGb')} />
-          <TextField label="E-mails par mois *" inputMode="numeric" placeholder="5000" error={formState.errors.emailsMonth?.message} {...register('emailsMonth')} />
+          <TextField label="Utilisateurs" inputMode="numeric" placeholder="Vide : plusieurs" error={formState.errors.users?.message} {...register('users')} />
+          <TextField label="Lots" inputMode="numeric" placeholder="Vide : illimités" error={formState.errors.lots?.message} {...register('lots')} />
+          <TextField label="Locataires" inputMode="numeric" placeholder="Vide : illimités" error={formState.errors.tenants?.message} {...register('tenants')} />
+          <TextField label="Baux" inputMode="numeric" placeholder="Vide : illimités" error={formState.errors.leases?.message} {...register('leases')} />
+          <TextField label="États des lieux" inputMode="numeric" placeholder="Vide : illimités" error={formState.errors.inspections?.message} {...register('inspections')} />
+          <TextField label="Signatures par mois" inputMode="numeric" placeholder="Vide : selon le plan" error={formState.errors.signaturesMonth?.message} {...register('signaturesMonth')} />
+          <TextField label="Stockage, Mo *" inputMode="numeric" placeholder="500" error={formState.errors.storageMb?.message} {...register('storageMb')} />
         </div>
       </Section>
       <Section

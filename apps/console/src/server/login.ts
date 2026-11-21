@@ -58,10 +58,10 @@ function grant(env: ServerEnv, token: string): Response {
 }
 
 export async function handleLogin(request: Request): Promise<Response> {
-  const foreign = rejectForeignOrigin(request);
-  if (foreign) return foreign;
   const env = readServerEnv();
   if (!env) return problems.notConfigured();
+  const foreign = rejectForeignOrigin(request, env.CONSOLE_PUBLIC_ORIGIN);
+  if (foreign) return foreign;
   const credentials = await readCredentials(request);
   if (credentials instanceof Response) return credentials;
 
@@ -86,11 +86,11 @@ export async function handleLogin(request: Request): Promise<Response> {
 }
 
 export async function handleLogout(request: Request): Promise<Response> {
-  const foreign = rejectForeignOrigin(request);
-  if (foreign) return foreign;
   const cleared = { 'Set-Cookie': clearedSessionCookie() };
   const env = readServerEnv();
   if (!env) return problem({ status: 503, code: 'service_unavailable', title: 'Service indisponible' }, cleared);
+  const foreign = rejectForeignOrigin(request, env.CONSOLE_PUBLIC_ORIGIN);
+  if (foreign) return foreign;
   const session = currentSession(request, env.CONSOLE_SESSION_SECRET);
   if (!session) return new Response(null, { status: 204, headers: noStoreHeaders(cleared) });
 

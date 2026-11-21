@@ -6,6 +6,7 @@ import { createContext, use } from 'react';
 import type { ReactNode } from 'react';
 import type {
   AccessRequestInput,
+  ActivityQuery,
   AccountFilters,
   AuditQuery,
   ChangePasswordInput,
@@ -83,6 +84,11 @@ export interface AuditApi {
   export: (query: Omit<AuditQuery, 'page' | 'pageSize'>) => Promise<ExportAuditResult>;
 }
 
+export interface ActivityApi {
+  list: (query: ActivityQuery) => Promise<unknown>;
+  get: (id: string) => Promise<unknown>;
+}
+
 export interface RgpdApi {
   list: (query: RgpdQuery) => Promise<unknown>;
   get: (id: string) => Promise<unknown>;
@@ -133,6 +139,7 @@ export interface ConsoleSource extends ShellSource {
   modules: ModulesApi;
   abonnements: AbonnementsApi;
   audit: AuditApi;
+  activity: ActivityApi;
   rgpd: RgpdApi;
   sante: SanteApi;
   sauvegardes: SauvegardesApi;

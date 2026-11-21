@@ -2,6 +2,7 @@ import {
   Activity,
   Archive,
   Building2,
+  ClipboardCheck,
   CircleHelp,
   CircleUser,
   CreditCard,
@@ -23,10 +24,52 @@ import type {
   ShellNavigation,
 } from '@eguardimmo/shell';
 
+import { canAccess } from '@/platform/roles';
+import type { OperatorRole, Section } from '@/platform/roles';
+
 export const SPACE_LABEL = 'Console opérateur';
 export const RAIL_STORAGE_KEY = 'eg-nav-console';
 
-export function navigation(counts: Readonly<Record<string, number>> | undefined): ShellNavigation {
+export interface NavigationOptions {
+  roles?: readonly OperatorRole[];
+  api?: boolean;
+}
+
+const ENTRY_SECTION: Record<string, Section> = {
+  'vue-ensemble': 'accueil',
+  organisations: 'organisations',
+  comptes: 'comptes',
+  abonnements: 'abonnements',
+  audit: 'audit',
+  rgpd: 'rgpd',
+  support: 'support',
+  approbations: 'approbations',
+  sante: 'sante',
+  sauvegardes: 'sauvegardes',
+  parametres: 'parametres',
+  equipe: 'equipe',
+};
+
+const NOT_IN_API = new Set(['modules']);
+
+function visible(entryId: string, { roles, api = false }: NavigationOptions): boolean {
+  if (api && NOT_IN_API.has(entryId)) return false;
+  const section = ENTRY_SECTION[entryId];
+  if (roles === undefined || section === undefined) return true;
+  return canAccess(roles, section);
+}
+
+export function navigation(counts: Readonly<Record<string, number>> | undefined, options: NavigationOptions = {}): ShellNavigation {
+  const full = fullNavigation(counts);
+  return {
+    sections: full.sections
+      .map((section) => ({ ...section, entries: section.entries.filter((entry) => visible(entry.id, options)) }))
+      .filter((section) => section.entries.length > 0),
+    footer: full.footer.filter((entry) => visible(entry.id, options)),
+  };
+}
+
+function fullNavigation(counts: Readonly<Record<string, number>> | undefined): ShellNavigation {
   return {
     sections: [
       {
@@ -45,6 +88,7 @@ export function navigation(counts: Readonly<Record<string, number>> | undefined)
         label: 'Gouvernance',
         entries: [
           { id: 'audit', label: "Journal d'audit", href: '/audit', icon: ScrollText },
+          { id: 'approbations', label: 'Approbations', href: '/approbations', icon: ClipboardCheck, count: counts?.approbations },
           { id: 'rgpd', label: 'Conformité RGPD', href: '/rgpd', icon: ShieldCheck, count: counts?.rgpd },
           { id: 'support', label: 'Support', href: '/support', icon: LifeBuoy, count: counts?.support },
           { id: 'sante', label: 'Santé du système', href: '/sante', icon: Activity },
@@ -99,6 +143,7 @@ export const searchPages: PageResult[] = [
   { href: '/audit', label: "Journal d'audit" },
   { href: '/rgpd', label: 'Conformité RGPD' },
   { href: '/support', label: 'Support' },
+  { href: '/approbations', label: 'Approbations' },
   { href: '/sante', label: 'Santé du système' },
   { href: '/sauvegardes', label: 'Sauvegardes' },
   { href: '/sauvegardes/restauration', label: 'Restauration' },

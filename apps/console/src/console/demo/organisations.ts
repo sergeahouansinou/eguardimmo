@@ -1,5 +1,6 @@
 import type { OrganisationState, OrganisationType } from '../schemas/organisations';
 import { addDays } from './clock';
+import { buildPlans } from './plans';
 import { FIRST_NAMES, LAST_NAMES, createRandom, pick } from './random';
 
 export interface OrgUser {
@@ -33,7 +34,7 @@ export interface OrgRecord {
   activity: string;
   creation: string;
   users: OrgUser[];
-  usage: { lots: number; storageMb: number; emailsMonth: number };
+  usage: { lots: number; storageMb: number; signaturesMonth: number };
   lastActivity: { at: string; by: string };
   moduleOverrides: Record<string, { enabled: boolean; reason: string }>;
   accesses: OrgAccess[];
@@ -50,16 +51,16 @@ interface NamedSeed {
 }
 
 const NAMED: NamedSeed[] = [
-  { name: 'Gestion Les Tilleuls', type: 'bailleur', planId: 'pro', state: 'active', createdOn: '2025-03-12', users: 4 },
-  { name: 'Cabinet Delmas Immobilier', type: 'agence', planId: 'agence', state: 'active', createdOn: '2025-01-14', users: 9 },
+  { name: 'Gestion Les Tilleuls', type: 'bailleur', planId: 'gold', state: 'active', createdOn: '2025-03-12', users: 4 },
+  { name: 'Cabinet Delmas Immobilier', type: 'agence', planId: 'gold', state: 'active', createdOn: '2025-01-14', users: 9 },
   { name: 'SCI Les Acacias', type: 'proprietaire', planId: 'proprietaire', state: 'active', createdOn: '2025-02-20', users: 2 },
   { name: 'SCI Chevalier', type: 'proprietaire', planId: 'proprietaire', state: 'active', createdOn: '2025-02-03', users: 1 },
-  { name: 'Immo Rhône Gestion', type: 'agence', planId: 'agence', state: 'essai', createdOn: '2026-10-29', trialEndsOn: '2026-11-28', users: 5 },
-  { name: 'Maison Girard', type: 'bailleur', planId: 'essentiel', state: 'essai', createdOn: '2026-10-20', trialEndsOn: '2026-11-19', users: 1 },
-  { name: 'Résidences du Parc', type: 'bailleur', planId: 'pro', state: 'active', createdOn: '2025-06-05', users: 7 },
-  { name: 'Agence Port-Sud', type: 'agence', planId: 'agence', state: 'suspendue', createdOn: '2025-09-11', users: 3 },
-  { name: 'Foncière du Verger', type: 'bailleur', planId: 'pro', state: 'essai', createdOn: '2026-10-25', trialEndsOn: '2026-11-24', users: 2 },
-  { name: 'Léa Fontaine', type: 'bailleur', planId: 'essentiel', state: 'essai', createdOn: '2026-11-06', trialEndsOn: '2026-12-06', users: 1 },
+  { name: 'Immo Rhône Gestion', type: 'agence', planId: 'gold', state: 'essai', createdOn: '2026-11-05', trialEndsOn: '2026-11-20', users: 5 },
+  { name: 'Maison Girard', type: 'bailleur', planId: 'silver', state: 'essai', createdOn: '2026-11-04', trialEndsOn: '2026-11-19', users: 1 },
+  { name: 'Résidences du Parc', type: 'bailleur', planId: 'gold', state: 'active', createdOn: '2025-06-05', users: 7 },
+  { name: 'Agence Port-Sud', type: 'agence', planId: 'gold', state: 'suspendue', createdOn: '2025-09-11', users: 3 },
+  { name: 'Foncière du Verger', type: 'bailleur', planId: 'gold', state: 'essai', createdOn: '2026-11-09', trialEndsOn: '2026-11-24', users: 2 },
+  { name: 'Léa Fontaine', type: 'bailleur', planId: 'silver', state: 'essai', createdOn: '2026-11-06', trialEndsOn: '2026-11-21', users: 1 },
 ];
 
 const BAILLEUR_PREFIXES = ['Gestion', 'Résidences', 'Maison', 'Patrimoine', 'Foncière', 'SCI', 'Immo'];
@@ -92,9 +93,9 @@ interface GenSpec {
 }
 
 const GENERATED: GenSpec[] = [
-  { type: 'bailleur', planId: 'essentiel', count: 39, states: [...Array<OrganisationState>(38).fill('active'), 'suspendue'] },
-  { type: 'bailleur', planId: 'pro', count: 30, states: [...Array<OrganisationState>(29).fill('active'), 'suspendue'] },
-  { type: 'agence', planId: 'agence', count: 28, states: [...Array<OrganisationState>(26).fill('active'), 'essai', 'essai'] },
+  { type: 'bailleur', planId: 'silver', count: 39, states: [...Array<OrganisationState>(38).fill('active'), 'suspendue'] },
+  { type: 'bailleur', planId: 'gold', count: 30, states: [...Array<OrganisationState>(29).fill('active'), 'suspendue'] },
+  { type: 'agence', planId: 'gold', count: 28, states: [...Array<OrganisationState>(26).fill('active'), 'essai', 'essai'] },
   { type: 'proprietaire', planId: 'proprietaire', count: 21, states: Array<OrganisationState>(21).fill('active') },
 ];
 
@@ -122,7 +123,11 @@ function makeUsers(random: () => number, orgSlug: string, total: number, holderN
   return users;
 }
 
-function finishRecord(random: () => number, seed: NamedSeed, index: number): OrgRecord {
+const PLAN_LIMITS = new Map(buildPlans().map((plan) => [plan.id, plan.limits]));
+
+const within = (value: number, limit: number | null | undefined): number => (limit == null ? value : Math.min(value, limit));
+
+function finishRecord(random: () => number, seed: NamedSeed): OrgRecord {
   const id = slug(seed.name);
   const holderName = id === 'cabinet-delmas-immobilier' ? 'Sophie Delmas' : `${pick(random, FIRST_NAMES)} ${pick(random, LAST_NAMES)}`;
   const lastLogin = `${addDays('2026-11-13', -Math.floor(random() * 6))}T${String(8 + Math.floor(random() * 11)).padStart(2, '0')}:${String(Math.floor(random() * 60)).padStart(2, '0')}:00+01:00`;
@@ -135,6 +140,7 @@ function finishRecord(random: () => number, seed: NamedSeed, index: number): Org
         { id: 'delmas-u5', name: 'Mathieu Clément', role: 'Agent', lastLoginAt: '2026-11-09T10:02:00+01:00' },
         { id: 'delmas-u6', name: 'Élodie Roussel', role: 'Agent', lastLoginAt: '2026-11-06T15:44:00+01:00' },
   ];
+  const limits = PLAN_LIMITS.get(seed.planId);
   const users = makeUsers(random, id, seed.users, holderName, lastLogin, delmas ? delmasUsers : []);
   const domain = `${id}.example`;
   const city = delmas ? 'Lyon' : pick(random, CITIES);
@@ -154,8 +160,12 @@ function finishRecord(random: () => number, seed: NamedSeed, index: number): Org
     creation: `${seed.createdOn.slice(8, 10)}/${seed.createdOn.slice(5, 7)}/${seed.createdOn.slice(0, 4)}, par inscription`,
     users,
     usage: delmas
-      ? { lots: 14, storageMb: 4200, emailsMonth: 1240 }
-      : { lots: 1 + Math.floor(random() * 30), storageMb: 100 + Math.floor(random() * 6000), emailsMonth: 20 + Math.floor(random() * 1800) + index },
+      ? { lots: 14, storageMb: 4200, signaturesMonth: 12 }
+      : {
+          lots: within(1 + Math.floor(random() * 30), limits?.lots),
+          storageMb: within(100 + Math.floor(random() * 6000), limits?.storageMb),
+          signaturesMonth: within(Math.floor(random() * 21), limits?.signaturesMonth),
+        },
     lastActivity: { at: users[0]?.lastLoginAt ?? lastLogin, by: holderName },
     moduleOverrides: delmas
       ? { rapports: { enabled: false, reason: "Désactivé à la demande de l'organisation, le 02/09/2026" } }
@@ -172,7 +182,7 @@ function finishRecord(random: () => number, seed: NamedSeed, index: number): Org
 
 export function buildOrganisations(): OrgRecord[] {
   const random = createRandom(7);
-  const records: OrgRecord[] = NAMED.map((seed, index) => finishRecord(random, seed, index));
+  const records: OrgRecord[] = NAMED.map((seed) => finishRecord(random, seed));
   const used = new Set(records.map((record) => record.id));
   let counter = 0;
 
@@ -191,8 +201,8 @@ export function buildOrganisations(): OrgRecord[] {
       used.add(slug(name));
       const state = spec.states[index] ?? 'active';
       const createdOn = addDays('2025-01-08', Math.floor(random() * 480));
-      const trialEndsOn = state === 'essai' ? addDays('2026-11-13', 7 + Math.floor(random() * 14)) : undefined;
-      const maxUsers = { bailleur: spec.planId === 'pro' ? 8 : 3, agence: 14, proprietaire: 2 }[spec.type];
+      const trialEndsOn = state === 'essai' ? addDays('2026-11-13', 1 + Math.floor(random() * 14)) : undefined;
+      const maxUsers = { bailleur: spec.planId === 'gold' ? 8 : 3, agence: 14, proprietaire: 2 }[spec.type];
       records.push(
         finishRecord(
           random,
@@ -201,11 +211,10 @@ export function buildOrganisations(): OrgRecord[] {
             type: spec.type,
             planId: spec.planId,
             state,
-            createdOn: trialEndsOn ? addDays(trialEndsOn, -30) : createdOn,
+            createdOn: trialEndsOn ? addDays(trialEndsOn, -15) : createdOn,
             ...(trialEndsOn ? { trialEndsOn } : {}),
             users: 1 + Math.floor(random() * maxUsers),
           },
-          records.length,
         ),
       );
     }

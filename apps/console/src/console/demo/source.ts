@@ -1,6 +1,7 @@
 import { shellSchema } from '@eguardimmo/shell';
 import type { ShellData, ShellNotification } from '@eguardimmo/shell';
 import type { ConsoleSource } from '../source';
+import { unavailable } from '../unavailable';
 import { createAuditLog } from './audit';
 import { buildAuditEvents } from './auditSeed';
 import { buildAccounts } from './comptes';
@@ -100,6 +101,7 @@ export function createDemoSource({ clock = createDemoClock() }: DemoSourceOption
     modules: modulesApi(ctx),
     abonnements: abonnementsApi(ctx),
     audit: auditApi(ctx),
+    activity: { list: unavailable, get: unavailable },
     rgpd: rgpdApi(ctx),
     sante: santeApi(ctx),
     sauvegardes: sauvegardesApi(ctx),

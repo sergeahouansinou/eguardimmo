@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import { ActivityDetailScreen } from '@/features/audit/ActivityDetailScreen';
 import { AuditDetailScreen } from '@/features/audit/AuditDetailScreen';
+import { dataSource } from '@/lib/env';
 import { IdParam } from '@/ui/IdParam';
 
 export const metadata: Metadata = { title: 'Événement du journal' };
@@ -9,5 +11,5 @@ export function generateStaticParams() {
 }
 
 export default function Page({ params }: PageProps<'/audit/[id]'>) {
-  return <IdParam params={params}>{(id) => <AuditDetailScreen id={id} />}</IdParam>;
+  return <IdParam params={params}>{(id) => (dataSource === 'api' ? <ActivityDetailScreen id={id} /> : <AuditDetailScreen id={id} />)}</IdParam>;
 }

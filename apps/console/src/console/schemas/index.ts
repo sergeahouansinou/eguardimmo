@@ -1,4 +1,5 @@
 export * from './abonnements';
+export * from './activity';
 export * from './audit';
 export * from './auth';
 export * from './comptes';

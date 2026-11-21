@@ -9,7 +9,8 @@ import { Controller, useWatch } from 'react-hook-form';
 import { errorMessage } from '@/console/hooks/core';
 import { useCreateOrganisation } from '@/console/hooks/mutations';
 import { useOverview, useSubscriptions } from '@/console/hooks/queries';
-import { ORGANISATION_TYPE_LABELS, createOrganisationInputSchema } from '@/console/schemas';
+import { ORGANISATION_TYPE_LABELS, createOrganisationInputSchema, planServes } from '@/console/schemas';
+import { usersLabel } from '@/features/abonnements/limits';
 import type { OrganisationType, PlanRow } from '@/console/schemas';
 import { dayKey, formatDate, formatEuros } from '@/lib/format';
 import { useZodForm } from '@/lib/useZodForm';
@@ -45,7 +46,7 @@ function FormContent({ plans }: { plans: PlanRow[] }) {
   const notify = useNotify();
   const create = useCreateOrganisation();
   const [failure, setFailure] = useState<string | null>(null);
-  const firstPlan = plans.find((plan) => plan.audience === 'agence') ?? plans[0];
+  const firstPlan = plans.find((plan) => planServes(plan, 'agence')) ?? plans[0];
   const form = useZodForm(createOrganisationInputSchema, {
     name: '',
     type: 'agence',
@@ -61,7 +62,7 @@ function FormContent({ plans }: { plans: PlanRow[] }) {
   const type = useWatch({ control, name: 'type' });
   const planId = useWatch({ control, name: 'planId' });
   const trial = useWatch({ control, name: 'trial' });
-  const availablePlans = plans.filter((plan) => plan.audience === type);
+  const availablePlans = plans.filter((plan) => planServes(plan, type));
   const plan = plans.find((candidate) => candidate.id === planId);
 
   useEffect(() => {
@@ -134,7 +135,7 @@ function FormContent({ plans }: { plans: PlanRow[] }) {
             options={availablePlans.map((candidate) => ({
               value: candidate.id,
               label: candidate.name,
-              description: `${formatEuros(candidate.monthlyMinor)} HT par mois · ${String(candidate.limits.users)} utilisateurs${candidate.moduleIds.length > 0 ? `, ${String(candidate.moduleIds.length)} modules` : ''}`,
+              description: `${formatEuros(candidate.monthlyMinor)} HT par mois · ${usersLabel(candidate.limits.users)}${candidate.moduleIds.length > 0 ? `, ${String(candidate.moduleIds.length)} modules` : ''}`,
             }))}
             value={planId}
             onValueChange={(value) => { setValue('planId', value, { shouldValidate: true }); }}

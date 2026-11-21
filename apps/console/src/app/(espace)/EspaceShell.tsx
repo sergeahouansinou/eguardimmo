@@ -1,6 +1,6 @@
 "use client";
 
-import { useTicketStats } from "@eguardimmo/messagerie";
+import { useConsoleStats, useTicketStats } from "@eguardimmo/messagerie";
 import { SpaceShell } from "@eguardimmo/shell";
 import type { ShellCounts } from "@eguardimmo/shell";
 import Link from "next/link";
@@ -17,14 +17,27 @@ import {
   notifications,
   searchPages,
 } from "@/espace/config";
+import { dataSource } from "@/lib/env";
+import { useNavigationInputs, useNoNavigationInputs } from "@/espace/useOperator";
+import { ApiRouteGate } from "./ApiRouteGate";
 
 export function EspaceShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const openTickets = useTicketStats().data?.open;
+  const readStats = dataSource === "api" ? useConsoleStats : useTicketStats;
+  const openTickets = readStats().data?.open;
+  const readInputs = dataSource === "api" ? useNavigationInputs : useNoNavigationInputs;
+  const { roles, pendingApprovals } = readInputs();
   const navigationWithTickets = useMemo(
-    () => (counts: ShellCounts | undefined) => navigation(openTickets === undefined ? counts : { ...counts, support: openTickets }),
-    [openTickets],
+    () => (counts: ShellCounts | undefined) => {
+      const merged = {
+        ...counts,
+        ...(openTickets === undefined ? {} : { support: openTickets }),
+        ...(pendingApprovals === undefined ? {} : { approbations: pendingApprovals }),
+      };
+      return navigation(merged, { roles, api: dataSource === "api" });
+    },
+    [openTickets, pendingApprovals, roles],
   );
   return (
     <SpaceShell
@@ -41,7 +54,7 @@ export function EspaceShell({ children }: { children: ReactNode }) {
       notifications={notifications}
       searchPages={searchPages}
     >
-      {children}
+      <ApiRouteGate>{children}</ApiRouteGate>
     </SpaceShell>
   );
 }

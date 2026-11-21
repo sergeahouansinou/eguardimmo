@@ -9,7 +9,7 @@ function consoleHost(request: Request): { host: string; protocol: string } {
   return { host, protocol: forwarded ? `${forwarded.split(',')[0]?.trim() ?? ''}:` : url.protocol };
 }
 
-function hasConsoleOrigin(request: Request): boolean {
+function hasConsoleOrigin(request: Request, publicOrigin: string | undefined): boolean {
   const origin = request.headers.get('origin');
   if (!origin) return false;
   let parsed: URL;
@@ -18,11 +18,12 @@ function hasConsoleOrigin(request: Request): boolean {
   } catch {
     return false;
   }
+  if (publicOrigin !== undefined) return parsed.origin === publicOrigin;
   const expected = consoleHost(request);
   return parsed.host === expected.host && parsed.protocol === expected.protocol;
 }
 
-export function rejectForeignOrigin(request: Request): Response | null {
+export function rejectForeignOrigin(request: Request, publicOrigin: string | undefined): Response | null {
   if (SAFE_METHODS.has(request.method)) return null;
-  return hasConsoleOrigin(request) ? null : problems.forbiddenOrigin();
+  return hasConsoleOrigin(request, publicOrigin) ? null : problems.forbiddenOrigin();
 }

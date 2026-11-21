@@ -20,8 +20,8 @@ export function planRows(ctx: DemoContext): PlanRow[] {
 }
 
 const FAILURES = [
-  { organisationId: 'residences-du-parc', name: 'Résidences du Parc', detail: 'Prélèvement refusé le 01/11/2026 · 79 €', status: 'Relance 2 sur 3', tone: 'danger' as const },
-  { organisationId: 'agence-port-sud', name: 'Agence Port-Sud', detail: 'Prélèvement refusé le 01/11/2026 · 199 €', status: 'Suspendue', tone: 'danger' as const },
+  { organisationId: 'residences-du-parc', name: 'Résidences du Parc', detail: 'Prélèvement refusé le 01/11/2026 · 10,90 €', status: 'Relance 2 sur 3', tone: 'danger' as const },
+  { organisationId: 'agence-port-sud', name: 'Agence Port-Sud', detail: 'Prélèvement refusé le 01/11/2026 · 10,90 €', status: 'Suspendue', tone: 'danger' as const },
 ];
 
 export function abonnementsApi(ctx: DemoContext): AbonnementsApi {
@@ -85,7 +85,7 @@ export function abonnementsApi(ctx: DemoContext): AbonnementsApi {
         code: input.code,
         name: input.name,
         audience: input.audience,
-        tagline: input.audience === 'agence' ? 'agences sous mandat' : input.audience === 'bailleur' ? 'bailleurs' : 'propriétaires',
+        tagline: input.audience === 'organisation' ? 'bailleurs et agences' : 'propriétaires',
         description: input.description,
         monthlyMinor: input.monthlyMinor,
         yearlyMinor: input.yearlyMinor,
@@ -115,7 +115,7 @@ export function abonnementsApi(ctx: DemoContext): AbonnementsApi {
         'Prix mensuel (centimes)': String(plan.monthlyMinor),
         'Prix annuel (centimes)': String(plan.yearlyMinor),
         Modules: String(plan.moduleIds.length),
-        Utilisateurs: String(plan.limits.users),
+        Utilisateurs: plan.limits.users === null ? 'plusieurs' : String(plan.limits.users),
       };
       Object.assign(plan, {
         code: input.code,
@@ -141,7 +141,7 @@ export function abonnementsApi(ctx: DemoContext): AbonnementsApi {
           'Prix mensuel (centimes)': String(plan.monthlyMinor),
           'Prix annuel (centimes)': String(plan.yearlyMinor),
           Modules: String(plan.moduleIds.length),
-          Utilisateurs: String(plan.limits.users),
+          Utilisateurs: plan.limits.users === null ? 'plusieurs' : String(plan.limits.users),
         },
       });
       return Promise.resolve();

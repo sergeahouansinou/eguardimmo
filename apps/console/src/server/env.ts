@@ -4,6 +4,17 @@ const KEY_BYTES = 32;
 
 const HTTPS_REQUIRED = "L'URL de l'API doit utiliser https:// en production.";
 
+const ORIGIN_REQUIRED = "L'origine publique de la console doit utiliser https:// en production.";
+
+const publicOriginSchema = (production: boolean) => {
+  const origin = z
+    .url()
+    .refine((value) => !production || value.startsWith('https://'), ORIGIN_REQUIRED)
+    .refine((value) => ['http:', 'https:'].includes(new URL(value).protocol), ORIGIN_REQUIRED)
+    .transform((value) => new URL(value).origin);
+  return production ? origin : origin.optional();
+};
+
 const serverEnvSchema = (production: boolean) => z.object({
   CONSOLE_API_URL: z
     .url()
@@ -15,6 +26,7 @@ const serverEnvSchema = (production: boolean) => z.object({
     .refine((key) => key.length === KEY_BYTES, 'La clé de session doit faire 32 octets (base64).'),
   CONSOLE_TOKEN_TTL_MINUTES: z.coerce.number().int().min(1).max(1440).default(240),
   CONSOLE_RELAY_KEY: z.string().min(32, 'La clé de relais doit faire au moins 32 caractères.'),
+  CONSOLE_PUBLIC_ORIGIN: publicOriginSchema(production),
   CONSOLE_TRUSTED_PROXY_HOPS: z.coerce.number().int().min(1).max(5).default(1),
 });
 
@@ -23,11 +35,13 @@ export type ServerEnv = z.infer<ReturnType<typeof serverEnvSchema>>;
 export function parseServerEnv(source: Record<string, string | undefined>): ServerEnv | null {
   const ttl = source.CONSOLE_TOKEN_TTL_MINUTES;
   const hops = source.CONSOLE_TRUSTED_PROXY_HOPS;
+  const origin = source.CONSOLE_PUBLIC_ORIGIN;
   const parsed = serverEnvSchema(source.NODE_ENV === 'production').safeParse({
     CONSOLE_API_URL: source.CONSOLE_API_URL,
     CONSOLE_SESSION_SECRET: source.CONSOLE_SESSION_SECRET,
     CONSOLE_TOKEN_TTL_MINUTES: ttl === '' ? undefined : ttl,
     CONSOLE_RELAY_KEY: source.CONSOLE_RELAY_KEY,
+    CONSOLE_PUBLIC_ORIGIN: origin === '' ? undefined : origin,
     CONSOLE_TRUSTED_PROXY_HOPS: hops === '' ? undefined : hops,
   });
   if (parsed.success) return parsed.data;
