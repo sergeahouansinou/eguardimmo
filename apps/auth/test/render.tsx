@@ -32,5 +32,5 @@ export function renderWithAuth(ui: ReactElement, environment: TestEnvironment = 
     </QueryClientProvider>
   );
   const view = render(wrap(ui));
-  return { ...view, environment, rerenderWithAuth: (content: ReactElement) => { view.rerender(wrap(content)); } };
+  return { ...view, client, environment, rerenderWithAuth: (content: ReactElement) => { view.rerender(wrap(content)); } };
 }

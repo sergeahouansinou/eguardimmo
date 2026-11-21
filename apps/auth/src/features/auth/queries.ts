@@ -3,7 +3,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 import { z } from "zod";
-import { invitationDetailSchema, profileSchema, securitySchema, sessionSchema, verificationStatusSchema } from "./schemas";
+import { ownerInvitationPreviewSchema } from "./ownerInvitationSchemas";
+import {
+  invitationDetailSchema,
+  profileSchema,
+  securitySchema,
+  sessionSchema,
+  tenantInvitationPreviewSchema,
+  verificationStatusSchema,
+} from "./schemas";
 import { useAuthSource } from "./source";
 import type { AuthSource, RegisterInput, SignInInput, SocialSignInInput } from "./source";
 import type { SocialProvider } from "./schemas";
@@ -16,6 +24,8 @@ export const authKeys = {
   verification: ["auth", "verification"] as const,
   setup: ["auth", "setup"] as const,
   invitation: (token: string) => ["auth", "invitation", token] as const,
+  tenantInvitation: (token: string) => ["auth", "tenant-invitation", token] as const,
+  ownerInvitation: (token: string) => ["auth", "owner-invitation", token] as const,
   resetToken: (token: string, email: string) => ["auth", "reset-token", token, email] as const,
 };
 
@@ -29,6 +39,7 @@ export interface AuthQuery<T> {
   data: T | undefined;
   isError: boolean;
   isPending: boolean;
+  isFetching?: boolean;
   refetch: () => void;
 }
 
@@ -48,7 +59,7 @@ function useAuthQuery<T>(
   });
   const refetch = () => void query.refetch();
   if (!hydrated) return { data: undefined, isError: false, isPending: true, refetch };
-  return { data: query.data, isError: query.isError, isPending: query.isPending, refetch };
+  return { data: query.data, isError: query.isError, isPending: query.isPending, isFetching: query.isFetching, refetch };
 }
 
 export const useSession = () => useAuthQuery(authKeys.session, (s) => s.getSession(), sessionSchema.nullable());
@@ -69,6 +80,12 @@ const invitationResultSchema = z.discriminatedUnion("status", [
 
 export const useInvitation = (token: string) =>
   useAuthQuery(authKeys.invitation(token), (s) => s.getInvitation(token), invitationResultSchema);
+
+export const useTenantInvitationPreview = (token: string, enabled: boolean) =>
+  useAuthQuery(authKeys.tenantInvitation(token), (s) => s.previewTenantInvitation(token), tenantInvitationPreviewSchema, enabled);
+
+export const useOwnerInvitationPreview = (token: string, enabled: boolean) =>
+  useAuthQuery(authKeys.ownerInvitation(token), (s) => s.previewOwnerInvitation(token), ownerInvitationPreviewSchema, enabled);
 
 const setupSchema = z.object({ secret: z.string().min(1), otpauthUri: z.string().min(1) });
 
@@ -122,6 +139,23 @@ export const useResetPassword = () =>
 export const useRequestPasswordDefinition = () => useAuthMutation((s) => s.requestPasswordDefinition());
 export const useAcceptInvitation = () =>
   useAuthMutation((s, input: { token: string; password: string }) => s.acceptInvitation(input));
+export function useAcceptTenantInvitation() {
+  const source = useAuthSource();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (token: string) => source.acceptTenantInvitation({ token, consent: true }),
+    onSuccess: (result) => (result.status === "accepted" ? client.invalidateQueries({ queryKey: authKeys.profiles }) : undefined),
+  });
+}
+export function useAcceptOwnerInvitation() {
+  const source = useAuthSource();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { token: string; code: string }) => source.acceptOwnerInvitation({ ...input, consent: true }),
+    gcTime: 0,
+    onSuccess: (result) => (result.status === "accepted" ? client.invalidateQueries({ queryKey: authKeys.profiles }) : undefined),
+  });
+}
 export const useSelectProfile = () => useAuthMutation((s, profileId: string) => s.selectProfile(profileId));
 export const useConfirmPassword = () => useAuthMutation((s, password: string) => s.confirmPassword(password));
 export const useConfirmCode = () => useAuthMutation((s, code: string) => s.confirmCode(code));

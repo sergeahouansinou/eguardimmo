@@ -61,3 +61,26 @@ export const securityResponse = {
     confirmed_with_code_until: null,
   },
 };
+
+export const TENANT_TOKEN = "Aa1Bb2Cc3Dd4Ee5Ff6Gg7Hh8Ii9Jj0Kk1Ll2Mm3Nn4Oo5Pp6";
+
+export const tenantInvitationPreviewResponse = {
+  data: { organization: { name: "Agence du Port" }, expires_at: "2026-11-23T10:00:00+00:00" },
+};
+
+export const tenantInvitationAcceptanceResponse = { data: { tenant_link_id: "0199a1b2-7c3d-7e4f-8a5b-bbbbbbbbbbbb" } };
+
+export const OWNER_TOKEN = "Zz9Yy8Xx7Ww6Vv5Uu4Tt3Ss2Rr1Qq0Pp9Oo8Nn7Mm6Ll5Kk4";
+export const OWNER_CODE = "482915";
+
+export const ownerInvitationPreviewResponse = {
+  data: { organization: { name: "Agence du Port" }, role: "holder", expires_at: "2026-11-26T10:00:00+00:00" },
+};
+
+export const ownerInvitationAcceptanceResponse = {
+  data: {
+    owner_link_id: "0199a1b2-7c3d-7e4f-8a5b-cccccccccccc",
+    role: "holder",
+    organization: { id: "0199a1b2-7c3d-7e4f-8a5b-9a8b7c6d5e4f", name: "Agence du Port" },
+  },
+};

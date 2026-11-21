@@ -12,6 +12,8 @@ export const ROUTES = {
   retourRefuse: "/retour-refuse",
   verificationEmail: "/verification-email",
   lienExpire: "/lien-expire",
+  invitationLocataire: "/invitation-locataire",
+  invitationProprietaire: "/invitation-proprietaire",
   compte: "/compte/securite",
   comptesLies: "/compte/comptes-lies",
   appareils: "/compte/appareils",

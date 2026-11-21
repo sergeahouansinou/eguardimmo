@@ -51,3 +51,14 @@ export const securityResponseSchema = z.object({
     confirmed_with_code_until: z.string().nullable(),
   }),
 });
+
+export const tenantInvitationPreviewResponseSchema = z.object({
+  data: z.object({
+    organization: z.object({ name: z.string().min(1) }),
+    expires_at: z.string().min(1),
+  }),
+});
+
+export const tenantInvitationAcceptanceResponseSchema = z.object({
+  data: z.object({ tenant_link_id: z.string().min(1) }),
+});

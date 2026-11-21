@@ -8,6 +8,8 @@ import {
   seedAccounts,
 } from "./demoData";
 import type { DemoAccount } from "./demoData";
+import { createDemoOwnerInvitations } from "./demoOwnerInvitations";
+import { createDemoTenantInvitations } from "./demoTenantInvitations";
 import type { Profile, SecurityOverview, Session } from "./schemas";
 import type { AuthSource, RegisterInput, SocialSignInInput } from "./source";
 
@@ -267,9 +269,14 @@ export function createDemoAuthSource(options: DemoOptions = {}): AuthSource {
     return { status: "authenticated" as const };
   };
 
+  const tenantInvitations = createDemoTenantInvitations({ now, currentAccount });
+  const ownerInvitations = createDemoOwnerInvitations({ now, currentAccount });
+
   const source: AuthSource = {
     kind: "demo",
     now,
+    ...tenantInvitations,
+    ...ownerInvitations,
     getSession: () => {
       const account = currentAccount();
       return Promise.resolve(account ? toSession(account) : null);

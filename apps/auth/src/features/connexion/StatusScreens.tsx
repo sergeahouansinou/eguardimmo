@@ -11,7 +11,9 @@ import { providerSchema } from "@/features/auth/schemas";
 import type { SocialProvider } from "@/features/auth/schemas";
 import { useReturnContext } from "@/features/auth/useReturnContext";
 import { parseReturnTo } from "@/lib/returnTo";
-import { ROUTES } from "@/lib/routes";
+import { ROUTES, withContext } from "@/lib/routes";
+import { useHasPendingOwnerInvitation } from "@/lib/ownerInvitationIntent";
+import { useHasPendingTenantInvitation } from "@/lib/tenantInvitationIntent";
 
 const PROVIDER_LABELS: Record<SocialProvider, string> = { google: "Google", apple: "Apple" };
 
@@ -144,14 +146,24 @@ export function DeconnecteScreen() {
 
 export function EmailVerifieScreen() {
   const context = useReturnContext();
+  const pendingTenant = useHasPendingTenantInvitation();
+  const pendingOwner = useHasPendingOwnerInvitation();
+  const pendingInvitation = pendingTenant || pendingOwner;
+  const resume = pendingOwner ? ROUTES.invitationProprietaire : ROUTES.invitationLocataire;
   return (
     <StatusScreen
       icon={BadgeCheck}
       tone="success"
       title="E-mail vérifié"
-      description="Connectez-vous pour accéder à votre espace."
+      description={
+        pendingInvitation
+          ? `Connectez-vous pour reprendre votre invitation à l’espace ${pendingOwner ? "propriétaire" : "locataire"}.`
+          : "Connectez-vous pour accéder à votre espace."
+      }
     >
-      <ButtonLink href={context.to(ROUTES.connexion)}>Me connecter</ButtonLink>
+      <ButtonLink href={pendingInvitation ? withContext(ROUTES.connexion, { suite: resume }) : context.to(ROUTES.connexion)}>
+        {pendingInvitation ? "Me connecter et reprendre l’invitation" : "Me connecter"}
+      </ButtonLink>
     </StatusScreen>
   );
 }

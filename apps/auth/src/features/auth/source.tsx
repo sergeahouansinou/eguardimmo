@@ -2,6 +2,7 @@
 
 import { createContext, use } from "react";
 import type { ReactNode } from "react";
+import type { OwnerRole } from "./ownerInvitationSchemas";
 import type { InvitationDetail, RegisterProfile, SocialProvider } from "./schemas";
 
 export type SocialIntent = "connexion" | "inscription" | "invitation";
@@ -80,6 +81,29 @@ export type DeleteAccountResult =
   | { status: "deleted" }
   | { status: "confirmation_required"; needsCode: boolean };
 
+export type TenantInvitationAcceptance =
+  | { status: "accepted" }
+  | { status: "invalid" }
+  | { status: "email_mismatch" }
+  | { status: "email_unverified" }
+  | { status: "unauthenticated" }
+  | { status: "consent_required" }
+  | { status: "account_already_linked" }
+  | { status: "party_already_linked" }
+  | { status: "rate_limited"; retryAfterSeconds: number };
+
+export type OwnerInvitationAcceptance =
+  | { status: "accepted"; role: OwnerRole }
+  | { status: "invalid" }
+  | { status: "email_mismatch" }
+  | { status: "email_unverified" }
+  | { status: "unauthenticated" }
+  | { status: "consent_required" }
+  | { status: "code_invalid" }
+  | { status: "already_linked" }
+  | { status: "limit_reached" }
+  | { status: "rate_limited"; retryAfterSeconds: number };
+
 export interface TwoFactorSetup {
   secret: string;
   otpauthUri: string;
@@ -107,6 +131,10 @@ export interface AuthSource {
   requestPasswordDefinition: () => Promise<RequestResult>;
   getInvitation: (token: string) => Promise<unknown>;
   acceptInvitation: (input: { token: string; password: string }) => Promise<{ status: "activated" } | { status: "invalid" }>;
+  previewTenantInvitation: (token: string) => Promise<unknown>;
+  acceptTenantInvitation: (input: { token: string; consent: true }) => Promise<TenantInvitationAcceptance>;
+  previewOwnerInvitation: (token: string) => Promise<unknown>;
+  acceptOwnerInvitation: (input: { token: string; code: string; consent: true }) => Promise<OwnerInvitationAcceptance>;
   listProfiles: () => Promise<unknown>;
   selectProfile: (profileId: string) => Promise<void>;
   getSecurity: () => Promise<unknown>;

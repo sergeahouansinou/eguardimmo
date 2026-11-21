@@ -189,3 +189,21 @@ export const verificationStatusSchema = z.object({
   resendAvailableInSeconds: z.number().int().min(0),
 });
 export type VerificationStatus = z.infer<typeof verificationStatusSchema>;
+
+export const TENANT_INVITATION_TOKEN_LENGTH = 48;
+export const tenantInvitationTokenSchema = z.string().regex(/^[A-Za-z0-9]{48}$/, "Le jeton d’invitation est invalide.");
+
+export const tenantConsentSchema = z.object({
+  consent: z.boolean().refine((accepted) => accepted, { error: "Cochez la case pour accepter le rattachement de votre compte." }),
+});
+export type TenantConsentValues = z.infer<typeof tenantConsentSchema>;
+
+export const tenantInvitationPreviewSchema = z.discriminatedUnion("status", [
+  z.object({ status: z.literal("valid"), organizationName: z.string().min(1), expiresAt: z.iso.datetime() }),
+  z.object({ status: z.literal("invalid") }),
+  z.object({ status: z.literal("email_mismatch") }),
+  z.object({ status: z.literal("email_unverified") }),
+  z.object({ status: z.literal("unauthenticated") }),
+  z.object({ status: z.literal("rate_limited"), retryAfterSeconds: z.number().int().min(1) }),
+]);
+export type TenantInvitationPreview = z.infer<typeof tenantInvitationPreviewSchema>;

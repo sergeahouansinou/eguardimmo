@@ -1,7 +1,7 @@
 "use client";
 
 import { useId } from "react";
-import { LEGAL_LINKS } from "@/lib/legal";
+import { TERMS_LINK } from "@/lib/legal";
 import type { ComponentProps, ReactNode } from "react";
 
 export interface CheckboxFieldProps extends Omit<ComponentProps<"input">, "type" | "children"> {
@@ -41,14 +41,18 @@ export function TermsLabel({ verb = "J’accepte" }: { verb?: string }) {
   return (
     <>
       {verb} les{" "}
-      <a
-        href={LEGAL_LINKS[1].href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="font-medium text-action-on-subtle underline underline-offset-3"
-      >
-        conditions d’utilisation
-      </a>
+      {TERMS_LINK === null ? (
+        "conditions d’utilisation"
+      ) : (
+        <a
+          href={TERMS_LINK.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-action-on-subtle underline underline-offset-3"
+        >
+          conditions d’utilisation
+        </a>
+      )}
       .
     </>
   );
