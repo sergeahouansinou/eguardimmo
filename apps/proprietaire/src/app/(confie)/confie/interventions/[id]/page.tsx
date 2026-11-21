@@ -3,6 +3,9 @@ import { Suspense } from "react";
 import { PageSkeleton } from "@/features/confie/ui/States";
 import { InterventionScreen } from "@/features/confie/screens/InterventionScreen";
 import { createDemoData } from "@/features/confie/data/demo";
+import { dataSource } from "@/lib/env";
+import { InterventionScreen as ApiInterventionScreen } from "@/owner/interventions/InterventionScreen";
+import { WithParam } from "@/owner/WithParam";
 
 export const metadata: Metadata = { title: "Suivi de l'intervention" };
 
@@ -11,6 +14,13 @@ export function generateStaticParams() {
 }
 
 export default function Page({ params }: PageProps<"/confie/interventions/[id]">) {
+  if (dataSource === "api") {
+    return (
+      <WithParam params={params} name="id">
+        {(id) => <ApiInterventionScreen id={id} />}
+      </WithParam>
+    );
+  }
   return (
     <Suspense fallback={<PageSkeleton />}>
       <Screen params={params} />

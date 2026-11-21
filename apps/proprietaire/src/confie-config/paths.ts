@@ -12,8 +12,12 @@ export function toShellHref(realHref: string): string {
   return realHref === "/" ? OUTSIDE : `${OUTSIDE}${realHref}`;
 }
 
+const ALIASES: Readonly<Record<string, string>> = { "/reversements": `${CONFIE_BASE}/loyers` };
+
 export function toRealHref(shellHref: string): string {
   if (isExternalHref(shellHref)) return shellHref;
+  const alias = ALIASES[shellHref];
+  if (alias !== undefined) return alias;
   if (shellHref === "/") return CONFIE_BASE;
   if (shellHref === OUTSIDE) return "/";
   if (shellHref.startsWith(`${OUTSIDE}/`)) return shellHref.slice(OUTSIDE.length);

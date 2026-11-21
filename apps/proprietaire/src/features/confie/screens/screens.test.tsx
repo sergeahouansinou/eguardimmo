@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { expectNoA11yViolations } from "../../../../test/axe";
@@ -11,6 +11,7 @@ import { InformationsModifierScreen } from "./InformationsModifierScreen";
 import { MandatFinScreen } from "./MandatFinScreen";
 import { NotificationsScreen } from "./NotificationsScreen";
 import { BienScreen } from "./BienScreen";
+import { ReleveScreen } from "./ReleveScreen";
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 
@@ -160,5 +161,39 @@ describe("modification des informations", () => {
     expect(await screen.findByText(/5 chiffres/)).toBeTruthy();
     expect(push).not.toHaveBeenCalled();
     expect(confieSchema.parse(await source.snapshot()).profile.postalCode).toBe("69300");
+  });
+});
+
+describe("relevé de compte de démonstration", () => {
+  const cell = (row: HTMLElement | undefined, header: string) => row?.querySelector(`td[data-label="${header}"]`)?.textContent.replace(/\s/g, " ");
+
+  it("présente le mois en cours avec les soldes et les mouvements calculés sur les reversements", async () => {
+    const { container } = renderWithSpace(<ReleveScreen />);
+
+    const table = await screen.findByRole("table", { name: "Relevé de compte du 01/11/2026 au 30/11/2026" });
+    const rows = within(table).getAllByRole("row");
+    expect(rows).toHaveLength(4);
+    expect(within(screen.getByRole("region", { name: "Solde au 01/11/2026, avant mouvements" })).getByText("1 150,00 €")).toBeTruthy();
+    expect(within(screen.getByRole("region", { name: "Solde au 30/11/2026" })).getByText("700,00 €")).toBeTruthy();
+    expect([cell(rows[1], "Crédit"), cell(rows[1], "Solde")]).toEqual(["700,00 €", "1 850,00 €"]);
+    expect([cell(rows[2], "Débit"), cell(rows[3], "Débit"), cell(rows[3], "Solde")]).toEqual(["80,50 €", "1 069,50 €", "700,00 €"]);
+    expect(screen.getByRole("link", { name: "Accueil" }).getAttribute("href")).toBe("/confie");
+    await expectNoA11yViolations(container);
+  });
+
+  it("recalcule le relevé pour une autre période et refuse une période incohérente", async () => {
+    const user = userEvent.setup();
+    renderWithSpace(<ReleveScreen />);
+    await screen.findByRole("table");
+
+    fireEvent.change(screen.getByLabelText("Du"), { target: { value: "2026-12-01" } });
+    fireEvent.change(screen.getByLabelText("Au"), { target: { value: "2026-12-31" } });
+    await user.click(screen.getByRole("button", { name: "Afficher le relevé" }));
+    expect(await screen.findByText("Aucun mouvement sur cette période")).toBeTruthy();
+    expect(within(screen.getByRole("region", { name: "Solde au 31/12/2026" })).getByText("700,00 €")).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Au"), { target: { value: "2026-11-01" } });
+    await user.click(screen.getByRole("button", { name: "Afficher le relevé" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("La date de fin ne peut pas précéder celle de début.");
   });
 });

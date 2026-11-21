@@ -16,7 +16,7 @@ export function Section({ title, aside, className, children }: SectionProps) {
   return (
     <Card role="region" aria-labelledby={id} className={cx("px-4 py-3", className)}>
       <CardHeader className="flex-wrap">
-        <CardTitle as="h2" id={id}>
+        <CardTitle as="h2" id={id} className="[overflow-wrap:anywhere]">
           {title}
         </CardTitle>
         {aside}

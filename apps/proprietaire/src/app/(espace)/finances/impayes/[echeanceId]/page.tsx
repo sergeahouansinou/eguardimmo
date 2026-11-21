@@ -2,6 +2,9 @@ import { financesStaticIds } from "@eguardimmo/gestion/finances";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ImpayeDossierScreen } from "@/features/finances/screens";
+import { WithId } from "@/features/locataires/WithId";
+import { LoyerDetailScreen } from "@/features/loyers/screens";
+import { dataSource } from "@/lib/env";
 
 export const metadata: Metadata = { title: "Recouvrement" };
 
@@ -10,6 +13,7 @@ export function generateStaticParams() {
 }
 
 export default function Page({ params }: PageProps<"/finances/impayes/[echeanceId]">) {
+  if (dataSource === "api") return <WithId params={params.then(({ echeanceId }) => ({ id: echeanceId }))}>{(id) => <LoyerDetailScreen id={id} />}</WithId>;
   return (
     <Suspense fallback={<div aria-hidden="true" className="h-7 w-48 animate-pulse rounded-sm bg-muted" />}>
       <Detail params={params} />

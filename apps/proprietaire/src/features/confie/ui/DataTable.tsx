@@ -17,7 +17,7 @@ export type TableRow<T> =
 
 const cellBase = "px-2 py-2 align-middle";
 const cellMobile =
-  "max-sm:flex max-sm:items-center max-sm:justify-between max-sm:gap-3 max-sm:p-0 max-sm:text-right max-sm:before:text-left max-sm:before:text-caption max-sm:before:text-fg-subtle";
+  "max-sm:flex max-sm:items-center max-sm:justify-between max-sm:gap-3 max-sm:p-0 max-sm:text-right max-sm:[overflow-wrap:anywhere] max-sm:before:text-left max-sm:before:text-caption max-sm:before:text-fg-subtle";
 
 export interface DataTableProps<T> {
   caption: string;

@@ -16,10 +16,12 @@ import {
   notifications,
   searchPages,
 } from "./config";
+import { dataSource } from "@/lib/env";
+import { ApiConfieShell } from "@/owner/ApiConfieShell";
 import { ConfieLink } from "./ConfieLink";
 import { toRealHref, toShellPath } from "./paths";
 
-export function ConfieShell({ children }: { children: ReactNode }) {
+function DemoConfieShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const unread = useInboxStats().data?.unread;
@@ -47,4 +49,8 @@ export function ConfieShell({ children }: { children: ReactNode }) {
       <SupportWidget />
     </>
   );
+}
+
+export function ConfieShell({ children }: { children: ReactNode }) {
+  return dataSource === "api" ? <ApiConfieShell>{children}</ApiConfieShell> : <DemoConfieShell>{children}</DemoConfieShell>;
 }

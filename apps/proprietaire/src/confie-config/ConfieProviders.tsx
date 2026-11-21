@@ -6,23 +6,29 @@ import type { ReactNode } from "react";
 import { ConfieSourceProvider } from "@/features/confie/data/source";
 import { ToastProvider } from "@/features/confie/ui/Toast";
 import { MessagerieSpaceProvider } from "@/features/messagerie/SpaceProvider";
-import { DemoGestionSource } from "@/lib/DemoGestionSource";
 import { dataSource } from "@/lib/env";
+import { ApiOwnerData } from "@/owner/ApiOwnerData";
+import { shouldRetry } from "@/owner/errors";
 import { createConfieSource } from "./demo";
 
-export function ConfieProviders({ children }: { children: ReactNode }) {
-  const [client] = useState(() => new QueryClient({ defaultOptions: { queries: { staleTime: 30_000 } } }));
+function DemoConfieProviders({ children }: { children: ReactNode }) {
   const [source] = useState(() => createConfieSource());
-  const content = (
+  return (
     <ConfieSourceProvider source={source}>
       <MessagerieSpaceProvider space="proprietaire">
         <ToastProvider>{children}</ToastProvider>
       </MessagerieSpaceProvider>
     </ConfieSourceProvider>
   );
+}
+
+export function ConfieProviders({ children }: { children: ReactNode }) {
+  const [client] = useState(
+    () => new QueryClient({ defaultOptions: { queries: { staleTime: 30_000, ...(dataSource === "api" ? { retry: shouldRetry } : {}) } } }),
+  );
   return (
     <QueryClientProvider client={client}>
-      {dataSource === "api" ? <DemoGestionSource>{content}</DemoGestionSource> : content}
+      {dataSource === "api" ? <ApiOwnerData>{children}</ApiOwnerData> : <DemoConfieProviders>{children}</DemoConfieProviders>}
     </QueryClientProvider>
   );
 }

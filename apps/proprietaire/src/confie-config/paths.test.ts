@@ -13,6 +13,13 @@ describe("chemins de la coquille propriétaire", () => {
     expect(toRealHref(shell)).toBe(real);
   });
 
+  it("redirige les liens de notification vers les pages réelles", () => {
+    expect(toRealHref("/reversements")).toBe("/confie/loyers");
+    expect(toRealHref("/compte-de-paiement")).toBe("/confie/compte-de-paiement");
+    expect(toRealHref("/interventions/0193a5e1")).toBe("/confie/interventions/0193a5e1");
+    expect(toRealHref("/comptes-rendus/0193a5e1")).toBe("/confie/comptes-rendus/0193a5e1");
+  });
+
   it("laisse intactes les adresses d'une autre application", () => {
     const url = "http://localhost:3040/profils";
     expect(toShellHref(url)).toBe(url);

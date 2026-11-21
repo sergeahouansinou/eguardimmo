@@ -12,19 +12,14 @@ import {
   AbonnementScreen,
   CompteScreen,
   ExportScreen,
-  JournalScreen,
   ReglagesDocumentsScreen,
   ReglagesMenuScreen,
-  ReglagesNotificationsScreen,
   ReglagesScreen,
 } from "@/features/outils/screensCompte";
 import { AnalytiqueVueScreen, RapportsScreen } from "@/features/outils/screensOutils";
 import {
-  AgendaScreen,
-  ContactsScreen,
   DocumentsScreen,
   InterventionsScreen,
-  TachesScreen,
 } from "@/features/outils/screensSuivi";
 import { DemoGestionSource } from "@/lib/DemoGestionSource";
 import { ApiRouteGate } from "./ApiRouteGate";
@@ -53,24 +48,16 @@ vi.mock("next/navigation", () => ({
 }));
 
 const GATED: readonly (readonly [family: string, path: string, Screen: ComponentType])[] = [
-  ["bureau", "/", BureauScreen],
   ["finances", "/finances", FinancesScreen],
   ["finances (bilan)", "/finances/bilan", BilanScreen],
-  ["analytique", "/analytique", AnalytiqueVueScreen],
+  ["analytique (page inconnue)", "/analytique/inconnu", AnalytiqueVueScreen],
   ["rapports", "/rapports", RapportsScreen],
-  ["agenda", "/agenda", AgendaScreen],
-  ["tâches", "/taches", TachesScreen],
-  ["interventions", "/interventions", InterventionsScreen],
-  ["contacts", "/contacts", ContactsScreen],
-  ["journal", "/journal", JournalScreen],
-  ["documents", "/documents", DocumentsScreen],
-  ["compte", "/compte", CompteScreen],
+  ["interventions (modification)", "/interventions/12/modifier", InterventionsScreen],
   ["compte (abonnement)", "/compte/abonnement", AbonnementScreen],
   ["compte (export)", "/compte/export", ExportScreen],
   ["réglages", "/reglages", ReglagesScreen],
   ["réglages (documents)", "/reglages/documents", ReglagesDocumentsScreen],
   ["réglages (menu)", "/reglages/menu", ReglagesMenuScreen],
-  ["réglages (notifications)", "/reglages/notifications", ReglagesNotificationsScreen],
 ];
 
 function renderRoute(path: string, Screen: ComponentType, mode: "demo" | "api") {
@@ -117,7 +104,81 @@ describe("routes sans source API en mode api", () => {
   });
 });
 
+describe("routes du compte servies en mode api", () => {
+  it.each(["/", "/compte", "/compte/securite", "/reglages/notifications", "/interventions", "/interventions/nouvelle", "/interventions/prestataires", "/interventions/12", "/agenda", "/agenda/nouveau", "/agenda/12", "/agenda/12/modifier", "/taches", "/taches/nouvelle", "/taches/12", "/contacts", "/contacts/12/modifier", "/journal", "/reglages/fuseau-horaire", "/analytique", "/analytique/revenus-depenses", "/analytique/occupation", "/analytique/rentabilite", "/analytique/previsionnel", "/finances/prets", "/finances/prets/12", "/finances/cout-de-revient", "/finances/fiscalite", "/finances/fiscalite/12"])("%s : laisse passer l'écran réel sans « Bientôt disponible »", (path) => {
+    state.pathname = path;
+    state.mode = "api";
+
+    render(
+      <ApiRouteGate>
+        <p>Écran réel</p>
+      </ApiRouteGate>,
+    );
+
+    expect(screen.getByText("Écran réel")).toBeTruthy();
+    expect(screen.queryByText("Bientôt disponible")).toBeNull();
+  });
+
+  it("garde Abonnement et Export indisponibles", () => {
+    for (const path of ["/compte/abonnement", "/compte/export"]) expect(classifyRoute(path)).toBe("compte");
+  });
+});
+
+describe("Documents et Conformité servis en mode api", () => {
+  it.each(["/documents", "/conformite", "/conformite/01a1e9ab-9be5-7020-a050-08d26f2db94d"])("%s : laisse passer l'écran réel", (path) => {
+    state.pathname = path;
+    state.mode = "api";
+
+    render(
+      <ApiRouteGate>
+        <p>Écran réel</p>
+      </ApiRouteGate>,
+    );
+
+    expect(screen.getByText("Écran réel")).toBeTruthy();
+    expect(screen.queryByText("Bientôt disponible")).toBeNull();
+  });
+
+  it("garde l'ajout isolé d'un document « Bientôt disponible »", () => {
+    expect(classifyRoute("/documents/nouveau")).toBe("documents");
+    state.pathname = "/documents/nouveau";
+    state.mode = "api";
+
+    render(
+      <ApiRouteGate>
+        <p>Écran réel</p>
+      </ApiRouteGate>,
+    );
+
+    expect(screen.getByText("Bientôt disponible")).toBeTruthy();
+  });
+});
+
 describe("mode démo inchangé", () => {
+  it("les documents de démonstration restent affichés en mode démo", async () => {
+    renderRoute("/documents", DocumentsScreen, "demo");
+
+    await screen.findAllByRole("heading", { level: 1 });
+    expect(screen.queryByText("Bientôt disponible")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("l'accueil de démonstration reste affiché en mode démo", async () => {
+    renderRoute("/", BureauScreen, "demo");
+
+    await screen.findAllByRole("heading", { level: 1 });
+    expect(screen.queryByText("Bientôt disponible")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("le compte de démonstration reste affiché en mode démo", async () => {
+    renderRoute("/compte", CompteScreen, "demo");
+
+    await screen.findAllByRole("heading", { level: 1 });
+    expect(screen.queryByText("Bientôt disponible")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it.each(GATED)("%s : affiche l'écran de démonstration", async (_family, path, Screen) => {
     renderRoute(path, Screen, "demo");
 

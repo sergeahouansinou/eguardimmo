@@ -30,7 +30,7 @@ vi.mock("next/navigation", () => ({
   usePathname: () => state.pathname,
 }));
 
-const FORBIDDEN = ["Marc Chevalier", "Gestion Les Tilleuls", "Awa Diallo", "Essentiel", "Visa 4242"];
+const FORBIDDEN = ["Marc Chevalier", "Gestion Les Tilleuls", "Awa Diallo", "Silver", "Visa 4242"];
 
 function stubApi(extra: Record<string, unknown> = {}) {
   const calls: string[] = [];
@@ -48,6 +48,8 @@ function stubApi(extra: Record<string, unknown> = {}) {
     },
     [`/api/v1/org/${ORG}`]: { data: { id: ORG, kind: "individual", name: "Dupont Gestion", country: "FR", two_factor_required: false } },
     [`/api/v1/org/${ORG}/conversations/stats`]: { data: { unread: 3, stale: 0 } },
+    "/api/v1/notifications/unread-count": { data: { unread: 0 } },
+    "/api/v1/notifications": { data: [], meta: { next_cursor: null } },
     ...extra,
   };
   const fetchMock = vi.fn<typeof fetch>((input) => {
@@ -113,6 +115,73 @@ describe("coquille de l'espace bailleur en mode api", () => {
     expect(within(side).queryByRole("button", { name: /Biens\s*\d/ })).toBeNull();
     expect(within(side).queryByRole("button", { name: /Locataires\s*\d/ })).toBeNull();
     expect(within(side).queryByRole("link", { name: /Interventions\s*\d/ })).toBeNull();
+  });
+
+  it("propose Prêts, Coût de revient et Fiscalité sous Finances", async () => {
+    stubApi();
+    state.pathname = "/finances/fiscalite";
+
+    renderEspace();
+
+    const side = await screen.findByRole("navigation", { name: "Navigation principale" });
+    expect((await within(side).findByRole("link", { name: "Fiscalité" })).getAttribute("href")).toBe("/finances/fiscalite");
+    expect(within(side).getByRole("link", { name: "Coût de revient" }).getAttribute("href")).toBe("/finances/cout-de-revient");
+    expect(within(side).getByRole("link", { name: "Prêts" }).getAttribute("href")).toBe("/finances/prets");
+  });
+
+  describe("support", () => {
+    const TICKET = {
+      id: "0193a5e1-0000-7000-8000-0000000001a1",
+      reference: "SUP-2026-0001",
+      subject: "Reversement introuvable",
+      organization: "Dupont Gestion",
+      space: "organization",
+      requester: { id: "01934f6e-0000-7000-8000-0000000000a1", name: "Jeanne Dupont" },
+      assignee: null,
+      priority: "normal",
+      status: "waiting",
+      category: "billing",
+      created_at: "2026-11-19T09:00:00+00:00",
+      updated_at: "2026-11-19T10:00:00+00:00",
+      requester_last_read_at: "2026-11-19T09:00:00+00:00",
+      support_last_read_at: null,
+      message_count: 2,
+    };
+    const GRANT = {
+      id: "0193a5e1-0000-7000-8000-0000000001f1",
+      kind: "consent",
+      status: "requested",
+      scopes: ["settings"],
+      reason: "Diagnostic",
+      emergency_basis: null,
+      ticket_reference: "SUP-2026-0001",
+      operator: "Camille M.",
+      duration_hours: 24,
+      requested_at: "2026-11-19T09:30:00+00:00",
+      decided_at: null,
+      granted_at: null,
+      expires_at: null,
+      revoked_at: null,
+      reviewed: false,
+      read_count: 0,
+    };
+    const routes = {
+      "/api/v1/support/tickets": { data: [TICKET] },
+      "/api/v1/support/status": { data: { online: true, hours_label: "Lun–ven 9 h – 18 h", response_label: "Réponse sous 1 jour ouvré", timezone: "Europe/Paris", hours: [] } },
+      [`/api/v1/org/${ORG}/support-access`]: { data: [GRANT], meta: { has_more: false, next_cursor: null } },
+    };
+
+    it("affiche le nombre de réponses à lire et celui des accès en attente au titulaire, et branche le widget", async () => {
+      const calls = stubApi(routes);
+
+      renderEspace();
+
+      const side = await screen.findByRole("navigation", { name: "Navigation principale" });
+      expect(await within(side).findByRole("link", { name: /Support\s*1$/ })).toBeTruthy();
+      await waitFor(() => { expect(within(side).getByRole("button", { name: /Réglages\s*1$/ })).toBeTruthy(); });
+      expect(await screen.findByRole("button", { name: "Aide et support, 1 réponse non lue" })).toBeTruthy();
+      expect(calls).toContain(`/api/v1/org/${ORG}/support-access`);
+    });
   });
 
   it("n'a aucune notification et le dit", async () => {
