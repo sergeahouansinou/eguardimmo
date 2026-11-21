@@ -1,6 +1,9 @@
 # ADR 0007 — Flux financiers et événements
 
 Statut : accepté (2026-11-13).
+Amendement accepté (2026-11-18, ADR 0031) : le grand livre distingue les fonds de l'agence et ceux des mandants (`TrustBank`, `OwnerRentCalled`, `OwnerChargesCalled`, `OwnerVatCalled`, `OwnerPayable` crédité par les encaissements, `PayoutsInTransit`) ; aucune écriture ne se passe dans une période close (`accounting_periods`, déclencheurs, `OnClosedPeriod`) ; équation de cantonnement ; ordre des verrous inter-modules : (1) `rent_schedules` ou intervention, (2) verrou du compte mandant (`Ledger::lockParty`), (3) `invoices`, (4) verrous de période.
+Amendement accepté (2026-11-19, ADR 0034) : niveau (0) de l'ordre des verrous : `charge_property_locks`, puis l'exercice, puis le décompte, ou la dépense ; puis (1) `rent_schedules` du bail, (2) compte du mandant, (3) factures, (4) périodes ; plusieurs baux par identifiant croissant. Sources d'écriture `expense` et `charge_statement` ; nature d'imputation `expense`.
+Amendement accepté (2026-11-19, ADR 0035) : niveau (0) de l'ordre des verrous : lignes de relevé `bank_statement_lines` `FOR UPDATE` par identifiant croissant (Banking), avant (1) `rent_schedules`, (2) compte du mandant, (3) factures, (4) périodes. Banking écrit seul les frais bancaires (`BankCharges`, 5100) dans sa transaction, source `bank_line`, `onClosedPeriod = roll_forward`.
 
 ## Contexte
 
@@ -37,3 +40,12 @@ Application :
 
 - Tout nouvel événement financier précise dans son module la clé d'idempotence et la tâche de rattrapage.
 - Les numéros de facture et de quittance suivent une séquence continue par organisation, attribuée sous verrou transactionnel.
+
+## Amendement du 2026-11-20 (ADR 0036)
+
+- Module Payments : intention (`online_payments`), compte connecté de l'organisation (`payment_accounts`), webhooks dédoublonnés (`payment_provider_events`, unique sur le fournisseur et l'identifiant d'événement). Transitions monotones ; seule exception : un succès confirmé par le PSP l'emporte sur une annulation ou une expiration locale, car l'argent a bougé. Un montant confirmé différent du montant demandé n'est jamais cru.
+- `PaymentConfirmed` (après commit) porte la clé d'idempotence `psp:{provider}:{référence}` ; Rent l'écoute en file et enregistre l'encaissement par `RecordPayment` (moyen `card`, `provider_reference` stocké « {fournisseur}:{référence} », unique par organisation). Rattrapage `payments:reconcile` quotidien : relit au PSP les intentions `pending` de plus de 24 h et rejoue les confirmations non imputées sur 30 jours ; un rejeu ne crée jamais un second encaissement.
+
+## Amendement du 2026-11-21 (ADR 0039)
+
+- Un prêt est un contrat hors grand livre : son échéancier et son capital restant dû ne sont pas des soldes comptables et Investments n'écrit aucune écriture. Le prévisionnel de Reporting est une projection non stockée (« projection, ce n'est pas un solde ») ; son ouverture est le solde `Bank` de la fin du mois précédent, lu par `LedgerReader::accountBalance`.

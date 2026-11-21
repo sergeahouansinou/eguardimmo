@@ -1,6 +1,7 @@
 # ADR 0004 — Authentification centralisée et connexion Google / Apple
 
 Statut : accepté (2026-11-13), révisé le même jour : la console sort du hub (section « Console »). Complète l'ADR 0002 (Sanctum) et l'ADR 0003 (espaces). Plan : `../.claude/PRPs/plans/auth-centralisee-google-apple.plan.md`.
+Amendement (2026-11-16, ADR 0024) : le locataire s'inscrit par l'inscription ordinaire, sans `IntendedProfile` ; son profil n'est acquis que par l'acceptation d'une invitation envoyée par une organisation, sur une adresse vérifiée égale à l'adresse invitée. Aucun rattachement par e-mail seul (même raison que la liaison automatique écartée ci-dessous).
 
 ## Décision
 
@@ -85,3 +86,14 @@ Statut : accepté (2026-11-13), révisé le même jour : la console sort du hub 
 - Le hub et les applications d'espace doivent rester sous un même domaine parent ; la console n'en a pas besoin. Si un jour ce n'est plus le cas, il faudra rouvrir cette décision (OIDC).
 - Variables d'environnement nouvelles : identifiants Google (web, iOS, Android), Apple (team, key id, `.p8`, services id, bundle id) et liste blanche `AUTH_RETURN_TO_ALLOWED_HOSTS`.
 - Actions manuelles hors code : console Google Cloud (écran de consentement, URI de redirection), compte Apple Developer (Services ID, domaines, relais e-mail).
+
+## Amendement du 2026-11-20 (ADR 0036)
+
+- Changement d'adresse e-mail vérifié : `POST /me/email-change` envoie un code à 6 chiffres à la **nouvelle** adresse (haché, 15 minutes, 5 essais, un seul vivant, table `email_change_requests`) ; la confirmation remplace l'adresse, pose `email_verified_at`, révoque les autres sessions et jetons et prévient l'ancienne adresse. Adresse déjà prise : même réponse, aucun code valable, pas d'énumération. Purge quotidienne `identity:purge-email-changes`.
+- Téléphone déclaratif : `users.phone` chiffré (E.164), `phone_verified_at` nul, jamais utilisé pour l'authentification (`PUT /me/phone`, `reauthenticated`). Aucun SMS tant qu'aucun fournisseur n'est retenu.
+
+## Amendement du 2026-11-21 (ADR 0037)
+
+- Preuve TOTP (ou code de secours) sur chaque écriture console : middleware `operator-proof`, consommée avant la validation du corps (`operator_proof_required`, `operator_proof_invalid`, verrouillage de compte existant, anti-rejeu).
+- Suspension de compte : `users.suspended_at`, refusée au hub, au mobile et à la console (`account_suspended`) ; revue a posteriori par un second opérateur. Réactivation et réinitialisation 2FA par double validation (jetons et sessions révoqués, e-mail de sécurité).
+- Effacement d'un compte à la demande RGPD : exécuté par la double validation `privacy.erasure.execute`, jamais par un opérateur seul. La purge des comptes supprimés (question 11) reste à décider.

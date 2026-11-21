@@ -1,6 +1,7 @@
 # ADR 0018 — Données personnalisables
 
 Statut : accepté (2026-11-15). Amende l'ADR 0001 et l'ADR 0005 (nouveau module Catalog, clé étrangère admise vers ses référentiels) et l'ADR 0013 (droits des plans). Moteur : ADR 0017.
+Amendement accepté (2026-11-19, ADR 0034) : vocabulaire de plateforme `charge_rubric` (une valeur par rubrique du décret n° 87-713, ni extensible ni personnalisable) ; métadonnée `recoverable_by_default` sur `expense_category`.
 
 ## Contexte
 
@@ -57,3 +58,11 @@ Nouveau module du socle : référentiels, surcharges, définitions de champs per
 - Le modèle de données remplace ses colonnes `kind`, `type`, `category` et `family` à valeurs fixes par des `{nom}_term_id`, sauf pour les statuts.
 - Un seeder idempotent fournit les valeurs de la plateforme par juridiction ; un test vérifie que chaque `semantic_key` utilisé par le code existe.
 - Les exports et la recherche lisent les définitions des champs personnalisés.
+
+## Amendement du 2026-11-20 (ADR 0040)
+
+- Écart assumé : les conditions par défaut des mandats forment un modèle de conditions typé dans Mandates (`mandate_term_defaults`), pas un réglage personnalisable. Écart existant signalé, non traité ici : `accounting_settings` reste un réglage à colonnes fixes.
+
+## Amendement du 2026-11-21 (ADR 0037)
+
+- `organization_entitlement_overrides` (fonction, activé, limite, début, fin d'au plus 12 mois, motif de la liste fermée) sont créées et retirées par double validation ; elles ne modifient jamais le plan publié.

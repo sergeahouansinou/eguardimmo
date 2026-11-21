@@ -58,3 +58,21 @@ Rentila ne publie pas de prix en CAD. Décision de l'utilisateur : convertir les
 - Mêmes quotas, même essai, mêmes règles que la grille en euros.
 - Les prix CAD sont figés : ils ne suivent pas le taux de change. Une révision crée une nouvelle version de la grille, sans toucher aux abonnements en cours.
 - Taxes ajoutées à la facturation : TPS et TVQ pour une organisation québécoise, à confirmer avec un fiscaliste (inscription aux fichiers de la TPS et de la TVQ d'un fournisseur étranger de services numériques).
+
+## Amendement du 2026-11-21 (ADR 0037)
+
+- Les plans sont des `plan_versions` et `plan_prices` (montants en unités mineures, EUR et CAD) ; une version publiée est immuable (déclencheurs), publiée par double validation.
+- Les dépendances entre modules sont inversées : les modules métier demandent leurs droits à `Subscriptions\PublicApi\Entitlements`.
+- Aucune suspension pour impayé : les motifs de suspension d'organisation sont `fraud`, `abuse`, `legal_order`, `security`.
+
+## Amendement du 2026-11-21 (reprise des quotas)
+
+- Plafonds appliqués dans l'Action créatrice, sous le verrou de l'abonnement (celui-ci se prend toujours en premier) : lots (`CreateUnit`, `RestoreUnit`), baux (`CreateLease`, qui sert aussi `DuplicateLease` ; `RestoreLease`), états des lieux (`RecordInspection`, rejeu par `client_id` non recompté), utilisateurs (`InviteMember`). Un lot ou un bail archivé qui est restauré compte de nouveau : sans cela, archiver, créer puis restaurer contournerait le plafond.
+- Refus : 409 `plan_quota_reached` avec `feature`, `limit` (limite effective, dérogation comprise) et `current` en membres du corps RFC 9457 ; 403 `feature_not_in_plan` porte `feature`. Une organisation sans abonnement n'est limitée par rien.
+- Non câblés : locataires (aucune entité locataire, un tiers devient locataire par une ligne de bail : définition du compte à arbitrer), stockage (périmètre à arbitrer : documents émis par la plateforme, pièces sous conservation légale, pièces de messagerie), signatures (aucun service de signature électronique : `SignLease` enregistre une signature hors application).
+
+## Amendement du 2026-11-21 (stockage, fonctions désactivées, locataires et signatures)
+
+- **Stockage** : plafond appliqué dans `Documents\Actions\StoreFile`, point d'écriture unique de tous les modules, sous le verrou de l'abonnement. Volume compté = somme de `size_bytes` des fichiers réellement stockés de l'organisation ; la limite `storage_mb` se compte en Mo de 1 048 576 octets (`Feature::unit()`). Refus si volume actuel + taille du fichier dépasse la limite (409 `plan_quota_reached`, `limit` et `current` en Mo). Comptent mais ne sont jamais refusées : les pièces produites par la plateforme (catégories `issued`, `bundle` : quittances, factures, comptes rendus, paquets) et les pièces de messagerie ou de l'espace locataire (un tiers ne bute pas sur le plan de l'organisation). Lecture et téléchargement restent ouverts au-delà de la limite.
+- **`entitled:{fonction}`** posé sur toutes les routes d'écriture `/org/{organization}` des modules Documents, Rent, Mandates, OwnerFunds, Charges, Banking, Invoicing, Maintenance, Recovery, Reporting, Notifications (diffusions) et Messaging (conversations), après `organization`. Les espaces locataire et propriétaire ne sont pas couverts (aucun contexte d'organisation membre). Accounting, Payments, Planning, Tax et Investments n'ont pas de fonction dans le registre.
+- **Non câblés, décision à prendre** : `tenants` (aucune entité locataire : le compte dépend d'une définition à arbitrer, personnes distinctes portées par un rôle locataire sur un bail non archivé, ce qui impose de prendre le verrou de l'abonnement avant celui du bail dans `UpdateLease` et `AddLeaseParty`) et `signatures_monthly` (aucun envoi en signature : `SignLease` enregistre une signature faite hors application, voir ADR 0011).

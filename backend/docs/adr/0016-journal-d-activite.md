@@ -1,6 +1,12 @@
 # ADR 0016 — Journal d'activité et historique des entités
 
 Statut : accepté (2026-11-13). Complète l'ADR 0002 (sécurité) et l'ADR 0004 (console opérateur).
+Amendement accepté (2026-11-19, ADR 0035) : actions `banking.account.created|replaced|closed` (la modification du libellé passe par le trait `Auditable`), `banking.statement.imported|voided|downloaded`, `banking.line.ignored|restored|settled`, `banking.match.created|undone`, `banking.suggestions.accepted`, `banking.rule.created|updated|disabled`, `banking.reconciliation.validated`, `banking.verify.anomaly` ; `OrganizationBankAccount` et `BankStatementLine` sont `Auditable` avec `auditExcluded` (empreintes, libellé, contrepartie, références) ; propositions (`bank_suggestions`) hors `Auditable`, cache recalculable ; aucun libellé ni IBAN dans l'audit, les logs ni les notifications.
+Amendement (2026-11-19, ADR 0033, lot 1) : actions `messaging.conversation.opened|closed|reopened|assigned|muted|unmuted`, `messaging.message.redacted` et `messaging.messages.erased`, et `documents.file.purged` avec `early` pour le retrait d'une pièce avant la fin de sa conservation. `ConversationMessage` est `Auditable` avec `body` et `redaction_reason` exclus : le texte d'un message n'entre jamais dans le journal.
+Amendement (2026-11-19, ADR 0033, lot 3) : actions `messaging.support_access.requested|granted|refused|revoked|expired|emergency|reviewed`, `messaging.ticket.auto_resolved`, `console.support_access.read|denied` (ressource et périmètre dans `metadata`, jamais de contenu). Les lectures du support sont journalisées une par une, y compris le refus faute d'accès.
+Amendement (2026-11-19, ADR 0034) : actions `charges.expense.recorded|approved|cancelled`, `charges.exercise.computed|issued|discarded`, `charges.statement.issued|rectified|plan_recorded|downloaded`, `charges.file.shared|unshared`, `charges.prescription.acknowledged` ; `rent.refund.recorded` ; ni montant, ni nom, ni libellé libre dans `metadata`.
+
+Amendement (2026-11-19, ADR 0033, revue du lot 3) : la console ne sert le détail (`changes`, `metadata`, identité de l'auteur, `ip`, `user_agent`, identifiant du sujet) d'une entrée portant une `organization_id` qu'à l'opérateur qui a un accès de support vivant sur cette organisation (périmètre `settings`) ; sans cet accès l'entrée est expurgée (action, date, organisation, type du sujet, `request_id`, route). Les entrées sans organisation restent servies en entier. `SupportTicket` exclut `subject` et `organization_name` du différentiel.
 
 ## Contexte
 
@@ -48,6 +54,7 @@ Règles pour les modules :
 
 - `GET /api/v1/console/activity` est réservé au jeton opérateur (`space:operator`, ADR 0004). On y filtre par auteur, entité (type et identifiant), action (préfixe), organisation, identifiant de requête et période (intervalle semi-ouvert). La pagination est par curseur, triée de la plus récente à la plus ancienne.
 - `GET /api/v1/console/activity/{id}` renvoie le détail, différentiel compris.
+- Une entrée qui porte une organisation n'est servie en entier qu'avec un accès de support vivant sur celle-ci (ADR 0033, décision 9) ; sinon elle est expurgée, y compris sous le filtre `organization`. Le consentement de l'organisation ne se contourne donc pas par le journal.
 - L'historique d'une entité est le même endpoint filtré sur `subject_type` et `subject_id`.
 - Chaque consultation de la console est elle-même journalisée (`console.activity.listed`, `console.activity.viewed`).
 
@@ -69,5 +76,27 @@ Règles pour les modules :
 ## Conséquences
 
 - Volume : une ligne par écriture. Une politique de rétention (durée par type d'action, conforme RGPD et aux obligations de conservation) reste à fixer avant la production. Aucune purge n'existe pour l'instant.
-- Les données personnelles des différentiels sont visibles des opérateurs. D'où les attributs masqués, la consultation réservée à la console et la journalisation des lectures.
+- Les données personnelles des différentiels portant une organisation ne sont visibles que d'un opérateur qui a un accès de support vivant sur elle ; celles de la plateforme restent visibles des opérateurs. D'où les attributs masqués, la consultation réservée à la console et la journalisation des lectures.
 - `request_id` relie le journal, les logs applicatifs et les erreurs (ADR 0014 : membre `request_id` des problèmes 5xx).
+
+## Amendement du 2026-11-19 (ADR 0033, lots 5 et 6)
+
+Actions ajoutées, via `RecordAudit` (jamais de texte, d'adresse ni de nom de fichier dans `metadata`) : `notifications.campaign.created|updated|scheduled|sent|cancelled|test_sent|attachment_added|attachment_removed|content_purged|addresses_purged`, `notifications.mail.unsubscribed` ; `documents.file.scanned` (résultat `clean|infected|unverifiable`) ; `messaging.conversation.content_purged`, `messaging.ticket.content_purged`, `messaging.ticket.attachments_purged`. La rétention du journal reste à fixer.
+
+## Amendement du 2026-11-20 (ADR 0036)
+
+- Actions ajoutées, sans motif, adresse, assureur, numéro de contrat, code ni texte libre : `leases.document.shared|unshared`, `leases.notice_request.submitted|acknowledged|withdrawn|closed|proof_downloaded`, `leases.notice_requests.erased`, `leases.insurance.submitted|accepted|rejected|withdrawn|reminded`, `identity.email_change.requested|confirmed|cancelled`, `identity.phone.updated`, `parties.contact_update.requested|applied|dismissed`, `inspections.inspection.recorded|updated|published`, `inspections.remark.created|answered`, `inspections.remarks.erased`, `payments.account.onboarded`, `payments.online_payment.created|processing|succeeded|failed|cancelled|expired`.
+- Revue de sécurité : `leases.insurance.downloaded` (téléchargement d'une attestation par l'équipe), `payments.online_payment.mismatch` (succès du PSP au montant ou à la devise discordants, ou sans l'un d'eux), `rent.card_payment.rejected` (encaissement carte refusé après toutes les tentatives). Même règle : aucune donnée personnelle dans `metadata`.
+
+## Amendement du 2026-11-20 (ADR 0040)
+
+- Actions ajoutées, sans montant ni donnée personnelle : `mandates.terms.amended` (existante, plus `signed_file_id`), `mandates.document.shared|unshared`, `documents.library.filed|archived|restored`, `organizations.member.scope_refused` ; les conditions par défaut (`mandate_term_defaults`) sont journalisées par le trait `Auditable`. La simulation d'honoraires ne journalise rien : elle n'écrit rien.
+
+## Amendement du 2026-11-21 (ADR 0037)
+
+- Actions ajoutées : `identity.operator.roles_changed`, `console.account.searched|viewed|sessions_revoked|suspended|suspension_reviewed`, `identity.account.reactivated|two_factor_reset`, `console.organization.viewed`, `organizations.organization.suspended|reactivated`, `operations.approval.requested|approved|rejected|cancelled|expired|executed|failed`, `subscriptions.plan_version.created|published|archived`, `subscriptions.override.granted|revoked`, `subscriptions.subscription.created|trial_ended`, `privacy.request.received|verified|extended|forwarded|exported|completed|refused|handled`, `privacy.export.downloaded`, `operations.backup.recorded`. Aucune adresse, nom, motif ni texte libre en clair ; l'adresse recherchée est une empreinte.
+- Conservation proposée, à confirmer : approbations 5 ans ; demandes RGPD et journal de preuve 5 ans après clôture ; export RGPD 30 jours ; exécutions planifiées : la dernière seulement ; rapports de sauvegarde 13 mois (purge non implémentée).
+
+## Amendement du 2026-11-21 (ADR 0039)
+
+- Actions ajoutées. `investments.acquisition.created`, `investments.loan.created|imported|prepaid|attested|fee_added|voided` ; `tax.summary.finalized|rectified|published|downloaded|exported`, `tax.verify.anomaly` ; `reporting.forecast.assumptions_updated`, `reporting.export.generated` (types `prets-immobiliers` et `rentabilite-par-bien`, nombre de lignes). Ni montant, ni libellé libre, ni référence de contrat dans `metadata` ; `forecast_assumptions` exclut du journal d'avant/après ses lots de vacance et ses dépenses ponctuelles.

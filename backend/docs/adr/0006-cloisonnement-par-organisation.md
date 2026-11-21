@@ -1,6 +1,7 @@
 # ADR 0006 — Cloisonnement par organisation
 
 Statut : accepté (2026-11-13). Remplace le « base unique + agency_id » de l'ADR 0002/0003.
+Amendement (2026-11-16, ADR 0024) : la lecture locataire inter-organisations (`Leases\Queries\TenantLeases`) a pour clé le couple (organisation, partie) rattaché au compte, jamais un identifiant du client ; la résolution du détail se fait ensuite sous `CurrentOrganization::run()`, une fois par organisation. Un bail hors de cette clé répond 404, comme un bail inconnu.
 
 ## Contexte
 
@@ -40,3 +41,17 @@ L'ancienne application cloisonnait par `agency_id`, vérifié contrôleur par co
 - Les seeders, commandes et jobs doivent poser le contexte ; sinon ils échouent, ce qui est voulu.
 - Chaque endpoint de l'espace organisation a un test : la ressource d'une autre organisation renvoie 404.
 - Implémenté dans `app/Shared/Tenancy/` ; tests dans `tests/Feature/Shared/TenancyTest.php`.
+
+## Amendement du 2026-11-20 (ADR 0036)
+
+- Les lectures `AcrossOrganizations` des espaces locataire de Leases, Inspections, Payments et Parties vivent uniquement dans leurs `Queries/` et passent par la clé de l'ADR 0024 (`tenantStanding` pour les écritures) ; hors clé, la ressource est introuvable (404). Les relations d'un modèle lu hors organisation ne se chargent pas par `with()` : elles se rattachent à la main sous le contexte de l'organisation concernée.
+- `EmailChangeRequest` (compte, sans organisation) et `PaymentProviderEvent` (webhook reçu avant toute résolution d'organisation) rejoignent la liste des modèles hors organisation de `ArchTest`.
+
+## Amendement du 2026-11-21 (ADR 0037)
+
+- Modèles hors organisation : `OperatorApproval`, `ScheduledTaskRun`, `BackupReport`, `PrivacyRequest`, `PrivacyRequestEvent`, `Plan`, `PlanVersion`, `PlanPrice`, `PlanEntitlement`. `PrivacyRequestForward`, `Subscription` et `OrganizationEntitlementOverride` portent `organization_id`.
+- Les lectures de la console passent par `AcrossOrganizations` dans les `Queries/` d'Organizations, Subscriptions et Privacy, en comptes ou en champs minimaux, jamais en secret, IBAN ni pièce d'identité.
+
+## Amendement du 2026-11-21 (ADR 0039)
+
+- `Tax\Queries\OwnerTaxStatements` lit en `AcrossOrganizations`, restreint par la clé `ownerScope` (organisation, mandant) ; c'est le seul accès inter-organisations de l'ADR 0039. Les vues financières de Reporting restent dans l'organisation courante (`BelongsToOrganization`, `Reading`).

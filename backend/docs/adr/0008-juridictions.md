@@ -53,3 +53,11 @@ eGuardImmo ouvre au lancement quatre pays (décision de l'utilisateur) : France,
 - L'interface est en français au lancement ; le néerlandais, l'allemand et l'anglais viendront avec les juridictions qui les exigent.
 - Le Canada sort du cadre européen pour la signature, la facturation et les données personnelles : voir ADR 0011.
 - Abonnement en CAD pour les organisations canadiennes : grille fixée dans l'ADR 0013.
+
+## Amendement du 2026-11-20 (ADR 0036)
+
+- Le contrat `LeaseRegime` gagne `tenantNoticeReasons(jurisdictionData)` (clé, libellé, mois, justificatif exigé) et `tenantEarliestDeparture(jurisdictionData, reçu le, motif)` ; `tenantNoticeMonths` est conservé pour `RecordNotice`. Le motif devient une donnée de la demande de congé ; `tenant_notice_reason` de `jurisdiction_data` reste lu en repli, son retrait attend la reprise des données. Bail hors `Fr` : 422 `lease_jurisdiction_unsupported`, jamais de repli.
+
+## Amendement du 2026-11-21 (ADR 0039)
+
+- Contrat `RentalIncomeRules` par millésime (Tax, `Jurisdictions/Fr`, millésime `Revenus2025`) ; le registre n'en exige que pour `Fr` : aucune juridiction par défaut (422 `tax_jurisdiction_unsupported`, 422 `tax_year_unsupported`).

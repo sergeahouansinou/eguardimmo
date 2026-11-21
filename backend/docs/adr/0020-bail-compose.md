@@ -1,6 +1,7 @@
 # ADR 0020 — Bail composé et échéances en lignes
 
 Statut : accepté (2026-11-15). Amende l'ADR 0007 (échéancier) et l'ADR 0008 (données de juridiction). Parties : ADR 0019. Référentiels : ADR 0018. Invariants sous verrou : ADR 0017.
+Amendement accepté (2026-11-19, ADR 0034) : sens système `charges_adjustment`, réservé aux lignes d'échéance (jamais un terme de bail) ; il vit dans l'énumération des lignes de Rent, pas dans `lease_component`.
 
 ## Contexte
 
@@ -25,6 +26,7 @@ Le modèle de données proposé rattache un bail à un seul lot et porte le loye
 - `installments` : période (début, fin), date d'échéance, état. Clé unique `(lease_id, period_start)` pour l'idempotence.
 - `installment_lines` : une ligne par composante appelée, avec le libellé et le montant figés. Une proratisation, une régularisation ou un arriéré est une ligne.
 - Les soldes restent dans le grand livre ; les lignes décrivent ce qui est appelé, pas ce qui est payé.
+- Amendement (ADR 0026) : les montants des termes sont mensuels ; une ligne d'échéance est un tronçon d'un mois civil proratisé au jour réel, et une révision de loyer ne modifie jamais une échéance déjà générée.
 
 ## Options écartées
 
@@ -37,3 +39,7 @@ Le modèle de données proposé rattache un bail à un seul lot et porte le loye
 - Rent génère les échéances depuis les `lease_terms` valides sur la période.
 - La révision d'indice devient une Action qui ferme et ouvre des lignes ; la juridiction fournit l'indice et la règle.
 - Les écrans de bail affichent le loyer « actuel » calculé, et l'historique des composantes.
+
+## Amendement du 2026-11-20 (ADR 0036)
+
+- Tables ajoutées à Leases : `lease_documents` (partage explicite, révocable, par bail ou par fiche), `lease_notice_requests` (une demande vivante par bail et fiche, colonne générée unique), `lease_notice_request_events` (journal de preuve en ajout seul, déclencheur refusant `UPDATE` et `DELETE`), `lease_insurance_submissions` et `lease_insurance_reminders` (une relance par 7 jours et par bail). Un dépôt d'assurance en attente par bail et fiche. `RecordNotice` et `EndLeaseParty` peuvent citer `notice_request_id` et clôturent la demande dans la même transaction.

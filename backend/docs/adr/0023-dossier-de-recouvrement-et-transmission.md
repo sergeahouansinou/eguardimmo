@@ -42,3 +42,19 @@ Le premier modèle ouvrait un dossier par échéance impayée (`recovery_cases.o
 - Les écrans Impayés et Recouvrement passent d'une logique par échéance à une logique par dossier : sélection des créances à l'ouverture, ajout et retrait ensuite, carte « Pièces du dossier », dialogue « Transmettre au commissaire de justice », historique des envois.
 - La catégorie de contact « Commissaire de justice » s'ajoute aux contacts.
 - Tests : séquence de numérotation, créance refusée dans un second dossier ouvert, lien expiré, révoqué ou inconnu (404 identique), acte créé à l'envoi et à la révocation, téléchargement journalisé, 404 sur le dossier d'une autre organisation.
+
+## API livrée (2026-11-17)
+
+- Organisation, `org/{organization}/recovery/` : lecture (propriétaire, administrateur, gestionnaire, comptable) `unpaid`, `cases`, `cases/{case}`, `cases/{case}/acts`, `bundles/{bundle}`, `bundles/{bundle}/download` ; écriture (propriétaire, administrateur, gestionnaire) ouverture, ajout et retrait de créances, changement de statut, actes, génération de l'envoi, transmission, révocation, renvoi.
+- Public : `GET /api/v1/recovery/downloads/{token}` (limité par `throttle:auth`, sans cookie de session, `Cache-Control: private, no-store`). Le jeton n'est stocké que haché (SHA-256), jamais renvoyé après création ni journalisé.
+- Un seul dossier actif (ouvert ou en plan) par bail et débiteur ; la règle « une créance, un seul dossier actif » est tenue sous un verrou d'organisation (compteur de type `lock`). Clôturé et irrécouvrable sont terminaux.
+- Configuration : `RECOVERY_GOTENBERG_URL` (repli sur `RENT_GOTENBERG_URL`), `RECOVERY_LINK_URL` (gabarit HTTPS contenant `{token}`) ; sans lien HTTPS valide, la transmission répond 503.
+- Hors ADR, à valider : e-mail du lien envoyé par un écouteur et un Mailable minimaux dans Recovery (pas de module Notifications) ; `RentLedger::noticesOf` ajouté pour retrouver les avis émis.
+
+## Factures (2026-11-18, ADR 0028)
+
+- Les factures émises sur un bail et échues entrent dans un dossier comme créances `invoice`, lues par `InvoiceLedger` (Recovery → Invoicing, lecture seule, déjà inscrit à l'ADR 0005). Le reste dû est celui du grand livre : règlements et avoirs sont déduits, une facture soldée ou annulée par avoir total sort des impayés.
+- Types de créance stables : `installment` et `invoice`. `POST cases` et `POST cases/{case}/items` acceptent `installment_ids` et `invoice_ids` (au moins une créance, 100 de chaque type au plus). La règle « une créance, un seul dossier actif » est la même pour les deux types (`recovery_item_claims`, clé `organisation, type, créance`).
+- `recovery_case_items.reference` porte le numéro de la facture. Une facture n'a pas de période : `period_start` et `period_end` y reçoivent sa date d'émission.
+- L'envoi ajoute la facture émise (PDF d'Invoicing) au ZIP, pièce `invoice`, et le décompte la liste ligne à ligne (`recovery-2`). Les mises en demeure restent des actes du carnet (`formal_notice`), sans pièce générée.
+- API : `GET unpaid` renvoie `type`, `item_id`, `installment_id`, `invoice_id`, `reference`, `period` (null pour une facture), `issued_on` (null pour une échéance) et `status` (null pour une facture) ; les lignes d'un dossier portent les mêmes champs.

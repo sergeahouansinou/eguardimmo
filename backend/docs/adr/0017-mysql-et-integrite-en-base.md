@@ -18,7 +18,7 @@ L'audit du modèle de données (2026-11-15) relève aussi que l'appartenance d'u
 ### Types
 - UUID (ADR 0015) : `char(36)` en `ascii` et `ascii_bin`. En `utf8mb4` chaque clé occuperait 144 octets dans chaque index au lieu de 36.
 - Horodatages : `datetime(6)` en UTC (`datetimes()`, `dateTime(precision: 6)`), jamais `timestamp`, limité à 2038. Les durées de conservation (10 ans en comptabilité) dépassent cette borne.
-- Montants : `bigint` en unités mineures et `char(3)` pour la devise. Taux et quotes-parts : entier en points de base.
+- Montants : `bigint` en unités mineures et `char(3)` pour la devise. Quotes-parts : entier en points de base. Taux de taxe : entier en cent-millièmes (`pcm`, 100 000 = 100 %), la TVQ de 9,975 % ne s'écrivant pas en points de base (amendement du 2026-11-18, ADR 0028).
 - Statuts : `varchar` avec contrainte `CHECK` (appliquée depuis MySQL 8.0.16), jamais le type `ENUM`, dont l'évolution réécrit la table.
 - Données semi-structurées : type `JSON` (ADR 0018), jamais pour un montant, une date d'échéance ou un statut.
 
@@ -48,3 +48,8 @@ MySQL n'a ni contrainte d'exclusion, ni contrainte différée, ni sécurité au 
 - Les migrations Identity existantes utilisent `timestamp` et l'UUID en `utf8mb4` : à corriger avant le premier déploiement, sans coût de données puisque rien n'est déployé.
 - `phpunit.xml` et l'intégration continue passent les tests d'intégration sur MySQL.
 - Une base vide se recrée par `php artisan migrate:fresh` après ces corrections.
+
+## Amendement du 2026-11-21 (ADR 0037)
+
+- `operators` en `datetime(6)`. Déclencheurs d'ajout seul sur `privacy_request_events` et `backup_reports` (mise à jour interdite), d'immuabilité des versions publiées (`plan_versions`, `plan_prices`, `plan_entitlements`), des demandes RGPD closes et des transmissions traitées.
+- Colonnes générées uniques pour « une demande vivante » : `operator_approvals`, `privacy_requests`, `plan_versions` (un brouillon par plan). Vérifiées sous SQLite ; à vérifier sous MySQL avant la mise en production.

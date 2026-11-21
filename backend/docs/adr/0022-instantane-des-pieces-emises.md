@@ -24,3 +24,11 @@ Dans le modèle de données proposé, une quittance ou une facture relit le nom,
 
 - L'anonymisation d'une partie ne touche pas les pièces émises, conservées pour leur durée légale.
 - Un test vérifie qu'aucune pièce émise ne lit une fiche pour s'afficher.
+
+## Amendement du 2026-11-20 (ADR 0036)
+
+- La lettre de congé est une pièce émise de type `letter` avec instantané (identité, adresse du logement, motif, mention du justificatif, date souhaitée) et empreinte SHA-256, générée par Gotenberg (`LEASES_GOTENBERG_URL`, `LEASES_GOTENBERG_TIMEOUT`). Gotenberg indisponible : le dépôt échoue sans rien écrire.
+
+## Amendement du 2026-11-21 (ADR 0039)
+
+- Synthèse fiscale figée : type `IssuedDocumentType::TaxSummary` (préfixe de numéro `FIS`), émise après le PDF ; un échec du service PDF (503 `tax_pdf_unavailable`) n'écrit rien.

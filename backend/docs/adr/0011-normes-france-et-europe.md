@@ -1,6 +1,7 @@
 # ADR 0011 — Normes françaises et européennes de référence
 
 Statut : accepté (2026-11-13), amendé le 2026-11-13 (signature électronique : solution hybride, voir plus bas). Les dates et obligations ci-dessous viennent de sources secondaires (éditeurs, presse spécialisée) : elles sont **à confirmer** sur Légifrance, impots.gouv.fr et EUR-Lex, et avec un expert-comptable, avant d'implémenter le module concerné.
+Amendement accepté (2026-11-19, ADR 0035) : ligne « Relevés bancaires » (camt.053 .001.02 et .001.08 et CSV à profil importés par l'utilisateur ; MT940, CFONB 120 et agrégation DSP2 par un prestataire agréé hors périmètre ; aucun identifiant bancaire détenu) ; les trois prestataires à choisir deviennent quatre (plateforme agréée, horodatage qualifié, PSP, agrégateur DSP2).
 
 ## Décision
 
@@ -72,3 +73,17 @@ Repères de départ, **tous à confirmer** sur les textes officiels avant le mod
 - Avant la mise en production de la signature : avis d'un juriste sur le niveau de signature par type d'acte.
 - Chaque intégration externe distingue trois états (trouvé, absent, non vérifiable) et ne met jamais une panne en cache comme un refus.
 - Avant chaque module listé ici, une vérification des textes officiels en vigueur fait partie du plan.
+
+## Amendement du 2026-11-20 (ADR 0036)
+
+- PSP : Stripe Connect (comptes Standard) recommandé, **non branché** : seuls `FakeGateway` (développement et tests) et une passerelle indisponible (503 `payment_provider_unavailable`) existent derrière `PaymentGateway`. eGuardImmo ne détient jamais les fonds. Bac à sable puis production après DPA et avis juridique.
+- La lettre de congé est un PDF émis avec empreinte SHA-256 et journal de preuve, **non scellé** tant que le parcours de scellement n'existe pas. La LRE qualifiée par prestataire reste une option reportée.
+
+## Amendement du 2026-11-21 (ADR 0037)
+
+- La facturation et l'encaissement de l'abonnement de la plateforme (PSP de la plateforme, plateforme agréée) relèvent d'un ADR distinct ; l'ADR 0037 ne livre que le catalogue, l'essai et les droits.
+- Demandes des personnes (RGPD) : délai d'un mois, prolongeable de deux mois une seule fois, vérification d'identité préalable, effacement par double validation. Points de droit à confirmer par le DPO.
+
+## Amendement du 2026-11-21 (ADR 0039)
+
+- Ligne « Fiscalité du bailleur » précisée : location nue, déclaration 2044 au régime normal (revenus 2025), formules des totaux stockées comme données du millésime. Aucun conseil fiscal, aucune télédéclaration, aucun appel à un service de l'administration ; validation du libellé et des formules par un expert-comptable à faire avant ouverture.

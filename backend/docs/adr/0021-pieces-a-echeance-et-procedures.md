@@ -34,3 +34,11 @@ Le modèle de données proposé consacre une table à chaque pièce valable jusq
 
 - `diagnostics`, `professional_cards`, `financial_guarantees`, `liability_insurances`, `home_insurances` et `supporting_documents` du modèle proposé disparaissent.
 - L'écran Conformité de l'agence lit les pièces de type conformité de l'organisation.
+
+## Amendement du 2026-11-20 (ADR 0036)
+
+- L'assurance habitation (type `home_insurance`, sujet `lease`) n'est créée que par **acceptation** d'un dépôt (`Certificates::record`, dans la même transaction) ; un dépôt refusé ou retiré ne devient jamais une pièce. `CertificateDeadlineReached` d'une pièce de sujet `lease` alimente les notifications `tenant.insurance_expiring|expired` des locataires du bail et non plus celles de l'équipe. La relance de l'agence n'est pas une mise en demeure.
+
+## Amendement du 2026-11-20 (ADR 0040)
+
+- Les diagnostics et pièces de conformité avec une validité se déposent comme pièces à échéance depuis la bibliothèque de documents (`library_documents`, Documents) ; la bibliothèque classe, elle ne calcule aucune échéance.

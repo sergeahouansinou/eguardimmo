@@ -91,3 +91,30 @@ Succès :
 - Le client HTTP partagé des applications (`packages/`) lit `application/problem+json`, se branche sur `code` et affiche `detail`. Il ne montre jamais un message pour un 500 au-delà du texte générique.
 - La traduction des `detail` (néerlandais pour Bruxelles et la Flandre, anglais pour le Québec) reste à décider. Le `code` permet aux clients de traduire eux-mêmes en attendant.
 - Un nouveau code d'erreur fait partie du contrat public : il s'ajoute à l'enum du module et à la documentation de l'API dans la même modification.
+
+## Amendement du 2026-11-20 (ADR 0036)
+
+- Codes ajoutés. Leases : `lease_document_not_found`, `notice_request_not_found`, `lease_notice_not_allowed`, `notice_request_exists`, `notice_request_locked`, `notice_departure_too_early`, `notice_reason_unsupported`, `notice_proof_required`, `lease_jurisdiction_unsupported`, `insurance_submission_not_found`, `insurance_submission_not_pending`, `insurance_submission_not_allowed`, `insurance_period_invalid`, `lease_notice_invalid`. Inspections : `inspection_not_found`, `inspection_remark_not_found`, `inspection_remark_window_closed`, `inspection_not_publishable`, `inspection_published`, `inspection_stale_version`, `inspection_remark_answered`. Payments : `online_payment_not_found`, `payment_nothing_due`, `payment_account_not_ready`, `payment_provider_unavailable` (503, `Retry-After`), `payment_not_cancellable`, `payment_method_unsupported`, `webhook_signature_invalid` (401). `idempotency_key_reused` (409) s'applique à toute création par `client_id`.
+- Revue de sécurité : Payments `payment_installments_in_progress` (409) ; Leases `lease_document_invalid` (422). Le motif `payment_in_progress` s'ajoute aux raisons d'indisponibilité des options de paiement.
+
+## Amendement du 2026-11-20 (ADR 0040)
+
+- Codes ajoutés. Mandates : `mandate_amendment_signature_required` (422), `mandate_document_invalid` (422), `mandate_document_not_found` (404), `mandate_term_defaults_not_found` (404). Documents : `document_not_clean` (409), `library_document_not_found` (404), `library_kind_subject_mismatch` (422). Organizations : `member_scope_unsupported` (422). OwnerFunds : `owner_funds_mandate_not_found` (404). Réutilisés : `mandate_stale_version`, `mandate_agency_only`, `owner_funds_agency_only`, `fee_base_missing`.
+
+## Amendement du 2026-11-21 (ADR 0037)
+
+- Codes ajoutés. Identity : `operator_role_required` (403), `operator_proof_required` (422), `operator_proof_invalid` (422), `operator_account_protected` (403), `last_operator_administrator` (409), `account_suspended` (403), `account_not_found` (404), `account_already_suspended` (409), `account_not_suspended` (409), `two_factor_not_enabled` (409), `suspension_review_forbidden` (403). Operations : `approval_not_found` (404), `approval_self_forbidden` (403), `approval_role_forbidden` (403), `approval_not_pending` (409), `approval_expired` (409), `approval_pending_exists` (409), `approval_stale` (409). Organizations : `organization_suspended` (403), `organization_already_suspended` (409), `organization_not_suspended` (409). Subscriptions : `plan_not_found` (404), `plan_version_not_editable` (409), `plan_draft_exists` (409), `plan_version_publication_pending` (409), `plan_version_invalid` (422), `subscription_not_found` (404), `feature_not_in_plan` (403), `plan_quota_reached` (409), `override_invalid` (422). Privacy : `privacy_request_not_found` (404), `privacy_request_closed` (409), `privacy_request_exists` (409), `privacy_export_expired` (410), `privacy_identity_not_verified` (409), `privacy_account_required` (409), `privacy_already_extended` (409), `privacy_export_unavailable` (404), `privacy_deadline_passed` (409), `privacy_erasure_requires_approval` (409), `reauthentication_required` (403, dépôt d'une demande d'accès, de portabilité ou d'effacement).
+
+## Amendement du 2026-11-21 (ADR 0039)
+
+- Codes ajoutés. Investments : `loan_not_found` (404), `acquisition_not_found` (404), `investments_landlord_only` (403), `investments_idempotency_key_required` (422), `loan_terms_invalid` (422), `loan_schedule_inconsistent` (422), `acquisition_scope_mixed` (422), `investments_target_invalid` (422), `investments_file_invalid` (422), `loan_in_use` (409), `loan_version_conflict` (409), `loan_state_invalid` (409), `acquisition_exists` (409), `loan_attestation_exists` (409), `investments_idempotency_key_reused` (409).
+- Tax : `tax_summary_not_found` (404), `tax_mandant_not_found` (404), `tax_landlord_only` (403), `tax_agency_only` (403), `tax_idempotency_key_required` (422), `tax_year_unsupported` (422), `tax_jurisdiction_unsupported` (422), `tax_taxpayer_unsupported` (422), `tax_export_too_large` (422), `tax_interest_source_conflict` (409), `tax_period_not_closed` (409), `tax_owner_funds_not_ready` (409), `tax_summary_stale_version` (409), `tax_summary_exists` (409), `tax_summary_not_rectifiable` (409), `tax_summary_not_publishable` (409), `tax_idempotency_key_reused` (409), `tax_pdf_unavailable` (503).
+- Reporting : `reporting_landlord_only` (403), `forecast_assumptions_stale` (409), `profitability_period_invalid` (422), `finance_too_large` (422, plus de 500 lots ou de 20 pages de baux), `export_type_unknown` (404) ; `export_too_large` (422) sert aussi aux exports financiers.
+
+## Amendement du 2026-11-21 (quotas de plan)
+
+- `plan_quota_reached` (409) ajoute au corps `feature` (clé de la fonction), `limit` (limite effective) et `current` (nombre d'objets au moment du refus) ; `feature_not_in_plan` (403) ajoute `feature`. Aucun code nouveau.
+
+## Amendement du 2026-11-21 (plafond d'organisations)
+
+- Organizations : `organization_limit_reached` (403), refus de `POST /organizations` quand le compte a déjà créé `ORGANIZATIONS_MAX_OWNED_PER_USER` organisations (5 par défaut). Sans `Retry-After` : ce n'est pas une limite de débit.
