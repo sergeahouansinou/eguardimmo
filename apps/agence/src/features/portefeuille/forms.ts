@@ -1,5 +1,9 @@
 import { z } from "zod";
+import { amountExample, currencyName, parseAmount, parseRateBasisPoints } from "@/lib/currency";
+import type { Currency } from "@/lib/currency";
 import { addMonths, addDays, formatDay, isoDayOrNull } from "@/lib/dates";
+import { feeBaseSchema, feeTaxModeSchema } from "./api/apiSchemas";
+import { OPTIONAL_RATE_MESSAGE, optionalRate } from "./feeTerms";
 import { avenantKindSchema, mandantTypeSchema, paymentModeSchema } from "./schemas";
 import type { AvenantKind } from "./schemas";
 
@@ -19,11 +23,15 @@ export function parseDecimal(raw: string): number | null {
   return Number(text);
 }
 
-export function toMinor(raw: string): number {
-  const value = parseDecimal(raw);
+export function toMinor(raw: string, currency: Currency = "EUR"): number {
+  const value = parseAmount(raw, currency);
   if (value === null) throw new RangeError(`Montant invalide : ${raw}`);
-  return Math.round(value * 100);
+  return value;
 }
+
+export const amountMessage = (currency: Currency): string => `Saisissez un montant en ${currencyName(currency)}, par exemple ${amountExample(currency)}.`;
+
+const MAX_AVENANT_RATE_BASIS_POINTS = 2000;
 
 const required = (message: string) => z.string().trim().min(1, message);
 const decimalField = (message: string) => z.string().trim().refine((value) => parseDecimal(value) !== null, message);
@@ -73,8 +81,8 @@ export const mandatFormSchema = z
     mandantId: required("Choisissez le mandant."),
     lots: z.array(lotFormSchema).min(1, "Confiez au moins un lot."),
     feePercent: z.string().trim().refine((value) => {
-      const parsed = parseDecimal(value);
-      return parsed !== null && parsed > 0 && parsed <= 20;
+      const parsed = parseRateBasisPoints(value);
+      return parsed !== null && parsed > 0 && parsed <= MAX_AVENANT_RATE_BASIS_POINTS;
     }, "Saisissez un taux entre 0,01 et 20 %, par exemple 7,00."),
     payoutDay: z.string().regex(/^(?:[1-9]|1\d|2[0-8])$/, "Choisissez un jour entre 1 et 28."),
     worksLimit: decimalField("Saisissez un montant en euros, par exemple 500."),
@@ -160,8 +168,8 @@ export const TERMINATION_REASONS = [
 
 export const TERMINATION_NOTICE_MONTHS = 3;
 
-export function makeTerminationFormSchema(todayIso: string) {
-  const earliest = addMonths(todayIso, TERMINATION_NOTICE_MONTHS);
+export function makeTerminationFormSchema(todayIso: string, noticeMonths: number = TERMINATION_NOTICE_MONTHS) {
+  const earliest = addMonths(todayIso, noticeMonths);
   return z
     .object({
       reason: z.enum(["mandant", "agence", "vente", "accord"]),
@@ -173,7 +181,7 @@ export function makeTerminationFormSchema(todayIso: string) {
         ctx.addIssue({
           code: "custom",
           path: ["effectIso"],
-          message: `Le préavis est de ${String(TERMINATION_NOTICE_MONTHS)} mois : la date d'effet est au plus tôt le ${formatDay(earliest)}.`,
+          message: `Le préavis est de ${String(noticeMonths)} mois : la date d'effet est au plus tôt le ${formatDay(earliest)}.`,
         });
       }
     });
@@ -208,6 +216,8 @@ export const AVENANT_KINDS: readonly { value: AvenantKind; label: string; descri
 export interface AvenantFormContext {
   todayIso: string;
   endIsoByMandat: Readonly<Record<string, string>>;
+  currencyByMandat?: Readonly<Record<string, Currency>>;
+  api?: boolean;
 }
 
 export function makeAvenantFormSchema(context: AvenantFormContext) {
@@ -220,16 +230,29 @@ export function makeAvenantFormSchema(context: AvenantFormContext) {
       endIso: z.string(),
       payoutDay: z.string(),
       worksLimit: z.string().trim(),
+      feeBase: z.string(),
+      feeMinimum: z.string().trim(),
+      feeTaxMode: z.string(),
+      lettingRate: z.string().trim(),
+      worksFeeRate: z.string().trim(),
       note: z.string().trim().max(500, "Le motif ne dépasse pas 500 caractères."),
     })
     .superRefine((values, ctx) => {
+      const currency = context.currencyByMandat?.[values.mandatId] ?? "EUR";
       if (isoDayOrNull(values.effectIso) && values.effectIso < context.todayIso) {
         ctx.addIssue({ code: "custom", path: ["effectIso"], message: `La date d'effet ne peut pas être antérieure au ${formatDay(context.todayIso)}.` });
       }
       if (values.kind === "honoraires") {
-        const rate = parseDecimal(values.feePercent);
-        if (rate === null || rate <= 0 || rate > 20) {
+        const rate = parseRateBasisPoints(values.feePercent);
+        if (rate === null || rate <= 0 || rate > MAX_AVENANT_RATE_BASIS_POINTS) {
           ctx.addIssue({ code: "custom", path: ["feePercent"], message: "Saisissez un taux entre 0,01 et 20 %, par exemple 6,50." });
+        }
+        if (context.api === true) {
+          if (!feeBaseSchema.safeParse(values.feeBase).success) ctx.addIssue({ code: "custom", path: ["feeBase"], message: "Choisissez la base de calcul des honoraires." });
+          if (parseAmount(values.feeMinimum, currency) === null) ctx.addIssue({ code: "custom", path: ["feeMinimum"], message: `Saisissez le minimum par mois en ${currencyName(currency)}, 0 si aucun.` });
+          if (!feeTaxModeSchema.safeParse(values.feeTaxMode).success) ctx.addIssue({ code: "custom", path: ["feeTaxMode"], message: "Indiquez si les honoraires s'entendent hors taxes ou toutes taxes comprises." });
+          if (optionalRate(values.lettingRate) === undefined) ctx.addIssue({ code: "custom", path: ["lettingRate"], message: OPTIONAL_RATE_MESSAGE });
+          if (optionalRate(values.worksFeeRate) === undefined) ctx.addIssue({ code: "custom", path: ["worksFeeRate"], message: OPTIONAL_RATE_MESSAGE });
         }
       }
       if (values.kind === "duree") {
@@ -243,8 +266,8 @@ export function makeAvenantFormSchema(context: AvenantFormContext) {
       if (values.kind === "reversement" && !/^(?:[1-9]|1\d|2[0-8])$/.test(values.payoutDay)) {
         ctx.addIssue({ code: "custom", path: ["payoutDay"], message: "Choisissez un jour entre 1 et 28." });
       }
-      if (values.kind === "travaux" && parseDecimal(values.worksLimit) === null) {
-        ctx.addIssue({ code: "custom", path: ["worksLimit"], message: "Saisissez un montant en euros, par exemple 500." });
+      if (values.kind === "travaux" && parseAmount(values.worksLimit, currency) === null) {
+        ctx.addIssue({ code: "custom", path: ["worksLimit"], message: amountMessage(currency) });
       }
     });
 }

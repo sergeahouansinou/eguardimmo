@@ -1,37 +1,20 @@
-export type Currency = "EUR" | "XOF";
+import { formatCurrency, parseAmount } from "@/lib/currency";
+import type { Currency } from "@/lib/currency";
 
-const MINOR_DIGITS: Record<Currency, number> = { EUR: 2, XOF: 0 };
+export type { Currency };
 
 export function formatMoney(minor: number, currency: Currency = "EUR", options: { signed?: boolean } = {}): string {
-  if (!Number.isSafeInteger(minor)) throw new RangeError(`Montant en unités mineures non entier : ${String(minor)}`);
-  const digits = MINOR_DIGITS[currency];
-  const factor = 10 ** digits;
-  const whole = minor % factor === 0;
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: whole ? 0 : digits,
-    maximumFractionDigits: whole ? 0 : digits,
-    signDisplay: options.signed ? "exceptZero" : "auto",
-  })
-    .format(minor / factor)
-    .replace(/[\u202f\u00a0]/g, "\u00a0");
+  return formatCurrency(minor, currency, { signed: options.signed === true });
 }
 
-export function formatMoneyExact(minor: number): string {
-  if (!Number.isSafeInteger(minor)) throw new RangeError(`Montant en unités mineures non entier : ${String(minor)}`);
-  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    .format(minor / 100)
-    .replace(/[\u202f\u00a0]/g, "\u00a0");
+export function formatMoneyExact(minor: number, currency: Currency = "EUR"): string {
+  return formatCurrency(minor, currency, { fixed: true });
 }
 
-const MONEY_TEXT = /^\d{1,9}(?:[.,]\d{1,2})?$/;
+const CURRENCY_SYMBOLS = /[€]|F\s?CFA/gi;
 
-export function parseMoney(text: string): number | null {
-  const compact = text.replace(/[\s\u00a0\u202f€]/g, "");
-  if (!MONEY_TEXT.test(compact)) return null;
-  const [whole = "0", decimals = ""] = compact.replace(",", ".").split(".");
-  return Number(whole) * 100 + Number(decimals.padEnd(2, "0"));
+export function parseMoney(text: string, currency: Currency = "EUR"): number | null {
+  return parseAmount(text.replace(CURRENCY_SYMBOLS, ""), currency);
 }
 
 export function applyRate(amountMinor: number, rateBasisPoints: number): number {

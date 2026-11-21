@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Chip, Icon, Select, StatCard, Tab, TabList, TabPanel, Tabs } from "@eguardimmo/ui";
-import { Download, Eye, RefreshCw, Ban, Plus } from "lucide-react";
+import { Ban, Download, Eye, Plus, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -10,22 +10,21 @@ import type { DataColumn } from "@/components/ui/DataList";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PillBadge } from "@/components/ui/PillBadge";
 import { QueryState } from "@/components/ui/QueryState";
-import { RowMenu } from "@/components/ui/RowMenu";
 import { SearchField } from "@/components/ui/SearchField";
 import { useDemoDownload } from "@/components/ui/useDemoDownload";
 import { agenceRoutes, mandantHref, mandatHref, mandatTerminationHref } from "@/espace/routes";
 import { downloadCsv, toCsv } from "@/lib/csv";
 import { daysBetween, formatDay } from "@/lib/dates";
-import { formatRate } from "@/lib/money";
 import { matchesQuery } from "@/lib/text";
-import { MANDAT_STATE_PILLS, plural } from "../labels";
-import { usePortefeuille } from "../queries";
+import { END_REQUEST_PILL, MANDAT_STATE_PILLS, TERMS_MISSING_LABEL, feeText, payoutText, plural } from "../labels";
+import { usePortefeuille, usePortefeuilleAccess } from "../queries";
 import { isOperational, mandatState } from "../selectors";
 import type { MandatState, Portefeuille } from "../selectors";
 import type { Mandant, Mandat } from "../schemas";
+import { MandatMenu } from "./MandatMenu";
 import { RenewMandatDialog } from "./RenewMandatDialog";
 
-type Segment = "actifs" | "a_renouveler" | "termines" | "brouillons";
+type Segment = "actifs" | "a_renouveler" | "termines" | "brouillons" | "archives" | "demandes";
 
 interface MandatLine {
   mandat: Mandat;
@@ -34,10 +33,13 @@ interface MandatLine {
   state: MandatState;
 }
 
-const SEGMENTS: readonly Segment[] = ["actifs", "a_renouveler", "termines", "brouillons"];
+const SEGMENTS: readonly Segment[] = ["actifs", "a_renouveler", "termines", "brouillons", "archives", "demandes"];
 const EXPIRY_WINDOW_DAYS = 90;
 
 const inSegment = (line: MandatLine, segment: Segment): boolean => {
+  if (segment === "archives") return line.mandat.archived === true;
+  if (line.mandat.archived) return false;
+  if (segment === "demandes") return line.mandat.hasEndRequest === true;
   if (segment === "actifs") return isOperational(line.state);
   if (segment === "a_renouveler") return line.state === "a_renouveler";
   if (segment === "termines") return line.state === "termine";
@@ -64,20 +66,21 @@ function Mandats({ index }: { index: Portefeuille }) {
   const { data } = index;
   const params = useSearchParams();
   const requested = params.get("etat");
-  const initial = SEGMENTS.find((segment) => segment === requested) ?? "actifs";
+  const initial = SEGMENTS.find((segment) => segment === requested && (index.isApi || (segment !== "demandes" && segment !== "archives"))) ?? "actifs";
   const [segment, setSegment] = useState<Segment>(initial);
   const [search, setSearch] = useState("");
   const [expiry, setExpiry] = useState("toutes");
   const [soonOnly, setSoonOnly] = useState(false);
   const [renewing, setRenewing] = useState<string>();
   const download = useDemoDownload();
+  const { canWrite } = usePortefeuilleAccess();
 
   const lines = useMemo<MandatLine[]>(
     () =>
       data.mandats.map((mandat) => ({
         mandat,
         mandant: index.mandant(mandat.mandantId),
-        lots: index.biensOfMandat(mandat.id).length,
+        lots: index.lotCount(mandat),
         state: mandatState(mandat, data.todayIso),
       })),
     [data, index],
@@ -85,7 +88,7 @@ function Mandats({ index }: { index: Portefeuille }) {
   const count = (segmentValue: Segment) => lines.filter((line) => inSegment(line, segmentValue)).length;
   const operational = lines.filter((line) => isOperational(line.state));
   const covered = operational.reduce((sum, line) => sum + line.lots, 0);
-  const rates = new Set(operational.map((line) => line.mandat.feeBasisPoints));
+  const rates = new Set(operational.map((line) => feeText(line.mandat, !index.isApi)));
   const renewals = lines.filter((line) => line.state === "a_renouveler");
 
   const filtered = lines.filter((line) => {
@@ -128,10 +131,19 @@ function Mandats({ index }: { index: Portefeuille }) {
         ),
     },
     { id: "lots", header: "Biens", cell: ({ lots }) => plural(lots, "lot", "lots") },
-    { id: "fees", header: "Honoraires", cell: ({ mandat }) => `${formatRate(mandat.feeBasisPoints)} TTC` },
-    { id: "payout", header: "Reversement", cell: ({ mandat }) => `Le ${String(mandat.payoutDay)}` },
+    { id: "fees", header: "Honoraires", cell: ({ mandat }) => feeText(mandat, !index.isApi) },
+    { id: "payout", header: "Reversement", cell: ({ mandat }) => payoutText(mandat) },
     { id: "end", header: "Échéance", cell: ({ mandat }) => formatDay(mandat.endIso) },
-    { id: "state", header: "État", cell: ({ state }) => <PillBadge pill={MANDAT_STATE_PILLS[state]} /> },
+    {
+      id: "state",
+      header: "État",
+      cell: ({ mandat, state }) => (
+        <span className="flex flex-wrap items-center gap-1">
+          <PillBadge pill={MANDAT_STATE_PILLS[state]} />
+          {mandat.hasEndRequest === true ? <PillBadge pill={END_REQUEST_PILL} /> : null}
+        </span>
+      ),
+    },
     {
       id: "action",
       header: "Action",
@@ -142,13 +154,16 @@ function Mandats({ index }: { index: Portefeuille }) {
               Ouvrir
             </Link>
           </Button>
-          <RowMenu
+          <MandatMenu
+            mandat={mandat}
+            state={state}
+            todayIso={data.todayIso}
             label={`Actions pour le mandat ${mandat.number}`}
             items={[
               { id: "voir", label: "Voir le mandat", icon: Eye, href: mandatHref(mandat.id) },
-              { id: "telecharger", label: "Télécharger le mandat", icon: Download, onSelect: () => { download(`Mandat ${mandat.number}`); } },
-              ...(state === "a_renouveler" ? [{ id: "renouveler", label: "Renouveler", icon: RefreshCw, onSelect: () => { setRenewing(mandat.id); } }] : []),
-              ...(isOperational(state) && state !== "resilie"
+              ...(index.isApi ? [] : [{ id: "telecharger", label: "Télécharger le mandat", icon: Download, onSelect: () => { download(`Mandat ${mandat.number}`); } }]),
+              ...(canWrite && state === "a_renouveler" ? [{ id: "renouveler", label: "Renouveler", icon: RefreshCw, onSelect: () => { setRenewing(mandat.id); } }] : []),
+              ...(canWrite && isOperational(state) && state !== "resilie" && state !== "suspendu"
                 ? [{ id: "fin", label: "Mettre fin au mandat", icon: Ban, href: mandatTerminationHref(mandat.id), tone: "danger" as const, separatorBefore: true }]
                 : []),
             ]}
@@ -167,8 +182,8 @@ function Mandats({ index }: { index: Portefeuille }) {
           line.mandat.number,
           line.mandant?.name ?? "",
           String(line.lots),
-          String(line.mandat.feeBasisPoints / 100),
-          String(line.mandat.payoutDay),
+          line.mandat.termsMissing !== true && line.mandat.flatFeeMinor === undefined ? String(line.mandat.feeBasisPoints / 100) : feeText(line.mandat, false),
+          line.mandat.termsMissing === true ? TERMS_MISSING_LABEL : String(line.mandat.payoutDay),
           formatDay(line.mandat.endIso),
           MANDAT_STATE_PILLS[line.state].label,
         ]),
@@ -187,12 +202,14 @@ function Mandats({ index }: { index: Portefeuille }) {
               <Icon icon={Download} />
               Exporter
             </Button>
-            <Button asChild>
-              <Link href={agenceRoutes.mandatNew}>
-                <Icon icon={Plus} />
-                Nouveau mandat
-              </Link>
-            </Button>
+            {canWrite ? (
+              <Button asChild>
+                <Link href={agenceRoutes.mandatNew}>
+                  <Icon icon={Plus} />
+                  Nouveau mandat
+                </Link>
+              </Button>
+            ) : null}
           </>
         }
       />
@@ -201,7 +218,7 @@ function Mandats({ index }: { index: Portefeuille }) {
         <StatCard label="Mandats actifs" value={operational.length}>
           <span className="text-caption text-fg-subtle">{plural(covered, "lot couvert", "lots couverts")}</span>
         </StatCard>
-        <StatCard label="Honoraires" value={rates.size === 1 ? `${formatRate([...rates][0] ?? 0)} TTC` : "Variables"}>
+        <StatCard label="Honoraires" value={rates.size === 1 ? [...rates][0] ?? "—" : "Variables"}>
           <span className="text-caption text-fg-subtle">{rates.size === 1 ? "taux identique sur tous les mandats" : "selon le mandat"}</span>
         </StatCard>
         <StatCard label="À renouveler" value={renewals.length}>
@@ -215,6 +232,8 @@ function Mandats({ index }: { index: Portefeuille }) {
           <Tab value="a_renouveler" count={count("a_renouveler")}>À renouveler</Tab>
           <Tab value="termines" count={count("termines")}>Terminés</Tab>
           {count("brouillons") > 0 ? <Tab value="brouillons" count={count("brouillons")}>Brouillons</Tab> : null}
+          {index.isApi ? <Tab value="demandes" count={count("demandes")}>Demandes de fin de mandat</Tab> : null}
+          {index.isApi ? <Tab value="archives" count={count("archives")}>Archivés</Tab> : null}
         </TabList>
         <TabPanel value={segment} className="flex min-w-0 flex-col gap-3">
           <div className="flex flex-wrap items-end gap-2">

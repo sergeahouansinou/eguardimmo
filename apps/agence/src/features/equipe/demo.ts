@@ -2,7 +2,6 @@ import { settle } from "./settle";
 import { DEMO_NOW } from "@/features/shared/dates";
 import { CURRENT_USER } from "@/features/shared/directory";
 import { DemoServerError } from "@/features/shared/errors";
-import { SEAT_LIMIT } from "@/features/shared/agencyDefaults";
 import { createStore, nextId, slugify } from "@/features/shared/store";
 import { INITIAL_MEMBERS } from "./fixtures";
 import type { MemberRecord } from "./fixtures";
@@ -48,7 +47,7 @@ function findMember(state: State, id: string): MemberRecord {
 
 function ensureSeat(state: State): void {
   const { used } = countSeats(state.members);
-  if (used >= state.plan.seats) {
+  if (state.plan.seats !== null && used >= state.plan.seats) {
     throw new DemoServerError(
       "seat_limit",
       `La formule ${state.plan.name} est complète (${String(used)} collaborateurs sur ${String(state.plan.seats)}). Passez à une formule supérieure ou libérez une place.`,
@@ -62,7 +61,7 @@ function applyPortfolio(role: MemberRecord["role"], mode: MemberRecord["portfoli
 }
 
 export function createEquipeDemo(): EquipeDemo {
-  const store = createStore<State>({ members: INITIAL_MEMBERS, plan: { name: "Agence", seats: SEAT_LIMIT } });
+  const store = createStore<State>({ members: INITIAL_MEMBERS, plan: { name: "Gratuit", seats: null } });
 
   const replace = (id: string, change: (member: MemberRecord) => MemberRecord) => {
     store.update((state) => ({ ...state, members: state.members.map((member) => (member.id === id ? change(member) : member)) }));

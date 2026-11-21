@@ -146,7 +146,6 @@ function HonorairesContent({ data, period, onPeriodChange }: { data: Honoraires;
               items={[
                 { label: "Gestion courante", value: data.scheme.rateLabel },
                 { label: "Base de calcul", value: data.scheme.baseLabel },
-                { label: "Prélèvement", value: data.scheme.collectionLabel },
                 { label: "Mandats", value: `${String(data.scheme.sameRateCount)} sur ${String(data.scheme.totalMandants)} au même taux` },
               ]}
             />

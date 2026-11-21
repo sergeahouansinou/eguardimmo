@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { excludingVatRate, formatPercent, formatSiren, isValidFrenchIban, isValidSiren, maskIban, parseRateBp, payoutDayLabel, rateBpToText } from "./logic";
+import { formatPercent, formatSiren, isValidIban, isValidSiren, maskIban, parseRateBp, payoutDayLabel, rateBpToText } from "./logic";
 
 describe("réglages : contrôles", () => {
   it("valide le SIREN par sa clé de contrôle", () => {
@@ -10,11 +10,14 @@ describe("réglages : contrôles", () => {
     expect(formatSiren("912345675")).toBe("912 345 675");
   });
 
-  it("valide un IBAN français par sa clé mod 97 et n’en garde que la version masquée", () => {
-    expect(isValidFrenchIban("FR76 3000 6000 0112 3456 7890 189")).toBe(true);
-    expect(isValidFrenchIban("fr7630006000011234567890189")).toBe(true);
-    expect(isValidFrenchIban("FR76 3000 6000 0112 3456 7890 188")).toBe(false);
-    expect(isValidFrenchIban("DE89 3704 0044 0532 0130 00")).toBe(false);
+  it("valide un IBAN de tout pays par sa clé mod 97 et n’en garde que la version masquée", () => {
+    expect(isValidIban("FR76 3000 6000 0112 3456 7890 189")).toBe(true);
+    expect(isValidIban("fr7630006000011234567890189")).toBe(true);
+    expect(isValidIban("FR76 3000 6000 0112 3456 7890 188")).toBe(false);
+    expect(isValidIban("DE89 3704 0044 0532 0130 00")).toBe(true);
+    expect(isValidIban("DE89 3704 0044 0532 0130 01")).toBe(false);
+    expect(isValidIban("CI93 CI00 8011 1301 1342 9120 0589")).toBe(true);
+    expect(isValidIban("1234")).toBe(false);
     expect(maskIban("FR76 3000 6000 0112 3456 7890 189")).toEqual({ masked: "FR76 •••• •••• •••• •••• 0189", last4: "0189" });
   });
 
@@ -22,18 +25,17 @@ describe("réglages : contrôles", () => {
     expect(parseRateBp("7")).toBe(700);
     expect(parseRateBp("7,5 %")).toBe(750);
     expect(parseRateBp("5.83")).toBe(583);
+    expect(parseRateBp("0,29")).toBe(29);
+    expect(parseRateBp("1.15")).toBe(115);
     expect(parseRateBp("abc")).toBeNull();
     expect(parseRateBp("100")).toBeNull();
     expect(rateBpToText(700)).toBe("7");
     expect(rateBpToText(750)).toBe("7,5");
   });
 
-  it("calcule l’équivalent hors taxe", () => {
-    expect(excludingVatRate(700, 2000)).toBe(583);
-    expect(formatPercent(583)).toBe("5,83 %");
-    expect(formatPercent(700)).toBe("7 %");
-    expect(excludingVatRate(800, 2000)).toBe(667);
-    expect(excludingVatRate(700, 0)).toBe(700);
+  it("formate un taux en pourcentage", () => {
+    expect(formatPercent(583).replace(/\s/g, " ")).toBe("5,83 %");
+    expect(formatPercent(700).replace(/\s/g, " ")).toBe("7 %");
   });
 
   it("libelle le jour de reversement", () => {

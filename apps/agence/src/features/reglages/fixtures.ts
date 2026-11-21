@@ -26,14 +26,14 @@ export function initialIdentity(): Identity {
 
 export function initialFinances(): Finances {
   return {
+    currency: "EUR",
     feeRateBp: DEFAULT_FEE_BASIS_POINTS,
-    feeBasis: "rents_collected",
-    vatBp: VAT_BASIS_POINTS,
+    feeBasis: "rent_and_charges",
+    feeTaxMode: "incl_tax",
     minFeeMinor: DEFAULT_MIN_FEE_PER_LOT_MINOR,
     payoutDay: PAYOUT_DAY,
-    retainFees: true,
-    attachReport: true,
     worksCeilingMinor: WORKS_CEILING_MINOR,
+    vat: { regime: "normal", rateBp: VAT_BASIS_POINTS },
     account: {
       ibanMasked: `FR76 •••• •••• •••• •••• ${AGENCY.mandantsAccountLast4}`,
       last4: AGENCY.mandantsAccountLast4,

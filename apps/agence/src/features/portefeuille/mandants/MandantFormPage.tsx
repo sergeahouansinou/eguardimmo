@@ -10,9 +10,10 @@ import { FieldRow, FormSection } from "@/components/ui/FormSection";
 import { FilePicker } from "@/components/ui/FilePicker";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { agenceRoutes, mandantHref } from "@/espace/routes";
+import { dataSource } from "@/lib/env";
 import { mandantFormSchema } from "../forms";
 import type { MandantFormValues } from "../forms";
-import { MANDANT_TYPE_LABELS } from "../labels";
+import { MANDANT_TYPE_LABELS, UNAVAILABLE } from "../labels";
 import { useCreateMandant } from "../queries";
 import type { NewMandant } from "../source";
 
@@ -63,6 +64,26 @@ export function toNewMandant(values: MandantFormValues): NewMandant {
 }
 
 export function MandantFormPage() {
+  return dataSource === "api" ? <MandantUnavailable /> : <MandantForm />;
+}
+
+function MandantUnavailable() {
+  return (
+    <div className="flex max-w-xl flex-col gap-3">
+      <PageHeader crumbs={[{ label: "Mandants", href: agenceRoutes.mandants }, { label: "Nouveau mandant" }]} title="Nouveau mandant" />
+      <Alert tone="info" title="Création de mandant non disponible">
+        {`${UNAVAILABLE} : un mandant est une partie du carnet d'adresses, qui n'est pas encore reliée à cet écran.`}
+      </Alert>
+      <div>
+        <Button variant="secondary" asChild>
+          <Link href={agenceRoutes.mandants}>Retour aux mandants</Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function MandantForm() {
   const router = useRouter();
   const toast = useToast();
   const create = useCreateMandant();

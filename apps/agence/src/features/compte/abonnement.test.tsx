@@ -20,74 +20,75 @@ async function plan(name: string): Promise<HTMLElement> {
 }
 
 describe("Abonnement", () => {
-  it("reproduit l'essai gratuit, les formules et l'utilisation de la maquette", async () => {
+  it("affiche l'essai complet, les formules de l'ADR et l'utilisation", async () => {
     const { container } = renderScreen(<SubscriptionPage />);
-    expect(await screen.findByText("Formule Agence, essai d'un mois")).toBeTruthy();
-    expect(screen.getByText("Du 29/10/2026 au 28/11/2026 · 15 jours restants")).toBeTruthy();
-    expect(screen.getByRole("img", { name: "15 jours sur 30 écoulés" })).toBeTruthy();
+    expect(await screen.findByText("Formule Gratuit, essai complet de 15 jours")).toBeTruthy();
+    expect(screen.getByText("Du 05/11/2026 au 20/11/2026 · 7 jours restants")).toBeTruthy();
+    expect(screen.getByRole("img", { name: "8 jours sur 15 écoulés" })).toBeTruthy();
     expect(screen.getByText("Aucun moyen de paiement enregistré")).toBeTruthy();
     expect(
-      screen.getByText("Ajoutez-en un avant le 28/11/2026 pour poursuivre après l'essai. Premier prélèvement : 39,00 € HT le 29/11/2026."),
+      screen.getByText("Ajoutez-en un avant le 20/11/2026 pour souscrire une formule payante. Sans souscription, l'organisation repasse en Gratuit à la fin de l'essai."),
     ).toBeTruthy();
-    expect(within(await plan("Agence")).getByText("Essai en cours")).toBeTruthy();
-    expect(within(await plan("Agence")).getByText("39 €")).toBeTruthy();
-    expect(within(await plan("Agence")).getByText("20 lots")).toBeTruthy();
-    expect(within(await plan("Agence Pro")).getByText("79 €")).toBeTruthy();
-    expect(within(await plan("Réseau")).getByText("Sur devis")).toBeTruthy();
-    expect(within(await plan("Réseau")).getByRole("link", { name: "Nous contacter" }).getAttribute("href")).toMatch(/^mailto:/);
+    expect(within(await plan("Gratuit")).getByText("Essai en cours")).toBeTruthy();
+    expect(within(await plan("Gratuit")).getByText("0 €")).toBeTruthy();
+    expect(within(await plan("Gratuit")).getByText("1 lot")).toBeTruthy();
+    expect(within(await plan("Silver")).getByText("4,90 €")).toBeTruthy();
+    expect(within(await plan("Silver")).getByText("2 à 5 lots")).toBeTruthy();
+    expect(within(await plan("Gold")).getByText("10,90 €")).toBeTruthy();
+    expect(within(await plan("Gold")).getByText("Lots illimités")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Formule Réseau" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Nous contacter" })).toBeNull();
     expect(screen.getByRole<HTMLButtonElement>("button", { name: "Formule de l'essai" }).disabled).toBe(true);
     const usage = screen.getByRole("region", { name: "Utilisation" });
-    expect(within(usage).getByText("14 / 20")).toBeTruthy();
-    expect(within(usage).getByText("4 / 5")).toBeTruthy();
-    expect(within(usage).getByText("0,8 Go / 5 Go")).toBeTruthy();
-    expect(within(usage).getByRole("img", { name: "70 % utilisé" })).toBeTruthy();
-    expect(within(usage).getByRole("img", { name: "80 % utilisé" })).toBeTruthy();
+    expect(within(usage).getByText("14 / illimité")).toBeTruthy();
+    expect(within(usage).getByText("4 / selon le plan")).toBeTruthy();
+    expect(within(usage).getByText("800 Mo / 5 Go")).toBeTruthy();
     expect(within(usage).getByRole("img", { name: "16 % utilisé" })).toBeTruthy();
-    expect(screen.getByText("Aucune facture pendant l'essai. La première sera émise le 29/11/2026.")).toBeTruthy();
+    expect(screen.getByText("Aucune facture pendant l'essai.")).toBeTruthy();
     expect(screen.getByText("24 avenue de la République, 75011 Paris")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Enregistrer" })).toBeNull();
     await expectNoA11yViolations(container);
   });
 
-  it("affiche les prix annuels calculés par le serveur (dix mois facturés)", async () => {
+  it("affiche les prix annuels de l'ADR, sans remise calculée", async () => {
     const user = userEvent.setup();
     renderScreen(<SubscriptionPage />);
-    await user.click(await screen.findByRole("radio", { name: "Annuel, 2 mois offerts" }));
-    expect(within(await plan("Agence")).getByText("390 €")).toBeTruthy();
-    expect(within(await plan("Agence Pro")).getByText("790 €")).toBeTruthy();
+    await user.click(await screen.findByRole("radio", { name: "Annuel" }));
+    expect(within(await plan("Silver")).getByText("58 €")).toBeTruthy();
+    expect(within(await plan("Gold")).getByText("118 €")).toBeTruthy();
   });
 
-  it("passe à Agence Pro après confirmation : prix, places et utilisation suivent", async () => {
+  it("passe à Gold après confirmation : prix, places et utilisation suivent", async () => {
     const user = userEvent.setup();
     const { source } = renderScreen(<SubscriptionPage />);
-    await user.click(await screen.findByRole("button", { name: "Choisir Agence Pro" }));
-    const dialog = await screen.findByRole("dialog", { name: "Choisir la formule Agence Pro ?" });
-    expect(within(dialog).getByText("79 € HT par mois")).toBeTruthy();
-    await user.click(within(dialog).getByRole("button", { name: "Choisir Agence Pro" }));
-    expect(await screen.findByText("Formule Agence Pro activée")).toBeTruthy();
-    expect(await screen.findByText("Formule Agence Pro, essai d'un mois")).toBeTruthy();
-    expect(screen.getByText(/Premier prélèvement : 79,00 € HT le 29\/11\/2026/)).toBeTruthy();
-    expect(within(screen.getByRole("region", { name: "Utilisation" })).getByText("14 / 100")).toBeTruthy();
-    expect(within(screen.getByRole("region", { name: "Utilisation" })).getByText("4 / 15")).toBeTruthy();
+    await user.click(await screen.findByRole("button", { name: "Choisir Gold" }));
+    const dialog = await screen.findByRole("dialog", { name: "Choisir la formule Gold ?" });
+    expect(within(dialog).getByText("10,90 € HT par mois")).toBeTruthy();
+    await user.click(within(dialog).getByRole("button", { name: "Choisir Gold" }));
+    expect(await screen.findByText("Formule Gold activée")).toBeTruthy();
+    expect(await screen.findByText("Formule Gold, essai complet de 15 jours")).toBeTruthy();
+    expect(screen.getByText(/Premier prélèvement : 10,90 € HT le 21\/11\/2026/)).toBeTruthy();
+    expect(within(screen.getByRole("region", { name: "Utilisation" })).getByText("14 / illimité")).toBeTruthy();
     const team = equipeOverviewSchema.parse(await source.equipe.overview());
-    expect(team.seats).toMatchObject({ planName: "Agence Pro", limit: 15 });
+    expect(team.seats).toMatchObject({ planName: "Gold", limit: null });
   });
 
-  it("facture un an à dix fois le prix mensuel, sans montant envoyé par le client", async () => {
+  it("facture un an au prix annuel de la grille, sans montant envoyé par le client", async () => {
     const source = createDemoSource();
-    await source.compte.changePlan({ planId: "agence-pro", period: "yearly" });
+    await source.compte.changePlan({ planId: "gold", period: "yearly" });
     const view = subscriptionSchema.parse(await source.compte.subscription());
-    expect(view.firstCharge).toEqual({ date: "2026-11-29", amountMinor: 79000, period: "yearly" });
+    expect(view.firstCharge).toEqual({ date: "2026-11-21", amountMinor: 11800, period: "yearly" });
     await expect(source.compte.changePlan({ planId: "reseau", period: "monthly" })).rejects.toMatchObject({ code: "invalid_input" });
-    await expect(source.compte.changePlan({ planId: "agence", period: "monthly", amountMinor: 1 })).resolves.toBeTruthy();
-    expect(subscriptionSchema.parse(await source.compte.subscription()).firstCharge.amountMinor).toBe(3900);
+    await expect(source.compte.changePlan({ planId: "gold", period: "monthly", amountMinor: 1 })).resolves.toBeTruthy();
+    expect(subscriptionSchema.parse(await source.compte.subscription()).firstCharge.amountMinor).toBe(1090);
   });
 
-  it("refuse de repasser à une formule trop petite pour l'équipe", async () => {
+  it("refuse de repasser à une formule trop petite pour l'équipe ou le portefeuille", async () => {
     const source = createDemoSource();
-    await source.compte.changePlan({ planId: "agence-pro", period: "monthly" });
+    await expect(source.compte.changePlan({ planId: "silver", period: "monthly" })).rejects.toMatchObject({ code: "lot_limit" });
+    await source.compte.changePlan({ planId: "gold", period: "monthly" });
     await source.equipe.invite({ firstName: "Thomas", lastName: "Girard", email: "thomas.girard@example.com", role: "comptable", portfolioMode: "all", mandantIds: [], message: "" });
-    await expect(source.compte.changePlan({ planId: "agence", period: "monthly" })).rejects.toMatchObject({ code: "seat_limit" });
+    await expect(source.compte.changePlan({ planId: "gratuit", period: "monthly" })).rejects.toMatchObject({ code: "seat_limit" });
   });
 
   it("ajoute un moyen de paiement masqué sans jamais saisir de numéro", async () => {

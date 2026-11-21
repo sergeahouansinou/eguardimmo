@@ -1,30 +1,16 @@
-const NBSP = /[  ]/g;
+import { formatCurrency } from "./currency";
+import type { Currency } from "./currency";
 
-function format(minor: number, fixed: boolean, signed: boolean): string {
-  if (!Number.isSafeInteger(minor)) throw new RangeError(`Montant en centimes non entier : ${String(minor)}`);
-  const whole = minor % 100 === 0;
-  const digits = fixed || !whole ? 2 : 0;
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-    signDisplay: signed ? "exceptZero" : "auto",
-  })
-    .format(minor / 100)
-    .replace(NBSP, " ");
+export function formatEuros(minor: number, currency: Currency = "EUR"): string {
+  return formatCurrency(minor, currency);
 }
 
-export function formatEuros(minor: number): string {
-  return format(minor, false, false);
+export function formatEurosExact(minor: number, currency: Currency = "EUR"): string {
+  return formatCurrency(minor, currency, { fixed: true });
 }
 
-export function formatEurosExact(minor: number): string {
-  return format(minor, true, false);
-}
-
-export function formatEurosSigned(minor: number): string {
-  return format(minor, true, true);
+export function formatEurosSigned(minor: number, currency: Currency = "EUR"): string {
+  return formatCurrency(minor, currency, { fixed: true, signed: true });
 }
 
 export function applyRate(baseMinor: number, rateBasisPoints: number): number {

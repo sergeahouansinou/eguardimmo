@@ -2,7 +2,7 @@ import type { TeamStats } from "./schemas";
 
 export interface SeatPlan {
   name: string;
-  seats: number;
+  seats: number | null;
 }
 
 export interface EquipeSource {

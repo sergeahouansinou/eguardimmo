@@ -73,6 +73,13 @@ describe("DataTable", () => {
     await expectNoA11yViolations(container);
   });
 
+  it("rend la zone de défilement atteignable au clavier", () => {
+    render(<Table />);
+    const region = screen.getAllByRole("region").find((candidate) => candidate.contains(screen.getByRole("table")));
+    expect(region?.getAttribute("tabindex")).toBe("0");
+    expect(region?.getAttribute("aria-label")).toMatch(/, défilement horizontal$/);
+  });
+
   it("affiche l’état vide", () => {
     render(<Table empty />);
     expect(screen.getByText("Aucun impayé")).toBeTruthy();

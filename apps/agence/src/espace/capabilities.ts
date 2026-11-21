@@ -1,4 +1,4 @@
-import { matchRoute } from "@eguardimmo/gestion";
+import { matchRoute, normalizedPath } from "@eguardimmo/gestion";
 
 export const GATED_FAMILIES = [
   "accueil",
@@ -6,7 +6,6 @@ export const GATED_FAMILIES = [
   "mandats",
   "finances",
   "comptesRendus",
-  "interventions",
   "devis",
   "conformite",
   "documents",
@@ -20,20 +19,19 @@ export const GATED_FAMILIES = [
 export type GatedFamily = (typeof GATED_FAMILIES)[number];
 
 export const familyHasApiSource: Record<GatedFamily, boolean> = {
-  accueil: false,
-  mandants: false,
-  mandats: false,
+  accueil: true,
+  mandants: true,
+  mandats: true,
   finances: false,
-  comptesRendus: false,
-  interventions: false,
+  comptesRendus: true,
   devis: false,
   conformite: false,
   documents: false,
   reglages: false,
   compte: false,
   roles: false,
-  invitationLocataire: false,
-  avisEcheance: false,
+  invitationLocataire: true,
+  avisEcheance: true,
   autre: false,
 };
 
@@ -43,7 +41,6 @@ export const familyLabel: Record<GatedFamily, string> = {
   mandats: "Mandats",
   finances: "Finances",
   comptesRendus: "Comptes rendus",
-  interventions: "Interventions",
   devis: "Devis",
   conformite: "Conformité",
   documents: "Documents",
@@ -62,10 +59,22 @@ const ROUTES: readonly (readonly [prefix: string, outcome: Outcome])[] = [
   ["/mandants", "mandants"],
   ["/mandats", "mandats"],
   ["/finances", "finances"],
+  ["/finances/loyers", "reelle"],
+  ["/finances/recouvrement", "reelle"],
+  ["/finances/factures", "reelle"],
+  ["/finances/reversements", "reelle"],
+  ["/finances/honoraires", "reelle"],
+  ["/finances/honoraires/bareme", "finances"],
+  ["/finances/fonds", "reelle"],
+  ["/finances/cloture", "reelle"],
+  ["/finances/depenses", "reelle"],
+  ["/finances/charges", "reelle"],
+  ["/finances/banque", "reelle"],
+  ["/finances/paiements-en-ligne", "reelle"],
   ["/comptes-rendus", "comptesRendus"],
-  ["/interventions", "interventions"],
+  ["/interventions", "reelle"],
   ["/devis", "devis"],
-  ["/conformite", "conformite"],
+  ["/conformite", "reelle"],
   ["/documents", "documents"],
   ["/reglages", "reglages"],
   ["/compte", "compte"],
@@ -81,9 +90,40 @@ const ROUTES: readonly (readonly [prefix: string, outcome: Outcome])[] = [
   ["/aide", "reelle"],
   ["/notifications", "reelle"],
   ["/compte/securite", "reelle"],
+  ["/compte/notifications", "reelle"],
+  ["/agenda", "reelle"],
+  ["/taches", "reelle"],
+  ["/contacts", "reelle"],
+  ["/journal", "reelle"],
 ];
 
+const REAL_EXACT_ROUTES: readonly string[] = [
+  "/compte",
+  "/finances/impayes",
+  "/finances/encaissements",
+  "/finances/encaissements/nouveau",
+  "/finances/honoraires/bareme",
+  "/devis",
+  "/documents",
+  "/documents/ajout",
+  "/reglages",
+  "/reglages/acces-support",
+  "/reglages/fuseau-horaire",
+  "/reglages/finances",
+  "/finances/fiscalite",
+  "/analytique",
+  "/analytique/revenus-depenses",
+  "/analytique/occupation",
+  "/equipe/roles",
+  "/support",
+  "/support/nouvelle",
+];
+
+const REAL_PATTERNS: readonly RegExp[] = [/^\/finances\/impayes\/[^/]+$/, /^\/finances\/fiscalite\/[^/]+$/, /^\/support\/[^/]+$/];
+
 export function classifyRoute(pathname: string): Outcome | null {
+  const path = normalizedPath(pathname);
+  if (REAL_EXACT_ROUTES.includes(path) || REAL_PATTERNS.some((pattern) => pattern.test(path))) return "reelle";
   return matchRoute(ROUTES, pathname);
 }
 

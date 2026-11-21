@@ -1,6 +1,7 @@
 import { VAT_BASIS_POINTS } from "@/features/shared/agencyDefaults";
 import { DEMO_TODAY, addDays, daysBetween, formatDate } from "@/features/shared/dates";
 import { LOTS, MANDANTS, lotById } from "@/features/shared/directory";
+import type { Mandant } from "@/features/shared/directory";
 import { applyRate, formatMoney, splitVat, sum } from "@/features/shared/money";
 import type { FeeScheme, FinancesState, Installment, Payment, UnpaidCase } from "./model";
 
@@ -56,8 +57,12 @@ export function schemeAt(state: FinancesState, mandantId: string, dateIso: strin
   return found;
 }
 
-export function feeFor(amountMinor: number, installment: Installment, scheme: Pick<FeeScheme, "rateBp" | "base" | "minFeeMinor">): number {
-  const base = scheme.base === "hors_charges" ? Math.round((amountMinor * installment.rentMinor) / installment.calledMinor) : amountMinor;
+export function mandantOfMandate(mandateId: string): Mandant | undefined {
+  return MANDANTS.find((mandant) => mandant.mandateRef === mandateId);
+}
+
+export function feeFor(amountMinor: number, installment: Pick<Installment, "rentMinor" | "calledMinor">, scheme: Pick<FeeScheme, "rateBp" | "base" | "minFeeMinor">): number {
+  const base = scheme.base === "rent" ? Math.round((amountMinor * installment.rentMinor) / installment.calledMinor) : amountMinor;
   return Math.min(amountMinor, Math.max(applyRate(base, scheme.rateBp), scheme.minFeeMinor));
 }
 

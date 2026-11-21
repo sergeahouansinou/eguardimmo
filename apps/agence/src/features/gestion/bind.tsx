@@ -2,9 +2,11 @@
 
 import { GestionNavigationProvider, PendingNotice } from "@eguardimmo/gestion";
 import type { ScreenProps } from "@eguardimmo/gestion";
+import { StaffWriteButton } from "@eguardimmo/messagerie";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ComponentType, ReactNode } from "react";
+import { dataSource } from "@/lib/env";
 
 function LotBridge({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -17,6 +19,21 @@ function LotBridge({ children }: { children: ReactNode }) {
           router.push(href);
         },
         search,
+        ...(dataSource === "api"
+          ? {
+              writeToTenant: (target) => (
+                <StaffWriteButton
+                  target={{
+                    kind: "tenant",
+                    partyId: target.partyId,
+                    partyName: target.partyName,
+                    links: target.leases,
+                    ...(target.defaultLeaseId ? { defaultLinkId: target.defaultLeaseId } : {}),
+                  }}
+                />
+              ),
+            }
+          : {}),
       }}
     >
       <PendingNotice />

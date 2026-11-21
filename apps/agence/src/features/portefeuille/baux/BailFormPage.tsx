@@ -232,7 +232,7 @@ function BailForm({ index }: { index: Portefeuille }) {
                 { label: "Mandant", value: mandant?.name ?? "—" },
                 { label: "Loyer charges comprises", value: called === null ? "—" : `${formatEuros(called)} par mois` },
                 { label: "Fin du bail", value: end ? formatDay(end) : "—" },
-                { label: "Honoraires", value: mandat && called !== null ? `${formatEuros(applyRate(called, mandat.feeBasisPoints))} par mois (${formatRate(mandat.feeBasisPoints)})` : "—" },
+                { label: "Honoraires", value: mandat && mandat.termsMissing !== true && called !== null ? `${formatEuros(applyRate(called, mandat.feeBasisPoints))} par mois (${formatRate(mandat.feeBasisPoints)})` : "—" },
               ]}
             />
           </Card>

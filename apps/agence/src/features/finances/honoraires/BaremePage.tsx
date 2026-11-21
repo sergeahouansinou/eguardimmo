@@ -6,11 +6,11 @@ import { useState } from "react";
 import { Controller, useWatch } from "react-hook-form";
 import { QueryState } from "@/components/ui/QueryState";
 import { SectionCard } from "@/components/ui/SectionCard";
-import { FormSelect, FormSwitch, LinkButton, PageFrame, SummaryLines, useNotify, useSchemaForm } from "@/features/kit";
-import { DEMO_TODAY, addDays, addMonths, formatDate } from "@/features/shared/dates";
+import { FormSelect, LinkButton, PageFrame, SummaryLines, useNotify, useSchemaForm } from "@/features/kit";
+import { DEMO_TODAY, addMonths, formatDate } from "@/features/shared/dates";
 import { DemoServerError, messageOf } from "@/features/shared/errors";
 import { formatMoney, formatMoneyExact } from "@/features/shared/money";
-import { BASE_LABELS, COLLECTION_LABELS, basisPointsText, csvAmount, plural, rateText } from "../format";
+import { BASE_LABELS, basisPointsText, csvAmount, plural, rateText } from "../format";
 import { useBaremes, useSaveBareme, useSimulation } from "../hooks";
 import type { Baremes } from "../schemas";
 import { baremeFormSchema, toBaremeInput } from "./baremeForm";
@@ -19,31 +19,29 @@ import type { BaremeFormInput, BaremeFormValues } from "./baremeForm";
 type Entry = Baremes[number];
 
 const BASE_OPTIONS = Object.entries(BASE_LABELS).map(([value, label]) => ({ value, label }));
-const COLLECTION_OPTIONS = Object.entries(COLLECTION_LABELS).map(([value, label]) => ({ value, label }));
 const FIELD_TARGETS: Record<string, keyof BaremeFormInput> = {
-  mandantId: "mandantId",
+  mandateId: "mandateId",
   rateBp: "rate",
   minFeeMinor: "minFee",
-  relocationPercent: "relocation",
+  lettingBp: "letting",
   worksBp: "works",
   effectiveFrom: "effectiveFrom",
 };
 
-function defaultsOf(entry: Entry): Omit<BaremeFormInput, "effectiveFrom" | "applyToAll"> {
+function defaultsOf(entry: Entry): Omit<BaremeFormInput, "effectiveFrom"> {
   return {
-    mandantId: entry.mandantId,
+    mandateId: entry.mandateId,
     rate: basisPointsText(entry.current.rateBp),
     base: entry.current.base,
     minFee: csvAmount(entry.current.minFeeMinor),
-    collection: entry.current.collection,
-    relocation: String(entry.current.relocationPercent),
+    letting: basisPointsText(entry.current.lettingBp),
     works: basisPointsText(entry.current.worksBp),
   };
 }
 
 export function BaremePage() {
   const query = useBaremes();
-  const requested = useSearchParams().get("mandant");
+  const requested = useSearchParams().get("mandat");
   return (
     <QueryState query={query} label="Le barème des honoraires">
       {(entries) => <BaremeForm entries={entries} requested={requested} />}
@@ -56,38 +54,34 @@ function BaremeForm({ entries, requested }: { entries: Baremes; requested: strin
   const notify = useNotify();
   const save = useSaveBareme();
   const [formError, setFormError] = useState<string | null>(null);
-  const first = entries.find((entry) => entry.mandantId === requested) ?? entries[0];
+  const first = entries.find((entry) => entry.mandateId === requested) ?? entries[0];
   const form = useSchemaForm<BaremeFormInput, BaremeFormValues>(baremeFormSchema, {
-    ...(first ? defaultsOf(first) : { mandantId: "", rate: "", base: "encaisses", minFee: "", collection: "reversement", relocation: "", works: "" }),
+    ...(first ? defaultsOf(first) : { mandateId: "", rate: "", base: "rent", minFee: "", letting: "", works: "" }),
     effectiveFrom: addMonths(`${DEMO_TODAY.slice(0, 8)}01`, 1),
-    applyToAll: false,
   });
   const { control, register, setValue, setError, formState } = form;
   const values = useWatch({ control });
-  const entry = entries.find((item) => item.mandantId === values.mandantId);
+  const entry = entries.find((item) => item.mandateId === values.mandateId);
   const simulationInput = toBaremeInput({
-    mandantId: values.mandantId ?? "",
+    mandateId: values.mandateId ?? "",
     rate: values.rate ?? "",
-    base: values.base ?? "encaisses",
+    base: values.base ?? "rent",
     minFee: values.minFee ?? "",
-    collection: values.collection ?? "reversement",
-    relocation: values.relocation ?? "",
+    letting: values.letting ?? "",
     works: values.works ?? "",
     effectiveFrom: values.effectiveFrom ?? "",
-    applyToAll: values.applyToAll ?? false,
   });
   const simulation = useSimulation(simulationInput);
 
-  const chooseMandant = (mandantId: string) => {
-    const next = entries.find((item) => item.mandantId === mandantId);
+  const chooseMandate = (mandateId: string) => {
+    const next = entries.find((item) => item.mandateId === mandateId);
     if (!next) return;
     const defaults = defaultsOf(next);
     const options = { shouldValidate: formState.isSubmitted };
     setValue("rate", defaults.rate, options);
     setValue("base", defaults.base, options);
     setValue("minFee", defaults.minFee, options);
-    setValue("collection", defaults.collection, options);
-    setValue("relocation", defaults.relocation, options);
+    setValue("letting", defaults.letting, options);
     setValue("works", defaults.works, options);
   };
 
@@ -97,7 +91,7 @@ function BaremeForm({ entries, requested }: { entries: Baremes; requested: strin
     if (!input) return;
     save.mutate(input, {
       onSuccess: (result) => {
-        notify.success("Barème enregistré", `Avenant à signer envoyé à ${result.mandantNames.length > 1 ? plural(result.mandantNames.length, "mandant", "mandants") : (result.mandantNames[0] ?? "")}. Entrée en vigueur le ${formatDate(result.effectiveFrom)}.`);
+        notify.success("Barème enregistré", `Avenant à signer pour le mandat ${result.mandateRef} envoyé à ${result.mandantName}. Entrée en vigueur le ${formatDate(result.effectiveFrom)}.`);
         router.push("/finances/honoraires");
       },
       onError: (error) => {
@@ -141,16 +135,16 @@ function BaremeForm({ entries, requested }: { entries: Baremes; requested: strin
               <div className="px-4 pb-4">
                 <Controller
                   control={control}
-                  name="mandantId"
+                  name="mandateId"
                   render={({ field, fieldState }) => (
                     <Select
                       label="Mandat *"
                       placeholder="Choisir un mandat"
-                      options={entries.map((item) => ({ value: item.mandantId, label: item.label }))}
+                      options={entries.map((item) => ({ value: item.mandateId, label: item.label }))}
                       value={field.value}
                       onValueChange={(next) => {
                         field.onChange(next);
-                        chooseMandant(next);
+                        chooseMandate(next);
                       }}
                       error={fieldState.error?.message}
                       hint={entry ? `${plural(entry.lots, "lot", "lots")}, loyers de ${formatMoney(entry.monthlyMinor)} par mois, charges comprises.` : undefined}
@@ -167,23 +161,21 @@ function BaremeForm({ entries, requested }: { entries: Baremes; requested: strin
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <TextField label="Minimum par lot et par mois, €" placeholder="0,00" inputMode="decimal" autoComplete="off" error={formState.errors.minFee?.message} {...register("minFee")} />
-                  <FormSelect control={control} name="collection" label="Prélèvement" placeholder="Choisir un prélèvement" options={COLLECTION_OPTIONS} />
                 </div>
               </div>
             </SectionCard>
             <SectionCard title="Prestations annexes">
               <div className="flex flex-col gap-3 px-4 pb-4">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <TextField label="Relocation, % d'un mois de loyer" placeholder="50" inputMode="decimal" autoComplete="off" error={formState.errors.relocation?.message} {...register("relocation")} />
+                  <TextField label="Mise en location, % d'un mois de loyer" placeholder="50" inputMode="decimal" autoComplete="off" error={formState.errors.letting?.message} {...register("letting")} />
                   <TextField label="Suivi de travaux, % TTC" placeholder="5,00" inputMode="decimal" autoComplete="off" error={formState.errors.works?.message} {...register("works")} />
                 </div>
-                <TextField label="Entrée en vigueur *" placeholder="JJ/MM/AAAA" type="date" min={addDays(DEMO_TODAY, 1)} error={formState.errors.effectiveFrom?.message} {...register("effectiveFrom")} />
-                <FormSwitch control={control} name="applyToAll" label="Appliquer ce barème à tous les mandats" />
+                <TextField label="Entrée en vigueur *" placeholder="JJ/MM/AAAA" type="date" min={DEMO_TODAY} error={formState.errors.effectiveFrom?.message} {...register("effectiveFrom")} />
               </div>
             </SectionCard>
           </div>
           <div className="flex min-w-0 flex-col gap-3">
-            <SectionCard title="Simulation, novembre">
+            <SectionCard title={`Simulation, ${simData?.periodLabel ?? "dernier mois clos"}`}>
               <div className="px-4 pb-4">
                 {simData && simulationInput ? (
                   <SummaryLines
@@ -195,16 +187,14 @@ function BaremeForm({ entries, requested }: { entries: Baremes; requested: strin
                     ]}
                   />
                 ) : (
-                  <p className="text-body text-fg-subtle">Renseignez un taux valide pour simuler l'effet du nouveau barème sur les loyers encaissés en novembre.</p>
+                  <p className="text-body text-fg-subtle">Renseignez un taux valide pour simuler l'effet du nouveau barème sur les loyers encaissés du dernier mois clos.</p>
                 )}
               </div>
             </SectionCard>
             <SectionCard title="Avenant">
               <div className="px-4 pb-4">
                 <Alert tone="info">
-                  {values.applyToAll
-                    ? `Un avenant sera généré et envoyé à chacun des ${String(entries.length)} mandants pour signature avant l'entrée en vigueur.`
-                    : `Un avenant sera généré et envoyé à ${entry?.name ?? "ce mandant"} pour signature avant l'entrée en vigueur.`}
+                  {`Un avenant sera généré pour ce mandat et envoyé à ${entry?.name ?? "ce mandant"} pour signature. Il n'est jamais rétroactif.`}
                 </Alert>
               </div>
             </SectionCard>

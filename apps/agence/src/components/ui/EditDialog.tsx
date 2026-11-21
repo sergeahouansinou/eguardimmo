@@ -11,6 +11,7 @@ export interface EditField {
   placeholder: string;
   value: string;
   hint?: string;
+  type?: "text" | "date";
 }
 
 export interface EditDialogProps {
@@ -80,6 +81,7 @@ function EditForm({ fields, schema, onSubmit, onCancel, onDone }: EditFormProps)
           key={field.name}
           label={field.label}
           placeholder={field.placeholder}
+          {...(field.type ? { type: field.type } : {})}
           value={values[field.name] ?? ""}
           {...(field.hint ? { hint: field.hint } : {})}
           {...(errors[field.name] ? { error: errors[field.name] } : {})}

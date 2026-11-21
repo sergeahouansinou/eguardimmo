@@ -5,7 +5,7 @@ import { LOTS } from "@/features/shared/directory";
 import { parseInput } from "@/features/equipe/zodErrors";
 import type { EquipeDemo } from "@/features/equipe/source";
 import type { Store } from "@/features/shared/store";
-import { PLANS, YEARLY_BILLED_MONTHS, planById } from "./plans";
+import { PLANS, planById } from "./plans";
 import type { PlanDefinition, PlanId } from "./plans";
 import type { CompteSource } from "./source";
 import { addPaymentMethodInputSchema, billingInputSchema, changePlanInputSchema } from "./subscriptionSchemas";
@@ -22,10 +22,10 @@ export interface SubscriptionState {
 }
 
 export const INITIAL_SUBSCRIPTION: SubscriptionState = {
-  planId: "agence",
+  planId: "gratuit",
   billingPeriod: "monthly",
-  trialStart: "2026-10-29",
-  trialEnd: "2026-11-28",
+  trialStart: "2026-11-05",
+  trialEnd: "2026-11-20",
   paymentMethods: [],
   billing: {
     company: "Cabinet Delmas Immobilier",
@@ -41,9 +41,13 @@ const DEMO_METHODS = {
   sepa: { label: "Mandat SEPA •••• 3031", prefix: "mandat" },
 } as const;
 
-function amountOf(plan: PlanDefinition, period: BillingPeriod): number | null {
-  if (plan.monthlyMinor === null) return null;
-  return period === "yearly" ? plan.monthlyMinor * YEARLY_BILLED_MONTHS : plan.monthlyMinor;
+function amountOf(plan: PlanDefinition, period: BillingPeriod): number {
+  return period === "yearly" ? plan.yearlyMinor : plan.monthlyMinor;
+}
+
+function entitledPlan(state: SubscriptionState, plan: PlanDefinition): PlanDefinition {
+  const trialActive = DEMO_TODAY <= state.trialEnd;
+  return trialActive && plan.id === "gratuit" ? (planById("gold") ?? plan) : plan;
 }
 
 function toPlan(plan: PlanDefinition, currentId: PlanId): Plan {
@@ -51,7 +55,7 @@ function toPlan(plan: PlanDefinition, currentId: PlanId): Plan {
     id: plan.id,
     name: plan.name,
     monthlyMinor: plan.monthlyMinor,
-    yearlyMinor: amountOf(plan, "yearly"),
+    yearlyMinor: plan.yearlyMinor,
     lots: plan.lots,
     seats: plan.seats,
     features: [...plan.features],
@@ -74,6 +78,7 @@ export function subscriptionDemo(
       const state = store.get();
       const plan = currentPlan(state);
       const stats = equipe.stats();
+      const entitled = entitledPlan(state, plan);
       return {
         planId: plan.id,
         planName: plan.name,
@@ -87,16 +92,16 @@ export function subscriptionDemo(
         billingPeriod: state.billingPeriod,
         firstCharge: {
           date: addDays(state.trialEnd, 1),
-          amountMinor: amountOf(plan, state.billingPeriod) ?? 0,
+          amountMinor: amountOf(plan, state.billingPeriod),
           period: state.billingPeriod,
         },
         plans: PLANS.map((candidate) => toPlan(candidate, plan.id)),
         paymentMethods: [...state.paymentMethods],
         billing: state.billing,
         usage: {
-          lots: { used: LOTS.length, limit: plan.lots ?? LOTS.length },
-          seats: { used: stats.activeCount, limit: plan.seats ?? stats.activeCount },
-          storage: { usedMb: state.storageUsedMb, limitMb: plan.storageMb ?? state.storageUsedMb },
+          lots: { used: LOTS.length, limit: entitled.lots },
+          seats: { used: stats.activeCount, limit: entitled.seats },
+          storage: { usedMb: state.storageUsedMb, limitMb: entitled.storageMb },
         },
       };
     }),
@@ -104,18 +109,16 @@ export function subscriptionDemo(
     changePlan: (input) => settle(() => {
       const data = parseInput(changePlanInputSchema, input);
       const target = planById(data.planId);
-      if (target?.monthlyMinor === undefined || target.monthlyMinor === null || target.lots === null || target.seats === null) {
-        throw new DemoServerError("invalid_plan", "Cette formule se souscrit sur devis.");
-      }
+      if (!target) throw new DemoServerError("invalid_plan", "Formule inconnue.");
       const stats = equipe.stats();
       const seatsUsed = stats.activeCount + stats.pendingCount;
-      if (seatsUsed > target.seats) {
+      if (target.seats !== null && seatsUsed > target.seats) {
         throw new DemoServerError(
           "seat_limit",
           `La formule ${target.name} accepte ${String(target.seats)} collaborateurs : retirez ${String(seatsUsed - target.seats)} collaborateur(s) ou invitation(s) avant de la choisir.`,
         );
       }
-      if (LOTS.length > target.lots) {
+      if (target.lots !== null && LOTS.length > target.lots) {
         throw new DemoServerError("lot_limit", `La formule ${target.name} accepte ${String(target.lots)} lots.`);
       }
       store.update((state) => ({ ...state, planId: target.id, billingPeriod: data.period }));

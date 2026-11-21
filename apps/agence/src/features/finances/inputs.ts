@@ -7,8 +7,7 @@ const minor = z.number().int();
 
 export const paymentModeSchema = z.enum(["virement", "cheque", "prelevement", "especes"]);
 export const channelSchema = z.enum(["email", "sms", "courrier"]);
-export const feeBaseSchema = z.enum(["encaisses", "hors_charges"]);
-export const feeCollectionSchema = z.enum(["reversement", "encaissement"]);
+export const feeBaseSchema = z.enum(["rent", "rent_and_charges"]);
 
 export const recordPaymentSchema = z.object({
   idempotencyKey: key,
@@ -60,15 +59,13 @@ export const blockSchema = z.object({
 });
 
 export const baremeInputSchema = z.object({
-  mandantId: z.string().min(1, "Choisissez un mandat."),
+  mandateId: z.string().min(1, "Choisissez un mandat."),
   rateBp: minor.min(1, "Le taux doit être supérieur à 0 %.").max(2500, "Le taux ne peut pas dépasser 25 %."),
   base: feeBaseSchema,
   minFeeMinor: minor.min(0, "Le minimum ne peut pas être négatif.").max(50_000, "Minimum trop élevé."),
-  collection: feeCollectionSchema,
-  relocationPercent: z.number().min(0, "Entre 0 et 100 %.").max(100, "Entre 0 et 100 %."),
+  lettingBp: minor.min(0, "Entre 0 et 100 %.").max(10_000, "Entre 0 et 100 %."),
   worksBp: minor.min(0, "Entre 0 et 15 %.").max(1500, "Entre 0 et 15 %."),
   effectiveFrom: isoDate,
-  applyToAll: z.boolean(),
 });
 
 export type RecordPaymentInput = z.input<typeof recordPaymentSchema>;
@@ -83,4 +80,3 @@ export type BaremeInput = z.input<typeof baremeInputSchema>;
 export type PaymentMode = z.output<typeof paymentModeSchema>;
 export type ReminderChannel = z.output<typeof channelSchema>;
 export type FeeBase = z.output<typeof feeBaseSchema>;
-export type FeeCollection = z.output<typeof feeCollectionSchema>;

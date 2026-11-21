@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, Badge, Button, Card, CardHeader, CardTitle, EmptyState, Icon, Select, Textarea } from "@eguardimmo/ui";
+import { Alert, Badge, Button, Card, CardHeader, CardTitle, EmptyState, Icon, Select } from "@eguardimmo/ui";
 import { FileText, Download, Send } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -13,7 +13,6 @@ import { mandantById } from "@/features/shared/directory";
 import { messageOf } from "@/features/shared/errors";
 import { formatMoney } from "@/features/shared/money";
 import { useDevisList, useIntervention, useSubmitDevis } from "./queries";
-import { submitDevisSchema } from "./schemas";
 import type { Devis } from "./schemas";
 
 export function DevisPage() {
@@ -52,7 +51,6 @@ function DevisView({ devis, all }: { devis: Devis; all: readonly Devis[] }) {
   const submit = useSubmitDevis();
   const intervention = useIntervention(devis.interventionId);
   const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState(devis.message);
   const [error, setError] = useState<string | null>(null);
   const mandant = mandantById(devis.mandantId);
   const subject = intervention.data?.subject ?? "Intervention";
@@ -60,13 +58,8 @@ function DevisView({ devis, all }: { devis: Devis; all: readonly Devis[] }) {
   const submitted = devis.state === "soumis";
 
   const confirm = () => {
-    const checked = submitDevisSchema.safeParse({ devisId: devis.id, message });
-    if (!checked.success) {
-      setError(checked.error.issues[0]?.message ?? "Message invalide.");
-      return;
-    }
     setError(null);
-    submit.mutate(checked.data, {
+    submit.mutate({ devisId: devis.id }, {
       onSuccess: () => {
         notify.success("Devis soumis au mandant", `${mandant?.name ?? "Le mandant"} a été prévenu par e-mail.`);
         setOpen(false);
@@ -101,7 +94,6 @@ function DevisView({ devis, all }: { devis: Devis; all: readonly Devis[] }) {
           {submitted ? null : (
             <Button
               onClick={() => {
-                setMessage(devis.message);
                 setError(null);
                 setOpen(true);
               }}
@@ -176,7 +168,7 @@ function DevisView({ devis, all }: { devis: Devis; all: readonly Devis[] }) {
             <CardHeader>
               <CardTitle as="h2">Message joint</CardTitle>
             </CardHeader>
-            <p className="text-body text-fg-muted">{devis.message}</p>
+            <p className="text-body text-fg-muted">{devis.message === "" ? "Aucun message n'a été saisi avec ce devis." : devis.message}</p>
           </Card>
         </aside>
       </div>
@@ -190,15 +182,7 @@ function DevisView({ devis, all }: { devis: Devis; all: readonly Devis[] }) {
         error={error}
         onConfirm={confirm}
       >
-        <Textarea
-          label="Message joint"
-          placeholder="Bonjour, voici le devis de l'intervention."
-          rows={5}
-          value={message}
-          onChange={(event) => {
-            setMessage(event.target.value);
-          }}
-        />
+        <p className="text-body text-fg-muted">Le message saisi avec le devis est joint tel quel ; la soumission n'en ajoute pas.</p>
       </ActionDialog>
     </PageFrame>
   );

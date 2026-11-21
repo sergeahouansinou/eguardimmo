@@ -1,4 +1,4 @@
-import { splitVat } from "@/features/shared/money";
+import { parseRateBasisPoints } from "@/lib/currency";
 
 export function isValidSiren(raw: string): boolean {
   const digits = raw.replace(/\s/g, "");
@@ -22,9 +22,11 @@ export function normalizeIban(raw: string): string {
   return raw.replace(/\s/g, "").toUpperCase();
 }
 
-export function isValidFrenchIban(raw: string): boolean {
+const IBAN_SHAPE = /^[A-Z]{2}\d{2}[0-9A-Z]{11,30}$/;
+
+export function isValidIban(raw: string): boolean {
   const iban = normalizeIban(raw);
-  if (!/^FR\d{2}[0-9A-Z]{23}$/.test(iban)) return false;
+  if (!IBAN_SHAPE.test(iban)) return false;
   const numeric = Array.from(`${iban.slice(4)}${iban.slice(0, 4)}`)
     .map((char) => String(Number.parseInt(char, 36)))
     .join("");
@@ -39,12 +41,11 @@ export function maskIban(raw: string): { masked: string; last4: string } {
   return { masked: `${iban.slice(0, 4)} •••• •••• •••• •••• ${last4}`, last4 };
 }
 
-const RATE_TEXT = /^\d{1,2}(?:[.,]\d{1,2})?$/;
+const MAX_RATE_BASIS_POINTS = 10_000;
 
 export function parseRateBp(text: string): number | null {
-  const compact = text.replace(/[\s %]/g, "");
-  if (!RATE_TEXT.test(compact)) return null;
-  return Math.round(Number(compact.replace(",", ".")) * 100);
+  const basisPoints = parseRateBasisPoints(text);
+  return basisPoints !== null && basisPoints < MAX_RATE_BASIS_POINTS ? basisPoints : null;
 }
 
 export function formatPercent(basisPoints: number): string {
@@ -53,10 +54,6 @@ export function formatPercent(basisPoints: number): string {
 
 export function rateBpToText(basisPoints: number): string {
   return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2, useGrouping: false }).format(basisPoints / 100);
-}
-
-export function excludingVatRate(ttcBasisPoints: number, vatBasisPoints: number): number {
-  return splitVat(ttcBasisPoints, vatBasisPoints).ht;
 }
 
 export function payoutDayLabel(day: number): string {

@@ -6,5 +6,5 @@ import { dataSource } from "@/lib/env";
 export const metadata: Metadata = { title: "Équipe" };
 
 export default function Page() {
-  return dataSource === "api" ? <EquipeScreen /> : <EquipePage />;
+  return dataSource === "api" ? <EquipeScreen journal={false} /> : <EquipePage />;
 }

@@ -3,16 +3,17 @@ import { DEMO_TODAY, formatDayMonth, formatPeriod } from "@/features/shared/date
 import { LOTS, MANDANTS, mandantById } from "@/features/shared/directory";
 import { DemoServerError } from "@/features/shared/errors";
 import { splitVat, sum } from "@/features/shared/money";
-import { BASE_LABELS, COLLECTION_LABELS, FEE_PERIODS, executionDateOf, rateText } from "../format";
+import { BASE_LABELS, FEE_PERIODS, executionDateOf, rateText } from "../format";
 import { baremeInputSchema } from "../inputs";
 import type { BaremeInput } from "../inputs";
 import type { Baremes, Honoraires, Simulation } from "../schemas";
 import { CURRENT_PERIOD } from "./model";
 import type { FinancesState } from "./model";
 import { parseInput } from "./parse";
-import { feeFor, mandantFigures, schemeAt, unpaidLotIds } from "./rules";
+import { feeFor, mandantFigures, mandantOfMandate, schemeAt, unpaidLotIds } from "./rules";
 
 const YEAR = "2026";
+const CLOSED_PERIOD = "2026-10";
 
 function periodLabel(period: string): string {
   return period === YEAR ? `Année ${YEAR}` : formatPeriod(period);
@@ -33,8 +34,6 @@ function linesOf(state: FinancesState, mandantId: string, period: string): FeeLi
 
 function retentionLabel(state: FinancesState, mandantId: string, period: string): string {
   if (period === YEAR) return "Retenus sur l'année";
-  const scheme = schemeAt(state, mandantId, DEMO_TODAY);
-  if (scheme.collection === "encaissement") return "Retenus à l'encaissement";
   const paidOn = period === CURRENT_PERIOD ? executionDateOf(period) : (state.records.find((record) => record.mandantId === mandantId && record.period === period)?.paidOn ?? executionDateOf(period));
   return `Retenus le ${formatDayMonth(paidOn)}`;
 }
@@ -87,7 +86,6 @@ export function honoraires(state: FinancesState, period: string): Honoraires {
     scheme: {
       rateLabel: `${commonRate === undefined ? "Selon mandat" : `${rateText(commonRate)} TTC`} des loyers`,
       baseLabel: representative ? BASE_LABELS[representative.base] : "",
-      collectionLabel: representative ? COLLECTION_LABELS[representative.collection] : "",
       sameRateCount: current.filter((scheme) => scheme.rateBp === commonRate).length,
       totalMandants: MANDANTS.length,
       upcoming: state.schemes
@@ -102,6 +100,7 @@ export function baremes(state: FinancesState): Baremes {
     const scheme = schemeAt(state, mandant.id, DEMO_TODAY);
     const lines = mandantFigures(state, mandant.id, CURRENT_PERIOD).lines;
     return {
+      mandateId: mandant.mandateRef,
       mandantId: mandant.id,
       name: mandant.name,
       label: `${mandant.mandateRef}, ${mandant.name}`,
@@ -111,8 +110,7 @@ export function baremes(state: FinancesState): Baremes {
         rateBp: scheme.rateBp,
         base: scheme.base,
         minFeeMinor: scheme.minFeeMinor,
-        collection: scheme.collection,
-        relocationPercent: scheme.relocationPercent,
+        lettingBp: scheme.lettingBp,
         worksBp: scheme.worksBp,
       },
     };
@@ -121,13 +119,18 @@ export function baremes(state: FinancesState): Baremes {
 
 export function simulateBareme(state: FinancesState, input: BaremeInput): Simulation {
   const parsed = parseInput(baremeInputSchema, input);
-  const current = schemeAt(state, parsed.mandantId, DEMO_TODAY);
-  const { lines } = mandantFigures(state, parsed.mandantId, CURRENT_PERIOD);
-  const payments = lines.flatMap((line) => line.payments.map((payment) => ({ payment, installment: line.installment })));
-  const currentFee = sum(payments.map(({ payment, installment }) => feeFor(payment.amountMinor, installment, current)));
-  const newFee = sum(payments.map(({ payment, installment }) => feeFor(payment.amountMinor, installment, parsed)));
+  const mandant = mandantOfMandate(parsed.mandateId);
+  if (!mandant) throw new DemoServerError("mandat_inconnu", "Ce mandat n'existe pas.", { mandateId: "Choisissez un mandat." });
+  const current = schemeAt(state, mandant.id, DEMO_TODAY);
+  const closed = state.records.some((record) => record.mandantId === mandant.id && record.period === CLOSED_PERIOD);
+  const payments = closed
+    ? LOTS.filter((lot) => lot.mandantId === mandant.id).map((lot) => ({ amountMinor: lot.rentMinor + lot.chargesMinor, installment: { rentMinor: lot.rentMinor, calledMinor: lot.rentMinor + lot.chargesMinor } }))
+    : [];
+  const currentFee = sum(payments.map(({ amountMinor, installment }) => feeFor(amountMinor, installment, current)));
+  const newFee = sum(payments.map(({ amountMinor, installment }) => feeFor(amountMinor, installment, parsed)));
   return {
-    collectedMinor: sum(payments.map(({ payment }) => payment.amountMinor)),
+    periodLabel: formatPeriod(CLOSED_PERIOD),
+    collectedMinor: sum(payments.map(({ amountMinor }) => amountMinor)),
     currentRateBp: current.rateBp,
     currentFeeMinor: currentFee,
     newFeeMinor: newFee,

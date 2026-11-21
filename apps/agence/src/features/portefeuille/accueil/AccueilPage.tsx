@@ -76,7 +76,7 @@ function Accueil({ index }: { index: Portefeuille }) {
   return (
     <>
       <PageHeader
-        title={`Bonjour ${data.managerFirstName}`}
+        title={data.managerFirstName ? `Bonjour ${data.managerFirstName}` : "Bonjour"}
         description={`${data.agencyName} · ${formatLongDay(data.todayIso)} · ${plural(data.mandants.length, "mandant", "mandants")}, ${plural(lots, "lot", "lots")} sous mandat`}
         actions={
           <>

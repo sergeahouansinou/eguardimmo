@@ -1,7 +1,28 @@
 import type { BadgeTone } from "@eguardimmo/ui";
 import { bailSituation, overdueDays } from "./selectors";
 import type { MandatState } from "./selectors";
-import type { Bail, BailStatus, MandantType, PaymentMode } from "./schemas";
+import { currencyOf } from "@/lib/currency";
+import type { Currency } from "@/lib/currency";
+import { formatEurosExact, formatRate } from "@/lib/money";
+import type { Bail, BailStatus, MandantType, Mandat, PaymentMode } from "./schemas";
+
+export const UNAVAILABLE = "Non disponible";
+
+export function currencyOfMandat(mandat: { currency?: string | undefined } | undefined): Currency {
+  return currencyOf(mandat?.currency ?? "EUR") ?? "EUR";
+}
+
+export const TERMS_MISSING_LABEL = "Conditions non renseignées";
+
+export function payoutText(mandat: Pick<Mandat, "payoutDay" | "termsMissing">, suffix = ""): string {
+  return mandat.termsMissing === true ? TERMS_MISSING_LABEL : `Le ${String(mandat.payoutDay)}${suffix}`;
+}
+
+export function feeText(mandat: Pick<Mandat, "feeBasisPoints" | "flatFeeMinor" | "currency" | "termsMissing">, withTax: boolean): string {
+  if (mandat.termsMissing === true) return TERMS_MISSING_LABEL;
+  if (mandat.flatFeeMinor !== undefined) return `Forfait de ${formatEurosExact(mandat.flatFeeMinor, currencyOfMandat(mandat))}`;
+  return `${formatRate(mandat.feeBasisPoints)}${withTax ? " TTC" : ""}`;
+}
 
 export interface Pill {
   tone: BadgeTone;
@@ -11,10 +32,13 @@ export interface Pill {
 export const MANDAT_STATE_PILLS: Record<MandatState, Pill> = {
   actif: { tone: "success", label: "Actif" },
   a_renouveler: { tone: "warning", label: "À renouveler" },
+  suspendu: { tone: "warning", label: "Suspendu" },
   resilie: { tone: "warning", label: "Fin programmée" },
   termine: { tone: "neutral", label: "Terminé" },
   brouillon: { tone: "neutral", label: "Brouillon" },
 };
+
+export const END_REQUEST_PILL: Pill = { tone: "info", label: "Fin demandée" };
 
 export const MANDANT_TYPE_LABELS: Record<MandantType, string> = {
   particulier: "Particulier",

@@ -7,7 +7,7 @@ import { renderScreen } from "../../../test/render";
 import { createDemoSource } from "../source";
 import { DevisPage } from "./DevisPage";
 import { InterventionFormPage } from "./InterventionFormPage";
-import { devisSchema, interventionSchema } from "./schemas";
+import { DEVIS_MESSAGE_MAX_LENGTH, devisSchema, interventionSchema, submitDevisSchema } from "./schemas";
 import type { CreateInterventionInput } from "./schemas";
 
 vi.mock("next/navigation", async () => (await import("../../../test/navigation")).navigationMock());
@@ -114,13 +114,7 @@ describe("devis à soumettre", () => {
     await userEvent.click(screen.getByRole("button", { name: "Soumettre au mandant" }));
     const dialog = await screen.findByRole("dialog", { name: "Soumettre le devis au mandant" });
     expect(dialog).toBeTruthy();
-    const message = within(dialog).getByLabelText("Message joint");
-    await userEvent.clear(message);
-    await userEvent.type(message, "court");
-    await userEvent.click(screen.getByRole("button", { name: "Soumettre le devis" }));
-    expect(await screen.findByText("Le message doit comporter 10 caractères au minimum.")).toBeTruthy();
-    await userEvent.clear(message);
-    await userEvent.type(message, "Merci de valider ce devis rapidement.");
+    expect(within(dialog).queryByRole("textbox")).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Soumettre le devis" }));
     expect(await screen.findByText("Devis soumis au mandant")).toBeTruthy();
     await waitFor(() => {
@@ -128,18 +122,24 @@ describe("devis à soumettre", () => {
     });
     expect(screen.getAllByText("Soumis").length).toBeGreaterThan(0);
     const devis = devisSchema.array().parse(await source.interventions.listDevis()).find((item) => item.id === "devis-plomberie-studio-4");
-    expect(devis).toMatchObject({ state: "soumis", submittedOn: "2026-11-13", message: "Merci de valider ce devis rapidement." });
+    expect(devis).toMatchObject({ state: "soumis", submittedOn: "2026-11-13", message: "Bonjour Marc, voici le devis de la fuite du Studio 4. Une réponse sous 48 heures nous permet de maintenir le passage du 16 novembre." });
     const intervention = interventionSchema.parse(await source.interventions.get("fuite-sous-l-evier"));
     expect(intervention.status).toBe("devis_soumis");
     expect(intervention.events[0]?.title.replace(/\u00a0/g, " ")).toBe("Devis soumis au mandant, 380 € TTC");
   });
 
+  it("ne demande aucun message à la soumission et conserve celui du devis, limité à 500 caractères", () => {
+    expect(submitDevisSchema.safeParse({ devisId: "devis-plomberie-studio-4" }).success).toBe(true);
+    expect(devisSchema.shape.message.safeParse("x".repeat(DEVIS_MESSAGE_MAX_LENGTH)).success).toBe(true);
+    expect(devisSchema.shape.message.safeParse("x".repeat(DEVIS_MESSAGE_MAX_LENGTH + 1)).success).toBe(false);
+  });
+
   it("refuse de soumettre deux fois le même devis", async () => {
     const source = createDemoSource();
-    const input = { devisId: "devis-plomberie-studio-4", message: "Merci de valider ce devis." };
+    const input = { devisId: "devis-plomberie-studio-4" };
     await source.interventions.submitDevis(input);
     await expect(source.interventions.submitDevis(input)).rejects.toMatchObject({ code: "already_submitted" });
-    await expect(source.interventions.submitDevis({ devisId: "inconnu", message: "Merci de valider ce devis." })).rejects.toMatchObject({ code: "not_found" });
+    await expect(source.interventions.submitDevis({ devisId: "inconnu" })).rejects.toMatchObject({ code: "not_found" });
   });
 
   it("sélectionne un autre devis et gère l'identifiant inconnu", async () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
+import { DEMO_TODAY } from "@/features/shared/dates";
 import { formatMoney } from "@/features/shared/money";
 import { mandantStatementSchema } from "@/features/shared/statement";
 import { createFinancesDemo } from "./demo";
@@ -8,15 +9,13 @@ import { baremesSchema, encaissementsSchema, honorairesSchema, impayeDetailSchem
 const anyString: unknown = expect.any(String);
 
 const baremeInput = {
-  mandantId: "marc-chevalier",
+  mandateId: "M-2025-0142",
   rateBp: 800,
-  base: "encaisses",
+  base: "rent_and_charges",
   minFeeMinor: 0,
-  collection: "reversement",
-  relocationPercent: 50,
+  lettingBp: 5000,
   worksBp: 500,
   effectiveFrom: "2026-12-01",
-  applyToAll: false,
 } as const;
 
 function paymentInput(overrides: Partial<Parameters<ReturnType<typeof createFinancesDemo>["recordPayment"]>[0]> = {}) {
@@ -261,25 +260,39 @@ describe("lot de virements", () => {
 });
 
 describe("barème", () => {
-  it("la simulation est calculée côté serveur", async () => {
+  it("la simulation porte sur le dernier mois clos, calculée côté serveur", async () => {
     const simulation = simulationSchema.parse(await createFinancesDemo().simulateBareme(baremeInput));
-    expect(simulation).toEqual({ collectedMinor: 70_000, currentRateBp: 700, currentFeeMinor: 4_900, newFeeMinor: 5_600, differenceMinor: 700 });
+    expect(simulation).toEqual({ periodLabel: "Octobre 2026", collectedMinor: 115_000, currentRateBp: 700, currentFeeMinor: 8_050, newFeeMinor: 9_200, differenceMinor: 1_150 });
   });
 
-  it("l'enregistrement crée une version à signer qui ne s'applique pas avant son entrée en vigueur", async () => {
+  it("l'enregistrement crée une version à signer, par mandat, qui ne s'applique pas avant son entrée en vigueur", async () => {
     const source = createFinancesDemo();
     const saved = await source.saveBareme(baremeInput);
-    expect(saved).toEqual({ mandantNames: ["Marc Chevalier"], effectiveFrom: "2026-12-01" });
+    expect(saved).toEqual({ mandantName: "Marc Chevalier", mandateRef: "M-2025-0142", effectiveFrom: "2026-12-01" });
     const fees = honorairesSchema.parse(await source.honoraires("2026-11"));
     expect(fees.feeMinor).toBe(83_580);
     expect(fees.scheme.upcoming).toEqual([{ mandantName: "Marc Chevalier", rateBp: 800, effectiveFrom: "2026-12-01" }]);
-    expect(baremesSchema.parse(await source.baremes())[0]?.current.rateBp).toBe(700);
+    const entries = baremesSchema.parse(await source.baremes());
+    expect(entries[0]).toMatchObject({ mandateId: "M-2025-0142", current: { rateBp: 700 } });
+    expect(entries.filter((entry) => entry.current.rateBp === 800)).toHaveLength(0);
   });
 
-  it("refuse une entrée en vigueur passée et applique à tous les mandats", async () => {
+  it("n'agit que sur le mandat choisi et refuse un mandat inconnu", async () => {
+    const source = createFinancesDemo();
+    await source.saveBareme(baremeInput);
+    const fees = honorairesSchema.parse(await source.honoraires("2026-11"));
+    expect(fees.scheme.upcoming).toHaveLength(1);
+    await expect(source.saveBareme({ ...baremeInput, mandateId: "M-0000-0000" })).rejects.toMatchObject({ fieldErrors: { mandateId: anyString } });
+  });
+
+  it("refuse une entrée en vigueur passée mais accepte aujourd'hui", async () => {
     const source = createFinancesDemo();
     await expect(source.saveBareme({ ...baremeInput, effectiveFrom: "2026-11-01" })).rejects.toMatchObject({ fieldErrors: { effectiveFrom: anyString } });
-    const saved = await source.saveBareme({ ...baremeInput, applyToAll: true });
-    expect(saved.mandantNames).toHaveLength(6);
+    await expect(source.saveBareme({ ...baremeInput, effectiveFrom: DEMO_TODAY })).resolves.toMatchObject({ effectiveFrom: DEMO_TODAY });
+  });
+
+  it("refuse une base de calcul hors du contrat serveur", async () => {
+    const source = createFinancesDemo();
+    await expect(source.saveBareme({ ...baremeInput, base: "encaisses" } as never)).rejects.toBeDefined();
   });
 });

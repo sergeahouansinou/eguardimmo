@@ -1,18 +1,13 @@
 import { formatMoney } from "@/features/shared/money";
 import type { BillingPeriod, Plan } from "./subscriptionSchemas";
 
-export function planPrice(plan: Plan, period: BillingPeriod): { amount: string; unit: string } | null {
+export function planPrice(plan: Plan, period: BillingPeriod): { amount: string; unit: string } {
   const minor = period === "yearly" ? plan.yearlyMinor : plan.monthlyMinor;
-  if (minor === null) return null;
   return { amount: formatMoney(minor), unit: period === "yearly" ? "HT par an" : "HT par mois" };
 }
 
-export function planFeatures(plan: Plan): readonly string[] {
-  if (plan.lots === null || plan.seats === null) return ["Lots illimités", "Équipe illimitée", ...plan.features];
-  return [`${String(plan.lots)} lots`, `${String(plan.seats)} collaborateurs`, ...plan.features];
-}
-
 export function formatStorage(mb: number): string {
+  if (mb < 1000) return `${String(mb)} Mo`;
   return `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(mb / 1000)} Go`;
 }
 

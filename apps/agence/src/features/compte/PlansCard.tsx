@@ -4,27 +4,19 @@ import { ActionDialog, SummaryLines, useNotify } from "@/features/kit";
 import { formatDate } from "@/features/shared/dates";
 import { messageOf } from "@/features/shared/errors";
 import { useChangePlan } from "./hooks";
-import { planFeatures, planPrice } from "./subscriptionFormat";
+import { planPrice } from "./subscriptionFormat";
 import type { BillingPeriod, Plan, SubscriptionView } from "./subscriptionSchemas";
 
 const PERIOD_OPTIONS = [
   { value: "monthly", label: "Mensuel" },
-  { value: "yearly", label: "Annuel, 2 mois offerts" },
+  { value: "yearly", label: "Annuel" },
 ] as const;
-
-const CONTACT_HREF = "mailto:contact@eguardimmo.example?subject=Formule%20R%C3%A9seau";
-
-type Choosable = Plan & { id: "agence" | "agence-pro" };
-
-function isChoosable(plan: Plan): plan is Choosable {
-  return plan.id !== "reseau";
-}
 
 export function PlansCard({ subscription }: { subscription: SubscriptionView }) {
   const notify = useNotify();
   const change = useChangePlan();
   const [period, setPeriod] = useState<BillingPeriod>(subscription.billingPeriod);
-  const [target, setTarget] = useState<Choosable | null>(null);
+  const [target, setTarget] = useState<Plan | null>(null);
   const [error, setError] = useState<string | null>(null);
   const targetPrice = target ? planPrice(target, period) : null;
 
@@ -67,11 +59,11 @@ export function PlansCard({ subscription }: { subscription: SubscriptionView }) 
                 {plan.current ? <Badge tone="info">Essai en cours</Badge> : null}
               </div>
               <p className="text-block-title text-fg">
-                {price ? price.amount : "Sur devis"}
-                {price ? <small className="ml-1 text-caption font-normal text-fg-subtle">{price.unit}</small> : null}
+                {price.amount}
+                <small className="ml-1 text-caption font-normal text-fg-subtle">{price.unit}</small>
               </p>
               <ul className="flex flex-1 list-disc flex-col gap-0.5 pl-4 text-body text-fg-muted">
-                {planFeatures(plan).map((feature) => (
+                {plan.features.map((feature) => (
                   <li key={feature}>{feature}</li>
                 ))}
               </ul>
@@ -79,19 +71,15 @@ export function PlansCard({ subscription }: { subscription: SubscriptionView }) 
                 <Button variant="secondary" disabled>
                   Formule de l'essai
                 </Button>
-              ) : isChoosable(plan) ? (
+              ) : (
                 <Button
-                  variant={plan.id === "agence-pro" ? "primary" : "secondary"}
+                  variant={plan.id === "gold" ? "primary" : "secondary"}
                   onClick={() => {
                     setError(null);
                     setTarget(plan);
                   }}
                 >
                   {`Choisir ${plan.name}`}
-                </Button>
-              ) : (
-                <Button asChild variant="secondary">
-                  <a href={CONTACT_HREF}>Nous contacter</a>
                 </Button>
               )}
             </section>

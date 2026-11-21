@@ -5,6 +5,9 @@ function plural(count: number, one: string, many: string): string {
 }
 
 export function seatMessage(seats: Seats): string {
+  if (seats.limit === null) {
+    return `Formule ${seats.planName} : ${plural(seats.active, "collaborateur actif", "collaborateurs actifs")}. Plusieurs collaborateurs inclus.`;
+  }
   const head = `Formule ${seats.planName} : ${plural(seats.active, "collaborateur actif", "collaborateurs actifs")} sur ${String(seats.limit)}.`;
   const free = seats.limit - seats.used;
   if (seats.pending > 0 && free <= 0) {

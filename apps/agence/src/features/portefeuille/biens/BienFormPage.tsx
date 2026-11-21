@@ -193,7 +193,7 @@ function BienForm({ index }: { index: Portefeuille }) {
                 { label: "Mandat", value: mandat?.number ?? "—" },
                 { label: "Mandant", value: mandant?.name ?? "—" },
                 { label: "Loyer charges comprises visé", value: called === null ? "—" : `${formatEuros(called)} par mois` },
-                { label: "Honoraires attendus", value: mandat && called !== null ? `${formatEuros(applyRate(called, mandat.feeBasisPoints))} par mois (${formatRate(mandat.feeBasisPoints)})` : "—" },
+                { label: "Honoraires attendus", value: mandat && mandat.termsMissing !== true && called !== null ? `${formatEuros(applyRate(called, mandat.feeBasisPoints))} par mois (${formatRate(mandat.feeBasisPoints)})` : "—" },
               ]}
             />
           </Card>

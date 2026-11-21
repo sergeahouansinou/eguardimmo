@@ -12,41 +12,88 @@ export const mandantSchema = z.object({
   name: z.string().min(1),
   legal: z.string().min(1),
   type: mandantTypeSchema,
-  sinceIso: isoDaySchema,
-  email: z.email(),
-  phoneMasked: z.string(),
-  address: z.string().min(1),
-  ibanLast4: z.string().regex(/^\d{3,4}$/),
-  ownerSpaceActive: z.boolean(),
-  reportsByEmail: z.boolean(),
+  sinceIso: isoDaySchema.optional(),
+  email: z.email().optional(),
+  phoneMasked: z.string().optional(),
+  address: z.string().min(1).optional(),
+  ibanLast4: z.string().regex(/^\d{3,4}$/).optional(),
+  ownerSpaceActive: z.boolean().optional(),
+  reportsByEmail: z.boolean().optional(),
 });
 export type Mandant = z.infer<typeof mandantSchema>;
 
-export const mandatStatusSchema = z.enum(["actif", "a_renouveler", "termine", "brouillon"]);
+export const mandatStatusSchema = z.enum(["actif", "a_renouveler", "suspendu", "termine", "brouillon"]);
 export type MandatStatus = z.infer<typeof mandatStatusSchema>;
 
 export const terminationSchema = z.object({
-  reason: z.string().min(1),
+  reason: z.string().min(1).optional(),
   effectIso: isoDaySchema,
-  noticeIso: isoDaySchema,
+  noticeIso: isoDaySchema.optional(),
   note: z.string(),
+  amicable: z.boolean().optional(),
 });
 export type Termination = z.infer<typeof terminationSchema>;
 
+export const mandatUnitSchema = z.object({
+  id: slugSchema,
+  unitId: slugSchema.nullable(),
+  reference: z.string().min(1),
+  propertyName: z.string(),
+  fromIso: isoDaySchema,
+  endIso: isoDaySchema.nullable(),
+});
+export type MandatUnit = z.infer<typeof mandatUnitSchema>;
+
+export const mandatTermsSchema = z.object({
+  id: slugSchema,
+  feeKind: z.enum(["percentage", "flat"]),
+  feeBasisPoints: z.number().int().min(0).max(10_000).optional(),
+  flatFeeMinor: minorSchema.optional(),
+  payoutDay: z.number().int().min(1).max(28),
+  worksLimitMinor: minorSchema,
+  feeBase: z.enum(["rent", "rent_and_charges"]).optional(),
+  feeMinimumMinor: minorSchema.optional(),
+  feeTaxMode: z.enum(["excl_tax", "incl_tax"]).optional(),
+  lettingFeeBasisPoints: z.number().int().min(0).max(10_000).optional(),
+  worksFeeBasisPoints: z.number().int().min(0).max(10_000).optional(),
+  signedFileId: z.string().min(1).optional(),
+  fromIso: isoDaySchema,
+  toIso: isoDaySchema.nullable(),
+  reason: z.enum(["initial", "amendment"]),
+});
+export type MandatTerms = z.infer<typeof mandatTermsSchema>;
+
 export const mandatSchema = z.object({
   id: slugSchema,
-  number: z.string().regex(/^M-\d{4}-\d{4}$/),
+  number: z.string().regex(/^M-\d{4}-\d{4,}$/),
   mandantId: slugSchema,
   status: mandatStatusSchema,
   startIso: isoDaySchema,
   endIso: isoDaySchema,
-  feeBasisPoints: z.number().int().min(0).max(2_000),
+  feeBasisPoints: z.number().int().min(0).max(10_000),
+  flatFeeMinor: minorSchema.optional(),
   payoutDay: z.number().int().min(1).max(28),
   worksLimitMinor: minorSchema,
+  feeBase: z.enum(["rent", "rent_and_charges"]).optional(),
+  feeMinimumMinor: minorSchema.optional(),
+  feeTaxMode: z.enum(["excl_tax", "incl_tax"]).optional(),
+  lettingFeeBasisPoints: z.number().int().min(0).max(10_000).optional(),
+  worksFeeBasisPoints: z.number().int().min(0).max(10_000).optional(),
+  termsMissing: z.boolean().optional(),
   renewal: z.enum(["aucune", "tacite"]),
-  guaranteeUntilIso: isoDaySchema,
+  guaranteeUntilIso: isoDaySchema.optional(),
   signed: z.boolean(),
   termination: terminationSchema.optional(),
+  renewalMonths: z.number().int().min(1).max(120).optional(),
+  noticeMonths: z.number().int().min(0).max(24).optional(),
+  currency: z.string().length(3).optional(),
+  typeLabel: z.string().optional(),
+  note: z.string().nullable().optional(),
+  signedOnIso: isoDaySchema.optional(),
+  archived: z.boolean().optional(),
+  hasEndRequest: z.boolean().optional(),
+  units: z.array(mandatUnitSchema).optional(),
+  termsHistory: z.array(mandatTermsSchema).optional(),
 });
 export type Mandat = z.infer<typeof mandatSchema>;
 
@@ -166,7 +213,7 @@ export const avenantSchema = z.object({
   effectIso: isoDaySchema,
   createdIso: isoDaySchema,
   applied: z.boolean(),
-  feeBasisPoints: z.number().int().min(0).max(2_000).optional(),
+  feeBasisPoints: z.number().int().min(0).max(10_000).optional(),
   endIso: isoDaySchema.optional(),
   payoutDay: z.number().int().min(1).max(28).optional(),
   worksLimitMinor: minorSchema.optional(),
@@ -201,9 +248,14 @@ export const avisSchema = z.object({
 });
 export type Avis = z.infer<typeof avisSchema>;
 
+export const unavailableKeySchema = z.enum(["baux", "reversements", "documents", "historique", "coordonnees", "garantie"]);
+export type UnavailableKey = z.infer<typeof unavailableKeySchema>;
+
 export const portefeuilleSchema = z.object({
+  origin: z.enum(["demo", "api"]).optional(),
+  unavailable: z.array(unavailableKeySchema).optional(),
   agencyName: z.string().min(1),
-  managerFirstName: z.string().min(1),
+  managerFirstName: z.string().min(1).optional(),
   todayIso: isoDaySchema,
   mandants: z.array(mandantSchema),
   mandats: z.array(mandatSchema),

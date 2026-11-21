@@ -52,7 +52,7 @@ export function DataList<T>({
   }
   return (
     <div className="flex min-w-0 flex-col gap-2">
-      <Table aria-label={label}>
+      <Table aria-label={label} scrollLabel={`${label}, défilement horizontal`}>
         <TableHead>
           <TableRow>
             {columns.map((column) => (

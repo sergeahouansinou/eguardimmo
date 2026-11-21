@@ -50,8 +50,10 @@ function stubApi(extra: Record<string, unknown> = {}, role = "owner") {
         previous_login_at: null,
       },
     },
-    [`/api/v1/org/${ORG}`]: { data: { id: ORG, kind: "agency", name: "Agence Soleil", country: "FR", two_factor_required: false } },
-    [`/api/v1/org/${ORG}/conversations/stats`]: { data: { unread: 3, stale: 0 } },
+    [`/api/v1/org/${ORG}`]: { data: { id: ORG, kind: "agency", name: "Agence Soleil", country: "FR", currency: "EUR", timezone: "Europe/Paris", two_factor_required: false } },
+    [`/api/v1/org/${ORG}/conversations/unread`]: { data: { internal: 1, tenant: 1, owner: 1 } },
+    "/api/v1/notifications/unread-count": { data: { unread: 0 } },
+    "/api/v1/notifications": { data: [], meta: { next_cursor: null } },
     ...extra,
   };
   const fetchMock = vi.fn<typeof fetch>((input) => {
@@ -100,7 +102,7 @@ describe("coquille de l'espace agence en mode api", () => {
     expect(within(menu).getByText("jeanne.dupont@example.com")).toBeTruthy();
     expect(within(menu).getByText("Titulaire")).toBeTruthy();
     expect(within(menu).queryByText(/membres/)).toBeNull();
-    expect(within(menu).queryByText("Pro")).toBeNull();
+    expect(within(menu).queryByText("Gratuit")).toBeNull();
     expect(screen.getByText("Contenu réel")).toBeTruthy();
     for (const text of FORBIDDEN) expect(document.body.textContent).not.toContain(text);
   });
@@ -130,6 +132,73 @@ describe("coquille de l'espace agence en mode api", () => {
     }
   });
 
+  describe("support", () => {
+    const TICKET = {
+      id: "0193a5e1-0000-7000-8000-0000000001a1",
+      reference: "SUP-2026-0001",
+      subject: "Reversement introuvable",
+      organization: "Agence Soleil",
+      space: "organization",
+      requester: { id: "01934f6e-0000-7000-8000-0000000000b1", name: "Jeanne Dupont" },
+      assignee: null,
+      priority: "normal",
+      status: "waiting",
+      category: "billing",
+      created_at: "2026-11-19T09:00:00+00:00",
+      updated_at: "2026-11-19T10:00:00+00:00",
+      requester_last_read_at: "2026-11-19T09:00:00+00:00",
+      support_last_read_at: null,
+      message_count: 2,
+    };
+    const GRANT = {
+      id: "0193a5e1-0000-7000-8000-0000000001f1",
+      kind: "consent",
+      status: "requested",
+      scopes: ["settings"],
+      reason: "Diagnostic",
+      emergency_basis: null,
+      ticket_reference: "SUP-2026-0001",
+      operator: "Camille M.",
+      duration_hours: 24,
+      requested_at: "2026-11-19T09:30:00+00:00",
+      decided_at: null,
+      granted_at: null,
+      expires_at: null,
+      revoked_at: null,
+      reviewed: false,
+      read_count: 0,
+    };
+    const routes = {
+      "/api/v1/support/tickets": { data: [TICKET] },
+      "/api/v1/support/status": { data: { online: true, hours_label: "Lun–ven 9 h – 18 h", response_label: "Réponse sous 1 jour ouvré", timezone: "Europe/Paris", hours: [] } },
+      [`/api/v1/org/${ORG}/support-access`]: { data: [GRANT], meta: { has_more: false, next_cursor: null } },
+    };
+
+    it("affiche le nombre de réponses à lire et celui des accès en attente à un titulaire, et branche le widget", async () => {
+      const calls = stubApi(routes);
+
+      renderEspace();
+
+      const side = await screen.findByRole("navigation", { name: "Navigation principale" });
+      expect(await within(side).findByRole("link", { name: /Support\s*1$/ })).toBeTruthy();
+      await waitFor(() => { expect(within(side).getByRole("button", { name: /Réglages\s*1$/ })).toBeTruthy(); });
+      expect(await screen.findByRole("button", { name: "Aide et support, 1 réponse non lue" })).toBeTruthy();
+      expect(calls).toContain(`/api/v1/org/${ORG}/support-access`);
+    });
+
+    it.each(["manager", "accountant"])("masque l’entrée des accès du support et n’interroge pas le serveur pour le rôle %s", async (role) => {
+      const calls = stubApi(routes, role);
+
+      renderEspace();
+
+      const side = await screen.findByRole("navigation", { name: "Navigation principale" });
+      expect(await within(side).findByRole("link", { name: /Support\s*1$/ })).toBeTruthy();
+      expect(within(side).queryByRole("button", { name: /Réglages/ })).toBeNull();
+      expect(within(side).getByRole("link", { name: "Réglages" })).toBeTruthy();
+      expect(calls).not.toContain(`/api/v1/org/${ORG}/support-access`);
+    });
+  });
+
   it("n'a aucune notification et le dit", async () => {
     stubApi();
 
@@ -140,6 +209,36 @@ describe("coquille de l'espace agence en mode api", () => {
     const panel = await screen.findByRole("dialog", { name: "Notifications" });
     expect(within(panel).getByText("Aucune notification.")).toBeTruthy();
     expect(within(panel).getByRole("button", { name: "Tout marquer comme lu" }).hasAttribute("disabled")).toBe(true);
+    for (const text of FORBIDDEN) expect(document.body.textContent).not.toContain(text);
+  });
+
+  it("affiche la cloche du serveur : compteur, notifications et lien profond relatif", async () => {
+    stubApi({
+      "/api/v1/notifications/unread-count": { data: { unread: 1 } },
+      "/api/v1/notifications": {
+        data: [
+          {
+            id: "01a1ee5a-0bb7-73fa-a273-ea6cbd9aa643",
+            type: "rent.overdue",
+            tone: "danger",
+            title: "Loyer en retard",
+            detail: "L'échéance du 05/11/2026 du bail BL-2026-001 n'est pas soldée.",
+            unread: true,
+            href: "/finances/impayes",
+            organization_id: ORG,
+            created_at: "2026-11-16T10:00:00+00:00",
+            read_at: null,
+          },
+        ],
+        meta: { next_cursor: null },
+      },
+    });
+
+    renderEspace();
+
+    await userEvent.click(await screen.findByRole("button", { name: "Notifications, 1 non lues" }));
+    const panel = await screen.findByRole("dialog", { name: "Notifications" });
+    expect((await within(panel).findByRole("link", { name: /Loyer en retard/ })).getAttribute("href")).toBe("/finances/impayes");
     for (const text of FORBIDDEN) expect(document.body.textContent).not.toContain(text);
   });
 
@@ -174,12 +273,12 @@ describe("coquille de l'espace agence en mode api", () => {
 
   it("remplace une famille sans source par « Bientôt disponible » sans exécuter l'écran de démonstration", async () => {
     stubApi();
-    state.pathname = "/mandats";
+    state.pathname = "/finances";
 
     renderEspace();
 
     expect(await screen.findByText("Bientôt disponible")).toBeTruthy();
-    expect(screen.getByRole("heading", { level: 1, name: "Mandats" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Finances" })).toBeTruthy();
     expect(screen.queryByText("Contenu réel")).toBeNull();
     for (const text of FORBIDDEN) expect(document.body.textContent).not.toContain(text);
   });

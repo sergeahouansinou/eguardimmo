@@ -13,41 +13,35 @@ import { QueryState } from "@/components/ui/QueryState";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { agenceRoutes, mandatHref } from "@/espace/routes";
 import { useSchemaForm } from "@/features/kit/form";
+import { currencySymbol, parseAmount, parseRateBasisPoints } from "@/lib/currency";
 import { formatDay } from "@/lib/dates";
 import { applyRate, formatEuros, formatRate } from "@/lib/money";
-import { AVENANT_KINDS, makeAvenantFormSchema, parseDecimal, toMinor } from "../forms";
-import type { AvenantFormValues } from "../forms";
-import { formatDecimalInput } from "../format";
-import { useCreateAvenant, usePortefeuille } from "../queries";
+import { FEE_BASE_LABELS, FEE_BASE_OPTIONS, FEE_TAX_MODE_LABELS, FEE_TAX_MODE_OPTIONS } from "../feeTerms";
+import { AVENANT_KINDS, makeAvenantFormSchema } from "../forms";
+import { currencyOfMandat, feeText } from "../labels";
+import { useCreateAvenant, useMandatDetail, useMandatFileUpload, usePortefeuille, usePortefeuilleAccess } from "../queries";
 import { calledMinor, isOperational, mandatState } from "../selectors";
 import type { Portefeuille } from "../selectors";
 import type { Avenant, AvenantKind } from "../schemas";
-import type { NewAvenant } from "../source";
 import { PortefeuilleError } from "../source";
+import { MutationFailure } from "../shared/MutationFailure";
+import { TermsHistoryTable } from "../shared/TermsHistoryTable";
+import { WriteForbidden } from "../shared/WriteForbidden";
+import { AvenantSignedFile } from "./AvenantSignedFile";
+import { termDefaults, toNewAvenant } from "./avenantPayload";
 
 const PAYOUT_OPTIONS = Array.from({ length: 28 }, (_, position) => ({ value: String(position + 1), label: `Le ${String(position + 1)} du mois` }));
 const KIND_OPTIONS = AVENANT_KINDS.map((kind) => ({ value: kind.value, label: kind.label }));
 const KIND_LABELS: Record<AvenantKind, string> = { honoraires: "Honoraires", duree: "Durée", reversement: "Reversement", travaux: "Travaux" };
 
-const SERVER_FIELDS = ["mandatId", "effectIso", "endIso", "feePercent", "payoutDay", "worksLimit"] as const;
+const SERVER_FIELDS = ["mandatId", "effectIso", "endIso", "feePercent", "payoutDay", "worksLimit", "feeBase", "feeMinimum", "feeTaxMode", "lettingRate", "worksFeeRate"] as const;
 type ServerField = (typeof SERVER_FIELDS)[number];
 const isServerField = (field: string | undefined): field is ServerField => SERVER_FIELDS.some((name) => name === field);
 
-export function toNewAvenant(values: AvenantFormValues): NewAvenant {
-  return {
-    mandatId: values.mandatId,
-    kind: values.kind,
-    effectIso: values.effectIso,
-    note: values.note,
-    ...(values.kind === "honoraires" ? { feeBasisPoints: Math.round((parseDecimal(values.feePercent) ?? 0) * 100) } : {}),
-    ...(values.kind === "duree" ? { endIso: values.endIso } : {}),
-    ...(values.kind === "reversement" ? { payoutDay: Number(values.payoutDay) } : {}),
-    ...(values.kind === "travaux" ? { worksLimitMinor: toMinor(values.worksLimit) } : {}),
-  };
-}
-
 export function AvenantFormPage() {
   const query = usePortefeuille();
+  const { canWrite } = usePortefeuilleAccess();
+  if (!canWrite) return <WriteForbidden title="Nouvel avenant" backHref={agenceRoutes.mandats} backLabel="Retour aux mandats" />;
   return (
     <QueryState query={query} label="Le formulaire d'avenant">
       {(index) => <AvenantForm index={index} />}
@@ -61,14 +55,19 @@ function AvenantForm({ index }: { index: Portefeuille }) {
   const params = useSearchParams();
   const toast = useToast();
   const create = useCreateAvenant();
-  const [failure, setFailure] = useState<string>();
+  const [failure, setFailure] = useState<{ message: string; error: unknown }>();
+  const [signedFile, setSignedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string>();
+  const uploadSigned = useMandatFileUpload();
+  const api = index.isApi;
 
   const mandats = data.mandats.filter((mandat) => {
     const state = mandatState(mandat, data.todayIso);
-    return isOperational(state) && state !== "resilie";
+    return !mandat.archived && isOperational(state) && state !== "resilie";
   });
   const endIsoByMandat = useMemo(() => Object.fromEntries(data.mandats.map((mandat) => [mandat.id, mandat.endIso])), [data.mandats]);
-  const schema = useMemo(() => makeAvenantFormSchema({ todayIso: data.todayIso, endIsoByMandat }), [data.todayIso, endIsoByMandat]);
+  const currencyByMandat = useMemo(() => Object.fromEntries(data.mandats.map((mandat) => [mandat.id, currencyOfMandat(mandat)])), [data.mandats]);
+  const schema = useMemo(() => makeAvenantFormSchema({ todayIso: data.todayIso, endIsoByMandat, currencyByMandat, api }), [data.todayIso, endIsoByMandat, currencyByMandat, api]);
 
   const requested = params.get("mandat") ?? "";
   const initial = mandats.find((mandat) => mandat.id === requested);
@@ -76,58 +75,67 @@ function AvenantForm({ index }: { index: Portefeuille }) {
     mandatId: initial?.id ?? "",
     kind: "honoraires",
     effectIso: data.todayIso,
-    feePercent: initial ? formatDecimalInput(initial.feeBasisPoints) : "",
+    ...termDefaults(initial),
     endIso: "",
     payoutDay: initial ? String(initial.payoutDay) : "5",
-    worksLimit: initial ? formatDecimalInput(initial.worksLimitMinor) : "",
     note: "",
   });
   const values = watch();
   const mandat = index.mandat(values.mandatId);
+  const currency = currencyOfMandat(mandat);
   const mandant = mandat ? index.mandant(mandat.mandantId) : undefined;
   const history = data.avenants.filter((avenant) => avenant.mandatId === values.mandatId);
+  const detail = useMandatDetail(api ? values.mandatId : "").data;
   const lots = mandat ? index.biensOfMandat(mandat.id) : [];
   const called = lots.flatMap((lot) => index.currentBail(lot.id) ?? []).reduce((sum, bail) => sum + calledMinor(bail), 0);
 
   const buildPreview = () => {
     if (!mandat) return undefined;
     if (values.kind === "honoraires") {
-      const rate = parseDecimal(values.feePercent);
-      const next = rate === null ? undefined : Math.round(rate * 100);
+      const next = parseRateBasisPoints(values.feePercent) ?? undefined;
       return {
         label: "Honoraires de gestion",
-        previous: formatRate(mandat.feeBasisPoints),
+        previous: feeText(mandat, false),
         next: next === undefined ? "—" : formatRate(next),
-        impact: next === undefined ? undefined : `${formatEuros(applyRate(called, next))} par mois sur ${formatEuros(called)} de loyers appelés, contre ${formatEuros(applyRate(called, mandat.feeBasisPoints))} aujourd'hui.`,
+        impact: next === undefined || api ? undefined : `${formatEuros(applyRate(called, next))} par mois sur ${formatEuros(called)} de loyers appelés, contre ${formatEuros(applyRate(called, mandat.feeBasisPoints))} aujourd'hui.`,
       };
     }
     if (values.kind === "duree") return { label: "Échéance du mandat", previous: formatDay(mandat.endIso), next: /^\d{4}-\d{2}-\d{2}$/.test(values.endIso) ? formatDay(values.endIso) : "—" };
     if (values.kind === "reversement") return { label: "Jour de reversement", previous: `Le ${String(mandat.payoutDay)}`, next: `Le ${values.payoutDay}` };
-    const limit = parseDecimal(values.worksLimit);
-    return { label: "Travaux sans accord", previous: formatEuros(mandat.worksLimitMinor), next: limit === null ? "—" : formatEuros(toMinor(values.worksLimit)) };
+    const limit = parseAmount(values.worksLimit, currency);
+    return { label: "Travaux sans accord", previous: formatEuros(mandat.worksLimitMinor, currency), next: limit === null ? "—" : formatEuros(limit, currency) };
   };
   const preview = buildPreview();
 
+  const needsSignedFile = api && values.kind !== "duree";
+
   const submit = handleSubmit(async (formValues) => {
     setFailure(undefined);
+    setFileError(undefined);
+    if (needsSignedFile && signedFile === null) {
+      setFileError("Joignez l'avenant signé par le mandant.");
+      return;
+    }
     try {
-      const avenant = await create.mutateAsync(toNewAvenant(formValues));
+      const signedFileId = needsSignedFile && signedFile !== null ? await uploadSigned(formValues.mandatId, signedFile) : undefined;
+      const avenant = await create.mutateAsync({ ...toNewAvenant(formValues, { api, currency, ...(mandat ? { current: mandat } : {}) }), ...(signedFileId === undefined ? {} : { signedFileId }) });
       toast.show({
         title: avenant.applied ? "Avenant appliqué" : "Avenant programmé",
-        description: `${avenant.number}, ${mandat?.number ?? ""}${avenant.applied ? "" : `, effet le ${formatDay(avenant.effectIso)}`}`,
+        description: `${[avenant.number, mandat?.number].filter(Boolean).join(", ")}${avenant.applied ? "" : `, effet le ${formatDay(avenant.effectIso)}`}`,
       });
       router.push(mandatHref(avenant.mandatId));
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "L'enregistrement a échoué.";
-      if (error instanceof PortefeuilleError && isServerField(error.field)) setError(error.field, { message });
-      else setFailure(message);
+      if (error instanceof PortefeuilleError && (error.field === "signedFile" || error.field === "file")) setFileError(message);
+      else if (error instanceof PortefeuilleError && isServerField(error.field)) setError(error.field, { message });
+      else setFailure({ message, error });
     }
   });
 
   const mandatOptions = mandats.map((item) => ({
     value: item.id,
     label: `${item.number}, ${index.mandant(item.mandantId)?.name ?? "Mandant inconnu"}`,
-    description: `${formatRate(item.feeBasisPoints)} · échéance ${formatDay(item.endIso)}`,
+    description: `${feeText(item, !api)} · échéance ${formatDay(item.endIso)}`,
   }));
   const immediate = values.effectIso === data.todayIso;
 
@@ -150,7 +158,7 @@ function AvenantForm({ index }: { index: Portefeuille }) {
         title="Nouvel avenant"
         description="Un avenant modifie une condition du mandat sans le refaire. Il s'ajoute à l'historique du mandat."
       />
-      {failure ? <Alert tone="danger" title="Enregistrement impossible">{failure}</Alert> : null}
+      {failure ? <MutationFailure title="Enregistrement impossible" message={failure.message} error={failure.error} /> : null}
 
       <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-3">
@@ -168,9 +176,15 @@ function AvenantForm({ index }: { index: Portefeuille }) {
                     field.onChange(next);
                     const chosen = index.mandat(next);
                     if (chosen) {
-                      setValue("feePercent", formatDecimalInput(chosen.feeBasisPoints));
+                      const defaults = termDefaults(chosen);
+                      setValue("feePercent", defaults.feePercent);
                       setValue("payoutDay", String(chosen.payoutDay));
-                      setValue("worksLimit", formatDecimalInput(chosen.worksLimitMinor));
+                      setValue("worksLimit", defaults.worksLimit);
+                      setValue("feeBase", defaults.feeBase);
+                      setValue("feeMinimum", defaults.feeMinimum);
+                      setValue("feeTaxMode", defaults.feeTaxMode);
+                      setValue("lettingRate", defaults.lettingRate);
+                      setValue("worksFeeRate", defaults.worksFeeRate);
                     }
                   }}
                   searchable
@@ -186,8 +200,17 @@ function AvenantForm({ index }: { index: Portefeuille }) {
                 items={[
                   { label: "Mandant", value: mandant?.name ?? "—" },
                   { label: "Période", value: `${formatDay(mandat.startIso)} au ${formatDay(mandat.endIso)}` },
-                  { label: "Honoraires", value: `${formatRate(mandat.feeBasisPoints)} TTC` },
+                  { label: "Honoraires", value: feeText(mandat, !api) },
                   { label: "Reversement", value: `Le ${String(mandat.payoutDay)} du mois` },
+                  ...(api
+                    ? [
+                        { label: "Base de calcul", value: mandat.feeBase ? FEE_BASE_LABELS[mandat.feeBase] : "Non renseignée" },
+                        { label: "Minimum par mois", value: formatEuros(mandat.feeMinimumMinor ?? 0, currency) },
+                        { label: "Honoraires exprimés", value: mandat.feeTaxMode ? FEE_TAX_MODE_LABELS[mandat.feeTaxMode] : "Non renseigné" },
+                        { label: "Relocation", value: mandat.lettingFeeBasisPoints === undefined ? "Non prévue" : `${formatRate(mandat.lettingFeeBasisPoints)} d'un mois de loyer` },
+                        { label: "Suivi de travaux", value: mandat.worksFeeBasisPoints === undefined ? "Non prévu" : `${formatRate(mandat.worksFeeBasisPoints)} des travaux` },
+                      ]
+                    : []),
                 ]}
               />
             ) : null}
@@ -197,7 +220,18 @@ function AvenantForm({ index }: { index: Portefeuille }) {
             <Controller control={control} name="kind" render={({ field }) => <RadioGroup label="Type d'avenant" options={KIND_OPTIONS} value={field.value} onValueChange={field.onChange} />} />
             <p className="text-caption text-fg-subtle">{AVENANT_KINDS.find((kind) => kind.value === values.kind)?.description}</p>
             {values.kind === "honoraires" ? (
-              <TextField label="Nouveaux honoraires, % TTC *" placeholder="6,50" inputMode="decimal" {...register("feePercent")} {...(errors.feePercent?.message ? { error: errors.feePercent.message } : {})} />
+              <>
+                <TextField label={api ? "Nouveaux honoraires, % des loyers *" : "Nouveaux honoraires, % TTC *"} placeholder="6,50" inputMode="decimal" {...register("feePercent")} {...(errors.feePercent?.message ? { error: errors.feePercent.message } : {})} />
+                {api ? (
+                  <>
+                    <Controller control={control} name="feeBase" render={({ field }) => <Select label="Base de calcul *" placeholder="Choisir une base, ex. : Loyer hors charges" options={FEE_BASE_OPTIONS} value={field.value} onValueChange={field.onChange} {...(errors.feeBase?.message ? { error: errors.feeBase.message } : {})} />} />
+                    <TextField label={`Minimum par mois, ${currencySymbol(currency)} *`} placeholder={currency === "XOF" ? "5 000" : "15"} inputMode="decimal" {...register("feeMinimum")} {...(errors.feeMinimum?.message ? { error: errors.feeMinimum.message } : {})} />
+                    <TextField label="Honoraires de relocation, % d'un mois de loyer" placeholder="50" inputMode="decimal" hint="Laissez vide si le mandat ne le prévoit pas." {...register("lettingRate")} {...(errors.lettingRate?.message ? { error: errors.lettingRate.message } : {})} />
+                    <TextField label="Suivi de travaux, % du montant des travaux" placeholder="5" inputMode="decimal" hint="Laissez vide si le mandat ne le prévoit pas." {...register("worksFeeRate")} {...(errors.worksFeeRate?.message ? { error: errors.worksFeeRate.message } : {})} />
+                    <Controller control={control} name="feeTaxMode" render={({ field }) => <Select label="Honoraires exprimés *" placeholder="Choisir un mode, ex. : Hors taxes" options={FEE_TAX_MODE_OPTIONS} value={field.value} onValueChange={field.onChange} {...(errors.feeTaxMode?.message ? { error: errors.feeTaxMode.message } : {})} />} />
+                  </>
+                ) : null}
+              </>
             ) : null}
             {values.kind === "duree" ? (
               <TextField label="Nouvelle échéance *" type="date" placeholder="31/12/2029" {...register("endIso")} {...(errors.endIso?.message ? { error: errors.endIso.message } : {})} />
@@ -210,13 +244,15 @@ function AvenantForm({ index }: { index: Portefeuille }) {
               />
             ) : null}
             {values.kind === "travaux" ? (
-              <TextField label="Nouveau plafond de travaux sans accord, € *" placeholder="500" inputMode="decimal" {...register("worksLimit")} {...(errors.worksLimit?.message ? { error: errors.worksLimit.message } : {})} />
+              <TextField label={`Nouveau plafond de travaux sans accord, ${currencySymbol(currency)} *`} placeholder={currency === "XOF" ? "250 000" : "500"} inputMode="decimal" {...register("worksLimit")} {...(errors.worksLimit?.message ? { error: errors.worksLimit.message } : {})} />
             ) : null}
           </FormSection>
 
+          {needsSignedFile ? <AvenantSignedFile file={signedFile} error={fileError} onFile={(file) => { setSignedFile(file); setFileError(undefined); }} /> : null}
+
           <FormSection title="Effet et motif">
             <TextField label="Date d'effet *" type="date" placeholder="13/11/2026" hint="Aujourd'hui ou plus tard : un avenant n'est pas rétroactif." {...register("effectIso")} {...(errors.effectIso?.message ? { error: errors.effectIso.message } : {})} />
-            <Textarea label="Motif" placeholder="Ex. : accord du mandant du 10 novembre, baisse des honoraires contre reconduction." {...register("note")} {...(errors.note?.message ? { error: errors.note.message } : {})} />
+            {api ? null : <Textarea label="Motif" placeholder="Ex. : accord du mandant du 10 novembre, baisse des honoraires contre reconduction." {...register("note")} {...(errors.note?.message ? { error: errors.note.message } : {})} />}
           </FormSection>
         </div>
 
@@ -254,7 +290,9 @@ function AvenantForm({ index }: { index: Portefeuille }) {
 
       {mandat ? (
         <SectionCard title="Avenants du mandat">
-          {history.length === 0 ? (
+          {api ? (
+            <TermsHistoryTable terms={detail?.termsHistory ?? []} currency={currency} />
+          ) : history.length === 0 ? (
             <p className="py-2 text-body text-fg-subtle">Aucun avenant sur ce mandat pour le moment.</p>
           ) : (
             <Table aria-label="Avenants du mandat">

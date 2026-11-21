@@ -1,7 +1,8 @@
 "use client";
 
-import { SupportWidget, useInboxStats } from "@eguardimmo/messagerie";
-import { SpaceShell } from "@eguardimmo/shell";
+import { bankingPermissions, tenantRequestsPermissions } from "@eguardimmo/gestion";
+import { canManageAccess } from "@eguardimmo/messagerie";
+import { SpaceShell, useOrganizationSession } from "@eguardimmo/shell";
 import type { ShellCounts } from "@eguardimmo/shell";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -22,18 +23,45 @@ import {
   helpMenu,
   notifications,
 } from "@/espace/config";
+import { useMessagesCount } from "@/features/messagerie/useMessagesCount";
+import { SupportWidgetSlot } from "@/features/support/SupportWidgetSlot";
+import { useSupportBadges } from "@/features/support/useSupportBadges";
 import { dataSource } from "@/lib/env";
 import { ApiRouteGate } from "./ApiRouteGate";
 
 export function EspaceShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const searchPages = useMemo(() => buildSearchPages({ records: dataSource === "demo" }), []);
-  const unread = useInboxStats().data?.unread;
+  const unread = useMessagesCount();
+  const session = useOrganizationSession();
+  const banking = dataSource === "api" && session !== null && bankingPermissions(session.organization.role).available;
+  const requestPermissions = tenantRequestsPermissions(dataSource === "api" && session !== null ? session.organization.role : null);
+  const tenantRequests = useMemo(
+    () => (dataSource === "api" ? { manage: requestPermissions.manage, payments: requestPermissions.readPayments } : undefined),
+    [requestPermissions.manage, requestPermissions.readPayments],
+  );
+  const searchPages = useMemo(() => buildSearchPages({ records: dataSource === "demo", banking, ...(tenantRequests ? { tenantRequests } : {}) }), [banking, tenantRequests]);
+  const role = session?.organization.role;
+  const badges = useSupportBadges();
+  const manageAccess = session !== null && canManageAccess(session.organization.role);
   const navigation = useMemo(
     () => (counts: ShellCounts | undefined) =>
-      buildNavigation(unread === undefined ? counts : { ...counts, messages: unread }),
-    [unread],
+      buildNavigation(unread === undefined ? counts : { ...counts, messages: unread }, {
+        rent: dataSource === "api",
+        invoicing: dataSource === "api",
+        ownerFunds: dataSource === "api",
+        charges: dataSource === "api",
+        banking,
+        ...(tenantRequests ? { tenantRequests } : {}),
+        planning: dataSource === "api",
+        contacts: dataSource === "api",
+        tax: dataSource === "api",
+        analytics: dataSource === "api",
+        activity: dataSource === "api" && (role === "owner" || role === "admin"),
+        timezone: dataSource === "api" && (role === "owner" || role === "admin"),
+        ...(dataSource === "api" ? { support: { manageAccess, requests: badges.requests, access: badges.access } } : {}),
+      }),
+    [unread, manageAccess, role, banking, tenantRequests, badges.requests, badges.access],
   );
   return (
     <>
@@ -56,7 +84,7 @@ export function EspaceShell({ children }: { children: ReactNode }) {
       >
         <ApiRouteGate>{children}</ApiRouteGate>
       </SpaceShell>
-      <SupportWidget />
+      <SupportWidgetSlot />
     </>
   );
 }

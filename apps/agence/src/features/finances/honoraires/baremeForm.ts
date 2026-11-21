@@ -1,68 +1,53 @@
 import { z } from "zod";
-import { DEMO_TODAY, addMonths, isIsoDate } from "@/features/shared/dates";
+import { DEMO_TODAY, addDays, isIsoDate } from "@/features/shared/dates";
 import { parseMoney } from "@/features/shared/money";
-import { parseBasisPoints } from "../format";
-import { feeBaseSchema, feeCollectionSchema } from "../inputs";
+import { parseRateBasisPoints } from "@/lib/currency";
+import { feeBaseSchema } from "../inputs";
 import type { BaremeInput } from "../inputs";
 
-const PERCENT = /^\d{1,3}(?:[.,]\d{1,2})?$/;
+const MAX_RATE_BP = 2500;
+const MAX_LETTING_BP = 10_000;
+const MAX_WORKS_BP = 1500;
 
-function percentValue(text: string): number | null {
-  const compact = text.replace(/[\s%]/g, "");
-  return PERCENT.test(compact) ? Number(compact.replace(",", ".")) : null;
+function rateWithin(max: number, min: number) {
+  return (value: string): boolean => {
+    const basisPoints = parseRateBasisPoints(value);
+    return basisPoints !== null && basisPoints >= min && basisPoints <= max;
+  };
 }
 
 export const baremeFormSchema = z.object({
-  mandantId: z.string().min(1, "Choisissez un mandat."),
-  rate: z
-    .string()
-    .trim()
-    .refine((value) => {
-      const basisPoints = parseBasisPoints(value);
-      return basisPoints !== null && basisPoints > 0 && basisPoints <= 2500;
-    }, "Saisissez un taux entre 0,01 et 25. Exemple : 7,00."),
+  mandateId: z.string().min(1, "Choisissez un mandat."),
+  rate: z.string().trim().refine(rateWithin(MAX_RATE_BP, 1), "Saisissez un taux entre 0,01 et 25. Exemple : 7,00."),
   base: feeBaseSchema,
   minFee: z
     .string()
     .trim()
     .refine((value) => parseMoney(value) !== null, "Montant invalide. Exemple : 0,00."),
-  collection: feeCollectionSchema,
-  relocation: z
-    .string()
-    .trim()
-    .refine((value) => (percentValue(value) ?? 101) <= 100, "Saisissez un pourcentage entre 0 et 100. Exemple : 50."),
-  works: z
-    .string()
-    .trim()
-    .refine((value) => {
-      const basisPoints = parseBasisPoints(value);
-      return basisPoints !== null && basisPoints <= 1500;
-    }, "Saisissez un pourcentage entre 0 et 15. Exemple : 5,00."),
+  letting: z.string().trim().refine(rateWithin(MAX_LETTING_BP, 0), "Saisissez un pourcentage entre 0 et 100. Exemple : 50."),
+  works: z.string().trim().refine(rateWithin(MAX_WORKS_BP, 0), "Saisissez un pourcentage entre 0 et 15. Exemple : 5,00."),
   effectiveFrom: z
     .string()
     .refine(isIsoDate, "Saisissez une date valide.")
-    .refine((value) => value > DEMO_TODAY, "L'entrée en vigueur doit être postérieure à aujourd'hui."),
-  applyToAll: z.boolean(),
+    .refine((value) => value >= DEMO_TODAY, "L'entrée en vigueur ne peut pas être antérieure à aujourd'hui."),
 });
 
 export type BaremeFormInput = z.input<typeof baremeFormSchema>;
 export type BaremeFormValues = z.output<typeof baremeFormSchema>;
 
 export function toBaremeInput(values: BaremeFormInput): BaremeInput | null {
-  const rateBp = parseBasisPoints(values.rate);
+  const rateBp = parseRateBasisPoints(values.rate);
   const minFeeMinor = parseMoney(values.minFee);
-  const relocationPercent = percentValue(values.relocation);
-  const worksBp = parseBasisPoints(values.works);
-  if (rateBp === null || minFeeMinor === null || relocationPercent === null || worksBp === null || values.mandantId === "") return null;
+  const lettingBp = parseRateBasisPoints(values.letting);
+  const worksBp = parseRateBasisPoints(values.works);
+  if (rateBp === null || minFeeMinor === null || lettingBp === null || worksBp === null || values.mandateId === "") return null;
   return {
-    mandantId: values.mandantId,
+    mandateId: values.mandateId,
     rateBp,
     base: values.base,
     minFeeMinor,
-    collection: values.collection,
-    relocationPercent,
+    lettingBp,
     worksBp,
-    effectiveFrom: isIsoDate(values.effectiveFrom) ? values.effectiveFrom : addMonths(DEMO_TODAY, 1),
-    applyToAll: values.applyToAll,
+    effectiveFrom: isIsoDate(values.effectiveFrom) ? values.effectiveFrom : addDays(DEMO_TODAY, 1),
   };
 }

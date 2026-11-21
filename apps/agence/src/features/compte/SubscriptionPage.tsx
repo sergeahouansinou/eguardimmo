@@ -37,7 +37,9 @@ function SubscriptionContent({ subscription }: { subscription: SubscriptionView 
               <CardTitle as="h2">Factures</CardTitle>
             </CardHeader>
             <p className="text-body text-fg-muted">
-              {`Aucune facture pendant l'essai. La première sera émise le ${formatDate(subscription.firstCharge.date)}.`}
+              {subscription.firstCharge.amountMinor > 0
+                ? `Aucune facture pendant l'essai. La première sera émise le ${formatDate(subscription.firstCharge.date)}.`
+                : "Aucune facture pendant l'essai."}
             </p>
           </Card>
         </aside>

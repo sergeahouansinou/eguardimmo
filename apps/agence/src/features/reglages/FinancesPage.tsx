@@ -1,43 +1,37 @@
 "use client";
 
 import { Badge, Button, TextField } from "@eguardimmo/ui";
-import { useState } from "react";
-import { useWatch } from "react-hook-form";
+import { useMemo, useState } from "react";
 import { QueryState } from "@/components/ui/QueryState";
 import { SectionCard } from "@/components/ui/SectionCard";
-import { FormSelect, FormSwitch, useSchemaForm } from "@/features/kit/form";
+import { FormSelect, useSchemaForm } from "@/features/kit/form";
 import { useNotify } from "@/features/kit/notify";
 import { SettingsPage } from "@/features/kit/SettingsPage";
 import { splitServerError } from "@/features/kit/serverValidation";
 import { formatDate } from "@/features/shared/dates";
 import { parseMoney } from "@/features/shared/money";
+import { currencySymbol, formatAmountInput } from "@/lib/currency";
+import type { Currency } from "@/lib/currency";
 import { AccountDialog } from "./AccountDialog";
-import { excludingVatRate, formatPercent, parseRateBp, payoutDayLabel, rateBpToText } from "./logic";
+import { formatPercent, parseRateBp, payoutDayLabel, rateBpToText } from "./logic";
 import { useFinances, useSaveFinances } from "./queries";
-import { FEE_BASES, VAT_OPTIONS, financesFormSchema } from "./schemas";
+import { FEE_BASES, FEE_TAX_MODES, makeFinancesFormSchema } from "./schemas";
 import type { Finances, FinancesForm } from "./schemas";
 import { SettingRow, StaticRow } from "./SettingRow";
 
 const PAYOUT_DAYS = Array.from({ length: 28 }, (_, index) => index + 1);
 
-function moneyText(minor: number): string {
-  return new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(minor / 100);
-}
-
-function worksText(minor: number): string {
-  return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(minor / 100);
-}
+const VAT_REGIME_LABELS = { normal: "Assujettie à la TVA", franchise: "Franchise en base de TVA" } as const;
 
 function toForm(finances: Finances): FinancesForm {
+  const currency: Currency = finances.currency;
   return {
     feeRate: rateBpToText(finances.feeRateBp),
     feeBasis: finances.feeBasis,
-    vat: String(finances.vatBp) as FinancesForm["vat"],
-    minFee: moneyText(finances.minFeeMinor),
+    feeTaxMode: finances.feeTaxMode,
+    minFee: formatAmountInput(finances.minFeeMinor, currency),
     payoutDay: String(finances.payoutDay),
-    retainFees: finances.retainFees,
-    attachReport: finances.attachReport,
-    worksCeiling: worksText(finances.worksCeilingMinor),
+    worksCeiling: formatAmountInput(finances.worksCeilingMinor, currency),
   };
 }
 
@@ -53,35 +47,31 @@ export function FinancesPage() {
 function FinancesSettings({ finances }: { finances: Finances }) {
   const notify = useNotify();
   const save = useSaveFinances();
-  const form = useSchemaForm<FinancesForm, FinancesForm>(financesFormSchema, toForm(finances));
+  const currency: Currency = finances.currency;
+  const symbol = currencySymbol(currency);
+  const schema = useMemo(() => makeFinancesFormSchema(currency), [currency]);
+  const form = useSchemaForm<FinancesForm, FinancesForm>(schema, toForm(finances));
   const [editingAccount, setEditingAccount] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const { errors } = form.formState;
-  const feeRate = useWatch({ control: form.control, name: "feeRate" });
-  const vat = useWatch({ control: form.control, name: "vat" });
-  const rateBp = parseRateBp(feeRate);
-  const vatHint =
-    rateBp === null ? "Saisissez un taux pour voir l’équivalent hors taxe." : `${formatPercent(rateBp)} TTC correspondent à ${formatPercent(excludingVatRate(rateBp, Number(vat)))} hors taxe`;
 
   const submit = form.handleSubmit(async (values) => {
     setFormError(null);
     const feeRateBp = parseRateBp(values.feeRate);
-    const minFeeMinor = parseMoney(values.minFee);
-    const worksCeilingMinor = parseMoney(values.worksCeiling);
+    const minFeeMinor = parseMoney(values.minFee, currency);
+    const worksCeilingMinor = parseMoney(values.worksCeiling, currency);
     if (feeRateBp === null || minFeeMinor === null || worksCeilingMinor === null) return;
     try {
       const saved = await save.mutateAsync({
         feeRateBp,
         feeBasis: values.feeBasis,
-        vatBp: Number(values.vat),
+        feeTaxMode: values.feeTaxMode,
         minFeeMinor,
         payoutDay: Number(values.payoutDay),
-        retainFees: values.retainFees,
-        attachReport: values.attachReport,
         worksCeilingMinor,
       });
       form.reset(toForm(saved));
-      notify.success("Réglages financiers enregistrés", "Ils s’appliquent par défaut à chaque nouveau mandat.");
+      notify.success("Réglages financiers enregistrés", "Ils préremplissent chaque nouveau mandat. Les mandats existants ne changent pas.");
     } catch (error: unknown) {
       const { fields, message } = splitServerError(error);
       setFormError(message ?? Object.values(fields).join(" "));
@@ -93,7 +83,7 @@ function FinancesSettings({ finances }: { finances: Finances }) {
   return (
     <SettingsPage
       currentHref="/reglages/finances"
-      subtitle="Honoraires, reversements et compte des mandants, appliqués par défaut à chaque nouveau mandat."
+      subtitle="Conditions types qui préremplissent la création d’un mandat. Chaque mandat reste la seule référence de ses honoraires : modifier ces réglages ne touche aucun mandat existant."
       dirty={form.formState.isDirty}
       saving={save.isPending}
       formError={formError}
@@ -106,9 +96,9 @@ function FinancesSettings({ finances }: { finances: Finances }) {
       }}
     >
       <SectionCard title="Honoraires de gestion">
-        <SettingRow title="Taux par défaut" hint="Modifiable mandat par mandat">
+        <SettingRow title="Taux par défaut" hint="Modifiable mandat par mandat, par avenant signé">
           <TextField
-            label="Taux par défaut (% TTC)"
+            label="Taux par défaut (%)"
             hideLabel
             inputMode="decimal"
             placeholder="Ex. : 7"
@@ -117,7 +107,7 @@ function FinancesSettings({ finances }: { finances: Finances }) {
             {...form.register("feeRate")}
           />
         </SettingRow>
-        <SettingRow title="Base de calcul" hint="Honoraires prélevés à chaque encaissement">
+        <SettingRow title="Base de calcul" hint="Les honoraires sont retenus au reversement, sur les loyers encaissés">
           <FormSelect
             control={form.control}
             name="feeBasis"
@@ -127,27 +117,31 @@ function FinancesSettings({ finances }: { finances: Finances }) {
             options={FEE_BASES.map((basis) => ({ value: basis.value, label: basis.label }))}
           />
         </SettingRow>
-        <SettingRow title="TVA applicable" hint={vatHint}>
+        <SettingRow title="Honoraires exprimés" hint="Hors taxes ou toutes taxes comprises">
           <FormSelect
             control={form.control}
-            name="vat"
-            label="TVA applicable"
+            name="feeTaxMode"
+            label="Honoraires exprimés"
             hideLabel
-            placeholder="Choisir un taux"
-            options={VAT_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+            placeholder="Choisir un mode"
+            options={FEE_TAX_MODES.map((mode) => ({ value: mode.value, label: mode.label }))}
           />
         </SettingRow>
         <SettingRow title="Minimum mensuel par lot" hint="Appliqué si le loyer est faible">
           <TextField
-            label="Minimum mensuel par lot (€)"
+            label={`Minimum mensuel par lot (${symbol})`}
             hideLabel
             inputMode="decimal"
-            placeholder="Ex. : 15,00"
+            placeholder={currency === "XOF" ? "Ex. : 5 000" : "Ex. : 15,00"}
             error={errors.minFee?.message}
             className="text-right"
             {...form.register("minFee")}
           />
         </SettingRow>
+        <StaticRow title="TVA" hint="Lecture seule : régime de l’identité légale et taux de la juridiction de l’agence">
+          <span>{VAT_REGIME_LABELS[finances.vat.regime]}</span>
+          {finances.vat.regime === "normal" ? <Badge>{`Taux ${formatPercent(finances.vat.rateBp)}`}</Badge> : null}
+        </StaticRow>
       </SectionCard>
       <SectionCard title="Reversements">
         <SettingRow title="Jour de reversement" hint="Aux mandants, après rapprochement bancaire">
@@ -160,19 +154,12 @@ function FinancesSettings({ finances }: { finances: Finances }) {
             options={PAYOUT_DAYS.map((day) => ({ value: String(day), label: payoutDayLabel(day) }))}
           />
         </SettingRow>
-        <FormSwitch
-          control={form.control}
-          name="retainFees"
-          label="Retenue des honoraires"
-          hint="Déduits du reversement, détaillés sur le compte rendu"
-        />
-        <FormSwitch control={form.control} name="attachReport" label="Compte rendu de gestion joint" hint="Envoyé avec chaque reversement" />
         <SettingRow title="Travaux sans accord du mandant" hint="Au-delà, un devis lui est soumis">
           <TextField
-            label="Travaux sans accord du mandant (€)"
+            label={`Travaux sans accord du mandant (${symbol})`}
             hideLabel
             inputMode="decimal"
-            placeholder="Ex. : 300"
+            placeholder={currency === "XOF" ? "Ex. : 250 000" : "Ex. : 300"}
             error={errors.worksCeiling?.message}
             className="text-right"
             {...form.register("worksCeiling")}
@@ -193,7 +180,7 @@ function FinancesSettings({ finances }: { finances: Finances }) {
           </Button>
         }
       >
-        <StaticRow title="IBAN" hint="Compte séquestre, distinct de celui de l’agence">
+        <StaticRow title="IBAN" hint="Compte séquestre, distinct de celui de l’agence. Visible du titulaire, de l’administrateur et du comptable.">
           <span className="tabular-nums">{account.ibanMasked}</span>
         </StaticRow>
         <StaticRow title="Banque">{account.bank}</StaticRow>

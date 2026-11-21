@@ -6,7 +6,10 @@ import type { SubscriptionView } from "./subscriptionSchemas";
 export function TrialCard({ subscription, onAddPayment }: { subscription: SubscriptionView; onAddPayment: () => void }) {
   const { trial, firstCharge, paymentMethods } = subscription;
   const hasMethod = paymentMethods.length > 0;
-  const charge = `Premier prélèvement : ${formatMoneyExact(firstCharge.amountMinor)} HT le ${formatDate(firstCharge.date)}.`;
+  const paid = firstCharge.amountMinor > 0;
+  const charge = paid
+    ? `Premier prélèvement : ${formatMoneyExact(firstCharge.amountMinor)} HT le ${formatDate(firstCharge.date)}.`
+    : "Sans souscription, l'organisation repasse en Gratuit à la fin de l'essai.";
   return (
     <Card role="region" aria-label="Essai gratuit">
       <CardHeader>
@@ -14,7 +17,7 @@ export function TrialCard({ subscription, onAddPayment }: { subscription: Subscr
       </CardHeader>
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <div className="flex min-w-0 flex-col">
-          <b className="text-body-strong text-fg">{`Formule ${subscription.planName}, essai d'un mois`}</b>
+          <b className="text-body-strong text-fg">{`Formule ${subscription.planName}, essai complet de ${String(trial.totalDays)} jours`}</b>
           <span className="text-caption text-fg-subtle">{`Du ${formatDate(trial.startDate)} au ${formatDate(trial.endDate)} · ${String(trial.daysLeft)} jours restants`}</span>
         </div>
         <span className="text-block-title text-fg">
@@ -29,7 +32,7 @@ export function TrialCard({ subscription, onAddPayment }: { subscription: Subscr
       ) : (
         <Alert tone="warning" title="Aucun moyen de paiement enregistré">
           <span className="flex flex-wrap items-center justify-between gap-2">
-            {`Ajoutez-en un avant le ${formatDate(trial.endDate)} pour poursuivre après l'essai. ${charge}`}
+            {`Ajoutez-en un avant le ${formatDate(trial.endDate)} ${paid ? "pour poursuivre après l'essai" : "pour souscrire une formule payante"}. ${charge}`}
             <Button variant="secondary" size="sm" onClick={onAddPayment}>
               Ajouter un moyen de paiement
             </Button>

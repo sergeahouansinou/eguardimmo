@@ -1,7 +1,7 @@
 import { ofMonth } from "@/lib/dates";
 import { formatDate, formatPeriod } from "@/features/shared/dates";
 import { formatRate } from "@/features/shared/money";
-import type { FeeBase, FeeCollection, PaymentMode, ReminderChannel } from "./inputs";
+import type { FeeBase, PaymentMode, ReminderChannel } from "./inputs";
 
 export function rateText(basisPoints: number): string {
   const percent = basisPoints / 100;
@@ -41,13 +41,8 @@ export const CHANNEL_LABELS: Record<ReminderChannel, string> = {
 };
 
 export const BASE_LABELS: Record<FeeBase, string> = {
-  encaisses: "Loyers encaissés",
-  hors_charges: "Loyers encaissés, hors charges",
-};
-
-export const COLLECTION_LABELS: Record<FeeCollection, string> = {
-  reversement: "Au reversement",
-  encaissement: "À l'encaissement",
+  rent: "Loyer hors charges",
+  rent_and_charges: "Loyer et charges",
 };
 
 export function joinLabels(labels: readonly string[]): string {
@@ -82,13 +77,6 @@ export const FEE_PERIODS = [
   { value: "2026-10", label: "Octobre 2026" },
   { value: "2026", label: "Année 2026" },
 ] as const;
-
-export function parseBasisPoints(text: string): number | null {
-  const compact = text.replace(/[\s%]/g, "");
-  if (!/^\d{1,2}(?:[.,]\d{1,2})?$/.test(compact)) return null;
-  const [whole = "0", decimals = ""] = compact.replace(",", ".").split(".");
-  return Number(whole) * 100 + Number(decimals.padEnd(2, "0"));
-}
 
 export function basisPointsText(basisPoints: number): string {
   return `${String(Math.floor(basisPoints / 100))},${String(basisPoints % 100).padStart(2, "0")}`;

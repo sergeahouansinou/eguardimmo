@@ -49,7 +49,7 @@ export function DataTable<T>({ caption, columns, rows, getRowId, footer, footerL
     columns.findIndex((column) => column.role === "title"),
   );
   return (
-    <Table aria-label={caption} className="max-sm:block">
+    <Table aria-label={caption} scrollLabel={`${caption}, défilement horizontal`} className="max-sm:block">
       <TableHead className="max-sm:hidden">
         <TableRow>
           {selection ? (

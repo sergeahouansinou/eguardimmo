@@ -57,6 +57,8 @@ export const devisLineSchema = z.object({
   totalMinor: z.number().int(),
 });
 
+export const DEVIS_MESSAGE_MAX_LENGTH = 500;
+
 export const devisSchema = z.object({
   id: z.string(),
   interventionId: z.string(),
@@ -76,7 +78,7 @@ export const devisSchema = z.object({
   imputation: z.string(),
   deductedFrom: z.string(),
   responseWithinHours: z.number().int(),
-  message: z.string(),
+  message: z.string().max(DEVIS_MESSAGE_MAX_LENGTH),
   submittedOn: z.string().nullable(),
 });
 
@@ -123,7 +125,6 @@ export const priorityChangeSchema = z.object({ id: z.string().min(1), priority: 
 
 export const submitDevisSchema = z.object({
   devisId: z.string().min(1),
-  message: z.string().trim().min(10, "Le message doit comporter 10 caractères au minimum.").max(1000, "1 000 caractères au maximum."),
 });
 
 export type StatusChangeInput = z.input<typeof statusChangeSchema>;

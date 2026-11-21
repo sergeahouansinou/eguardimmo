@@ -1,10 +1,7 @@
-function escapeCell(value: string): string {
-  const safe = /^[=+\-@]/.test(value) && !/^-?\d+(?:\.\d+)?$/.test(value) ? `'${value}` : value;
-  return /[";\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-}
+import { csvDocument } from "@eguardimmo/shell";
 
 export function toCsv(header: readonly string[], rows: readonly (readonly string[])[]): string {
-  return [header, ...rows].map((row) => row.map(escapeCell).join(";")).join("\r\n");
+  return csvDocument([header, ...rows]);
 }
 
 export function downloadCsv(filename: string, content: string): void {

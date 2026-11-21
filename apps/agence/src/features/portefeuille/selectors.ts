@@ -1,17 +1,18 @@
 import { addMonths, daysBetween, parseDay, toIso, yearMonth } from "@/lib/dates";
 import { applyRate } from "@/lib/money";
-import type { Bail, Bien, Locataire, Mandant, Mandat, PaymentMode, PortefeuilleData } from "./schemas";
+import type { Bail, Bien, Locataire, Mandant, Mandat, MandatUnit, PaymentMode, PortefeuilleData, UnavailableKey } from "./schemas";
 
-export type MandatState = "actif" | "a_renouveler" | "resilie" | "termine" | "brouillon";
+export type MandatState = "actif" | "a_renouveler" | "suspendu" | "resilie" | "termine" | "brouillon";
 
 export function mandatState(mandat: Mandat, todayIso: string): MandatState {
   if (mandat.status === "brouillon") return "brouillon";
   if (mandat.status === "termine") return "termine";
+  if (mandat.status === "suspendu") return "suspendu";
   if (mandat.termination) return mandat.termination.effectIso <= todayIso ? "termine" : "resilie";
   return mandat.status;
 }
 
-export const isOperational = (state: MandatState): boolean => state === "actif" || state === "a_renouveler" || state === "resilie";
+export const isOperational = (state: MandatState): boolean => state === "actif" || state === "a_renouveler" || state === "suspendu" || state === "resilie";
 
 export type BailSituation = "a_jour" | "impaye" | "preavis";
 
@@ -36,8 +37,15 @@ export function bailSituation(bail: Bail): BailSituation {
   return bail.noticeGiven ? "preavis" : "a_jour";
 }
 
+export function openUnits(mandat: Mandat): MandatUnit[] {
+  return (mandat.units ?? []).filter((unit) => unit.endIso === null);
+}
+
 export interface Portefeuille {
   data: PortefeuilleData;
+  isApi: boolean;
+  isUnavailable: (key: UnavailableKey) => boolean;
+  lotCount: (mandat: Mandat) => number;
   mandant: (id: string) => Mandant | undefined;
   mandat: (id: string) => Mandat | undefined;
   bien: (id: string) => Bien | undefined;
@@ -62,10 +70,14 @@ export function indexPortefeuille(data: PortefeuilleData): Portefeuille {
   const currentBail = (bienId: string) => data.baux.find((bail) => bail.bienId === bienId && bail.status === "en_cours");
   const mandatsOf = (mandantId: string) => data.mandats.filter((mandat) => mandat.mandantId === mandantId);
   const activeMandat = (mandantId: string) =>
-    mandatsOf(mandantId).find((mandat) => isOperational(mandatState(mandat, data.todayIso)));
+    mandatsOf(mandantId).find((mandat) => !mandat.archived && isOperational(mandatState(mandat, data.todayIso)));
   const biensOfMandat = (mandatId: string) => data.biens.filter((bien) => bien.mandatId === mandatId);
+  const unavailable = new Set<UnavailableKey>(data.unavailable ?? []);
   return {
     data,
+    isApi: data.origin === "api",
+    isUnavailable: (key) => unavailable.has(key),
+    lotCount: (mandat) => (mandat.units ? openUnits(mandat).length : biensOfMandat(mandat.id).length),
     mandant: (id) => mandants.get(id),
     mandat: (id) => mandats.get(id),
     bien: (id) => biens.get(id),

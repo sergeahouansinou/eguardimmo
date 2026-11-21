@@ -2,8 +2,7 @@ export const CURRENT_PERIOD = "2026-11";
 
 export type PaymentMode = "virement" | "cheque" | "prelevement" | "especes";
 export type PaymentStatus = "recu" | "a_rapprocher" | "rejete";
-export type FeeBase = "encaisses" | "hors_charges";
-export type FeeCollection = "reversement" | "encaissement";
+export type FeeBase = "rent" | "rent_and_charges";
 export type ReminderChannel = "email" | "sms" | "courrier";
 export type CaseEventKind = "echeance" | "relance" | "appel" | "mandant" | "message" | "mise_en_demeure" | "echeancier" | "paiement" | "rejet";
 export type BadgeTone = "neutral" | "info" | "success" | "warning" | "danger";
@@ -41,8 +40,7 @@ export interface FeeScheme {
   rateBp: number;
   base: FeeBase;
   minFeeMinor: number;
-  collection: FeeCollection;
-  relocationPercent: number;
+  lettingBp: number;
   worksBp: number;
   effectiveFrom: string;
   status: "en_vigueur" | "a_signer";
@@ -50,7 +48,7 @@ export interface FeeScheme {
 
 export interface Amendment {
   id: string;
-  mandantId: string;
+  mandateId: string;
   schemeId: string;
   createdOn: string;
 }

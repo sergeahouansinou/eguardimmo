@@ -17,8 +17,8 @@ import { downloadCsv, toCsv } from "@/lib/csv";
 import { formatDay } from "@/lib/dates";
 import { formatEuros, formatEurosExact } from "@/lib/money";
 import { matchesQuery } from "@/lib/text";
-import { MANDANT_TYPE_LABELS, MANDAT_STATE_PILLS, plural } from "../labels";
-import { usePortefeuille } from "../queries";
+import { MANDANT_TYPE_LABELS, MANDAT_STATE_PILLS, UNAVAILABLE, plural } from "../labels";
+import { usePortefeuille, usePortefeuilleAccess } from "../queries";
 import { mandantFigures, mandatState } from "../selectors";
 import type { MandantFigures, Portefeuille } from "../selectors";
 import type { Mandant, Mandat } from "../schemas";
@@ -59,9 +59,16 @@ function Mandants({ index }: { index: Portefeuille }) {
   const [state, setState] = useState("tous");
   const [pendingOnly, setPendingOnly] = useState(false);
   const [segment, setSegment] = useState<SegmentValue>("tous");
+  const { canWrite } = usePortefeuilleAccess();
+  const api = index.isApi;
 
   const lines = useMemo<MandantLine[]>(
-    () => data.mandants.map((mandant) => ({ mandant, mandat: index.activeMandat(mandant.id), ...mandantFigures(index, mandant.id) })),
+    () =>
+      data.mandants.map((mandant) => {
+        const mandat = index.activeMandat(mandant.id);
+        const figures = mandantFigures(index, mandant.id);
+        return { mandant, mandat, ...figures, lots: index.isApi ? (mandat ? index.lotCount(mandat) : 0) : figures.lots };
+      }),
     [data, index],
   );
   const stateOf = (line: MandantLine) => (line.mandat ? mandatState(line.mandat, data.todayIso) : "termine");
@@ -96,8 +103,12 @@ function Mandants({ index }: { index: Portefeuille }) {
     },
     { id: "mandat", header: "Mandat", cell: ({ mandat }) => mandat?.number ?? "—" },
     { id: "lots", header: "Lots", numeric: true, cell: ({ lots: count }) => count },
-    { id: "called", header: "Loyers appelés", numeric: true, cell: ({ calledMinor }) => formatEurosExact(calledMinor) },
-    { id: "payout", header: "À reverser", numeric: true, strong: true, cell: ({ payoutMinor }) => formatEurosExact(payoutMinor) },
+    ...(api
+      ? []
+      : [
+          { id: "called", header: "Loyers appelés", numeric: true, cell: ({ calledMinor }: MandantLine) => formatEurosExact(calledMinor) },
+          { id: "payout", header: "À reverser", numeric: true, strong: true, cell: ({ payoutMinor }: MandantLine) => formatEurosExact(payoutMinor) },
+        ]),
     { id: "end", header: "Fin du mandat", cell: ({ mandat }) => (mandat ? formatDay(mandat.endIso) : "—") },
     {
       id: "state",
@@ -119,7 +130,7 @@ function Mandants({ index }: { index: Portefeuille }) {
             items={[
               { id: "fiche", label: "Voir la fiche", icon: Eye, href: mandantHref(mandant.id) },
               { id: "ecrire", label: "Écrire", icon: Mail, href: agenceRoutes.messageNew },
-              { id: "reversement", label: "Préparer le reversement", icon: Wallet, href: agenceRoutes.reversementLot },
+              ...(api ? [] : [{ id: "reversement", label: "Préparer le reversement", icon: Wallet, href: agenceRoutes.reversementLot }]),
             ]}
           />
         </span>
@@ -131,14 +142,13 @@ function Mandants({ index }: { index: Portefeuille }) {
     downloadCsv(
       "mandants.csv",
       toCsv(
-        ["Mandant", "Type", "Mandat", "Lots", "Loyers appelés (€)", "À reverser (€)", "Fin du mandat", "État"],
+        ["Mandant", "Type", "Mandat", "Lots", ...(api ? [] : ["Loyers appelés (€)", "À reverser (€)"]), "Fin du mandat", "État"],
         filtered.map((line) => [
           line.mandant.name,
           line.mandant.legal,
           line.mandat?.number ?? "",
           String(line.lots),
-          (line.calledMinor / 100).toFixed(2),
-          (line.payoutMinor / 100).toFixed(2),
+          ...(api ? [] : [(line.calledMinor / 100).toFixed(2), (line.payoutMinor / 100).toFixed(2)]),
           line.mandat ? formatDay(line.mandat.endIso) : "",
           MANDAT_STATE_PILLS[stateOf(line)].label,
         ]),
@@ -157,12 +167,14 @@ function Mandants({ index }: { index: Portefeuille }) {
               <Icon icon={Download} />
               Exporter
             </Button>
-            <Button asChild>
-              <Link href={agenceRoutes.mandantNew}>
-                <Icon icon={Plus} />
-                Nouveau mandant
-              </Link>
-            </Button>
+            {canWrite && !api ? (
+              <Button asChild>
+                <Link href={agenceRoutes.mandantNew}>
+                  <Icon icon={Plus} />
+                  Nouveau mandant
+                </Link>
+              </Button>
+            ) : null}
           </>
         }
       />
@@ -185,8 +197,8 @@ function Mandants({ index }: { index: Portefeuille }) {
         <StatCard label="Mandants" value={data.mandants.length}>
           <span className="text-caption text-fg-subtle">{`${plural(lots, "lot", "lots")} sous mandat`}</span>
         </StatCard>
-        <StatCard label="Loyers appelés par mois" value={formatEuros(called)}>
-          <span className="text-caption text-fg-subtle">charges comprises</span>
+        <StatCard label="Loyers appelés par mois" value={api ? UNAVAILABLE : formatEuros(called)}>
+          <span className="text-caption text-fg-subtle">{api ? "les baux ne sont pas encore reliés" : "charges comprises"}</span>
         </StatCard>
         <StatCard label="Mandats à renouveler" value={renewals.length}>
           <span className="text-caption text-fg-subtle">{lastRenewal ? `avant le ${formatDay(lastRenewal)}` : "aucune échéance proche"}</span>
@@ -206,9 +218,11 @@ function Mandants({ index }: { index: Portefeuille }) {
         <SearchField label="Rechercher un mandant" placeholder="Nom, mandat, ex. : Chevalier" value={search} onChange={(event) => { setSearch(event.target.value); }} className="w-full sm:w-72" />
         <Select label="Type" placeholder="Tous" options={TYPE_OPTIONS} value={type} onValueChange={setType} className="w-40" />
         <Select label="État" placeholder="Tous" options={STATE_OPTIONS} value={state} onValueChange={setState} className="w-40" />
-        <Chip pressed={pendingOnly} onClick={() => { setPendingOnly((current) => !current); }}>
-          Reversement en attente
-        </Chip>
+        {api ? null : (
+          <Chip pressed={pendingOnly} onClick={() => { setPendingOnly((current) => !current); }}>
+            Reversement en attente
+          </Chip>
+        )}
       </div>
 
       <DataList

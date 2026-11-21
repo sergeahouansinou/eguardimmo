@@ -7,7 +7,6 @@ import { resetNavigation } from "../../../test/navigation";
 import { createDemoSource } from "@/features/source";
 import { FinancesPage } from "./FinancesPage";
 import { IdentityPage } from "./IdentityPage";
-import { formatPercent } from "./logic";
 import { financesSchema, identitySchema } from "./schemas";
 
 vi.mock("next/navigation", async () => (await import("../../../test/navigation")).navigationMock());
@@ -15,8 +14,6 @@ vi.mock("next/navigation", async () => (await import("../../../test/navigation")
 beforeEach(() => {
   resetNavigation();
 });
-
-const plain = (text: string) => text.replace(/\u00a0/g, " ");
 
 const identityOf = async (source: ReturnType<typeof createDemoSource>) => identitySchema.parse(await source.reglages.identity());
 const financesOf = async (source: ReturnType<typeof createDemoSource>) => financesSchema.parse(await source.reglages.finances());
@@ -113,16 +110,20 @@ describe("réglages : identité de l’agence", () => {
 });
 
 describe("réglages : finances et honoraires", () => {
-  it("affiche les honoraires, les reversements et le compte des mandants", async () => {
+  it("affiche les conditions types, la TVA en lecture seule et le compte des mandants", async () => {
     const { container } = renderScreen(<FinancesPage />);
     expect(await screen.findByDisplayValue("7")).toBeTruthy();
-    expect(screen.getByText(plain(`${formatPercent(700)} TTC correspondent à ${formatPercent(583)} hors taxe`))).toBeTruthy();
-    expect(screen.getByDisplayValue("15,00")).toBeTruthy();
+    expect(screen.getByDisplayValue("15")).toBeTruthy();
     expect(screen.getByDisplayValue("300")).toBeTruthy();
-    expect(screen.getByRole("combobox", { name: /Base de calcul/ }).textContent).toContain("Loyers encaissés");
+    expect(screen.getByRole("combobox", { name: /Base de calcul/ }).textContent).toContain("Loyer et charges");
+    expect(screen.getByRole("combobox", { name: /Honoraires exprimés/ }).textContent).toContain("Toutes taxes comprises");
     expect(screen.getByRole("combobox", { name: /Jour de reversement/ }).textContent).toContain("Le 5 du mois");
-    expect(screen.getByRole("combobox", { name: /TVA applicable/ }).textContent).toContain("20 %");
-    expect(screen.getByRole<HTMLButtonElement>("switch", { name: "Retenue des honoraires" }).getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByText("Assujettie à la TVA")).toBeTruthy();
+    expect(screen.getByText("Taux 20 %")).toBeTruthy();
+    expect(screen.queryByRole("combobox", { name: /TVA applicable/ })).toBeNull();
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(document.body.textContent).not.toContain("Loyers appelés");
+    expect(document.body.textContent).not.toContain("à chaque encaissement");
     expect(screen.getByText("FR76 •••• •••• •••• •••• 1208")).toBeTruthy();
     expect(screen.getByText("Banque du Canal")).toBeTruthy();
     expect(screen.getByText("12/11/2026")).toBeTruthy();
@@ -131,20 +132,55 @@ describe("réglages : finances et honoraires", () => {
     await expectNoA11yViolations(container);
   });
 
-  it("recalcule l’équivalent hors taxe et enregistre en points de base", async () => {
+  it("propose uniquement les bases du serveur, sans loyers appelés ni TVA libre", async () => {
+    const user = userEvent.setup();
+    renderScreen(<FinancesPage />);
+    await user.click(await screen.findByRole("combobox", { name: /Base de calcul/ }));
+    expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual(["Loyer hors charges", "Loyer et charges"]);
+  });
+
+  it("enregistre le taux en points de base, la base, le mode de taxe et le minimum", async () => {
     const user = userEvent.setup();
     const source = createDemoSource();
     renderScreen(<FinancesPage />, source);
-    const rate = await screen.findByLabelText("Taux par défaut (% TTC)");
+    const rate = await screen.findByLabelText("Taux par défaut (%)");
     await user.clear(rate);
-    await user.type(rate, "8");
-    expect(screen.getByText(plain(`${formatPercent(800)} TTC correspondent à ${formatPercent(667)} hors taxe`))).toBeTruthy();
+    await user.type(rate, "8,05");
     await user.clear(screen.getByLabelText("Minimum mensuel par lot (€)"));
     await user.type(screen.getByLabelText("Minimum mensuel par lot (€)"), "18,50");
-    await user.click(screen.getByRole("switch", { name: "Retenue des honoraires" }));
+    await user.click(screen.getByRole("combobox", { name: /Base de calcul/ }));
+    await user.click(await screen.findByRole("option", { name: "Loyer hors charges" }));
+    await user.click(screen.getByRole("combobox", { name: /Honoraires exprimés/ }));
+    await user.click(await screen.findByRole("option", { name: /Hors taxes/ }));
     await user.click(screen.getByRole("button", { name: "Enregistrer" }));
     expect(await screen.findByText("Réglages financiers enregistrés")).toBeTruthy();
-    expect(await financesOf(source)).toMatchObject({ feeRateBp: 800, minFeeMinor: 1850, retainFees: false, vatBp: 2000, payoutDay: 5, worksCeilingMinor: 30000 });
+    expect(screen.getByText(/Les mandats existants ne changent pas/)).toBeTruthy();
+    expect(await financesOf(source)).toMatchObject({ feeRateBp: 805, minFeeMinor: 1850, feeBasis: "rent", feeTaxMode: "excl_tax", payoutDay: 5, worksCeilingMinor: 30000 });
+  });
+
+  it("affiche et enregistre les montants en FCFA sans décimales ni multiplication par 100", async () => {
+    const user = userEvent.setup();
+    const source = createDemoSource();
+    const xof = { ...(await financesOf(source)), currency: "XOF" as const, minFeeMinor: 5_000, worksCeilingMinor: 250_000 };
+    source.reglages.finances = () => Promise.resolve(xof);
+    const saved: unknown[] = [];
+    source.reglages.saveFinances = (input) => {
+      saved.push(input);
+      return Promise.resolve({ ...xof, ...(input as object) });
+    };
+    renderScreen(<FinancesPage />, source);
+    const minimum = await screen.findByLabelText("Minimum mensuel par lot (F CFA)");
+    expect((minimum as HTMLInputElement).value).toBe("5000");
+    expect(screen.getByLabelText<HTMLInputElement>("Travaux sans accord du mandant (F CFA)").value).toBe("250000");
+    await user.clear(minimum);
+    await user.type(minimum, "7 500,5");
+    await user.click(screen.getByRole("button", { name: "Enregistrer" }));
+    expect(await screen.findByText("Saisissez un montant valide, par exemple 5 000.")).toBeTruthy();
+    await user.clear(minimum);
+    await user.type(minimum, "7 500");
+    await user.click(screen.getByRole("button", { name: "Enregistrer" }));
+    await waitFor(() => { expect(saved).toHaveLength(1); });
+    expect(saved[0]).toMatchObject({ minFeeMinor: 7_500, worksCeilingMinor: 250_000 });
   });
 
   it("enregistre le jour de reversement choisi", async () => {
@@ -163,7 +199,7 @@ describe("réglages : finances et honoraires", () => {
     const user = userEvent.setup();
     const source = createDemoSource();
     renderScreen(<FinancesPage />, source);
-    const rate = await screen.findByLabelText("Taux par défaut (% TTC)");
+    const rate = await screen.findByLabelText("Taux par défaut (%)");
     await user.clear(rate);
     await user.type(rate, "abc");
     await user.click(screen.getByRole("button", { name: "Enregistrer" }));
@@ -185,7 +221,7 @@ describe("réglages : finances et honoraires", () => {
     const dialog = await screen.findByRole("dialog", { name: "Modifier le compte des mandants" });
     await user.type(within(dialog).getByLabelText("IBAN"), "FR76 3000 6000 0112 3456 7890 188");
     await user.click(within(dialog).getByRole("button", { name: "Enregistrer le compte" }));
-    expect(await within(dialog).findByText("Cet IBAN n’est pas valide (IBAN français, clé de contrôle).")).toBeTruthy();
+    expect(await within(dialog).findByText(/Cet IBAN n’est pas valide \(clé de contrôle\)/)).toBeTruthy();
     await user.clear(within(dialog).getByLabelText("IBAN"));
     await user.type(within(dialog).getByLabelText("IBAN"), "FR76 3000 6000 0112 3456 7890 189");
     await user.clear(within(dialog).getByLabelText("Banque"));

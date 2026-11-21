@@ -1,9 +1,13 @@
 "use client";
 
 import { createContext, use } from "react";
+import { currencyOf } from "@/lib/currency";
+import type { Currency } from "@/lib/currency";
 import { addDays, addMonths, formatDay, yearMonth } from "@/lib/dates";
 import { dataSource } from "@/lib/env";
 import { formatEuros, formatRate } from "@/lib/money";
+import type { ApiFeeBase, ApiFeeTaxMode } from "./api/apiSchemas";
+import type { MandatDocumentOperations, TermDefaultsOperations } from "./api/operationTypes";
 import { createDemoData } from "./demo";
 import { INVITATION_BASE_URL, avisId } from "./demoExtra";
 import { isOperational, mandatState } from "./selectors";
@@ -22,10 +26,13 @@ import {
 } from "./schemas";
 import type { Avenant, AvenantKind, Bail, Bien, Invitation, Mandant, Mandat, PaymentMode, PortefeuilleData, Termination } from "./schemas";
 
+export type PortefeuilleErrorKind = "stale_version" | "forbidden" | "overlap" | "not_clean" | "conflict" | "invalid" | "unavailable" | "unknown";
+
 export class PortefeuilleError extends Error {
   constructor(
     message: string,
     readonly field?: string,
+    readonly kind: PortefeuilleErrorKind = "unknown",
   ) {
     super(message);
     this.name = "PortefeuilleError";
@@ -43,9 +50,24 @@ export interface NewLot {
   city: string;
 }
 
+export interface NewMandatApi {
+  typeId: string;
+  unitIds: readonly string[];
+  currency: Currency;
+  feeKind: "percentage" | "flat";
+  flatFeeMinor?: number;
+  feeBase: ApiFeeBase;
+  feeMinimumMinor: number;
+  feeTaxMode: ApiFeeTaxMode;
+  lettingFeeBasisPoints?: number;
+  worksFeeBasisPoints?: number;
+  signedOnIso?: string;
+}
+
 export interface NewMandat {
   mandantId: string;
   lots: NewLot[];
+  api?: NewMandatApi;
   feeBasisPoints: number;
   payoutDay: number;
   worksLimitMinor: number;
@@ -95,6 +117,12 @@ export interface NewAvenant {
   endIso?: string;
   payoutDay?: number;
   worksLimitMinor?: number;
+  feeBase?: ApiFeeBase;
+  feeMinimumMinor?: number;
+  feeTaxMode?: ApiFeeTaxMode;
+  lettingFeeBasisPoints?: number | null;
+  worksFeeBasisPoints?: number | null;
+  signedFileId?: string;
   note: string;
 }
 
@@ -121,7 +149,45 @@ export const AVIS_MONTHS_AFTER = 3;
 
 export type PatchKind = "mandant" | "mandat" | "bien" | "locataire" | "bail";
 
+export type AvenantResult = Pick<Avenant, "mandatId" | "applied" | "effectIso"> & { number?: string };
+
+export interface MandatOperations {
+  activate: (id: string, signedOnIso: string) => Promise<void>;
+  suspend: (id: string) => Promise<void>;
+  resume: (id: string) => Promise<void>;
+  archive: (id: string) => Promise<void>;
+  restore: (id: string) => Promise<void>;
+  addUnit: (id: string, unitId: string, fromIso?: string) => Promise<void>;
+  removeUnit: (id: string, mandatUnitId: string) => Promise<void>;
+  endUnit: (id: string, mandatUnitId: string, endIso: string) => Promise<void>;
+}
+
+export interface MandatFormOptions {
+  mandants: readonly { id: string; name: string; legal: string }[];
+  units: readonly { id: string; reference: string; propertyName: string }[];
+  types: readonly { id: string; label: string; semanticKey: string | null }[];
+}
+
+export type MandatEndRequestStatus = "pending" | "dismissed" | "fulfilled" | "cancelled";
+
+export interface MandatEndRequest {
+  status: MandatEndRequestStatus;
+  requestedAt: string;
+  reason: string | null;
+  cancelledAt: string | null;
+  decidedAt: string | null;
+  decisionNote: string | null;
+}
+
 export interface PortefeuilleSource {
+  canWrite: boolean;
+  operations?: MandatOperations;
+  documents?: MandatDocumentOperations;
+  termDefaults?: TermDefaultsOperations;
+  mandatDetail?: (id: string) => Promise<unknown>;
+  mandatEndRequest?: (id: string) => Promise<MandatEndRequest | null>;
+  dismissEndRequest?: (id: string, note: string | null) => Promise<MandatEndRequest>;
+  formOptions?: () => Promise<MandatFormOptions>;
   load: () => Promise<unknown>;
   createMandant: (input: NewMandant) => Promise<Mandant>;
   createMandat: (input: NewMandat) => Promise<Mandat>;
@@ -129,7 +195,7 @@ export interface PortefeuilleSource {
   terminateMandat: (id: string, termination: Termination) => Promise<Mandat>;
   createBail: (input: NewBail) => Promise<Bail>;
   createBien: (input: NewBien) => Promise<Bien>;
-  createAvenant: (input: NewAvenant) => Promise<Avenant>;
+  createAvenant: (input: NewAvenant) => Promise<AvenantResult>;
   createInvitation: (input: NewInvitation) => Promise<Invitation>;
   resendInvitation: (id: string) => Promise<Invitation>;
   cancelInvitation: (id: string) => Promise<Invitation>;
@@ -161,7 +227,8 @@ function describeAvenant(mandat: Mandat, input: NewAvenant): { previous: string;
   if (input.kind === "honoraires") return { previous: formatRate(mandat.feeBasisPoints), next: formatRate(input.feeBasisPoints ?? mandat.feeBasisPoints) };
   if (input.kind === "duree") return { previous: formatDay(mandat.endIso), next: formatDay(input.endIso ?? mandat.endIso) };
   if (input.kind === "reversement") return { previous: `Le ${String(mandat.payoutDay)}`, next: `Le ${String(input.payoutDay ?? mandat.payoutDay)}` };
-  return { previous: formatEuros(mandat.worksLimitMinor), next: formatEuros(input.worksLimitMinor ?? mandat.worksLimitMinor) };
+  const currency = currencyOf(mandat.currency ?? "EUR") ?? "EUR";
+  return { previous: formatEuros(mandat.worksLimitMinor, currency), next: formatEuros(input.worksLimitMinor ?? mandat.worksLimitMinor, currency) };
 }
 
 const AVENANT_TITLES: Record<AvenantKind, string> = {
@@ -191,6 +258,7 @@ export function createDemoSource(initial: PortefeuilleData = createDemoData()): 
   const data: PortefeuilleData = structuredClone(initial);
 
   return {
+    canWrite: true,
     load: () => Promise.resolve(structuredClone(data)),
 
     createMandant: (input) => {

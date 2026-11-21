@@ -1,8 +1,10 @@
 import { z } from "zod";
+import { CURRENCIES } from "@/lib/currency";
+import type { Currency } from "@/lib/currency";
 import { fileMetaSchema } from "@/features/kit/serverValidation";
 import { isIsoDate } from "@/features/shared/dates";
 import { parseMoney } from "@/features/shared/money";
-import { isValidFrenchIban, isValidSiren, parseRateBp } from "./logic";
+import { isValidIban, isValidSiren, parseRateBp } from "./logic";
 
 export const LEGAL_FORMS = ["SARL", "SAS", "SASU", "EURL", "SA", "SCI", "Entreprise individuelle"] as const;
 
@@ -60,29 +62,27 @@ export const identityInputSchema = z.object({
 });
 
 export const FEE_BASES = [
-  { value: "rents_collected", label: "Loyers encaissés" },
-  { value: "rents_charges_collected", label: "Loyers et charges encaissés" },
-  { value: "rents_billed", label: "Loyers appelés" },
+  { value: "rent", label: "Loyer hors charges" },
+  { value: "rent_and_charges", label: "Loyer et charges" },
 ] as const;
 
-export const VAT_OPTIONS = [
-  { value: "0", label: "Non applicable, 0 %" },
-  { value: "550", label: "5,5 %" },
-  { value: "1000", label: "10 %" },
-  { value: "2000", label: "20 %" },
+export const FEE_TAX_MODES = [
+  { value: "excl_tax", label: "Hors taxes (la taxe s’ajoute)" },
+  { value: "incl_tax", label: "Toutes taxes comprises" },
 ] as const;
 
-const feeBasisValues = ["rents_collected", "rents_charges_collected", "rents_billed"] as const;
+const feeBasisValues = ["rent", "rent_and_charges"] as const;
+const feeTaxModeValues = ["excl_tax", "incl_tax"] as const;
 
 export const financesSchema = z.object({
+  currency: z.enum(CURRENCIES),
   feeRateBp: z.number().int(),
   feeBasis: z.enum(feeBasisValues),
-  vatBp: z.number().int(),
+  feeTaxMode: z.enum(feeTaxModeValues),
   minFeeMinor: z.number().int().nonnegative(),
   payoutDay: z.number().int().min(1).max(28),
-  retainFees: z.boolean(),
-  attachReport: z.boolean(),
   worksCeilingMinor: z.number().int().nonnegative(),
+  vat: z.object({ regime: z.enum(["normal", "franchise"]), rateBp: z.number().int().nonnegative() }),
   account: z.object({
     ibanMasked: z.string(),
     last4: z.string(),
@@ -94,7 +94,10 @@ export const financesSchema = z.object({
 
 export type Finances = z.infer<typeof financesSchema>;
 
-export const financesFormSchema = z.object({
+const MIN_FEE_EXAMPLES: Readonly<Record<Currency, string>> = { EUR: "15,00", XOF: "5 000" };
+const WORKS_CEILING_EXAMPLES: Readonly<Record<Currency, string>> = { EUR: "300", XOF: "250 000" };
+
+export const makeFinancesFormSchema = (currency: Currency) => z.object({
   feeRate: z
     .string()
     .refine((value) => parseRateBp(value) !== null, "Saisissez un taux valide, par exemple 7.")
@@ -103,24 +106,20 @@ export const financesFormSchema = z.object({
       return bp === null || (bp > 0 && bp <= 2500);
     }, "Le taux doit être compris entre 0,01 % et 25 %."),
   feeBasis: z.enum(feeBasisValues, { error: "Choisissez la base de calcul." }),
-  vat: z.enum(["0", "550", "1000", "2000"], { error: "Choisissez la TVA applicable." }),
-  minFee: z.string().refine((value) => parseMoney(value) !== null, "Saisissez un montant valide, par exemple 15,00."),
+  feeTaxMode: z.enum(feeTaxModeValues, { error: "Indiquez si les honoraires s’entendent hors taxes ou toutes taxes comprises." }),
+  minFee: z.string().refine((value) => parseMoney(value, currency) !== null, `Saisissez un montant valide, par exemple ${MIN_FEE_EXAMPLES[currency]}.`),
   payoutDay: z.string().min(1, "Choisissez le jour de reversement."),
-  retainFees: z.boolean(),
-  attachReport: z.boolean(),
-  worksCeiling: z.string().refine((value) => parseMoney(value) !== null, "Saisissez un montant valide, par exemple 300."),
+  worksCeiling: z.string().refine((value) => parseMoney(value, currency) !== null, `Saisissez un montant valide, par exemple ${WORKS_CEILING_EXAMPLES[currency]}.`),
 });
 
-export type FinancesForm = z.infer<typeof financesFormSchema>;
+export type FinancesForm = z.infer<ReturnType<typeof makeFinancesFormSchema>>;
 
 export const financesInputSchema = z.object({
   feeRateBp: z.number().int().min(1).max(2500),
   feeBasis: z.enum(feeBasisValues),
-  vatBp: z.union([z.literal(0), z.literal(550), z.literal(1000), z.literal(2000)]),
+  feeTaxMode: z.enum(feeTaxModeValues),
   minFeeMinor: z.number().int().nonnegative().max(1_000_000),
   payoutDay: z.number().int().min(1).max(28),
-  retainFees: z.boolean(),
-  attachReport: z.boolean(),
   worksCeilingMinor: z.number().int().nonnegative().max(100_000_000),
 });
 
@@ -129,7 +128,7 @@ export const accountFormSchema = z.object({
     .string()
     .trim()
     .min(1, "L’IBAN est obligatoire.")
-    .refine((value) => isValidFrenchIban(value), "Cet IBAN n’est pas valide (IBAN français, clé de contrôle)."),
+    .refine((value) => isValidIban(value), "Cet IBAN n’est pas valide (clé de contrôle). Exemple : FR76 3000 6000 0112 3456 7890 189."),
   bank: requiredText("La banque", 80),
   holder: requiredText("Le titulaire", 120),
 });

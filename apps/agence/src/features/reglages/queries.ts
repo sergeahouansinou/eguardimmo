@@ -33,11 +33,9 @@ export function useSaveIdentity() {
 export interface FinancesPayload {
   feeRateBp: number;
   feeBasis: string;
-  vatBp: number;
+  feeTaxMode: string;
   minFeeMinor: number;
   payoutDay: number;
-  retainFees: boolean;
-  attachReport: boolean;
   worksCeilingMinor: number;
 }
 

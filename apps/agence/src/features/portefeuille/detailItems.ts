@@ -1,4 +1,5 @@
 import { addDays, addMonths, daysBetween, formatDay, monthName, parseDay, toIso } from "@/lib/dates";
+import { feeText } from "./labels";
 import type { Portefeuille } from "./selectors";
 import type { ActivityEvent, Bail, Bien, EventKind, Mandant, Mandat } from "./schemas";
 
@@ -12,7 +13,7 @@ export interface DocumentItem {
 export function mandatDocuments(mandat: Mandat): DocumentItem[] {
   return [
     { id: "mandat", title: "Mandat de gestion signé", meta: `PDF · signé électroniquement le ${formatDay(mandat.startIso)}` },
-    { id: "garantie", title: "Attestation de garantie financière", meta: `Valable jusqu'au ${formatDay(mandat.guaranteeUntilIso)}` },
+    { id: "garantie", title: "Attestation de garantie financière", meta: `Valable jusqu'au ${mandat.guaranteeUntilIso ? formatDay(mandat.guaranteeUntilIso) : "—"}` },
     { id: "rcp", title: "Attestation d'assurance RCP", meta: "Valable jusqu'au 31/12/2026" },
   ];
 }
@@ -21,8 +22,8 @@ export function mandantDocuments(mandant: Mandant, mandat: Mandat | undefined): 
   return [
     ...(mandat ? [{ id: "mandat", title: "Mandat de gestion signé", meta: `PDF · signé le ${formatDay(mandat.startIso)}` }] : []),
     { id: "cr", title: "Compte rendu de gestion, 3e trimestre 2026", meta: "PDF · envoyé le 05/10/2026" },
-    { id: "identite", title: "Pièce d'identité", meta: `Vérifiée le ${formatDay(mandant.sinceIso)}, numéro masqué` },
-    { id: "rib", title: "Relevé d'identité bancaire", meta: `IBAN •••• ${mandant.ibanLast4}` },
+    { id: "identite", title: "Pièce d'identité", meta: `Vérifiée le ${mandant.sinceIso ? formatDay(mandant.sinceIso) : "—"}, numéro masqué` },
+    { id: "rib", title: "Relevé d'identité bancaire", meta: `IBAN •••• ${mandant.ibanLast4 ?? "—"}` },
   ];
 }
 
@@ -104,4 +105,33 @@ export function eventsFor(index: Portefeuille, kind: EventKind, subjectId: strin
   const base = baseline(index, kind, subjectId);
   const all = base && !explicit.some((event) => event.title === base.title) ? [...explicit, base] : explicit;
   return all.sort(byDateDesc);
+}
+
+export function termsEvents(mandat: Mandat): ActivityEvent[] {
+  const history = mandat.termsHistory ?? [];
+  const events = history.map<ActivityEvent>((terms) => ({
+    id: `mandat-${mandat.id}-terms-${terms.id}`,
+    kind: "mandat",
+    subjectId: mandat.id,
+    dateIso: terms.fromIso,
+    title: terms.reason === "initial" ? "Conditions initiales" : "Avenant aux conditions",
+    detail: `${feeText({ feeBasisPoints: terms.feeBasisPoints ?? 0, currency: mandat.currency, ...(terms.flatFeeMinor === undefined ? {} : { flatFeeMinor: terms.flatFeeMinor }) }, false)}, reversement le ${String(terms.payoutDay)}`,
+    tone: terms.reason === "initial" ? "neutral" : "info",
+    ...(terms.toIso === null ? { badge: "En vigueur" } : {}),
+  }));
+  if (mandat.signedOnIso) {
+    events.push({ id: `mandat-${mandat.id}-signed`, kind: "mandat", subjectId: mandat.id, dateIso: mandat.signedOnIso, title: "Mandat signé", detail: "Date de signature saisie", tone: "success" });
+  }
+  if (mandat.termination) {
+    events.push({
+      id: `mandat-${mandat.id}-termination`,
+      kind: "mandat",
+      subjectId: mandat.id,
+      dateIso: mandat.termination.noticeIso ?? mandat.termination.effectIso,
+      title: "Résiliation notifiée",
+      detail: `Effet le ${formatDay(mandat.termination.effectIso)}`,
+      tone: "warning",
+    });
+  }
+  return events.sort(byDateDesc);
 }

@@ -24,7 +24,7 @@ export type Member = z.infer<typeof memberSchema>;
 
 export const seatsSchema = z.object({
   planName: z.string(),
-  limit: z.number().int(),
+  limit: z.number().int().nullable(),
   active: z.number().int(),
   pending: z.number().int(),
   used: z.number().int(),

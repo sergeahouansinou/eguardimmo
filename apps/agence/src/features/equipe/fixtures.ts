@@ -66,7 +66,7 @@ export const INITIAL_MEMBERS: readonly MemberRecord[] = [
     firstName: "Léa",
     lastName: "Fontaine",
     email: "lea.fontaine@example.com",
-    role: "assistante",
+    role: "gestionnaire",
     portfolioMode: "all",
     mandantIds: [],
     twoFactor: "disabled",

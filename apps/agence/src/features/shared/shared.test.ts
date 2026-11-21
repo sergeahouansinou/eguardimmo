@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { addDays, addMonths, daysBetween, formatDate, formatDateTime, formatPeriod, isIsoDate, monthsBetween } from "./dates";
 import { validateFile } from "./files";
-import { applyRate, formatMoney, formatRate, parseMoney, splitVat } from "./money";
+import { applyRate, formatMoney, formatMoneyExact, formatRate, parseMoney, splitVat } from "./money";
 
 const NBSP = " ";
 
@@ -33,6 +33,16 @@ describe("money", () => {
     expect(parseMoney("12,345")).toBeNull();
     expect(parseMoney("-5")).toBeNull();
     expect(parseMoney("abc")).toBeNull();
+  });
+
+  it("gère le FCFA sans décimales et jamais de multiplication par 100", () => {
+    expect(parseMoney("250 000", "XOF")).toBe(250_000);
+    expect(parseMoney("250 000 F CFA", "XOF")).toBe(250_000);
+    expect(parseMoney("250 000,5", "XOF")).toBeNull();
+    expect(parseMoney("250 000", "EUR")).toBe(25_000_000);
+    expect(formatMoney(250_000, "XOF")).toBe(`250${NBSP}000${NBSP}F${NBSP}CFA`);
+    expect(formatMoneyExact(250_000, "XOF")).toBe(`250${NBSP}000${NBSP}F${NBSP}CFA`);
+    expect(formatMoneyExact(45_000)).toBe(`450,00${NBSP}€`);
   });
 
   it("calcule honoraires et TVA en entiers", () => {

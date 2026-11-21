@@ -62,7 +62,7 @@ afterEach(() => {
 
 describe("routes de l'agence sans source API en mode api", () => {
   it("compte les pages gatées et les pages servies", () => {
-    expect(gated.length).toBeGreaterThan(30);
+    expect(gated.map((page) => page.route)).toEqual(["/compte/abonnement"]);
     expect(served.length).toBeGreaterThan(30);
   });
 
@@ -95,7 +95,7 @@ describe("routes de l'agence sans source API en mode api", () => {
     expect(screen.queryByText("Bientôt disponible")).toBeNull();
   });
 
-  it("titre l'accueil sans lien de retour vers lui-même", () => {
+  it("laisse passer l'accueil réel, sans « Bientôt disponible »", () => {
     state.mode = "api";
     state.pathname = "/";
 
@@ -105,8 +105,9 @@ describe("routes de l'agence sans source API en mode api", () => {
       </ApiRouteGate>,
     );
 
-    expect(screen.getByRole("heading", { level: 1, name: "Accueil" })).toBeTruthy();
-    expect(screen.queryByRole("link", { name: "Retour à l’accueil" })).toBeNull();
+    expect(screen.getByText("Écran réel")).toBeTruthy();
+    expect(screen.queryByRole("heading", { level: 1, name: "Accueil" })).toBeNull();
+    expect(screen.queryByText("Bientôt disponible")).toBeNull();
   });
 });
 

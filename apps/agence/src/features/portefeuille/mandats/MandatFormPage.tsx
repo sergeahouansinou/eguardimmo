@@ -12,15 +12,17 @@ import { KeyValueList } from "@/components/ui/KeyValueList";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { QueryState } from "@/components/ui/QueryState";
 import { agenceRoutes, mandatHref } from "@/espace/routes";
+import { parseRateBasisPoints } from "@/lib/currency";
 import { formatDay } from "@/lib/dates";
 import { formatEuros, formatRate } from "@/lib/money";
 import { mandatFormSchema, parseDecimal, toMinor } from "../forms";
 import type { MandatFormValues } from "../forms";
 import { plural } from "../labels";
-import { usePortefeuille, useCreateMandat } from "../queries";
+import { useCreateMandat, useMandatFormOptions, usePortefeuille, useTermDefaults } from "../queries";
 import type { Portefeuille } from "../selectors";
 import type { NewMandat } from "../source";
 import { PortefeuilleError } from "../source";
+import { MandatApiForm } from "./MandatApiForm";
 
 const EMPTY_LOT = { name: "", kind: "", surface: "", street: "", postalCode: "", city: "" };
 
@@ -42,7 +44,7 @@ export function toNewMandat(values: MandatFormValues, signed: boolean): NewManda
       postalCode: lot.postalCode,
       city: lot.city.trim(),
     })),
-    feeBasisPoints: Math.round((parseDecimal(values.feePercent) ?? 0) * 100),
+    feeBasisPoints: parseRateBasisPoints(values.feePercent) ?? 0,
     payoutDay: Number(values.payoutDay),
     worksLimitMinor: toMinor(values.worksLimit),
     renewal: values.renewal,
@@ -56,7 +58,29 @@ export function MandatFormPage() {
   const query = usePortefeuille();
   return (
     <QueryState query={query} label="Le formulaire de mandat">
-      {(index) => <MandatForm index={index} />}
+      {(index) => (index.isApi ? <MandatApiFormLoader todayIso={index.data.todayIso} /> : <MandatForm index={index} />)}
+    </QueryState>
+  );
+}
+
+function MandatApiFormLoader({ todayIso }: { todayIso: string }) {
+  const options = useMandatFormOptions();
+  const defaults = useTermDefaults();
+  return (
+    <QueryState query={{ isPending: options.isPending || defaults.kind === "loading", isError: options.isError, data: options.data }} label="Les choix du formulaire de mandat">
+      {(loaded) => (
+        <>
+          {defaults.kind === "unverifiable" ? (
+            <Alert tone="warning" title="Conditions par défaut indisponibles">
+              <span className="flex flex-wrap items-center gap-2">
+                Le formulaire n&apos;est pas prérempli : saisissez les conditions à la main.
+                <Button variant="secondary" size="sm" onClick={defaults.retry}>Réessayer</Button>
+              </span>
+            </Alert>
+          ) : null}
+          <MandatApiForm key={defaults.kind === "ready" ? "prefilled" : "blank"} options={loaded} todayIso={todayIso} defaults={defaults.kind === "ready" ? defaults.defaults : null} />
+        </>
+      )}
     </QueryState>
   );
 }
@@ -93,7 +117,7 @@ function MandatForm({ index }: { index: Portefeuille }) {
   const { fields, append, remove } = useFieldArray({ control, name: "lots" });
   const values = watch();
   const mandant = index.mandant(values.mandantId);
-  const fee = parseDecimal(values.feePercent);
+  const fee = parseRateBasisPoints(values.feePercent);
 
   const save = (draft: boolean) =>
     handleSubmit(async (formValues) => {
@@ -228,7 +252,7 @@ function MandatForm({ index }: { index: Portefeuille }) {
               items={[
                 { label: "Mandant", value: mandant?.name ?? "—" },
                 { label: "Biens", value: plural(values.lots.filter((lot) => lot.name.trim() !== "").length, "lot", "lots") },
-                { label: "Honoraires", value: fee === null ? "—" : `${formatRate(Math.round(fee * 100))} TTC` },
+                { label: "Honoraires", value: fee === null ? "—" : `${formatRate(fee)} TTC` },
                 { label: "Reversement", value: `Le ${values.payoutDay || "—"}` },
                 { label: "Échéance", value: values.endIso ? formatDay(values.endIso) : "—" },
                 { label: "Travaux sans accord", value: parseDecimal(values.worksLimit) === null ? "—" : formatEuros(toMinor(values.worksLimit)) },

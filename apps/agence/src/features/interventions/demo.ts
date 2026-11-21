@@ -186,7 +186,7 @@ export function createInterventionsDemo(): InterventionsSource {
         if (raw.state === "soumis") throw new DemoServerError("already_submitted", "Ce devis a déjà été soumis au mandant.");
         const view = toDevisView(raw, interventions.get());
         const mandant = mandantById(view.mandantId);
-        devis.update((items) => items.map((item) => (item.id === raw.id ? { ...item, state: "soumis", message: data.message, submittedOn: DEMO_TODAY } : item)));
+        devis.update((items) => items.map((item) => (item.id === raw.id ? { ...item, state: "soumis", submittedOn: DEMO_TODAY } : item)));
         replace(raw.interventionId, (item) => ({
           ...item,
           status: item.status === "devis_a_soumettre" ? "devis_soumis" : item.status,

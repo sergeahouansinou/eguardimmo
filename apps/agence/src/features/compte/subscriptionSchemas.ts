@@ -3,11 +3,13 @@ import { z } from "zod";
 export const billingPeriodSchema = z.enum(["monthly", "yearly"]);
 export type BillingPeriod = z.infer<typeof billingPeriodSchema>;
 
+export const planIdSchema = z.enum(["gratuit", "silver", "gold"]);
+
 export const planSchema = z.object({
-  id: z.enum(["agence", "agence-pro", "reseau"]),
+  id: planIdSchema,
   name: z.string(),
-  monthlyMinor: z.number().int().nullable(),
-  yearlyMinor: z.number().int().nullable(),
+  monthlyMinor: z.number().int(),
+  yearlyMinor: z.number().int(),
   lots: z.number().int().nullable(),
   seats: z.number().int().nullable(),
   features: z.array(z.string()),
@@ -44,7 +46,7 @@ export const billingInputSchema = z.object({
 export type BillingInput = z.input<typeof billingInputSchema>;
 
 export const subscriptionSchema = z.object({
-  planId: z.enum(["agence", "agence-pro", "reseau"]),
+  planId: planIdSchema,
   planName: z.string(),
   trial: z.object({
     startDate: z.string(),
@@ -59,15 +61,15 @@ export const subscriptionSchema = z.object({
   paymentMethods: z.array(paymentMethodSchema),
   billing: billingSchema,
   usage: z.object({
-    lots: z.object({ used: z.number().int(), limit: z.number().int() }),
-    seats: z.object({ used: z.number().int(), limit: z.number().int() }),
+    lots: z.object({ used: z.number().int(), limit: z.number().int().nullable() }),
+    seats: z.object({ used: z.number().int(), limit: z.number().int().nullable() }),
     storage: z.object({ usedMb: z.number().int(), limitMb: z.number().int() }),
   }),
 });
 export type SubscriptionView = z.infer<typeof subscriptionSchema>;
 
 export const changePlanInputSchema = z.object({
-  planId: z.enum(["agence", "agence-pro"]),
+  planId: planIdSchema,
   period: billingPeriodSchema,
 });
 export type ChangePlanInput = z.input<typeof changePlanInputSchema>;

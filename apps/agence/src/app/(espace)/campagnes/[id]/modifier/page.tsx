@@ -1,6 +1,10 @@
 import { NewCampaignPage } from "@eguardimmo/messagerie";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { ApiCampaignEditor } from "@/features/campagnes/CampaignsScreens";
+import { isUuid } from "@/features/messagerie/ids";
+import { dataSource } from "@/lib/env";
 import { campaignIds } from "@/espace/staticParams";
 
 export const metadata: Metadata = { title: "Modifier la campagne" };
@@ -19,5 +23,6 @@ export default function Page({ params }: PageProps<"/campagnes/[id]/modifier">) 
 
 async function Screen({ params }: Pick<PageProps<"/campagnes/[id]/modifier">, "params">) {
   const { id } = await params;
+  if (dataSource === "api") return isUuid(id) ? <ApiCampaignEditor id={id} /> : notFound();
   return <NewCampaignPage campaignId={id} />;
 }

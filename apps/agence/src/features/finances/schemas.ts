@@ -268,7 +268,6 @@ export const honorairesSchema = z.object({
   scheme: z.object({
     rateLabel: z.string(),
     baseLabel: z.string(),
-    collectionLabel: z.string(),
     sameRateCount: z.number().int(),
     totalMandants: z.number().int(),
     upcoming: z.array(z.object({ mandantName: z.string(), rateBp: z.number().int(), effectiveFrom: z.string() })),
@@ -277,6 +276,7 @@ export const honorairesSchema = z.object({
 
 export const baremesSchema = z.array(
   z.object({
+    mandateId: z.string(),
     mandantId: z.string(),
     name: z.string(),
     label: z.string(),
@@ -284,16 +284,16 @@ export const baremesSchema = z.array(
     monthlyMinor: money,
     current: z.object({
       rateBp: z.number().int(),
-      base: z.enum(["encaisses", "hors_charges"]),
+      base: z.enum(["rent", "rent_and_charges"]),
       minFeeMinor: money,
-      collection: z.enum(["reversement", "encaissement"]),
-      relocationPercent: z.number(),
+      lettingBp: z.number().int(),
       worksBp: z.number().int(),
     }),
   }),
 );
 
 export const simulationSchema = z.object({
+  periodLabel: z.string(),
   collectedMinor: money,
   currentRateBp: z.number().int(),
   currentFeeMinor: money,
