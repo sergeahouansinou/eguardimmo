@@ -34,6 +34,10 @@ final readonly class EnsureSpace
 
         $cible = Space::from($espace);
 
+        if ($user->isSuspended()) {
+            throw ErrorCode::AccountSuspended->problem();
+        }
+
         if ($cible !== Space::Operator && RefuseOperatorToken::porteLaCapaciteOperateur($user)) {
             throw ErrorCode::OperatorTokenForbidden->problem();
         }
@@ -46,6 +50,12 @@ final readonly class EnsureSpace
             throw ($cible === Space::Operator ? ErrorCode::OperatorTokenRequired : ErrorCode::SpaceForbidden)->problem();
         }
 
-        return $next($request);
+        $reponse = $next($request);
+
+        if ($cible === Space::Owner || $cible === Space::Operator) {
+            $reponse->headers->set('Cache-Control', 'private, no-store');
+        }
+
+        return $reponse;
     }
 }

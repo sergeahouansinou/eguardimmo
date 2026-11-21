@@ -14,4 +14,13 @@ enum SourceType: string
     case RecoveryFee = 'recovery_fee';
     case Adjustment = 'adjustment';
     case JournalEntry = 'journal_entry';
+    case SupplierInvoice = 'supplier_invoice';
+    case SupplierAllocation = 'supplier_allocation';
+    case SupplierPayment = 'supplier_payment';
+    case OwnerPayout = 'owner_payout';
+    case FeeSettlement = 'fee_settlement';
+    case TrustTransfer = 'trust_transfer';
+    case Expense = 'expense';
+    case ChargeStatement = 'charge_statement';
+    case BankLine = 'bank_line';
 }

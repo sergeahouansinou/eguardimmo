@@ -13,7 +13,7 @@ beforeEach(function (): void {
     $this->org = C::organisation();
     $this->fiche = C::partie($this->org);
     $this->autreFiche = C::partie($this->org);
-    $this->actingAs(C::titulaire($this->org));
+    C::sessionAgence($this, C::titulaire($this->org));
     $this->urlFiche = C::url($this->org, "/{$this->fiche->id}");
     $this->urlAutreFiche = C::url($this->org, "/{$this->autreFiche->id}");
 });
@@ -51,11 +51,11 @@ it('renvoie 404 pour un sous-objet ou une fiche d\'une autre organisation passé
     $ficheEtrangere = C::partie($autreOrg);
     $urlEtrangere = C::url($autreOrg, "/{$ficheEtrangere->id}");
 
-    C::changerDeCompte($this, C::titulaire($autreOrg));
+    C::sessionAgence($this, C::titulaire($autreOrg));
     $ids = isolationSousObjets($this, $urlEtrangere);
     $avant = DB::table('contact_points')->where('id', $ids['contact'])->first();
 
-    C::changerDeCompte($this, C::titulaire($this->org));
+    C::sessionAgence($this, C::titulaire($this->org));
 
     $this->patchJson("{$this->urlFiche}/contact-points/{$ids['contact']}", ['label' => 'Pirate'])->assertNotFound()->assertJsonPath('code', 'contact_point_not_found');
     $this->patchJson("{$this->urlFiche}/identifiers/{$ids['identifiant']}", ['value' => '111222333'])->assertNotFound()->assertJsonPath('code', 'identifier_not_found');

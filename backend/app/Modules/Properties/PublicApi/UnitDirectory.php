@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Properties\PublicApi;
 
+use App\Modules\Properties\Data\PropertyRefData;
 use App\Modules\Properties\Data\UnitData;
+use App\Modules\Properties\Queries\Properties;
 use App\Modules\Properties\Queries\UnitSummaries;
 
 /**
@@ -13,7 +15,10 @@ use App\Modules\Properties\Queries\UnitSummaries;
  */
 final readonly class UnitDirectory
 {
-    public function __construct(private UnitSummaries $resumes) {}
+    public function __construct(
+        private UnitSummaries $resumes,
+        private Properties $sites,
+    ) {}
 
     /**
      * Lève unit_not_found hors de l'organisation courante.
@@ -21,6 +26,16 @@ final readonly class UnitDirectory
     public function find(string $id): UnitData
     {
         return $this->resumes->one($id);
+    }
+
+    /**
+     * Lève property_not_found hors de l'organisation courante.
+     */
+    public function findProperty(string $id): PropertyRefData
+    {
+        $site = $this->sites->get($id);
+
+        return new PropertyRefData($site->id, $site->name, $site->archived_at !== null);
     }
 
     /**
@@ -32,5 +47,15 @@ final readonly class UnitDirectory
     public function findMany(array $ids): array
     {
         return $this->resumes->many($ids);
+    }
+
+    /**
+     * Lève property_not_found hors de l'organisation courante.
+     *
+     * @return list<UnitData>
+     */
+    public function ofProperty(string $propertyId): array
+    {
+        return $this->resumes->ofProperty($propertyId);
     }
 }

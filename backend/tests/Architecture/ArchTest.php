@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Modules\Catalog\Models\Term;
+use App\Modules\Identity\Models\EmailChangeRequest;
 use App\Modules\Identity\Models\Operator;
+use App\Modules\Identity\Models\OperatorRoleAssignment;
 use App\Modules\Identity\Models\PersonalAccessToken;
 use App\Modules\Identity\Models\SocialIdentity;
 use App\Modules\Identity\Models\User;
@@ -12,7 +14,22 @@ use App\Modules\Messaging\Models\SupportAccessGrant;
 use App\Modules\Messaging\Models\SupportAttachment;
 use App\Modules\Messaging\Models\SupportTicket;
 use App\Modules\Messaging\Models\SupportTicketMessage;
+use App\Modules\Notifications\Models\MailProviderEvent;
+use App\Modules\Notifications\Models\MailSuppression;
+use App\Modules\Notifications\Models\Notification;
+use App\Modules\Notifications\Models\NotificationPreference;
+use App\Modules\Notifications\Models\PushToken;
+use App\Modules\Operations\Models\BackupReport;
+use App\Modules\Operations\Models\OperatorApproval;
+use App\Modules\Operations\Models\ScheduledTaskRun;
 use App\Modules\Organizations\Models\Organization;
+use App\Modules\Payments\Models\PaymentProviderEvent;
+use App\Modules\Privacy\Models\PrivacyRequest;
+use App\Modules\Privacy\Models\PrivacyRequestEvent;
+use App\Modules\Subscriptions\Models\Plan;
+use App\Modules\Subscriptions\Models\PlanEntitlement;
+use App\Modules\Subscriptions\Models\PlanPrice;
+use App\Modules\Subscriptions\Models\PlanVersion;
 use App\Shared\Audit\AuditLog;
 use App\Shared\Tenancy\AcrossOrganizations;
 use App\Shared\Tenancy\BelongsToOrganization;
@@ -26,9 +43,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\ServiceProvider;
 
 // Modèles qui n'appartiennent à aucune organisation ; toute autre entrée est une décision d'architecture.
-$horsOrganisation = [User::class, Operator::class, SocialIdentity::class, UserDevice::class, PersonalAccessToken::class, Organization::class,
+$horsOrganisation = [User::class, Operator::class, OperatorRoleAssignment::class, OperatorApproval::class, Plan::class, PlanVersion::class, PlanPrice::class, PlanEntitlement::class, PrivacyRequest::class, PrivacyRequestEvent::class, ScheduledTaskRun::class, BackupReport::class, SocialIdentity::class, UserDevice::class, PersonalAccessToken::class, Organization::class,
     SupportTicket::class, SupportTicketMessage::class, SupportAttachment::class, SupportAccessGrant::class,
-    Term::class];
+    EmailChangeRequest::class, PaymentProviderEvent::class, Term::class, Notification::class, NotificationPreference::class, PushToken::class, MailSuppression::class, MailProviderEvent::class];
 
 $modules = array_map('basename', glob(__DIR__.'/../../app/Modules/*', GLOB_ONLYDIR) ?: []);
 
@@ -57,6 +74,22 @@ arch('modèles Eloquent uniquement dans Models')
 arch('journal d\'audit en UUID')
     ->expect(AuditLog::class)
     ->toUseTrait(HasUuids::class);
+
+arch('journal d\'audit lu seulement par Shared, Identity (Queries, Resources) et Organizations\Queries')
+    ->expect(AuditLog::class)
+    ->toOnlyBeUsedIn([
+        'App\\Shared',
+        'App\\Modules\\Identity\\Queries',
+        'App\\Modules\\Identity\\Http\\Resources',
+        'App\\Modules\\Organizations\\Queries',
+    ]);
+
+arch('Properties n\'importe de Parties que sa PublicApi')
+    ->expect('App\\Modules\\Properties')
+    ->not->toUse(array_map(
+        fn (string $dossier): string => 'App\\Modules\\Parties\\'.$dossier,
+        ['Actions', 'Data', 'Enums', 'Events', 'Http', 'Models', 'Queries', 'Support', 'Policies', 'Listeners', 'Database', 'Notifications'],
+    ));
 
 arch('FormRequest uniquement dans Http\Requests')
     ->expect('App')

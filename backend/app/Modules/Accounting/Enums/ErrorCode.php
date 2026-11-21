@@ -15,6 +15,9 @@ enum ErrorCode: string
     case EntryAlreadyReversed = 'entry_already_reversed';
     case EntryIsReversal = 'entry_is_reversal';
     case StatementTooLong = 'statement_too_long';
+    case PeriodClosed = 'accounting_period_closed';
+    case PeriodNotClosable = 'accounting_period_not_closable';
+    case PeriodOrder = 'accounting_period_order';
 
     public function problem(?string $detail = null): ApiProblem
     {
@@ -26,7 +29,7 @@ enum ErrorCode: string
         return match ($this) {
             self::EntryNotFound => 404,
             self::EntryUnbalanced, self::EntryInvalid, self::StatementTooLong => 422,
-            self::IdempotencyKeyReused, self::EntryAlreadyReversed, self::EntryIsReversal => 409,
+            self::IdempotencyKeyReused, self::EntryAlreadyReversed, self::EntryIsReversal, self::PeriodClosed, self::PeriodNotClosable, self::PeriodOrder => 409,
         };
     }
 
@@ -40,6 +43,9 @@ enum ErrorCode: string
             self::EntryAlreadyReversed => 'Écriture déjà contre-passée',
             self::EntryIsReversal => 'Contre-passation non contre-passable',
             self::StatementTooLong => 'Relevé trop long',
+            self::PeriodClosed => 'Période comptable close',
+            self::PeriodNotClosable => 'Clôture impossible',
+            self::PeriodOrder => 'Clôture hors ordre',
         };
     }
 
@@ -53,6 +59,9 @@ enum ErrorCode: string
             self::EntryAlreadyReversed => 'Cette écriture a déjà été contre-passée à une autre date.',
             self::EntryIsReversal => 'Une contre-passation ne se contre-passe pas : passez une nouvelle écriture.',
             self::StatementTooLong => 'Ce relevé dépasse le nombre de lignes affichables : réduisez la période.',
+            self::PeriodClosed => 'Cette date appartient à un mois clos : passez une écriture rectificative dans le mois ouvert.',
+            self::PeriodNotClosable => 'Ce mois ne peut pas être clos : des contrôles bloquants échouent.',
+            self::PeriodOrder => 'Seul le plus ancien mois ouvert peut être clos.',
         };
     }
 }

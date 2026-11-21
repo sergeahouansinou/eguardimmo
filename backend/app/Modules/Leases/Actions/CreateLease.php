@@ -14,6 +14,9 @@ use App\Modules\Leases\Support\DraftLeaseChecks;
 use App\Modules\Leases\Support\DraftLeaseResolver;
 use App\Modules\Leases\Support\DraftLeaseStructure;
 use App\Modules\Leases\Support\LeaseSequence;
+use App\Modules\Subscriptions\Enums\Feature;
+use App\Modules\Subscriptions\PublicApi\Entitlements;
+use App\Shared\Tenancy\CurrentOrganization;
 use Illuminate\Support\Facades\DB;
 
 final readonly class CreateLease
@@ -25,11 +28,15 @@ final readonly class CreateLease
         private CustomFieldValidator $champs,
         private LeaseSequence $sequence,
         private DraftAuthor $auteur,
+        private Entitlements $droits,
+        private CurrentOrganization $organisation,
     ) {}
 
     public function handle(NewLeaseData $donnees): Lease
     {
         return DB::transaction(function () use ($donnees): Lease {
+            $this->droits->assertWithin($this->organisation->id(), Feature::Leases, fn (): int => Lease::query()->whereNull('archived_at')->count());
+
             $reglage = $this->resolver->resolve(
                 $donnees->jurisdiction,
                 $donnees->regimeKey,

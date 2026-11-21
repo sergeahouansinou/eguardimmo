@@ -14,6 +14,7 @@ use App\Modules\Accounting\Models\JournalLine;
 use App\Modules\Accounting\Support\ChartOfAccounts;
 use App\Modules\Accounting\Support\EntryMapper;
 use App\Modules\Accounting\Support\EntryNumbering;
+use App\Modules\Accounting\Support\Periods;
 use App\Shared\Tenancy\CurrentOrganization;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,7 @@ final readonly class PostJournalEntry
         private ChartOfAccounts $plan,
         private EntryNumbering $numerotation,
         private EntryMapper $mapper,
+        private Periods $periodes,
     ) {}
 
     public function handle(EntryData $donnees, ?string $reversalOfId = null): PostedEntryData
@@ -62,7 +64,8 @@ final readonly class PostJournalEntry
     private function ecrire(EntryData $donnees, string $empreinte, ?string $reversalOfId): JournalEntry
     {
         $organisation = $this->contexte->id();
-        $annee = (int) $donnees->date->format('Y');
+        [$date, $libelle] = $this->periodes->resolve($donnees);
+        $annee = (int) $date->format('Y');
         $roles = [];
 
         foreach ($donnees->lines as $ligne) {
@@ -75,8 +78,8 @@ final readonly class PostJournalEntry
             'fiscal_year' => $annee,
             'number' => $this->numerotation->next($organisation, $annee),
             'journal' => $donnees->journal,
-            'entry_date' => $donnees->date->format('Y-m-d'),
-            'label' => trim($donnees->label),
+            'entry_date' => $date->format('Y-m-d'),
+            'label' => $libelle,
             'source_type' => $donnees->sourceType,
             'source_id' => $donnees->sourceId,
             'idempotency_key' => $donnees->idempotencyKey,

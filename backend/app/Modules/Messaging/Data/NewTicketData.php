@@ -20,5 +20,6 @@ final readonly class NewTicketData
         public string $subject,
         public string $body,
         public array $attachments,
+        public ?string $clientId = null,
     ) {}
 }

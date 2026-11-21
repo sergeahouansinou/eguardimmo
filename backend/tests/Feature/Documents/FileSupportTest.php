@@ -6,6 +6,8 @@ use App\Modules\Documents\Enums\ErrorCode;
 use App\Modules\Documents\Enums\FileCategory;
 use App\Modules\Documents\Support\FileInspector;
 use App\Modules\Documents\Support\FileNames;
+use App\Modules\Documents\Support\ImageSanitizer;
+use App\Shared\Http\ApiProblem;
 use Tests\Feature\Documents\DocumentsContext as D;
 
 function fichierTemporaire(string $contenu): string
@@ -50,5 +52,22 @@ it('accepte un PDF sain de plusieurs blocs', function (): void {
 
     expect(FileInspector::problem($chemin, FileCategory::Supporting))->toBeNull();
 
+    unlink($chemin);
+});
+
+it('refuse une image au-delà du maximum configuré de pixels, 25 millions par défaut', function (): void {
+    $chemin = tempnam(sys_get_temp_dir(), 'img');
+    $image = imagecreatetruecolor(100, 100);
+    imagepng($image, $chemin);
+
+    expect(config('documents.image_max_pixels'))->toBe(25_000_000);
+
+    unlink(ImageSanitizer::clean($chemin, 'image/png'));
+
+    config(['documents.image_max_pixels' => 9_999]);
+    expect(fn () => ImageSanitizer::clean($chemin, 'image/png'))->toThrow(fn (ApiProblem $p): bool => $p->problemCode === 'file_unsafe');
+
+    config(['documents.image_max_pixels' => 10_000]);
+    unlink(ImageSanitizer::clean($chemin, 'image/png'));
     unlink($chemin);
 });

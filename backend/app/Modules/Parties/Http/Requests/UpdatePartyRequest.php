@@ -29,12 +29,16 @@ final class UpdatePartyRequest extends FormRequest
         /** @var array<string, mixed> $v */
         $v = $this->validated();
 
-        $champs = Arr::only($v, ['last_name', 'first_name', 'company_name', 'legal_form_term_id', 'birth_date', 'address', 'language']);
+        $champs = Arr::only($v, ['last_name', 'first_name', 'company_name', 'legal_form_term_id', 'birth_date', 'address', 'language', 'note']);
 
         foreach (['last_name', 'first_name', 'company_name'] as $cle) {
             if (array_key_exists($cle, $champs) && is_string($champs[$cle])) {
                 $champs[$cle] = trim($champs[$cle]) === '' ? null : trim($champs[$cle]);
             }
+        }
+
+        if (array_key_exists('note', $champs)) {
+            $champs['note'] = is_string($champs['note']) && trim($champs['note']) !== '' ? trim($champs['note']) : null;
         }
 
         return new PartyChangesData(

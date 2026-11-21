@@ -65,7 +65,7 @@ it('n\'annule pas un bail signé ou terminé', function (LeaseStatus $statut): v
 })->with([LeaseStatus::Signed, LeaseStatus::Terminated]);
 
 it('archive et restaure un bail brouillon, annulé ou terminé, sans effet répété', function (LeaseStatus $statut): void {
-    ($this->etat)(['status' => $statut, 'signed_on' => '2026-02-15']);
+    ($this->etat)(['status' => $statut, 'signed_on' => '2026-02-15', ...($statut === LeaseStatus::Terminated ? ['starts_on' => '2019-01-01', 'ends_on' => '2020-01-01'] : [])]);
 
     $archive = ($this->action)(ArchiveLease::class);
     $encore = ($this->action)(ArchiveLease::class);
@@ -93,6 +93,16 @@ it('journalise l\'archivage avec la date posée', function (): void {
         ->and($ligne->changes['archived_at']['old'])->toBeNull()
         ->and($ligne->changes['archived_at']['new'])->not->toBeNull();
 });
+
+it('n\'archive pas un bail résilié tant que sa fin effective n\'est pas atteinte', function (array $dates): void {
+    ($this->etat)(['status' => LeaseStatus::Terminated, 'signed_on' => '2026-02-15', ...$dates]);
+
+    expect(($this->refus)(fn () => ($this->action)(ArchiveLease::class)))->toBe('lease_not_archivable:409')
+        ->and(L::dans($this->org, fn (): bool => Lease::query()->findOrFail($this->bail->id)->archived_at === null))->toBeTrue();
+})->with([
+    'fin future' => fn () => ['starts_on' => '2026-01-01', 'ends_on' => now()->addMonths(6)->toDateString()],
+    'départ annoncé futur avant une fin lointaine' => fn () => ['starts_on' => '2026-01-01', 'ends_on' => now()->addYear()->toDateString(), 'notice_received_on' => '2026-03-01', 'notice_given_by' => 'tenant', 'notice_departure_on' => now()->addMonth()->toDateString(), 'termination_reason' => 'Congé du locataire'],
+]);
 
 it('n\'archive pas un bail signé en cours', function (): void {
     ($this->etat)(['status' => LeaseStatus::Signed, 'signed_on' => '2026-02-15']);

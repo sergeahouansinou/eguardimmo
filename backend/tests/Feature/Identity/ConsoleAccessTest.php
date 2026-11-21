@@ -15,7 +15,7 @@ beforeEach(function (): void {
 function operateur(bool $deuxFacteurs = true): array
 {
     $user = User::factory()->create(['email' => 'ops@exemple.fr']);
-    $user->operator()->create(['granted_at' => now()]);
+    $user->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'admin', 'granted_at' => now()]);
     $secret = $deuxFacteurs ? activerDeuxFacteurs($user) : '';
 
     return [$user, $secret];
@@ -41,7 +41,7 @@ it('refuse le jeton console avec la même réponse : TOTP faux, non-opérateur, 
     [, $secret] = operateur();
     User::factory()->create(['email' => 'simple@exemple.fr']);
     $sansDeuxFacteurs = User::factory()->create(['email' => 'ops2@exemple.fr']);
-    $sansDeuxFacteurs->operator()->create(['granted_at' => now()]);
+    $sansDeuxFacteurs->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'admin', 'granted_at' => now()]);
 
     $reponses = [
         $this->postJson('/api/v1/console/auth/token', ['email' => 'ops@exemple.fr', 'password' => 'password', 'code' => '000000']),

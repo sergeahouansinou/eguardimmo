@@ -18,6 +18,7 @@ use App\Modules\Parties\PublicApi\PartyDirectory;
 use App\Modules\Properties\Data\UnitData;
 use App\Modules\Properties\PublicApi\UnitDirectory;
 use Carbon\CarbonInterface;
+use Closure;
 
 /**
  * Résout lots, parties et composantes d'une série de baux déjà chargés, une fois chacun.
@@ -37,7 +38,19 @@ final readonly class LeaseViews
      */
     public function of(iterable $baux, CarbonInterface $today, ?CarbonInterface $termsDay = null): array
     {
-        $baux = array_values([...$baux]);
+        return $this->at(array_values([...$baux]), fn (): CarbonInterface => $today, fn (): ?CarbonInterface => $termsDay);
+    }
+
+    /**
+     * Comme `of()`, avec un jour de référence par bail.
+     *
+     * @param  list<Lease>  $baux  relations `units`, `parties` et `terms` chargées
+     * @param  Closure(Lease): CarbonInterface  $today
+     * @param  Closure(Lease): ?CarbonInterface  $termsDay
+     * @return list<LeaseView>
+     */
+    public function at(array $baux, Closure $today, Closure $termsDay): array
+    {
 
         $lots = $this->unitData(array_merge(...array_map(fn (Lease $b): array => array_map(fn (LeaseUnit $u): string => $u->unit_id, $this->units($b)), $baux)));
         $parties = $this->partyData(array_merge(...array_map(fn (Lease $b): array => array_map(fn (LeaseParty $p): string => $p->party_id, $this->parties($b)), $baux)));
@@ -45,15 +58,15 @@ final readonly class LeaseViews
 
         return array_map(fn (Lease $bail): LeaseView => new LeaseView(
             lease: $bail,
-            phase: $this->phases->at($bail, $today),
-            today: $today,
+            phase: $this->phases->at($bail, $today($bail)),
+            today: $today($bail),
             units: $this->units($bail),
             parties: $this->parties($bail),
             terms: $this->terms($bail),
             unitData: $lots,
             partyData: $parties,
             components: $composantes,
-            termsDay: $termsDay,
+            termsDay: $termsDay($bail),
         ), $baux);
     }
 

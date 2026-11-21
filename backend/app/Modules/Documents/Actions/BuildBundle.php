@@ -12,6 +12,7 @@ use App\Modules\Documents\Enums\ErrorCode;
 use App\Modules\Documents\Enums\FileCategory;
 use App\Modules\Documents\Models\StoredFile;
 use App\Modules\Documents\Support\FileNames;
+use App\Modules\Documents\Support\ScanGate;
 use App\Modules\Documents\Support\TempFile;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Storage;
@@ -102,6 +103,8 @@ final readonly class BuildBundle
 
     private function copier(StoredFile $fichier, string $destination): void
     {
+        ScanGate::assertReadable($fichier);
+
         $flux = Storage::disk($fichier->disk)->readStream($fichier->path);
 
         if (! is_resource($flux)) {

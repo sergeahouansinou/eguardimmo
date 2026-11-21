@@ -28,6 +28,7 @@ final class RecordNoticeRequest extends FormRequest
             'notice_departure_on' => ['nullable', 'date_format:Y-m-d', 'after:notice_received_on', 'before_or_equal:2100-01-01'],
             'termination_reason' => ['required', 'string', 'min:3', 'max:255'],
             'replace' => ['sometimes', 'boolean'],
+            'notice_request_id' => ['sometimes', 'nullable', 'uuid'],
         ];
     }
 
@@ -43,6 +44,7 @@ final class RecordNoticeRequest extends FormRequest
             departureOn: isset($v['notice_departure_on']) ? (string) $v['notice_departure_on'] : null,
             terminationReason: (string) $v['termination_reason'],
             replace: (bool) ($v['replace'] ?? false),
+            noticeRequestId: isset($v['notice_request_id']) ? (string) $v['notice_request_id'] : null,
         );
     }
 }

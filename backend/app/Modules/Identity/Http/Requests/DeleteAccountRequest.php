@@ -6,7 +6,7 @@ namespace App\Modules\Identity\Http\Requests;
 
 use App\Modules\Identity\Data\ReauthenticationData;
 use App\Modules\Identity\Enums\SocialProvider;
-use App\Modules\Identity\Http\Middleware\EnsureRecentReauthentication;
+use App\Modules\Identity\Support\ReauthenticationProof;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -34,20 +34,6 @@ final class DeleteAccountRequest extends FormRequest
 
     public function toData(): ReauthenticationData
     {
-        return new ReauthenticationData(
-            recentPasswordConfirmation: EnsureRecentReauthentication::confirmedRecently($this, EnsureRecentReauthentication::CLE_MOT_DE_PASSE),
-            recentTwoFactorConfirmation: EnsureRecentReauthentication::confirmedRecently($this, EnsureRecentReauthentication::CLE_2FA),
-            password: $this->texte('password'),
-            code: $this->texte('code'),
-            recoveryCode: $this->texte('recovery_code'),
-            provider: $this->filled('provider') ? SocialProvider::from((string) $this->string('provider')) : null,
-            idToken: $this->texte('id_token'),
-            nonce: $this->texte('nonce'),
-        );
-    }
-
-    private function texte(string $cle): ?string
-    {
-        return $this->filled($cle) ? (string) $this->string($cle) : null;
+        return ReauthenticationProof::fromRequest($this);
     }
 }

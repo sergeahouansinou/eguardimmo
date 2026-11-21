@@ -21,7 +21,7 @@ final class ScopeInput
         return [
             'scope' => [$presence, 'array:type,property_ids'],
             'scope.type' => ['required_with:scope', Rule::enum(ScopeType::class)],
-            'scope.property_ids' => ['exclude_unless:scope.type,selected', 'required', 'array', 'min:1', 'max:'.self::MAX_BIENS],
+            'scope.property_ids' => ['exclude_unless:scope.type,selected', 'nullable', 'array', 'max:'.self::MAX_BIENS],
             'scope.property_ids.*' => ['uuid', 'distinct'],
         ];
     }

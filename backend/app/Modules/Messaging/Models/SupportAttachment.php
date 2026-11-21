@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Messaging\Models;
 
+use App\Modules\Documents\Enums\ScanStatus;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $mime_type
  * @property int $size_bytes
  * @property string $path
+ * @property ScanStatus $scan_status
+ * @property CarbonImmutable|null $scanned_at
  * @property-read SupportTicketMessage $message
  */
 final class SupportAttachment extends Model
@@ -37,6 +41,6 @@ final class SupportAttachment extends Model
 
     protected function casts(): array
     {
-        return ['size_bytes' => 'integer'];
+        return ['size_bytes' => 'integer', 'scan_status' => ScanStatus::class, 'scanned_at' => 'immutable_datetime'];
     }
 }

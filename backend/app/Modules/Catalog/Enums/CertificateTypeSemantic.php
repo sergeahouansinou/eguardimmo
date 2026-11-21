@@ -10,4 +10,5 @@ enum CertificateTypeSemantic: string
     case ProfessionalCard = 'professional_card';
     case FinancialGuarantee = 'financial_guarantee';
     case ProfessionalLiability = 'professional_liability';
+    case HomeInsurance = 'home_insurance';
 }

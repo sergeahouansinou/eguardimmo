@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Messaging\Queries;
 
 use App\Modules\Messaging\Data\ConversationFilters;
+use App\Modules\Messaging\Enums\ConversationKind;
 use App\Modules\Messaging\Enums\InboxTab;
 use App\Modules\Messaging\Models\ConversationParticipant;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -62,6 +63,7 @@ final class Inbox
         $requete = ConversationParticipant::query()
             ->select('conversation_participants.*')
             ->join('conversations', 'conversations.id', '=', 'conversation_participants.conversation_id')
+            ->where('conversations.kind', ConversationKind::Internal->value)
             ->where('conversation_participants.user_id', $userId);
 
         if ($recherche !== null) {

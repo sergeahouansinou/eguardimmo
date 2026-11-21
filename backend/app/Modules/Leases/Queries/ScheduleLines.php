@@ -60,4 +60,52 @@ final readonly class ScheduleLines
             );
         })->all());
     }
+
+    /**
+     * Même lecture que `between` pour plusieurs baux de l'organisation courante, en un nombre constant de requêtes ; un bail inconnu est absent du résultat.
+     *
+     * @param  list<string>  $leaseIds
+     * @return array<string, list<LeaseTermLineData>> par identifiant de bail, les lignes de chaque bail triées comme `between`
+     */
+    public function betweenMany(array $leaseIds, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        if ($to->lessThan($from)) {
+            throw ErrorCode::LeasePeriodInvalid->problem();
+        }
+
+        $ids = array_values(array_unique($leaseIds));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $lignes = LeaseTerm::query()
+            ->whereIn('lease_id', $ids)
+            ->where('valid_from', '<=', $to->toDateString())
+            ->where(fn (Builder $q) => $q->whereNull('valid_to')->orWhere('valid_to', '>', $from->toDateString()))
+            ->orderBy('valid_from')
+            ->orderBy('id')
+            ->get();
+
+        $composantes = $this->termes->findMany(array_values(array_unique(array_map(fn (LeaseTerm $l): string => $l->component_term_id, $lignes->all()))), VocabularyKey::LeaseComponent);
+        $resultat = [];
+
+        foreach ($lignes as $ligne) {
+            $composante = $composantes[$ligne->component_term_id];
+            $resultat[$ligne->lease_id][] = new LeaseTermLineData(
+                id: $ligne->id,
+                leaseId: $ligne->lease_id,
+                componentTermId: $composante->id,
+                componentKey: $composante->key,
+                semantic: $composante->semanticKey === null ? null : LeaseComponentSemantic::tryFrom($composante->semanticKey),
+                amount: $ligne->amount,
+                vatBp: $ligne->vat_bp,
+                indexed: $ligne->indexed,
+                validFrom: $ligne->valid_from->toDateString(),
+                validTo: $ligne->valid_to?->toDateString(),
+            );
+        }
+
+        return $resultat;
+    }
 }

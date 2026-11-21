@@ -16,19 +16,22 @@ use LogicException;
 
 final class LeasesSecurityContext
 {
+    public const PREFIXES_EQUIPE = ['leases.documents.', 'leases.insurance', 'leases.notice-requests.'];
+
     /**
-     * Toutes les routes nommées `leases.*`, lues dans le routeur : une route ajoutée plus tard entre d'elle-même dans les contrôles.
+     * Toutes les routes d'organisation nommées `leases.*`, lues dans le routeur : une route ajoutée plus tard entre d'elle-même dans les contrôles.
+     * Les routes de l'équipe de gestion seule (documents, assurance, demandes de congé : lecture comprise) ont leurs contrôles dans LeasesTeamSpaceSecurityTest. Les routes `leases.tenant.*` (espace locataire, ADR 0024) ont leurs propres contrôles dans tests/Feature/Tenant, les routes `leases.owner.*` dans tests/Feature/Owner.
      *
      * @return list<array{name: string, method: string, write: bool}>
      */
-    public static function routes(): array
+    public static function routes(bool $equipe = false): array
     {
         $routes = [];
 
         foreach (Route::getRoutes()->getRoutes() as $route) {
             $nom = (string) $route->getName();
 
-            if (str_starts_with($nom, 'leases.')) {
+            if (str_starts_with($nom, 'leases.') && ! str_starts_with($nom, 'leases.tenant.') && ! str_starts_with($nom, 'leases.owner.') && self::estEquipe($nom) === $equipe) {
                 $methode = strtolower(array_values(array_diff($route->methods(), ['HEAD']))[0]);
                 $routes[] = ['name' => $nom, 'method' => $methode, 'write' => $methode !== 'get'];
             }
@@ -37,6 +40,11 @@ final class LeasesSecurityContext
         usort($routes, fn (array $a, array $b): int => $a['name'] <=> $b['name']);
 
         return $routes;
+    }
+
+    public static function estEquipe(string $nom): bool
+    {
+        return array_any(self::PREFIXES_EQUIPE, fn (string $prefixe): bool => str_starts_with($nom, $prefixe));
     }
 
     /**
@@ -58,6 +66,9 @@ final class LeasesSecurityContext
             'lease' => $bail,
             'leaseParty' => (string) Str::uuid7(),
             'leaseUnit' => (string) Str::uuid7(),
+            'document' => (string) Str::uuid7(),
+            'submission' => (string) Str::uuid7(),
+            'noticeRequest' => (string) Str::uuid7(),
         ];
         $url = route($route['name'], array_intersect_key($valeurs, array_flip(Route::getRoutes()->getByName($route['name'])?->parameterNames() ?? [])), false);
 
@@ -93,6 +104,10 @@ final class LeasesSecurityContext
             'leases.units.end' => ['lock_version' => 1, 'valid_to' => '2026-12-01'],
             'leases.notice' => ['lock_version' => 1, 'notice_given_by' => 'tenant', 'notice_received_on' => '2026-11-10', 'termination_reason' => 'Mutation'],
             'leases.terminate' => ['lock_version' => 1, 'ends_on' => '2027-01-31', 'amicable' => true, 'termination_reason' => 'Accord', 'requested_by' => 'tenant'],
+            'leases.documents.store' => ['stored_file_id' => (string) Str::uuid7(), 'kind' => 'other'],
+            'leases.documents.destroy', 'leases.insurance-submissions.accept', 'leases.insurance.reminder' => [],
+            'leases.insurance-submissions.reject' => ['reason' => 'unreadable'],
+            'leases.notice-requests.acknowledge' => ['received_on' => '2026-11-10'],
             default => throw new LogicException("Aucun corps de test pour la route {$route['name']}."),
         };
     }
@@ -122,7 +137,7 @@ final class LeasesSecurityContext
 
     public static function jetonOperateur(User $compte): string
     {
-        $compte->operator()->create(['granted_at' => now()]);
+        $compte->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'admin', 'granted_at' => now()]);
         activerDeuxFacteurs($compte);
 
         return $compte->createToken('console', ['operator'])->plainTextToken;

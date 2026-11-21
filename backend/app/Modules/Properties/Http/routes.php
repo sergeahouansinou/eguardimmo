@@ -3,14 +3,18 @@
 declare(strict_types=1);
 
 use App\Modules\Properties\Http\Controllers\Organization\AddOwnershipController;
+use App\Modules\Properties\Http\Controllers\Organization\AddPropertyContactController;
 use App\Modules\Properties\Http\Controllers\Organization\ArchivePropertyController;
 use App\Modules\Properties\Http\Controllers\Organization\ArchiveUnitController;
 use App\Modules\Properties\Http\Controllers\Organization\CreatePropertyController;
 use App\Modules\Properties\Http\Controllers\Organization\CreateUnitController;
 use App\Modules\Properties\Http\Controllers\Organization\EndOwnershipController;
 use App\Modules\Properties\Http\Controllers\Organization\ListOwnershipsController;
+use App\Modules\Properties\Http\Controllers\Organization\ListPartyPropertiesController;
 use App\Modules\Properties\Http\Controllers\Organization\ListPropertiesController;
+use App\Modules\Properties\Http\Controllers\Organization\ListPropertyContactsController;
 use App\Modules\Properties\Http\Controllers\Organization\ListUnitsController;
+use App\Modules\Properties\Http\Controllers\Organization\RemovePropertyContactController;
 use App\Modules\Properties\Http\Controllers\Organization\RestorePropertyController;
 use App\Modules\Properties\Http\Controllers\Organization\RestoreUnitController;
 use App\Modules\Properties\Http\Controllers\Organization\ShowPropertyController;
@@ -25,6 +29,9 @@ Route::middleware(['auth:sanctum', 'space:organization'])->prefix('org/{organiza
         Route::get('/properties', ListPropertiesController::class)->name('properties.index');
         Route::get('/properties/{property}', ShowPropertyController::class)->whereUuid('property')->name('properties.show');
 
+        Route::get('/properties/{property}/contacts', ListPropertyContactsController::class)->whereUuid('property')->middleware('throttle:120,1,properties-contacts-read')->name('properties.contacts.index');
+        Route::get('/property-contacts', ListPartyPropertiesController::class)->middleware('throttle:120,1,properties-contacts-read')->name('properties.party-links.index');
+
         Route::get('/units', ListUnitsController::class)->name('properties.units.index');
         Route::get('/units/{unit}', ShowUnitController::class)->whereUuid('unit')->name('properties.units.show');
         Route::get('/units/{unit}/annexes', ShowUnitAnnexesController::class)->whereUuid('unit')->name('properties.units.annexes');
@@ -36,6 +43,9 @@ Route::middleware(['auth:sanctum', 'space:organization'])->prefix('org/{organiza
         Route::patch('/properties/{property}', UpdatePropertyController::class)->whereUuid('property')->name('properties.update');
         Route::post('/properties/{property}/archive', ArchivePropertyController::class)->whereUuid('property')->name('properties.archive');
         Route::delete('/properties/{property}/archive', RestorePropertyController::class)->whereUuid('property')->name('properties.restore');
+
+        Route::post('/properties/{property}/contacts', AddPropertyContactController::class)->whereUuid('property')->name('properties.contacts.store');
+        Route::delete('/properties/{property}/contacts/{link}', RemovePropertyContactController::class)->whereUuid(['property', 'link'])->name('properties.contacts.destroy');
 
         Route::post('/units', CreateUnitController::class)->name('properties.units.store');
         Route::patch('/units/{unit}', UpdateUnitController::class)->whereUuid('unit')->name('properties.units.update');

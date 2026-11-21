@@ -104,6 +104,14 @@ final readonly class RecordAudit
             return $attributs['organization_id'];
         }
 
+        if ($subject !== null && method_exists($subject, 'auditOrganizationId')) {
+            $propre = $subject->auditOrganizationId();
+
+            if (is_string($propre)) {
+                return $propre;
+            }
+        }
+
         return $this->organisation->has() ? $this->organisation->id() : null;
     }
 

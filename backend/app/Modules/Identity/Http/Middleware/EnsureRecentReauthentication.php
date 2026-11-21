@@ -16,12 +16,28 @@ final class EnsureRecentReauthentication
 
     public const CLE_MOT_DE_PASSE = 'auth.password_confirmed_at';
 
+    public const CLE_METHODE_2FA = 'auth.reauthenticated_method';
+
+    public const METHODE_TOTP = 'totp';
+
+    public const METHODE_SECOURS = 'recovery_code';
+
+    public const VARIANTE_DEUX_FACTEURS = 'two-factor';
+
     /**
+     * `reauthenticated:two-factor` n'accepte qu'une preuve par code 2FA ou de secours : le mot de passe ne suffit jamais (ADR 0032).
+     *
      * @param  Closure(Request): Response  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, ?string $variante = null): Response
     {
-        if (! self::isRecent($request)) {
+        $recente = match ($variante) {
+            null => self::isRecent($request),
+            self::VARIANTE_DEUX_FACTEURS => self::confirmedRecently($request, self::CLE_2FA),
+            default => throw new \InvalidArgumentException('Variante de reauthenticated inconnue.'),
+        };
+
+        if (! $recente) {
             throw ErrorCode::ReauthenticationRequired->problem();
         }
 

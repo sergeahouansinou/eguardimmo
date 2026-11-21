@@ -28,6 +28,7 @@ final class LeasesReadContext
     {
         auth()->forgetGuards();
         app()->forgetInstance(CurrentOrganization::class);
+        app()->forgetScopedInstances();
 
         return $test->actingAs($compte);
     }

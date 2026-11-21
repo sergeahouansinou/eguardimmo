@@ -16,5 +16,6 @@ final readonly class NewConversationData
         public string $subject,
         public string $body,
         public array $attachments,
+        public ?string $clientId = null,
     ) {}
 }

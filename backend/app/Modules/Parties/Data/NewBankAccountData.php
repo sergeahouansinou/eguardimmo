@@ -9,7 +9,7 @@ use Carbon\CarbonImmutable;
 final readonly class NewBankAccountData
 {
     public function __construct(
-        public string $iban,
+        #[\SensitiveParameter] public string $iban,
         public ?string $bic,
         public string $holderName,
         public CarbonImmutable $validFrom,

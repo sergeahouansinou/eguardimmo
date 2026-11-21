@@ -21,7 +21,7 @@ final readonly class Fingerprinter
         return $this->hash(['identifier', $scheme->value, $country, $value]);
     }
 
-    public function iban(string $iban): string
+    public function iban(#[\SensitiveParameter] string $iban): string
     {
         return $this->hash(['iban', Iban::normalize($iban)]);
     }

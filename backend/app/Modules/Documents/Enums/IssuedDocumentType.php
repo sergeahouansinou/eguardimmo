@@ -15,6 +15,7 @@ enum IssuedDocumentType: string
     case ChargesRegularization = 'charges_regularization';
     case ManagementReport = 'management_report';
     case DebtStatement = 'debt_statement';
+    case TaxSummary = 'tax_summary';
     case Attestation = 'attestation';
     case Letter = 'letter';
 
@@ -30,6 +31,7 @@ enum IssuedDocumentType: string
             self::ChargesRegularization => 'REG',
             self::ManagementReport => 'CRG',
             self::DebtStatement => 'DEC',
+            self::TaxSummary => 'FIS',
             self::Attestation => 'ATT',
             self::Letter => 'COU',
         };

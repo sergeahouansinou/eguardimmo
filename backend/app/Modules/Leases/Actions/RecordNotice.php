@@ -23,6 +23,7 @@ final readonly class RecordNotice
         private Leases $baux,
         private LeaseRegimes $regimes,
         private OccupationExtension $prolongation,
+        private CloseNoticeRequests $demandes,
         private RecordAudit $audit,
     ) {}
 
@@ -66,7 +67,13 @@ final readonly class RecordNotice
                 throw ErrorCode::LeaseNoticeExists->problem();
             }
 
-            $depart = $this->departure($bail, $donnees, $recu);
+            if ($donnees->noticeRequestId !== null && $donnees->givenBy !== NoticeGivenBy::Tenant) {
+                throw ErrorCode::LeaseNoticeInvalid->problem('Une demande de congé de locataire ne s\'enregistre que comme un congé donné par le locataire.');
+            }
+
+            $demande = $this->demandes->handle($bail->id, null, $this->acteurId(), $donnees->noticeRequestId, $donnees->givenBy === NoticeGivenBy::Tenant);
+
+            $depart = $this->departure($bail, $donnees, $recu, $demande?->reason_key);
             $this->prolongation->assertFree($bail, $bail->ends_on === null ? $depart->toDateString() : min($bail->ends_on->toDateString(), $depart->toDateString()));
 
             $bail->notice_given_by = $donnees->givenBy;
@@ -93,9 +100,13 @@ final readonly class RecordNotice
      * Premier jour où le départ est permis : réception plus durée de préavis du régime.
      * Un régime sans préavis légal pour cette partie n'en admet aucun : la résiliation passe alors par la voie amiable.
      */
-    public function minimumDeparture(Lease $bail, NoticeGivenBy $partie, CarbonImmutable $recu): CarbonImmutable
+    public function minimumDeparture(Lease $bail, NoticeGivenBy $partie, CarbonImmutable $recu, ?string $motif = null): CarbonImmutable
     {
         $regime = $this->regimes->for($bail->jurisdiction, $bail->regime_key);
+
+        if ($partie === NoticeGivenBy::Tenant && $motif !== null) {
+            return $regime->tenantEarliestDeparture($bail->jurisdiction_data, $recu, $motif);
+        }
 
         $mois = match ($partie) {
             NoticeGivenBy::Tenant => $regime->tenantNoticeMonths($bail->jurisdiction_data),
@@ -113,9 +124,9 @@ final readonly class RecordNotice
      * Le congé du bailleur prend effet au terme du bail, jamais avant, et doit le précéder du préavis légal ;
      * le locataire peut partir dès la fin de son préavis.
      */
-    private function departure(Lease $bail, NoticeData $donnees, CarbonImmutable $recu): CarbonImmutable
+    private function departure(Lease $bail, NoticeData $donnees, CarbonImmutable $recu, ?string $motif): CarbonImmutable
     {
-        $minimum = $this->minimumDeparture($bail, $donnees->givenBy, $recu);
+        $minimum = $this->minimumDeparture($bail, $donnees->givenBy, $recu, $motif);
         $demande = $donnees->departureOn !== null ? CarbonImmutable::parse($donnees->departureOn) : null;
 
         if ($demande !== null && $demande < $minimum) {
@@ -158,5 +169,10 @@ final readonly class RecordNotice
         }
 
         return null;
+    }
+
+    private function acteurId(): ?string
+    {
+        return is_string(auth()->id()) ? auth()->id() : null;
     }
 }

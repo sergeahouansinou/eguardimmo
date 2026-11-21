@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Leases\Jurisdictions;
 
+use App\Modules\Leases\Data\NoticeReason;
 use Carbon\CarbonImmutable;
 
 interface LeaseRegime
@@ -62,6 +63,21 @@ interface LeaseRegime
      * @param  array<string, mixed>  $jurisdictionData
      */
     public function tenantNoticeMonths(array $jurisdictionData): ?int;
+
+    /**
+     * Motifs de préavis que le locataire peut invoquer en ligne : liste fermée, vide si le régime n'en prévoit aucun.
+     *
+     * @param  array<string, mixed>  $jurisdictionData
+     * @return list<NoticeReason>
+     */
+    public function tenantNoticeReasons(array $jurisdictionData): array;
+
+    /**
+     * Premier jour de départ permis pour un congé reçu à cette date, selon le motif retenu.
+     *
+     * @param  array<string, mixed>  $jurisdictionData
+     */
+    public function tenantEarliestDeparture(array $jurisdictionData, CarbonImmutable $receivedOn, string $reasonKey): CarbonImmutable;
 
     /**
      * @param  array<string, mixed>  $jurisdictionData

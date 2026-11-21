@@ -23,7 +23,9 @@ final readonly class ArchiveLease
                 return $courant;
             }
 
-            if ($courant->status === LeaseStatus::Signed) {
+            $finEffective = $courant->effectiveEnd();
+
+            if ($courant->status === LeaseStatus::Signed || ($courant->status === LeaseStatus::Terminated && $finEffective !== null && $finEffective > now()->toDateString())) {
                 throw ErrorCode::LeaseNotArchivable->problem();
             }
 

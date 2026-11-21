@@ -27,6 +27,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $birth_date
  * @property array{line1: string, line2?: string|null, postal_code: string, city: string, country: string}|null $address
  * @property string $language
+ * @property string|null $note
  * @property string|null $user_id
  * @property array<string, mixed> $custom_fields
  * @property int $lock_version
@@ -53,7 +54,7 @@ final class Party extends Model
      */
     public function auditMasked(): array
     {
-        return ['display_name', 'last_name', 'first_name', 'company_name', 'birth_date', 'address', 'custom_fields'];
+        return ['display_name', 'last_name', 'first_name', 'company_name', 'birth_date', 'address', 'custom_fields', 'note'];
     }
 
     public function isAnonymized(): bool

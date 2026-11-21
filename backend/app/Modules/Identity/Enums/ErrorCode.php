@@ -24,6 +24,29 @@ enum ErrorCode: string
     case ReauthenticationRequired = 'reauthentication_required';
     case NoTokenToRevoke = 'no_token_to_revoke';
     case EmailVerificationLinkInvalid = 'email_verification_link_invalid';
+    case TenantInvitationInvalid = 'tenant_invitation_invalid';
+    case TenantInvitationEmailMismatch = 'tenant_invitation_email_mismatch';
+    case TenantInvitationConsentRequired = 'tenant_invitation_consent_required';
+    case TenantAccessAlreadyGranted = 'tenant_access_already_granted';
+    case OwnerInvitationInvalid = 'owner_invitation_invalid';
+    case OwnerInvitationEmailMismatch = 'owner_invitation_email_mismatch';
+    case OwnerInvitationCodeInvalid = 'owner_invitation_code_invalid';
+    case OwnerInvitationConsentRequired = 'owner_invitation_consent_required';
+    case InvitationDailyLimitReached = 'invitation_daily_limit_reached';
+    case EmailChangeCodeInvalid = 'email_change_code_invalid';
+    case EmailChangeAttemptsExceeded = 'email_change_attempts_exceeded';
+    case PhoneInvalid = 'phone_invalid';
+    case OperatorRoleRequired = 'operator_role_required';
+    case OperatorProofRequired = 'operator_proof_required';
+    case OperatorProofInvalid = 'operator_proof_invalid';
+    case OperatorAccountProtected = 'operator_account_protected';
+    case AccountSuspended = 'account_suspended';
+    case AccountNotFound = 'account_not_found';
+    case AccountAlreadySuspended = 'account_already_suspended';
+    case AccountNotSuspended = 'account_not_suspended';
+    case TwoFactorNotEnabled = 'two_factor_not_enabled';
+    case SuspensionReviewForbidden = 'suspension_review_forbidden';
+    case LastOperatorAdministrator = 'last_operator_administrator';
 
     private const RETRY_AFTER_SECONDES = 30;
 
@@ -37,12 +60,13 @@ enum ErrorCode: string
     public function status(): int
     {
         return match ($this) {
-            self::NoAccount => 404,
-            self::AccountExistsLinkRequired, self::IdentityAlreadyLinked, self::ProviderAlreadyLinked => 409,
-            self::EmailRequired, self::InvalidIdToken, self::NoTokenToRevoke => 422,
+            self::NoAccount, self::TenantInvitationInvalid, self::OwnerInvitationInvalid, self::AccountNotFound => 404,
+            self::AccountExistsLinkRequired, self::IdentityAlreadyLinked, self::ProviderAlreadyLinked, self::TenantAccessAlreadyGranted, self::AccountAlreadySuspended, self::AccountNotSuspended, self::TwoFactorNotEnabled, self::LastOperatorAdministrator => 409,
+            self::EmailRequired, self::InvalidIdToken, self::NoTokenToRevoke, self::TenantInvitationConsentRequired, self::OwnerInvitationCodeInvalid, self::OwnerInvitationConsentRequired, self::EmailChangeCodeInvalid, self::PhoneInvalid, self::OperatorProofRequired, self::OperatorProofInvalid => 422,
+            self::InvitationDailyLimitReached, self::EmailChangeAttemptsExceeded => 429,
             self::ProviderUnavailable => 503,
             self::ProviderError => 502,
-            self::InvalidState, self::EmailUnverified, self::SpaceForbidden, self::OperatorTokenRequired, self::OperatorTokenForbidden, self::ReauthenticationRequired, self::EmailVerificationLinkInvalid => 403,
+            self::InvalidState, self::EmailUnverified, self::SpaceForbidden, self::OperatorTokenRequired, self::OperatorTokenForbidden, self::ReauthenticationRequired, self::EmailVerificationLinkInvalid, self::TenantInvitationEmailMismatch, self::OwnerInvitationEmailMismatch, self::OperatorRoleRequired, self::OperatorAccountProtected, self::AccountSuspended, self::SuspensionReviewForbidden => 403,
         };
     }
 
@@ -65,6 +89,29 @@ enum ErrorCode: string
             self::ReauthenticationRequired => 'Confirmation requise',
             self::NoTokenToRevoke => 'Aucun jeton à révoquer',
             self::EmailVerificationLinkInvalid => 'Lien de confirmation invalide',
+            self::TenantInvitationInvalid => 'Invitation invalide',
+            self::TenantInvitationEmailMismatch => 'Invitation destinée à une autre adresse',
+            self::TenantInvitationConsentRequired => 'Consentement requis',
+            self::TenantAccessAlreadyGranted => 'Accès déjà accordé',
+            self::OwnerInvitationInvalid => 'Invitation invalide',
+            self::OwnerInvitationEmailMismatch => 'Invitation destinée à une autre adresse',
+            self::OwnerInvitationCodeInvalid => 'Code d\'appariement invalide',
+            self::OwnerInvitationConsentRequired => 'Consentement requis',
+            self::InvitationDailyLimitReached => 'Trop d\'invitations aujourd\'hui',
+            self::EmailChangeCodeInvalid => 'Code invalide',
+            self::EmailChangeAttemptsExceeded => 'Trop d\'essais',
+            self::PhoneInvalid => 'Numéro de téléphone invalide',
+            self::OperatorRoleRequired => 'Rôle opérateur requis',
+            self::OperatorProofRequired => 'Code de double authentification requis',
+            self::OperatorProofInvalid => 'Code de double authentification invalide',
+            self::OperatorAccountProtected => 'Compte opérateur protégé',
+            self::AccountSuspended => 'Compte suspendu',
+            self::AccountNotFound => 'Compte introuvable',
+            self::AccountAlreadySuspended => 'Compte déjà suspendu',
+            self::AccountNotSuspended => 'Compte non suspendu',
+            self::TwoFactorNotEnabled => 'Double authentification non activée',
+            self::SuspensionReviewForbidden => 'Revue de suspension refusée',
+            self::LastOperatorAdministrator => 'Dernier administrateur de la console',
         };
     }
 
@@ -87,6 +134,29 @@ enum ErrorCode: string
             self::ReauthenticationRequired => 'Confirmez votre identité pour continuer.',
             self::NoTokenToRevoke => 'Cette requête utilise une session : aucun jeton à révoquer.',
             self::EmailVerificationLinkInvalid => 'Ce lien est invalide, expiré ou déjà utilisé.',
+            self::TenantInvitationInvalid => 'Cette invitation est invalide, expirée ou déjà utilisée.',
+            self::TenantInvitationEmailMismatch => 'Connectez-vous avec l\'adresse e-mail qui a reçu l\'invitation, après l\'avoir confirmée.',
+            self::TenantInvitationConsentRequired => 'Acceptez le rattachement de votre compte à votre dossier de location pour continuer.',
+            self::TenantAccessAlreadyGranted => 'Ce contact est déjà rattaché à un compte : révoquez l\'accès avant d\'en inviter un autre.',
+            self::OwnerInvitationInvalid => 'Cette invitation est invalide, expirée, bloquée ou déjà utilisée.',
+            self::OwnerInvitationEmailMismatch => 'Connectez-vous avec l\'adresse e-mail qui a reçu l\'invitation, après l\'avoir confirmée.',
+            self::OwnerInvitationCodeInvalid => 'Le code d\'appariement est incorrect. Après cinq erreurs, l\'invitation est bloquée : demandez-en une nouvelle à votre agence.',
+            self::OwnerInvitationConsentRequired => 'Acceptez le rattachement de votre compte à votre dossier de propriétaire pour continuer.',
+            self::InvitationDailyLimitReached => 'Cette organisation a atteint le nombre d\'invitations autorisé sur vingt-quatre heures. Réessayez plus tard.',
+            self::EmailChangeCodeInvalid => 'Ce code est incorrect, expiré, ou l\'adresse n\'est pas utilisable. Recommencez la demande de changement.',
+            self::EmailChangeAttemptsExceeded => 'Trop de codes erronés : la demande est bloquée, recommencez-la.',
+            self::PhoneInvalid => 'Saisissez un numéro au format international, par exemple +33612345678.',
+            self::OperatorRoleRequired => 'Votre rôle d\'opérateur ne permet pas cette opération.',
+            self::OperatorProofRequired => 'Saisissez un code de double authentification pour confirmer cette opération.',
+            self::OperatorProofInvalid => 'Ce code de double authentification est incorrect ou a déjà été utilisé.',
+            self::OperatorAccountProtected => 'Un compte opérateur ne se modifie pas depuis la console.',
+            self::AccountSuspended => 'Ce compte est suspendu. Contactez le support de eGuardImmo.',
+            self::AccountNotFound => 'Aucun compte ne correspond à cette recherche.',
+            self::AccountAlreadySuspended => 'Ce compte est déjà suspendu.',
+            self::AccountNotSuspended => 'Ce compte n\'est pas suspendu.',
+            self::TwoFactorNotEnabled => 'Ce compte n\'a pas de double authentification confirmée.',
+            self::LastOperatorAdministrator => 'Ce changement retirerait le dernier opérateur administrateur : la console n\'aurait plus personne pour attribuer les rôles et valider. Ajoutez d\'abord un autre administrateur, ou confirmez avec --force.',
+            self::SuspensionReviewForbidden => 'La revue d\'une suspension revient à un autre opérateur que celui qui l\'a prononcée.',
         };
     }
 }

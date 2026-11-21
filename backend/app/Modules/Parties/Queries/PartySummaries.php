@@ -106,6 +106,8 @@ final readonly class PartySummaries
                 primaryEmail: $partie->isAnonymized() ? null : $emails->get($partie->id)?->value,
                 categories: array_values(array_unique($semantiques)),
                 isAnonymized: $partie->isAnonymized(),
+                firstName: $partie->isAnonymized() ? null : $partie->first_name,
+                isArchived: $partie->archived_at !== null,
             );
         }, $parties);
     }

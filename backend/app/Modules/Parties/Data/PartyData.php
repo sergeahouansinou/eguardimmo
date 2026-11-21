@@ -18,5 +18,7 @@ final readonly class PartyData
         public ?string $primaryEmail,
         public array $categories,
         public bool $isAnonymized,
+        public ?string $firstName = null,
+        public bool $isArchived = false,
     ) {}
 }

@@ -26,10 +26,14 @@ it('refuse tout /org/{o}/documents à un compte locataire ou propriétaire, sans
         ['postJson', D::url($org, '/files')],
         ['postJson', D::url($org, '/certificates')],
         ['postJson', D::url($org, "/certificates/{$uuid}/renew")],
+        ['getJson', D::url($org, '/library')],
+        ['postJson', D::url($org, '/library')],
+        ['postJson', D::url($org, "/library/{$uuid}/archive")],
+        ['deleteJson', D::url($org, "/library/{$uuid}/archive")],
     ];
 
     foreach ($appels as [$methode, $url]) {
-        $this->{$methode}($url, $methode === 'postJson' ? ['file' => D::pdf()] : [])
+        $this->{$methode}($url, in_array($methode, ['postJson'], true) ? ['file' => D::pdf()] : [])
             ->assertNotFound()
             ->assertJsonPath('code', 'organization_not_found');
     }

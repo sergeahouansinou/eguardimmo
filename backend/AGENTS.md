@@ -47,7 +47,7 @@ php artisan make:module Leases   # squelette d'un nouveau module, toujours via c
 - Depuis un autre module, seuls sont autorisés : `PublicApi`, `Data`, `Enums`, `Events`. Tout autre dossier (y compris un nouveau `Services/`, `Jobs/`…) est privé, et ces quatre dossiers n'exposent jamais un modèle.
 - `app/Shared` ne dépend d'aucun module.
 - Pas de clé étrangère SQL vers la table d'un autre module sans ADR (exception : `organization_id`).
-- Pas de lien entre modules absent de l'ADR 0005, pas de cycle. Reporting lit en SQL sans importer de modèle et n'écrit jamais.
+- Pas de lien entre modules absent de l'ADR 0005, pas de cycle. Reporting lit en SQL les faits (jamais un montant ni `journal_*`) sans importer de modèle et n'écrit jamais hors de ses propres tables.
 
 ## Cloisonnement ([ADR 0006](docs/adr/0006-cloisonnement-par-organisation.md))
 

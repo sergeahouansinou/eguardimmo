@@ -25,7 +25,7 @@ final class OpenTicketRequest extends FormRequest
     {
         return [
             'space' => ['required', Rule::enum(RequesterSpace::class)],
-            'organization_id' => ['nullable', 'uuid', Rule::requiredIf(fn (): bool => $this->input('space') === RequesterSpace::Organization->value)],
+            'organization_id' => ['nullable', 'uuid', 'prohibited_unless:space,'.RequesterSpace::Organization->value, Rule::requiredIf(fn (): bool => $this->input('space') === RequesterSpace::Organization->value)],
             'category' => ['required', Rule::enum(TicketCategory::class)],
             'subject' => ['required', 'string', 'max:140'],
             ...MessageInput::rules(),
@@ -41,6 +41,7 @@ final class OpenTicketRequest extends FormRequest
             trim((string) $this->string('subject')),
             MessageInput::body($this),
             MessageInput::attachments($this),
+            MessageInput::clientId($this),
         );
     }
 }

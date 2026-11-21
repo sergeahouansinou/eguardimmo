@@ -77,6 +77,16 @@ final class CommonLawRegime implements LeaseRegime
         return null;
     }
 
+    public function tenantNoticeReasons(array $jurisdictionData): array
+    {
+        return [];
+    }
+
+    public function tenantEarliestDeparture(array $jurisdictionData, CarbonImmutable $receivedOn, string $reasonKey): CarbonImmutable
+    {
+        return FrFields::earliestDeparture($this->tenantNoticeReasons($jurisdictionData), $receivedOn, $reasonKey);
+    }
+
     public function landlordNoticeMonths(array $jurisdictionData): ?int
     {
         return null;

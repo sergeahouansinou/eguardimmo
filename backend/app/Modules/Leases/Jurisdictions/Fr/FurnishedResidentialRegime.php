@@ -85,6 +85,16 @@ final class FurnishedResidentialRegime implements LeaseRegime
         return 1;
     }
 
+    public function tenantNoticeReasons(array $jurisdictionData): array
+    {
+        return FrFields::standardNotice(1);
+    }
+
+    public function tenantEarliestDeparture(array $jurisdictionData, CarbonImmutable $receivedOn, string $reasonKey): CarbonImmutable
+    {
+        return FrFields::earliestDeparture($this->tenantNoticeReasons($jurisdictionData), $receivedOn, $reasonKey);
+    }
+
     public function landlordNoticeMonths(array $jurisdictionData): int
     {
         return 3;

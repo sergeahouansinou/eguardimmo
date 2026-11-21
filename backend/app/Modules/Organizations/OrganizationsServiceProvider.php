@@ -7,11 +7,16 @@ namespace App\Modules\Organizations;
 use App\Modules\Identity\Data\ProfileData;
 use App\Modules\Identity\Enums\Space;
 use App\Modules\Identity\PublicApi\ProfileRegistry;
+use App\Modules\Organizations\Console\ReportScopedMembersCommand;
 use App\Modules\Organizations\Data\MembershipData;
 use App\Modules\Organizations\Http\Middleware\EnterOrganization;
+use App\Modules\Organizations\Http\Middleware\RequireConfirmedTwoFactor;
 use App\Modules\Organizations\Models\Organization;
+use App\Modules\Organizations\Models\OrganizationLegalIdentity;
 use App\Modules\Organizations\Models\OrganizationMember;
 use App\Modules\Organizations\Queries\Memberships;
+use App\Modules\Organizations\Support\OrganizationApprovalHandlers;
+use App\Shared\Approval\ApprovalHandlers;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Routing\Middleware\SubstituteBindings;
@@ -25,12 +30,22 @@ final class OrganizationsServiceProvider extends ServiceProvider
         Relation::enforceMorphMap([
             'organization' => Organization::class,
             'organization_member' => OrganizationMember::class,
+            'organization_legal_identity' => OrganizationLegalIdentity::class,
         ]);
 
         /** @var Router $routeur */
         $routeur = $this->app->make(Router::class);
         $routeur->aliasMiddleware('organization', EnterOrganization::class);
-        $this->app->make(HttpKernel::class)->addToMiddlewarePriorityBefore(SubstituteBindings::class, EnterOrganization::class);
+        $routeur->aliasMiddleware('two-factor', RequireConfirmedTwoFactor::class);
+        $noyau = $this->app->make(HttpKernel::class);
+        $noyau->addToMiddlewarePriorityBefore(SubstituteBindings::class, EnterOrganization::class);
+        $noyau->addToMiddlewarePriorityAfter(EnterOrganization::class, RequireConfirmedTwoFactor::class);
+
+        $this->app->make(OrganizationApprovalHandlers::class)->register($this->app->make(ApprovalHandlers::class));
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([ReportScopedMembersCommand::class]);
+        }
 
         $this->app->make(ProfileRegistry::class)->register(
             fn (string $userId): array => array_map(

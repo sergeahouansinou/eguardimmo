@@ -11,6 +11,7 @@ enum SubjectType: string
     case Party = 'party';
     case Equipment = 'equipment';
     case Lease = 'lease';
+    case Mandate = 'mandate';
 
     /**
      * @return list<string>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Documents\Data;
 
 use App\Modules\Documents\Enums\FileCategory;
+use App\Modules\Documents\Enums\ScanStatus;
 use Carbon\CarbonImmutable;
 
 final readonly class StoredFileData
@@ -19,5 +20,6 @@ final readonly class StoredFileData
         public ?DocumentSubject $subject,
         public ?CarbonImmutable $retentionUntil,
         public CarbonImmutable $createdAt,
+        public ScanStatus $scanStatus = ScanStatus::Clean,
     ) {}
 }

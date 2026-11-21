@@ -17,7 +17,7 @@ beforeEach(function (): void {
     C::semer();
     $this->org = C::organisation();
     $this->partie = C::partie($this->org, ['last_name' => 'Dupont', 'first_name' => 'Jean', 'display_name' => 'Jean Dupont']);
-    $this->actingAs(C::titulaire($this->org));
+    C::sessionAgence($this, C::titulaire($this->org));
     $this->url = C::url($this->org, "/{$this->partie->id}");
 });
 
@@ -106,7 +106,7 @@ it('refuse un identifiant mal formé ou déjà porté par une autre fiche, et l\
 
     $autreOrg = C::organisation();
     $fiche = C::partie($autreOrg);
-    C::changerDeCompte($this, C::titulaire($autreOrg))
+    C::sessionAgence($this, C::titulaire($autreOrg))
         ->postJson(C::url($autreOrg, "/{$fiche->id}/identifiers"), ['scheme' => 'siren', 'country' => 'FR', 'value' => '123456789'])
         ->assertCreated();
 });

@@ -38,7 +38,7 @@ function partiesFicheComplete(object $test, object $org, ?string $userId = null)
         'custom_fields' => ['code' => 'A1'], 'user_id' => $userId]);
     $url = C::url($org, "/{$partie->id}");
 
-    $test->actingAs(C::titulaire($org));
+    C::sessionAgence($test, C::titulaire($org));
     $contact = $test->postJson("{$url}/contact-points", ['type' => 'email', 'value' => 'jean@exemple.fr', 'label' => 'Maison'])->json('data.id');
     $identifier = $test->postJson("{$url}/identifiers", ['scheme' => 'passport', 'country' => 'FR', 'value' => '12AB34567'])->json('data.id');
     $bank = $test->postJson("{$url}/bank-accounts", ['iban' => 'FR7630006000011234567890189', 'holder_name' => 'Jean Dupont', 'valid_from' => '2026-01-01'])->json('data.id');
@@ -61,7 +61,7 @@ it('anonymise une fiche par la route sans supprimer aucune ligne ni toucher les 
     $avantComptes = $comptes();
     $journalAvant = AuditLog::query()->where('subject_id', $fiche['party']->id)->count();
 
-    C::changerDeCompte($this, $this->titulaire)
+    C::sessionAgence($this, $this->titulaire)
         ->postJson(C::url($this->org, "/{$fiche['party']->id}/anonymization"))
         ->assertOk()
         ->assertJsonPath('data.is_anonymized', true)

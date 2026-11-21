@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Organizations\Notifications;
 
+use App\Shared\Mail\MailText;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -32,11 +33,11 @@ final class MemberInvitationNotification extends Notification implements ShouldB
     public function toMail(object $notifiable): MailMessage
     {
         $message = (new MailMessage)
-            ->subject('Invitation à rejoindre '.$this->organizationName.' sur eGuardImmo')
-            ->line($this->inviterName.' vous invite à rejoindre l\'équipe '.$this->organizationName.' sur eGuardImmo.');
+            ->subject('Invitation à rejoindre '.MailText::plain($this->organizationName).' sur eGuardImmo')
+            ->line(MailText::markdown($this->inviterName).' vous invite à rejoindre l\'équipe '.MailText::markdown($this->organizationName).' sur eGuardImmo.');
 
         if ($this->personalMessage !== null) {
-            $message->line('Son message : « '.$this->personalMessage.' »');
+            $message->line('Son message : « '.MailText::markdown($this->personalMessage).' »');
         }
 
         return $message

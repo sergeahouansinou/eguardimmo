@@ -36,6 +36,35 @@ final readonly class PartyLines
     }
 
     /**
+     * Locataires présents à cette date pour plusieurs baux en une requête ; un bail inconnu ou d'une autre organisation est absent.
+     *
+     * @param  list<string>  $leaseIds
+     * @return array<string, list<LeasePartyData>> par identifiant de bail
+     */
+    public function tenantsAtMany(array $leaseIds, CarbonImmutable $date): array
+    {
+        if ($leaseIds === []) {
+            return [];
+        }
+
+        $jour = $date->toDateString();
+        $resultat = [];
+
+        $lignes = LeaseParty::query()->whereIn('lease_id', array_values(array_unique($leaseIds)))
+            ->where('role', LeasePartyRole::Tenant->value)
+            ->where('valid_from', '<=', $jour)
+            ->where(fn (Builder $q) => $q->whereNull('valid_to')->orWhere('valid_to', '>', $jour))
+            ->orderBy('valid_from')->orderBy('id')
+            ->get();
+
+        foreach ($lignes as $ligne) {
+            $resultat[$ligne->lease_id][] = $this->data($ligne);
+        }
+
+        return $resultat;
+    }
+
+    /**
      * @param  callable(Builder<LeaseParty>): Builder<LeaseParty>  $filtre
      * @return list<LeasePartyData>
      */
@@ -47,18 +76,23 @@ final readonly class PartyLines
             ->orderBy('valid_from')
             ->orderBy('id')
             ->get()
-            ->map(fn (LeaseParty $ligne): LeasePartyData => new LeasePartyData(
-                id: $ligne->id,
-                leaseId: $ligne->lease_id,
-                partyId: $ligne->party_id,
-                role: $ligne->role,
-                jointLiability: $ligne->joint_liability,
-                guaranteesPartyId: $ligne->guarantees_party_id,
-                guaranteeLimit: $ligne->guarantee_limit_amount,
-                guaranteeEndsOn: $ligne->guarantee_ends_on?->toDateString(),
-                validFrom: $ligne->valid_from->toDateString(),
-                validTo: $ligne->valid_to?->toDateString(),
-            ))
+            ->map(fn (LeaseParty $ligne): LeasePartyData => $this->data($ligne))
             ->all());
+    }
+
+    private function data(LeaseParty $ligne): LeasePartyData
+    {
+        return new LeasePartyData(
+            id: $ligne->id,
+            leaseId: $ligne->lease_id,
+            partyId: $ligne->party_id,
+            role: $ligne->role,
+            jointLiability: $ligne->joint_liability,
+            guaranteesPartyId: $ligne->guarantees_party_id,
+            guaranteeLimit: $ligne->guarantee_limit_amount,
+            guaranteeEndsOn: $ligne->guarantee_ends_on?->toDateString(),
+            validFrom: $ligne->valid_from->toDateString(),
+            validTo: $ligne->valid_to?->toDateString(),
+        );
     }
 }

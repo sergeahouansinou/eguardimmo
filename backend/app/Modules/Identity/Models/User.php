@@ -6,7 +6,9 @@ namespace App\Modules\Identity\Models;
 
 use App\Modules\Identity\Database\Factories\UserFactory;
 use App\Modules\Identity\Enums\IntendedProfile;
+use App\Modules\Identity\Enums\OperatorRole;
 use App\Modules\Identity\Enums\SocialProvider;
+use App\Modules\Identity\Enums\SuspensionReason;
 use App\Modules\Identity\Notifications\ResetPasswordNotification;
 use App\Modules\Identity\Notifications\VerifyEmailNotification;
 use App\Shared\Audit\Auditable;
@@ -31,6 +33,8 @@ use Laravel\Sanctum\TransientToken;
  * @property string $name
  * @property string $email
  * @property Carbon|null $email_verified_at
+ * @property string|null $phone
+ * @property Carbon|null $phone_verified_at
  * @property string|null $password
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
@@ -39,6 +43,11 @@ use Laravel\Sanctum\TransientToken;
  * @property Carbon|null $previous_login_at
  * @property IntendedProfile|null $intended_profile
  * @property Carbon|null $deleted_at
+ * @property Carbon|null $suspended_at
+ * @property SuspensionReason|null $suspension_reason
+ * @property string|null $suspended_by_user_id
+ * @property string|null $suspension_reviewed_by_user_id
+ * @property Carbon|null $suspension_reviewed_at
  * @property-read Operator|null $operator
  */
 #[Fillable(['name', 'email', 'password'])]
@@ -62,6 +71,13 @@ final class User extends Authenticatable implements MustVerifyEmail
         'two_factor_confirmed_at' => null,
         'last_login_at' => null,
         'previous_login_at' => null,
+        'phone' => null,
+        'phone_verified_at' => null,
+        'suspended_at' => null,
+        'suspension_reason' => null,
+        'suspended_by_user_id' => null,
+        'suspension_reviewed_by_user_id' => null,
+        'suspension_reviewed_at' => null,
     ];
 
     /**
@@ -114,6 +130,23 @@ final class User extends Authenticatable implements MustVerifyEmail
         return $this->operator !== null && $this->operator->revoked_at === null;
     }
 
+    /**
+     * @return list<OperatorRole>
+     */
+    public function operatorRoles(): array
+    {
+        if (! $this->isActiveOperator() || $this->operator === null) {
+            return [];
+        }
+
+        return array_values($this->operator->roles->map(fn ($role): OperatorRole => $role->role)->all());
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->suspended_at !== null;
+    }
+
     public function hasConfirmedTwoFactor(): bool
     {
         return $this->two_factor_secret !== null && $this->two_factor_confirmed_at !== null;
@@ -133,9 +166,14 @@ final class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone' => 'encrypted',
+            'phone_verified_at' => 'datetime',
             'two_factor_confirmed_at' => 'datetime',
             'last_login_at' => 'datetime',
             'previous_login_at' => 'datetime',
+            'suspended_at' => 'datetime',
+            'suspension_reviewed_at' => 'datetime',
+            'suspension_reason' => SuspensionReason::class,
             'intended_profile' => IntendedProfile::class,
             'password' => 'hashed',
         ];
@@ -150,7 +188,8 @@ final class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes',
-            'two_factor_confirmed_at', 'email_verified_at', 'last_login_at', 'previous_login_at',
+            'two_factor_confirmed_at', 'email_verified_at', 'last_login_at', 'previous_login_at', 'phone_verified_at',
+            'suspended_at', 'suspension_reason', 'suspended_by_user_id', 'suspension_reviewed_by_user_id', 'suspension_reviewed_at',
         ];
     }
 
@@ -161,6 +200,6 @@ final class User extends Authenticatable implements MustVerifyEmail
      */
     public function auditMasked(): array
     {
-        return ['name', 'email'];
+        return ['name', 'email', 'phone'];
     }
 }

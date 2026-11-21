@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Documents\PublicApi;
 
+use App\Modules\Documents\Actions\PurgeFile;
+use App\Modules\Documents\Actions\ReadFile;
 use App\Modules\Documents\Actions\StoreFile;
 use App\Modules\Documents\Actions\StreamFile;
 use App\Modules\Documents\Data\DocumentSubject;
@@ -22,6 +24,8 @@ final readonly class DocumentStore
     public function __construct(
         private StoreFile $stockage,
         private StreamFile $lecture,
+        private ReadFile $contenu,
+        private PurgeFile $purge,
         private StoredFiles $fichiers,
     ) {}
 
@@ -47,8 +51,62 @@ final readonly class DocumentStore
         return $this->lecture->handle($id);
     }
 
+    /**
+     * Lecture générique : refuse (404) une pièce de messagerie, un relevé bancaire et un fichier de l'espace locataire, qui ont leur route dédiée.
+     * À utiliser pour tout fichier désigné par un identifiant que l'appelant n'a pas lui-même créé.
+     */
+    public function streamGeneric(string $id): StreamedResponse
+    {
+        return $this->lecture->handle($id, generic: true);
+    }
+
+    /**
+     * Contenu d'un fichier de l'organisation courante, pour une pièce jointe : à n'utiliser que pour un envoi décidé par l'appelant.
+     */
+    public function contents(string $id): string
+    {
+        return $this->contenu->handle($id);
+    }
+
+    /**
+     * Supprime le fichier et son contenu une fois la durée de conservation échue ; refuse (`retention_active`) avant, ou sans durée.
+     * Sans effet sur un fichier déjà purgé.
+     */
+    public function purge(string $id): void
+    {
+        $this->purge->handle($id);
+    }
+
+    /**
+     * Purge avant la durée de conservation : réservée au retrait d'une pièce envoyée par erreur ou illicite (ADR 0033, décision 5).
+     * Le motif de l'appelant fait foi ; l'opération est journalisée (`documents.file.purged`, `early`).
+     */
+    public function purgeEarly(string $id): void
+    {
+        $this->purge->handle($id, early: true);
+    }
+
     public function exists(string $id): bool
     {
         return $this->fichiers->exists($id);
+    }
+
+    /**
+     * Description d'un fichier de l'organisation courante ; null s'il est inconnu ou d'une autre organisation.
+     */
+    public function find(string $id): ?StoredFileData
+    {
+        return $this->fichiers->data($id);
+    }
+
+    /**
+     * Description de plusieurs fichiers de l'organisation courante en une requête ; les inconnus sont absents du résultat.
+     *
+     * @param  list<string>  $ids
+     * @return array<string, StoredFileData> par identifiant
+     */
+    public function findMany(array $ids): array
+    {
+        return $this->fichiers->many($ids);
     }
 }

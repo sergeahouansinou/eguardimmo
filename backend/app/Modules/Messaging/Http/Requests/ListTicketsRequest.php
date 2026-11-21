@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Messaging\Http\Requests;
 
 use App\Modules\Messaging\Data\TicketFilters;
+use App\Modules\Messaging\Enums\RequesterSpace;
 use App\Modules\Messaging\Enums\TicketPriority;
 use App\Modules\Messaging\Enums\TicketStatus;
 use Illuminate\Foundation\Http\FormRequest;
@@ -26,6 +27,8 @@ final class ListTicketsRequest extends FormRequest
             'status' => ['nullable', Rule::enum(TicketStatus::class)],
             'priority' => ['nullable', Rule::enum(TicketPriority::class)],
             'assignee' => ['nullable', 'string', 'regex:/^(none|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i'],
+            'space' => ['nullable', Rule::enum(RequesterSpace::class)],
+            'organization' => ['nullable', 'uuid'],
             'search' => ['nullable', 'string', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
@@ -45,6 +48,8 @@ final class ListTicketsRequest extends FormRequest
             $recherche === '' ? null : $recherche,
             $this->integer('page', 1),
             $this->integer('per_page', 20),
+            $this->filled('space') ? RequesterSpace::from((string) $this->string('space')) : null,
+            $this->filled('organization') ? strtolower((string) $this->string('organization')) : null,
         );
     }
 }

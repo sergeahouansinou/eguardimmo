@@ -8,6 +8,7 @@ use App\Modules\Leases\Data\LeaseData;
 use App\Modules\Leases\Data\LeasePartyData;
 use App\Modules\Leases\Data\LeaseTermLineData;
 use App\Modules\Leases\Data\OccupancyData;
+use App\Modules\Leases\Data\OccupiedPeriodData;
 use App\Modules\Leases\Enums\LeasePartyRole;
 use App\Modules\Leases\Enums\LeaseStatus;
 use App\Modules\Leases\Models\Lease;
@@ -384,7 +385,7 @@ it('ne laisse fuiter aucun modèle : types de retour et valeurs renvoyées', fun
 
     foreach ([LeaseDirectory::class, LeaseSchedule::class, LeaseParticipants::class] as $classe) {
         foreach ((new ReflectionClass($classe))->getMethods(ReflectionMethod::IS_PUBLIC) as $methode) {
-            $type = (string) $methode->getReturnType();
+            $type = ltrim((string) $methode->getReturnType(), '?');
 
             if ($methode->isConstructor()) {
                 continue;
@@ -401,4 +402,57 @@ it('ne laisse fuiter aucun modèle : types de retour et valeurs renvoyées', fun
             expect(is_a(ltrim($type, '?'), Model::class, true), "{$dto}::{$propriete->getName()}")->toBeFalse();
         }
     }
+});
+
+it('donne les occupations de ces lots recouvrant [from, to), bornées à la fenêtre et semi-ouvertes', function (): void {
+    $lot = Str::uuid7()->toString();
+    $autreLot = Str::uuid7()->toString();
+    $bail = leasePubBail($this->org, ['starts_on' => '2026-01-01', 'ends_on' => '2027-01-01']);
+    leasePubLot($this->org, $bail, $lot, '2026-03-01', '2026-09-01');
+    $entre = fn (string $de, string $a, ?array $lots = null): array => L::dans($this->org, fn (): array => app(LeaseDirectory::class)->occupiedBetween($lots ?? [$lot, $autreLot], leasePubDate($de), leasePubDate($a)));
+
+    $entier = $entre('2026-01-01', '2027-01-01');
+    $borne = $entre('2026-05-01', '2026-06-01');
+
+    expect($entier)->toHaveCount(1)->and($entier[0])->toBeInstanceOf(OccupiedPeriodData::class)
+        ->and([$entier[0]->unitId, $entier[0]->leaseId, $entier[0]->from, $entier[0]->to])->toBe([$lot, $bail->id, '2026-03-01', '2026-09-01'])
+        ->and([$borne[0]->from, $borne[0]->to])->toBe(['2026-05-01', '2026-06-01'])
+        ->and($entre('2026-01-01', '2026-03-01'))->toBe([])
+        ->and($entre('2026-09-01', '2027-01-01'))->toBe([])
+        ->and(count($entre('2026-08-31', '2026-09-02')))->toBe(1)
+        ->and($entre('2026-01-01', '2027-01-01', []))->toBe([]);
+});
+
+it('n\'occupe pas par un bail brouillon, d\'une autre organisation ou hors de la fenêtre', function (): void {
+    $lot = Str::uuid7()->toString();
+    $brouillon = L::bail($this->org);
+    $etranger = leasePubBail($this->autre);
+    $futur = leasePubBail($this->org, ['starts_on' => '2026-07-01', 'ends_on' => '2029-07-01']);
+
+    foreach ([[$brouillon, $this->org], [$etranger, $this->autre], [$futur, $this->org]] as [$bail, $org]) {
+        leasePubLot($org, $bail, $lot, '2024-01-01');
+    }
+
+    $leases = L::dans($this->org, fn (): array => array_map(fn (OccupiedPeriodData $o): string => $o->leaseId, app(LeaseDirectory::class)->occupiedBetween([$lot], leasePubDate('2026-01-01'), leasePubDate('2026-06-01'))));
+
+    expect($leases)->toBe([]);
+});
+
+it('donne les lignes de plusieurs baux en une lecture, par bail, avec leurs sens système', function (): void {
+    $a = leasePubBail($this->org);
+    $b = leasePubBail($this->org);
+    $sansLigne = leasePubBail($this->org);
+    leasePubLigne($this->org, $a, 'rent', 65000);
+    leasePubLigne($this->org, $a, 'charges_provision', 8000);
+    leasePubLigne($this->org, $b, 'charges_flat', 3000, '2026-01-01', '2026-07-01');
+
+    $lignes = fn (string $de, string $au): array => L::dans($this->org, fn (): array => app(LeaseSchedule::class)->linesBetweenMany([$a->id, $b->id, $sansLigne->id], leasePubDate($de), leasePubDate($au)));
+    $sens = fn (array $liste): array => array_values(array_map(fn (LeaseTermLineData $l): string => $l->semantic->value, $liste));
+
+    $annee = $lignes('2026-01-01', '2026-12-31');
+
+    expect($sens($annee[$a->id]))->toEqualCanonicalizing(['rent', 'charges_provision'])->and($sens($annee[$b->id]))->toBe(['charges_flat'])
+        ->and($annee[$sansLigne->id] ?? [])->toBe([])
+        ->and($lignes('2026-07-01', '2026-12-31')[$b->id] ?? [])->toBe([])
+        ->and(L::dans($this->org, fn (): array => app(LeaseSchedule::class)->linesBetweenMany([], leasePubDate('2026-01-01'), leasePubDate('2026-12-31'))))->toBe([]);
 });

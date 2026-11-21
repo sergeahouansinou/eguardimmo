@@ -7,7 +7,10 @@ namespace App\Modules\Catalog\Support;
 use App\Modules\Catalog\Enums\CertificateTypeSemantic;
 use App\Modules\Catalog\Enums\ContactCategorySemantic;
 use App\Modules\Catalog\Enums\ExpenseCategorySemantic;
+use App\Modules\Catalog\Enums\InterventionNatureSemantic;
+use App\Modules\Catalog\Enums\InvoiceItemSemantic;
 use App\Modules\Catalog\Enums\LeaseComponentSemantic;
+use App\Modules\Catalog\Enums\MandateTypeSemantic;
 use App\Modules\Catalog\Enums\UnitTypeSemantic;
 use App\Modules\Catalog\Enums\VocabularyKey;
 
@@ -18,7 +21,7 @@ use App\Modules\Catalog\Enums\VocabularyKey;
 final class PlatformTerms
 {
     /**
-     * @return list<array{vocabulary: VocabularyKey, key: string, label: string, semantic: string|null, metadata: array<string, int|string>}>
+     * @return list<array{vocabulary: VocabularyKey, key: string, label: string, semantic: string|null, metadata: array<string, int|string|bool>}>
      */
     public static function all(): array
     {
@@ -42,7 +45,7 @@ final class PlatformTerms
     }
 
     /**
-     * @return array<string, array<string, array{0: string, 1?: string|null, 2?: array<string, int|string>}>>
+     * @return array<string, array<string, array{0: string, 1?: string|null, 2?: array<string, int|string|bool>}>>
      */
     private static function definitions(): array
     {
@@ -109,21 +112,94 @@ final class PlatformTerms
                     'guaranteed_amount' => ['type' => 'integer', 'required' => true, 'min' => 0],
                 ]]],
                 'professional_liability' => ['Responsabilité civile professionnelle', CertificateTypeSemantic::ProfessionalLiability->value, self::duree(12, 60)],
-                'home_insurance' => ['Assurance habitation du locataire', null, self::duree(12, 30)],
+                'home_insurance' => ['Assurance habitation du locataire', CertificateTypeSemantic::HomeInsurance->value, self::duree(12, 30)],
             ],
             VocabularyKey::ExpenseCategory->value => [
-                'maintenance' => ['Entretien', ExpenseCategorySemantic::Maintenance->value],
-                'repairs' => ['Réparations', ExpenseCategorySemantic::Repairs->value],
-                'improvements' => ['Travaux d\'amélioration', ExpenseCategorySemantic::Improvements->value],
-                'insurance' => ['Assurance', ExpenseCategorySemantic::Insurance->value],
-                'property_tax' => ['Taxe foncière', ExpenseCategorySemantic::PropertyTax->value],
-                'management_fees' => ['Frais de gestion', ExpenseCategorySemantic::ManagementFees->value],
-                'loan_interest' => ['Intérêts d\'emprunt', ExpenseCategorySemantic::LoanInterest->value],
-                'utilities' => ['Eau, énergie et services', ExpenseCategorySemantic::Utilities->value],
-                'co_ownership' => ['Charges de copropriété', ExpenseCategorySemantic::CoOwnership->value],
-                'other' => ['Autres dépenses', ExpenseCategorySemantic::Other->value],
+                'maintenance' => ['Entretien', ExpenseCategorySemantic::Maintenance->value, self::recuperable(true)],
+                'repairs' => ['Réparations', ExpenseCategorySemantic::Repairs->value, self::recuperable(false)],
+                'improvements' => ['Travaux d\'amélioration', ExpenseCategorySemantic::Improvements->value, self::recuperable(false)],
+                'insurance' => ['Assurance', ExpenseCategorySemantic::Insurance->value, self::recuperable(false)],
+                'property_tax' => ['Taxe foncière', ExpenseCategorySemantic::PropertyTax->value, self::recuperable(true)],
+                'management_fees' => ['Frais de gestion', ExpenseCategorySemantic::ManagementFees->value, self::recuperable(false)],
+                'loan_interest' => ['Intérêts d\'emprunt', ExpenseCategorySemantic::LoanInterest->value, self::recuperable(false)],
+                'utilities' => ['Eau, énergie et services', ExpenseCategorySemantic::Utilities->value, self::recuperable(true)],
+                'co_ownership' => ['Charges de copropriété', ExpenseCategorySemantic::CoOwnership->value, self::recuperable(true)],
+                'other' => ['Autres dépenses', ExpenseCategorySemantic::Other->value, self::recuperable(false)],
+            ],
+            VocabularyKey::ChargeRubric->value => [
+                'elevators' => ['Ascenseurs et monte-charge'],
+                'water_heating' => ['Eau froide, eau chaude et chauffage collectif'],
+                'individual_installations' => ['Installations individuelles'],
+                'common_interior' => ['Parties communes intérieures'],
+                'outdoor_spaces' => ['Espaces extérieurs'],
+                'hygiene' => ['Hygiène'],
+                'building_equipment' => ['Équipements divers du bâtiment'],
+                'taxes_and_fees' => ['Impositions et redevances'],
+            ],
+            VocabularyKey::MandateType->value => [
+                'rental_management' => ['Gestion locative', MandateTypeSemantic::RentalManagement->value],
+                'rental_management_syndic' => ['Gestion locative et syndic', MandateTypeSemantic::ManagementWithSyndic->value],
+                'short_term_management' => ['Gestion de location saisonnière', MandateTypeSemantic::ShortTermManagement->value],
+                'tenant_search' => ['Recherche de locataire', MandateTypeSemantic::TenantSearch->value],
+                'other' => ['Autre mandat', MandateTypeSemantic::Other->value],
+            ],
+            VocabularyKey::InvoiceItem->value => [
+                'management_fee' => ['Honoraires de gestion', InvoiceItemSemantic::FeeManagement->value],
+                'letting_fee' => ['Honoraires de location', InvoiceItemSemantic::FeeLetting->value],
+                'other_fee' => ['Autres honoraires', InvoiceItemSemantic::FeeOther->value],
+                'service' => ['Prestation de services', InvoiceItemSemantic::Service->value],
+                'recovery_cost' => ['Frais d\'acte de recouvrement refacturés au mandant', InvoiceItemSemantic::RecoveryCost->value],
+            ],
+            VocabularyKey::InterventionNature->value => [
+                'plumbing' => ['Plomberie', InterventionNatureSemantic::Plumbing->value, self::nature(false, true, 'owner', ExpenseCategorySemantic::Repairs)],
+                'electrical' => ['Électricité', InterventionNatureSemantic::Electrical->value, self::nature(false, true, 'owner', ExpenseCategorySemantic::Repairs)],
+                'heating' => ['Chauffage', InterventionNatureSemantic::Heating->value, self::nature(true, true, 'shared', ExpenseCategorySemantic::Maintenance)],
+                'locksmith' => ['Serrurerie', InterventionNatureSemantic::Locksmith->value, self::nature(true, false, 'undetermined', ExpenseCategorySemantic::Repairs)],
+                'humidity' => ['Humidité', InterventionNatureSemantic::Humidity->value, self::nature(false, false, 'owner', ExpenseCategorySemantic::Repairs)],
+                'pests' => ['Nuisibles', InterventionNatureSemantic::Pests->value, self::nature(false, false, 'undetermined', ExpenseCategorySemantic::Maintenance)],
+                'other' => ['Autre', InterventionNatureSemantic::Other->value, self::nature(false, false, 'undetermined', ExpenseCategorySemantic::Other)],
+            ],
+            VocabularyKey::TaxRate->value => [
+                'fr_vat_normal' => ['TVA 20 %', null, self::taux('FR', 'S', 20000)],
+                'fr_vat_intermediate' => ['TVA 10 %', null, self::taux('FR', 'S', 10000)],
+                'fr_vat_reduced' => ['TVA 5,5 %', null, self::taux('FR', 'S', 5500)],
+                'fr_vat_super_reduced' => ['TVA 2,1 %', null, self::taux('FR', 'S', 2100)],
+                'fr_vat_zero' => ['TVA à taux zéro', null, self::taux('FR', 'Z', 0)],
+                'fr_vat_exempt' => ['Exonéré de TVA', null, self::taux('FR', 'E', 0)],
+                'fr_vat_reverse_charge' => ['Autoliquidation de la TVA', null, self::taux('FR', 'AE', 0)],
+                'fr_vat_outside_scope' => ['Hors champ de la TVA', null, self::taux('FR', 'O', 0)],
             ],
         ];
+    }
+
+    /**
+     * Taux de TVA français, en cent-millièmes (100 000 = 100 %) ; la date d'entrée en vigueur est à confirmer sur impots.gouv.fr.
+     *
+     * @return array<string, int|string|bool>
+     */
+    private static function taux(string $pays, string $categorie, int $tauxPcm): array
+    {
+        return ['country' => $pays, 'tax_code' => 'vat', 'category' => $categorie, 'rate_pcm' => $tauxPcm, 'effective_from' => '2014-01-01'];
+    }
+
+    /**
+     * Indication de saisie seulement : la part récupérable d'une dépense reste décidée par l'équipe, dans la limite des rubriques de la juridiction.
+     *
+     * @return array<string, bool>
+     */
+    private static function recuperable(bool $valeur): array
+    {
+        return ['recoverable_by_default' => $valeur];
+    }
+
+    /**
+     * Défauts indicatifs de nature d'intervention : l'imputation au locataire reste décidée par l'équipe et les règles de la juridiction.
+     *
+     * @return array<string, bool|string>
+     */
+    private static function nature(bool $locataire, bool $assurance, string $responsabilite, ExpenseCategorySemantic $depense): array
+    {
+        return ['tenant_chargeable' => $locataire, 'insurance_required' => $assurance, 'default_responsibility' => $responsabilite, 'expense_semantic' => $depense->value];
     }
 
     /**

@@ -14,5 +14,6 @@ final readonly class TicketPatchData
         public ?TicketPriority $priority,
         public bool $assigneeProvided,
         public ?string $assigneeUserId,
+        public bool $read = false,
     ) {}
 }

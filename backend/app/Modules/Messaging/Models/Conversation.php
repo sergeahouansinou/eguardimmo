@@ -4,21 +4,39 @@ declare(strict_types=1);
 
 namespace App\Modules\Messaging\Models;
 
+use App\Modules\Messaging\Enums\ConversationKind;
+use App\Modules\Messaging\Enums\ConversationStatus;
+use App\Modules\Messaging\Enums\MessageSide;
+use App\Shared\Audit\PreciseTimestamp;
 use App\Shared\Tenancy\BelongsToOrganization;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Carbon;
 
 /**
  * @property string $id
  * @property string $organization_id
  * @property string $subject
  * @property string $created_by_user_id
- * @property Carbon $last_message_at
+ * @property CarbonImmutable $last_message_at
  * @property string $last_author_user_id
+ * @property ConversationKind $kind
+ * @property MessageSide $last_author_side
+ * @property string|null $party_id
+ * @property string|null $lease_id
+ * @property string|null $mandate_id
+ * @property string|null $intervention_id
+ * @property ConversationStatus $status
+ * @property CarbonImmutable|null $closed_at
+ * @property string|null $closed_by_user_id
+ * @property string|null $assignee_user_id
+ * @property CarbonImmutable|null $counterpart_muted_until
+ * @property string|null $counterpart_muted_reason
+ * @property CarbonImmutable|null $retention_until
+ * @property CarbonImmutable|null $content_purged_at
  * @property-read Collection<int, ConversationParticipant> $participants
  * @property-read Collection<int, ConversationMessage> $messages
  * @property-read ConversationMessage|null $latestMessage
@@ -58,6 +76,15 @@ final class Conversation extends Model
 
     protected function casts(): array
     {
-        return ['last_message_at' => 'datetime'];
+        return [
+            'kind' => ConversationKind::class,
+            'status' => ConversationStatus::class,
+            'last_author_side' => MessageSide::class,
+            'last_message_at' => PreciseTimestamp::class,
+            'closed_at' => PreciseTimestamp::class,
+            'counterpart_muted_until' => PreciseTimestamp::class,
+            'retention_until' => PreciseTimestamp::class,
+            'content_purged_at' => PreciseTimestamp::class,
+        ];
     }
 }

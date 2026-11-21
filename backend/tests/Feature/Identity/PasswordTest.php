@@ -9,6 +9,7 @@ use App\Modules\Identity\Notifications\ResetPasswordNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
+use Tests\Feature\Console\ConsoleContext;
 
 beforeEach(function (): void {
     Notification::fake();
@@ -127,4 +128,31 @@ it('refuse le changement sans le mot de passe actuel', function (): void {
 
 it('refuse le changement de mot de passe sans session', function (): void {
     $this->putJson('/auth/user/password', ['password' => 'x'])->assertUnauthorized();
+});
+
+it('révoque le jeton console d\'un opérateur au changement et à la réinitialisation du mot de passe', function (): void {
+    $op = ConsoleContext::operateur(['admin'], 'Opératrice', true, 'operatrice@exemple.fr');
+    ConsoleContext::lire($this, $op['jeton'], '/api/v1/console/me')->assertOk();
+
+    $this->actingAs($op['user'], 'web')->putJson('/auth/user/password', [
+        'current_password' => 'password',
+        'password' => 'nouveau-mot-de-passe',
+        'password_confirmation' => 'nouveau-mot-de-passe',
+    ])->assertOk();
+
+    ConsoleContext::lire($this, $op['jeton'], '/api/v1/console/me')->assertUnauthorized();
+
+    $second = $op['user']->createToken('console', ['operator'])->plainTextToken;
+    ConsoleContext::lire($this, $second, '/api/v1/console/me')->assertOk();
+    auth()->forgetGuards();
+    auth()->shouldUse('web');
+
+    $this->postJson('/auth/reset-password', [
+        'token' => Password::createToken($op['user']),
+        'email' => 'operatrice@exemple.fr',
+        'password' => 'encore-un-mot-de-passe',
+        'password_confirmation' => 'encore-un-mot-de-passe',
+    ])->assertOk();
+
+    ConsoleContext::lire($this, $second, '/api/v1/console/me')->assertUnauthorized();
 });

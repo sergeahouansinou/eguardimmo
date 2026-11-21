@@ -23,6 +23,7 @@ final class ReauthenticateWithTwoFactorController
         }
 
         $request->session()->put(EnsureRecentReauthentication::CLE_2FA, now()->getTimestamp());
+        $request->session()->put(EnsureRecentReauthentication::CLE_METHODE_2FA, $request->recoveryCode() === null ? EnsureRecentReauthentication::METHODE_TOTP : EnsureRecentReauthentication::METHODE_SECOURS);
 
         return response()->noContent();
     }

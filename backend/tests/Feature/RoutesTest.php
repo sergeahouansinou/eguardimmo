@@ -14,6 +14,10 @@ const ROUTES_PUBLIQUES = [
     'api/v1/auth/token/two-factor',
     'api/v1/auth/social/{provider}/token',
     'api/v1/console/auth/token',
+    'api/v1/recovery/downloads/{token}',
+    'api/v1/mail/unsubscribe/{token}',
+    'api/v1/webhooks/mail/mailtrap',
+    'api/v1/webhooks/payments/{provider}',
 ];
 
 /**
@@ -57,10 +61,18 @@ it('nomme chaque route API avec le préfixe de son module, sans doublon', functi
     expect($noms)->toBe(array_values(array_unique($noms)));
 });
 
-it('limite chaque route publique par throttle:auth', function (): void {
+// Le lien public de Recovery a son propre limiteur (seau par IP réelle, distinct de celui de la connexion).
+const LIMITEURS_PUBLICS_DEDIES = [
+    'api/v1/recovery/downloads/{token}' => 'throttle:recovery-download',
+    'api/v1/mail/unsubscribe/{token}' => 'throttle:mail-unsubscribe',
+    'api/v1/webhooks/mail/mailtrap' => 'throttle:mail-webhook',
+    'api/v1/webhooks/payments/{provider}' => 'throttle:payments-webhook',
+];
+
+it('limite chaque route publique par throttle:auth ou par son limiteur dédié', function (): void {
     foreach (routesApi() as $route) {
         if (! in_array('auth:sanctum', $route->gatherMiddleware(), true)) {
-            expect($route->gatherMiddleware())->toContain('throttle:auth');
+            expect($route->gatherMiddleware())->toContain(LIMITEURS_PUBLICS_DEDIES[$route->uri()] ?? 'throttle:auth');
         }
     }
 });
@@ -92,4 +104,32 @@ it('ne réserve /console qu\'aux jetons opérateur', function (): void {
             expect($route->gatherMiddleware())->toContain('space:operator');
         }
     }
+});
+
+it('refuse toute route console sans operator:{rôles}', function (): void {
+    foreach (routesApi() as $route) {
+        if (str_starts_with($route->uri(), 'api/v1/console/') && ! in_array($route->uri(), ROUTES_PUBLIQUES, true)) {
+            expect(collect($route->gatherMiddleware())->contains(fn ($m): bool => is_string($m) && str_starts_with($m, 'operator:')))->toBeTrue("{$route->uri()} sans operator:");
+        }
+    }
+});
+
+it('sépare les espaces : toute route authentifiée porte space:* ou no-operator-token', function (): void {
+    $sansSeparation = [];
+
+    foreach (routesApi() as $route) {
+        $middlewares = $route->gatherMiddleware();
+
+        if (! in_array('auth:sanctum', $middlewares, true)) {
+            continue;
+        }
+
+        $separee = collect($middlewares)->contains(fn ($m): bool => is_string($m) && (str_starts_with($m, 'space:') || $m === 'no-operator-token'));
+
+        if (! $separee) {
+            $sansSeparation[] = $route->uri();
+        }
+    }
+
+    expect($sansSeparation)->toBe([]);
 });

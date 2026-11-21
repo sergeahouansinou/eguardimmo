@@ -1,0 +1,41 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Mandates\Actions;
+
+use App\Modules\Mandates\Enums\ErrorCode;
+use App\Modules\Mandates\Enums\MandateStatus;
+use App\Modules\Mandates\Models\Mandate;
+use App\Modules\Mandates\Queries\Mandates;
+use Illuminate\Support\Facades\DB;
+
+final readonly class SuspendMandate
+{
+    public function __construct(private Mandates $mandats) {}
+
+    public function handle(Mandate $mandate, int $lockVersion): Mandate
+    {
+        return DB::transaction(function () use ($mandate, $lockVersion): Mandate {
+            $mandat = $this->mandats->locked($mandate->id);
+
+            if ($mandat->lock_version !== $lockVersion) {
+                throw ErrorCode::MandateStaleVersion->problem();
+            }
+
+            if ($mandat->archived_at !== null) {
+                throw ErrorCode::MandateArchived->problem();
+            }
+
+            if ($mandat->status !== MandateStatus::Active) {
+                throw ErrorCode::MandateNotActive->problem();
+            }
+
+            $mandat->status = MandateStatus::Suspended;
+            $mandat->lock_version = $mandat->lock_version + 1;
+            $mandat->save();
+
+            return $mandat;
+        });
+    }
+}

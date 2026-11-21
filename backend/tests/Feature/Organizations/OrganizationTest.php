@@ -11,6 +11,8 @@ use App\Modules\Organizations\Enums\OrganizationKind;
 use App\Modules\Organizations\Models\Organization;
 use App\Modules\Organizations\Models\OrganizationMember;
 use App\Modules\Organizations\Notifications\MemberInvitationNotification;
+use App\Shared\Audit\AuditLog;
+use App\Shared\Tenancy\AcrossOrganizations;
 use App\Shared\Tenancy\CurrentOrganization;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Notification;
@@ -140,6 +142,28 @@ it('liste l\'équipe de l\'organisation courante seulement', function (): void {
         ->assertJsonPath('meta.two_factor_required', false);
 });
 
+it('expose l\'identifiant de compte des membres actifs à chaque rôle de l\'organisation, jamais celui d\'un membre désactivé ni d\'une autre organisation', function (): void {
+    $org = organisation();
+    $comptable = membre($org, MemberRole::Accountant);
+    $gestionnaire = membre($org, MemberRole::Manager);
+    $desactive = membre($org, MemberRole::Manager, null, MemberStatus::Disabled);
+    $autre = organisation();
+    $etranger = membre($autre, MemberRole::Manager);
+    $attendu = [titulaire($org)->id, $comptable->user_id, $gestionnaire->user_id];
+
+    foreach ([titulaire($org), User::query()->findOrFail($comptable->user_id), User::query()->findOrFail($gestionnaire->user_id)] as $lecteur) {
+        app()->forgetInstance(CurrentOrganization::class);
+        auth()->forgetGuards();
+        $liste = $this->actingAs($lecteur)->getJson("/api/v1/org/{$org->id}/members")->assertOk()->assertJsonCount(4, 'data');
+        $membres = collect($liste->json('data'));
+
+        expect($membres->where('status', 'active')->pluck('user_id')->sort()->values()->all())->toBe(collect($attendu)->sort()->values()->all())
+            ->and($membres->firstWhere('id', $desactive->id)['user_id'])->toBeNull()
+            ->and($membres->pluck('user_id')->filter()->contains($etranger->user_id))->toBeFalse()
+            ->and(array_keys($membres->first()))->toContain('user_id', 'email')->not->toContain('password');
+    }
+});
+
 it('invite un membre, envoie le lien et refuse le doublon', function (): void {
     Notification::fake();
     $org = organisation();
@@ -221,7 +245,17 @@ it('refuse une invitation expirée', function (): void {
         ->postJson('/api/v1/invitations/acceptance', ['token' => $jeton])->assertNotFound();
 });
 
-it('change le rôle et le périmètre d\'un membre', function (): void {
+it('change le rôle et le périmètre « tous » d\'un membre', function (): void {
+    $org = organisation();
+    $cible = membre($org, MemberRole::Accountant);
+
+    $this->actingAs(titulaire($org))->patchJson("/api/v1/org/{$org->id}/members/{$cible->id}", [
+        'role' => 'manager',
+        'scope' => ['type' => 'all'],
+    ])->assertOk()->assertJsonPath('data.role', 'manager')->assertJsonPath('data.scope', ['type' => 'all', 'property_ids' => []]);
+});
+
+it('refuse le périmètre « biens sélectionnés » à la modification sans rien changer', function (): void {
     $org = organisation();
     $cible = membre($org, MemberRole::Accountant);
     $bien = '01934f6e-0000-7000-8000-0000000000c1';
@@ -229,7 +263,80 @@ it('change le rôle et le périmètre d\'un membre', function (): void {
     $this->actingAs(titulaire($org))->patchJson("/api/v1/org/{$org->id}/members/{$cible->id}", [
         'role' => 'manager',
         'scope' => ['type' => 'selected', 'property_ids' => [$bien]],
-    ])->assertOk()->assertJsonPath('data.role', 'manager')->assertJsonPath('data.scope', ['type' => 'selected', 'property_ids' => [$bien]]);
+    ])->assertUnprocessable()->assertJsonPath('code', 'member_scope_unsupported');
+
+    $this->patchJson("/api/v1/org/{$org->id}/members/{$cible->id}", ['scope' => ['type' => 'selected']])
+        ->assertUnprocessable()->assertJsonPath('code', 'member_scope_unsupported');
+
+    $apres = app(CurrentOrganization::class)->run($org->id, fn () => OrganizationMember::query()->findOrFail($cible->id));
+    expect($apres->role)->toBe(MemberRole::Accountant)->and($apres->scope_type->value)->toBe('all')->and($apres->scope_property_ids)->toBeNull();
+    expect(AuditLog::query()->where('action', 'organizations.member.scope_refused')->count())->toBe(2);
+});
+
+it('refuse l\'invitation au périmètre « biens sélectionnés » : rien n\'est créé, rien n\'est envoyé', function (): void {
+    Notification::fake();
+    $org = organisation();
+    $bien = '01934f6e-0000-7000-8000-0000000000c1';
+
+    foreach ([['type' => 'selected', 'property_ids' => [$bien]], ['type' => 'selected']] as $perimetre) {
+        $this->actingAs(titulaire($org))->postJson("/api/v1/org/{$org->id}/members", [...invitation(), 'scope' => $perimetre])
+            ->assertUnprocessable()->assertJsonPath('code', 'member_scope_unsupported');
+    }
+
+    Notification::assertNothingSent();
+    expect(app(CurrentOrganization::class)->run($org->id, fn () => OrganizationMember::query()->withTrashed()->count()))->toBe(1);
+
+    $ligne = AuditLog::query()->where('action', 'organizations.member.scope_refused')->latest('occurred_at')->firstOrFail();
+    expect($ligne->organization_id)->toBe($org->id)
+        ->and(json_encode($ligne->metadata, JSON_THROW_ON_ERROR))->not->toContain($bien)->not->toContain('fatou');
+});
+
+it('ne laisse aucun autre champ porter le périmètre', function (): void {
+    Notification::fake();
+    $org = organisation();
+
+    $this->actingAs(titulaire($org))->postJson("/api/v1/org/{$org->id}/members", [...invitation(), 'scope_type' => 'selected', 'scope_property_ids' => ['x']])
+        ->assertCreated()->assertJsonPath('data.scope', ['type' => 'all', 'property_ids' => []]);
+
+    $this->postJson("/api/v1/org/{$org->id}/members", [...invitation(), 'email' => 'b@example.com', 'scope' => ['type' => 'all', 'scope_type' => 'selected']])
+        ->assertUnprocessable();
+    $this->postJson("/api/v1/org/{$org->id}/members", [...invitation(), 'email' => 'c@example.com', 'scope' => ['type' => 'SELECTED', 'property_ids' => []]])
+        ->assertUnprocessable();
+});
+
+it('laisse inviter au périmètre « tous les biens »', function (): void {
+    Notification::fake();
+    $org = organisation();
+
+    $this->actingAs(titulaire($org))->postJson("/api/v1/org/{$org->id}/members", invitation())
+        ->assertCreated()->assertJsonPath('data.scope', ['type' => 'all', 'property_ids' => []]);
+});
+
+it('signale les adhésions « biens sélectionnés » existantes sans les modifier ni les supprimer', function (): void {
+    $org = organisation();
+    $autre = organisation();
+    $existant = membre($org, MemberRole::Manager);
+    $parAilleurs = membre($autre, MemberRole::Accountant);
+    $bien = '01934f6e-0000-7000-8000-0000000000c1';
+    app(CurrentOrganization::class)->run($org->id, fn () => OrganizationMember::query()->findOrFail($existant->id)->forceFill(['scope_type' => 'selected', 'scope_property_ids' => [$bien]])->save());
+
+    $avant = AcrossOrganizations::query(OrganizationMember::class)->orderBy('id')->get()->toArray();
+    $auditAvant = AuditLog::query()->count();
+
+    $this->artisan('organizations:report-scoped-members')
+        ->expectsOutputToContain('1 adhésion(s)')
+        ->expectsOutputToContain($existant->id)
+        ->doesntExpectOutputToContain($parAilleurs->id)
+        ->assertSuccessful();
+
+    expect(AcrossOrganizations::query(OrganizationMember::class)->orderBy('id')->get()->toArray())->toBe($avant)
+        ->and(AuditLog::query()->count())->toBe($auditAvant);
+});
+
+it('ne signale rien quand aucune adhésion n\'est limitée', function (): void {
+    organisation();
+
+    $this->artisan('organizations:report-scoped-members')->expectsOutputToContain('Aucune adhésion')->assertSuccessful();
 });
 
 it('protège le titulaire, soi-même et le dernier administrateur', function (): void {

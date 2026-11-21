@@ -29,4 +29,15 @@ final readonly class OwnershipDirectory
     {
         return $this->ownerships->ownersAt($this->units->get($unitId)->id, $date);
     }
+
+    /**
+     * Comme `ownersAt()` pour plusieurs lots, en une lecture ; un identifiant hors de l'organisation courante n'a simplement aucun droit.
+     *
+     * @param  list<string>  $unitIds
+     * @return array<string, list<OwnerShareData>>
+     */
+    public function ownersAtMany(array $unitIds, DateTimeInterface $date): array
+    {
+        return $this->ownerships->ownersAtMany($unitIds, $date);
+    }
 }

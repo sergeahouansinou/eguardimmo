@@ -9,6 +9,7 @@ use App\Modules\Catalog\Enums\VocabularyKey;
 use App\Modules\Catalog\PublicApi\TermDirectory;
 use App\Modules\Properties\Data\UnitData;
 use App\Modules\Properties\Enums\ErrorCode;
+use App\Modules\Properties\Models\Property;
 use App\Modules\Properties\Models\Unit;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
@@ -50,6 +51,20 @@ final readonly class UnitSummaries
         }
 
         return $resultat;
+    }
+
+    /**
+     * Tous les lots du bien, archivés compris : un lot archivé a pu être occupé pendant la période. Lève property_not_found hors de l'organisation courante.
+     *
+     * @return list<UnitData>
+     */
+    public function ofProperty(string $propertyId): array
+    {
+        if (! Str::isUuid($propertyId) || ! Property::query()->whereKey($propertyId)->exists()) {
+            throw ErrorCode::PropertyNotFound->problem();
+        }
+
+        return $this->toData(array_values(Unit::query()->with('property')->where('property_id', $propertyId)->orderBy('reference')->orderBy('id')->get()->all()));
     }
 
     /**

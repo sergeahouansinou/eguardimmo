@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Identity\Notifications;
 
 use App\Modules\Identity\Support\Hub;
+use App\Shared\Mail\MailText;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -28,7 +29,7 @@ final class NewDeviceLoginNotification extends Notification implements ShouldQue
     {
         return (new MailMessage)
             ->subject('Nouvelle connexion à votre compte')
-            ->line('Une connexion à votre compte eGuardImmo vient d\'avoir lieu depuis un nouvel appareil ('.$this->device.').')
+            ->line('Une connexion à votre compte eGuardImmo vient d\'avoir lieu depuis un nouvel appareil ('.MailText::markdown($this->device).').')
             ->line('Si ce n\'était pas vous, changez votre mot de passe et révoquez cet appareil depuis votre profil.')
             ->action('Sécuriser mon compte', Hub::url('/mot-de-passe-oublie'));
     }

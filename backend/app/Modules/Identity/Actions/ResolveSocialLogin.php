@@ -23,6 +23,12 @@ final readonly class ResolveSocialLogin
     {
         [$user, $evenement] = DB::transaction(fn (): array => $this->resoudre($profil, $intention));
 
+        if ($user->isSuspended()) {
+            $this->audit->handle('auth.login.denied', $user->id, ['channel' => 'social', 'reason' => 'account_suspended']);
+
+            throw ErrorCode::AccountSuspended->problem();
+        }
+
         $this->audit->handle('auth.social.'.$evenement, $user->id, ['provider' => $profil->provider->value]);
 
         return $user;

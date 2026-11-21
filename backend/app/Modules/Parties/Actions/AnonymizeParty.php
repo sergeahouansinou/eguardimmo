@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace App\Modules\Parties\Actions;
 
+use App\Modules\Identity\Enums\OwnerRevoker;
+use App\Modules\Identity\Enums\TenantRevoker;
+use App\Modules\Identity\PublicApi\TenantInvitations;
+use App\Modules\Parties\Events\PartyAnonymized;
 use App\Modules\Parties\Models\BankAccount;
 use App\Modules\Parties\Models\ContactPoint;
+use App\Modules\Parties\Models\ContactUpdateRequest;
 use App\Modules\Parties\Models\Party;
 use App\Modules\Parties\Models\PartyIdentifier;
 use App\Shared\Audit\RecordAudit;
@@ -15,7 +20,11 @@ final readonly class AnonymizeParty
 {
     public const LIBELLE = 'Contact anonymisé';
 
-    public function __construct(private RecordAudit $audit) {}
+    public function __construct(
+        private RecordAudit $audit,
+        private TenantInvitations $invitations,
+        private RevokeOwnerAccessesOfParties $accesProprietaire,
+    ) {}
 
     /**
      * Efface les données personnelles sans supprimer aucune ligne : les pièces émises gardent leur instantané (ADR 0022).
@@ -39,6 +48,7 @@ final readonly class AnonymizeParty
                 'company_name' => null,
                 'birth_date' => null,
                 'address' => null,
+                'note' => null,
                 'user_id' => null,
                 'custom_fields' => [],
                 'lock_version' => $partie->lock_version + 1,
@@ -60,7 +70,11 @@ final readonly class AnonymizeParty
                 ])->save();
             }
 
+            ContactUpdateRequest::query()->where('party_id', $partie->id)->delete();
+            $this->invitations->revokeForParty($partie->id, TenantRevoker::System, null);
+            $this->accesProprietaire->handle([$partie->id], OwnerRevoker::System, null);
             $this->audit->handle('parties.party.anonymized', subject: $partie, metadata: ['reason' => $motif]);
+            PartyAnonymized::dispatch($partie->id, $partie->organization_id);
 
             return $partie;
         });

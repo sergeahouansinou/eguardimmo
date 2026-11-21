@@ -66,10 +66,13 @@ it('borne l\'occupation au départ annoncé quand il précède la fin', function
         ->and(($this->actifs)('2027-04-01', '2027-04-30'))->toBe([]);
 });
 
-it('garde un bail archivé dans les baux actifs de la facturation', function (): void {
-    $bail = R::bailSigne($this->org, ['starts_on' => '2026-01-01', 'ends_on' => '2029-01-01', 'archived_at' => now()]);
+it('exclut un bail archivé des baux actifs de la facturation, tout en gardant son lot occupé', function (): void {
+    $archive = R::bailSigne($this->org, ['starts_on' => '2026-01-01', 'ends_on' => '2029-01-01', 'archived_at' => now()]);
+    R::occuper($this->org, $archive, $this->lot, ['valid_from' => '2026-01-01']);
+    $actif = R::bailSigne($this->org, ['starts_on' => '2026-01-01', 'ends_on' => '2029-01-01']);
 
-    expect(($this->actifs)('2026-06-01', '2026-06-30'))->toBe([$bail->id]);
+    expect(($this->actifs)('2026-06-01', '2026-06-30'))->toBe([$actif->id])
+        ->and(($this->occupants)('2026-06-15'))->toBe([$archive->id]);
 });
 
 it('calcule la fin effective comme le plus tôt de la fin du bail et du départ annoncé', function (?string $fin, ?string $depart, ?string $attendu): void {

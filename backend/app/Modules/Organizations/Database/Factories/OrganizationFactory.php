@@ -25,6 +25,7 @@ final class OrganizationFactory extends Factory
             'kind' => OrganizationKind::Agency,
             'name' => fake()->company(),
             'country' => 'FR',
+            'timezone' => 'Europe/Paris',
             'two_factor_required' => false,
             'created_by_user_id' => User::factory(),
         ];

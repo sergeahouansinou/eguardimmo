@@ -16,4 +16,10 @@ return [
     'console_relay_key' => env('CONSOLE_RELAY_KEY'),
 
     'reauthentication_minutes' => (int) env('REAUTHENTICATION_MINUTES', 10),
+
+    'owner_invitation_days' => (int) env('OWNER_INVITATION_DAYS', 7),
+
+    'owner_invitation_daily_max' => (int) env('OWNER_INVITATION_DAILY_MAX', 100),
+
+    'tenant_invitation_daily_max' => (int) env('TENANT_INVITATION_DAILY_MAX', 100),
 ];

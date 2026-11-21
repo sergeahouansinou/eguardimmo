@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 function jetonOperateur(User $user): string
 {
-    $user->operator()->create(['granted_at' => now()]);
+    $user->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'admin', 'granted_at' => now()]);
     activerDeuxFacteurs($user);
 
     return $user->createToken('console', ['operator'])->plainTextToken;

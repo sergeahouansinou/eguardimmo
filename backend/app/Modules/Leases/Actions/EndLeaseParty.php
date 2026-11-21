@@ -20,6 +20,7 @@ final readonly class EndLeaseParty
 {
     public function __construct(
         private Leases $baux,
+        private CloseNoticeRequests $demandes,
         private RecordAudit $audit,
     ) {}
 
@@ -56,6 +57,10 @@ final readonly class EndLeaseParty
             $ligne->setAttribute('valid_to', $fin);
             $ligne->save();
 
+            if ($donnees->noticeRequestId !== null && $ligne->role !== LeasePartyRole::Tenant) {
+                throw ErrorCode::NoticeRequestNotFound->problem();
+            }
+
             $bail->lock_version = $bail->lock_version + 1;
             $bail->save();
 
@@ -68,6 +73,8 @@ final readonly class EndLeaseParty
             ]);
 
             if ($ligne->role === LeasePartyRole::Tenant) {
+                $acteur = is_string(auth()->id()) ? auth()->id() : null;
+                $this->demandes->handle($bail->id, $ligne->party_id, $acteur, $donnees->noticeRequestId, true);
                 LeaseTenantLeft::dispatch($bail->id, $bail->organization_id, $ligne->party_id, $fin);
             }
 

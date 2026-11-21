@@ -17,6 +17,7 @@ use App\Modules\Organizations\Models\OrganizationMember;
 use App\Modules\Parties\Models\Party;
 use App\Shared\Tenancy\CurrentOrganization;
 use Closure;
+use Tests\Feature\Owner\OwnerContext;
 
 final class PartiesContext
 {
@@ -68,6 +69,17 @@ final class PartiesContext
     public static function dans(Organization $organisation, Closure $appel): mixed
     {
         return app(CurrentOrganization::class)->run($organisation->id, $appel);
+    }
+
+    /**
+     * Session de navigateur de l'agence avec preuve 2FA fraîche : exigée par les écritures de comptes bancaires.
+     */
+    public static function sessionAgence(mixed $test, User $compte): mixed
+    {
+        config(['sanctum.stateful' => ['agence.eguardimmo.test']]);
+        OwnerContext::preuve($test);
+
+        return OwnerContext::comme($test, $compte)->withHeaders(OwnerContext::ORIGINE);
     }
 
     public static function changerDeCompte(mixed $test, User $compte): mixed

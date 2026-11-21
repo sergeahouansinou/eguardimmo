@@ -13,7 +13,11 @@ use Illuminate\Support\Facades\DB;
 
 final readonly class UpdateSupportTicket
 {
-    public function __construct(private OperatorDirectory $operateurs) {}
+    public function __construct(
+        private OperatorDirectory $operateurs,
+        private MarkSupportTicketRead $lecture,
+        private ExpireSupportAccess $acces,
+    ) {}
 
     public function handle(SupportTicket $ticket, TicketPatchData $modifications): SupportTicket
     {
@@ -21,10 +25,15 @@ final readonly class UpdateSupportTicket
             throw ErrorCode::NotAnOperator->problem();
         }
 
-        return DB::transaction(function () use ($ticket, $modifications): SupportTicket {
+        $change = $modifications->status !== null || $modifications->priority !== null || $modifications->assigneeProvided;
+
+        return DB::transaction(function () use ($ticket, $modifications, $change): SupportTicket {
+            $ticket = SupportTicket::query()->whereKey($ticket->id)->lockForUpdate()->firstOrFail();
+
             if ($modifications->status !== null) {
-                $ticket->status = $modifications->status;
-                $ticket->resolved_at = $modifications->status === TicketStatus::Resolved ? now() : null;
+                $resolue = $modifications->status === TicketStatus::Resolved;
+                $ticket->resolved_at = $resolue ? ($ticket->status === TicketStatus::Resolved ? $ticket->resolved_at : now()) : null;
+                $ticket->moveTo($modifications->status);
             }
 
             if ($modifications->priority !== null) {
@@ -35,8 +44,18 @@ final readonly class UpdateSupportTicket
                 $ticket->assignee_user_id = $modifications->assigneeUserId;
             }
 
-            $ticket->last_activity_at = now();
-            $ticket->save();
+            if ($change) {
+                $ticket->last_activity_at = now();
+                $ticket->save();
+            }
+
+            if ($ticket->status === TicketStatus::Resolved) {
+                $this->acces->handle($ticket->id);
+            }
+
+            if ($modifications->read) {
+                $this->lecture->handle($ticket, parLeSupport: true);
+            }
 
             return $ticket;
         });

@@ -50,7 +50,7 @@ final class SupportTickets
     }
 
     /**
-     * @return array{open: int, open_high: int, waiting: int, resolved_30d: int, first_response_minutes: int|null}
+     * @return array{open: int, open_high: int, waiting: int, resolved_30d: int, first_response_minutes: int|null, first_response_overdue: int}
      */
     public function stats(): array
     {
@@ -66,6 +66,12 @@ final class SupportTickets
             'waiting' => SupportTicket::query()->where('status', TicketStatus::Waiting)->count(),
             'resolved_30d' => SupportTicket::query()->where('status', TicketStatus::Resolved)->where('resolved_at', '>=', now()->subDays(30))->count(),
             'first_response_minutes' => $delais->isEmpty() ? null : (int) round((float) $delais->median()),
+            'first_response_overdue' => SupportTicket::query()
+                ->whereNull('first_response_at')
+                ->where('status', '!=', TicketStatus::Resolved)
+                ->get(['created_at'])
+                ->filter(fn (SupportTicket $ticket): bool => $ticket->created_at->copy()->addWeekdays(1)->isPast())
+                ->count(),
         ];
     }
 
@@ -78,6 +84,14 @@ final class SupportTickets
 
         if ($filtres->priority !== null) {
             $requete->where('priority', $filtres->priority);
+        }
+
+        if ($filtres->space !== null) {
+            $requete->where('space', $filtres->space);
+        }
+
+        if ($filtres->organizationId !== null) {
+            $requete->where('organization_id', $filtres->organizationId);
         }
 
         if ($filtres->unassigned) {

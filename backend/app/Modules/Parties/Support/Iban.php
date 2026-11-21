@@ -6,12 +6,12 @@ namespace App\Modules\Parties\Support;
 
 final class Iban
 {
-    public static function normalize(string $iban): string
+    public static function normalize(#[\SensitiveParameter] string $iban): string
     {
         return strtoupper((string) preg_replace('/[\s-]+/', '', $iban));
     }
 
-    public static function isValid(string $iban): bool
+    public static function isValid(#[\SensitiveParameter] string $iban): bool
     {
         $iban = self::normalize($iban);
 
@@ -34,7 +34,7 @@ final class Iban
         return $reste === 1;
     }
 
-    public static function last4(string $iban): string
+    public static function last4(#[\SensitiveParameter] string $iban): string
     {
         return substr(self::normalize($iban), -4);
     }

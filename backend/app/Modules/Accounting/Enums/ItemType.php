@@ -8,4 +8,6 @@ enum ItemType: string
 {
     case Installment = 'installment';
     case Invoice = 'invoice';
+    case SupplierInvoice = 'supplier_invoice';
+    case Expense = 'expense';
 }

@@ -33,6 +33,7 @@ final class PartyResource extends JsonResource
             'birth_date' => $partie->birth_date?->toDateString(),
             'address' => $partie->address,
             'language' => $partie->language,
+            'note' => $partie->note,
             'has_account' => $partie->user_id !== null,
             'custom_fields' => (object) $partie->custom_fields,
             'lock_version' => $partie->lock_version,

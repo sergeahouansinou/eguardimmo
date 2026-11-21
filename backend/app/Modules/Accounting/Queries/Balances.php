@@ -23,35 +23,112 @@ final class Balances
 {
     public const RELEVE_LIGNES_MAX = 1000;
 
+    private const array CREANCES = [AccountRole::TenantReceivable, AccountRole::CustomerReceivable];
+
     public function account(AccountRole $role, Currency $currency, ?CarbonImmutable $asOf): Money
     {
-        return $this->solde($this->lignes($role, $currency), $currency, $role->normalSide(), $asOf);
+        return $this->solde($this->lignes($currency, $role), $currency, $role->normalSide(), $asOf);
     }
 
     public function receivable(string $colonne, string $valeur, Currency $currency, ?CarbonImmutable $asOf): Money
     {
         $role = AccountRole::TenantReceivable;
 
-        return $this->solde($this->lignes($role, $currency)->where("journal_lines.{$colonne}", $valeur), $currency, $role->normalSide(), $asOf);
+        return $this->solde($this->lignes($currency, $role)->where("journal_lines.{$colonne}", $valeur), $currency, $role->normalSide(), $asOf);
     }
 
     public function item(ItemType $type, string $id, Currency $currency, ?CarbonImmutable $asOf): Money
     {
-        $role = AccountRole::TenantReceivable;
-
         return $this->solde(
-            $this->lignes($role, $currency)->where('journal_lines.item_type', $type->value)->where('journal_lines.item_id', $id),
+            $this->lignes($currency, ...self::CREANCES)->where('journal_lines.item_type', $type->value)->where('journal_lines.item_id', $id),
+            $currency,
+            Side::Debit,
+            $asOf,
+        );
+    }
+
+    /**
+     * Solde d'un compte pour une pièce précise (facture reçue d'un prestataire), dans le sens normal du compte.
+     */
+    public function itemOn(AccountRole $role, ItemType $type, string $id, Currency $currency, ?CarbonImmutable $asOf): Money
+    {
+        return $this->solde(
+            $this->lignes($currency, $role)->where('journal_lines.item_type', $type->value)->where('journal_lines.item_id', $id),
             $currency,
             $role->normalSide(),
             $asOf,
         );
     }
 
+    /**
+     * Solde d'un compte sur les lignes d'un bail (dépôt de garantie).
+     */
+    public function accountOnLease(AccountRole $role, string $leaseId, Currency $currency, ?CarbonImmutable $asOf): Money
+    {
+        return $this->solde($this->lignes($currency, $role)->where('journal_lines.lease_id', $leaseId), $currency, $role->normalSide(), $asOf);
+    }
+
+    public function accountOnParty(AccountRole $role, string $partyId, Currency $currency, ?CarbonImmutable $asOf): Money
+    {
+        return $this->solde($this->lignes($currency, $role)->where('journal_lines.party_id', $partyId), $currency, $role->normalSide(), $asOf);
+    }
+
+    /**
+     * TVA encore différée d'une créance : crédit moins débit des lignes `VatDeferred` qui la référencent.
+     */
+    public function deferredVat(ItemType $type, string $id, Currency $currency, ?CarbonImmutable $asOf): Money
+    {
+        $role = AccountRole::VatDeferred;
+
+        return $this->solde(
+            $this->lignes($currency, $role)->where('journal_lines.item_type', $type->value)->where('journal_lines.item_id', $id),
+            $currency,
+            $role->normalSide(),
+            $asOf,
+        );
+    }
+
+    /**
+     * Reste dû de plusieurs créances d'un même type en une requête ; une créance sans écriture vaut zéro.
+     *
+     * @param  list<string>  $ids
+     * @return array<string, Money> par identifiant de créance
+     */
+    public function items(ItemType $type, array $ids, Currency $currency, ?CarbonImmutable $asOf): array
+    {
+        $soldes = [];
+
+        foreach ($ids as $id) {
+            $soldes[$id] = new Money(0, $currency);
+        }
+
+        foreach (array_chunk(array_values(array_unique($ids)), 500) as $lot) {
+            $lignes = $this->lignes($currency, ...self::CREANCES)
+                ->where('journal_lines.item_type', $type->value)
+                ->whereIn('journal_lines.item_id', $lot);
+
+            if ($asOf !== null) {
+                $lignes->where('journal_entries.entry_date', '<', $asOf->addDay()->format('Y-m-d'));
+            }
+
+            $lues = $lignes
+                ->selectRaw('journal_lines.item_id as item_id, coalesce(sum(journal_lines.debit), 0) as debit, coalesce(sum(journal_lines.credit), 0) as credit')
+                ->groupBy('journal_lines.item_id')
+                ->toBase()->get();
+
+            foreach ($lues as $ligne) {
+                $soldes[(string) $ligne->item_id] = MoneyColumns::money($ligne->debit, $currency)->subtract(MoneyColumns::money($ligne->credit, $currency));
+            }
+        }
+
+        return $soldes;
+    }
+
     public function statement(string $leaseId, Currency $currency, CarbonImmutable $from, CarbonImmutable $to): LeaseStatementData
     {
         $role = AccountRole::TenantReceivable;
         $ouverture = $this->solde(
-            $this->lignes($role, $currency)->where('journal_lines.lease_id', $leaseId),
+            $this->lignes($currency, $role)->where('journal_lines.lease_id', $leaseId),
             $currency,
             $role->normalSide(),
             null,
@@ -61,7 +138,7 @@ final class Balances
         $lignes = [];
         $courant = $ouverture;
 
-        $rows = $this->lignes($role, $currency)
+        $rows = $this->lignes($currency, $role)
             ->where('journal_lines.lease_id', $leaseId)
             ->where('journal_entries.entry_date', '>=', $from->format('Y-m-d'))
             ->where('journal_entries.entry_date', '<', $to->addDay()->format('Y-m-d'))
@@ -100,14 +177,14 @@ final class Balances
     /**
      * @return Builder<JournalLine>
      */
-    private function lignes(AccountRole $role, Currency $currency): Builder
+    private function lignes(Currency $currency, AccountRole ...$roles): Builder
     {
         return JournalLine::query()
             ->join('journal_entries', function ($jointure): void {
                 $jointure->on('journal_entries.id', '=', 'journal_lines.journal_entry_id')
                     ->on('journal_entries.organization_id', '=', 'journal_lines.organization_id');
             })
-            ->whereIn('journal_lines.account_id', Account::query()->where('role', $role->value)->select('id'))
+            ->whereIn('journal_lines.account_id', Account::query()->whereIn('role', array_map(fn (AccountRole $role): string => $role->value, $roles))->select('id'))
             ->where('journal_lines.currency', $currency->getCode());
     }
 

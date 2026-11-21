@@ -87,6 +87,7 @@ final readonly class LeaseSummaries
 
         return array_values(Lease::query()
             ->tap(fn (Builder $q) => LeaseOccupancy::between($q, $debut, $to->toDateString()))
+            ->whereNull('archived_at')
             ->when($afterId !== null, fn (Builder $q) => $q->where('id', '>', (string) $afterId))
             ->orderBy('id')
             ->limit(max(1, min($limit, self::MAX_PAGE)))
@@ -159,6 +160,7 @@ final readonly class LeaseSummaries
             startsOn: $bail->starts_on->toDateString(),
             endsOn: $bail->ends_on?->toDateString(),
             noticeDepartureOn: $bail->notice_departure_on?->toDateString(),
+            noticeReceivedOn: $bail->notice_received_on?->toDateString(),
             signedOn: $bail->signed_on?->toDateString(),
             dueDay: $bail->due_day,
             periodicity: $bail->periodicity,

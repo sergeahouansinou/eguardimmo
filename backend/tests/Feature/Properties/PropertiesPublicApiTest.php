@@ -12,6 +12,7 @@ use App\Modules\Properties\PublicApi\UnitDirectory;
 use App\Modules\Properties\Queries\UnitDetails;
 use App\Shared\Http\ApiProblem;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\Feature\Properties\PropertiesContext as C;
 
 beforeEach(function (): void {
@@ -140,4 +141,16 @@ it('résout les types d\'une liste de lots sans requête par ligne', function ()
 
     expect($detail([$lots[0]]))->toBe($detail($lots))
         ->and(array_keys(C::dans($this->org, fn () => app(UnitDetails::class)->typesOf($lots))))->toHaveCount(3);
+});
+
+it('liste les lots d\'un bien par référence, jamais ceux d\'un autre bien, et refuse un bien inconnu', function (): void {
+    $autreSite = C::site($this->org, ['name' => 'Résidence du Parc']);
+    $b = C::lot($this->org, $this->site, 'apartment', ['reference' => 'A-102']);
+    $etranger = C::lot($this->org, $autreSite, 'apartment', ['reference' => 'P-001']);
+
+    $lots = C::dans($this->org, fn (): array => app(UnitDirectory::class)->ofProperty($this->site->id));
+
+    expect(array_map(fn (UnitData $l): string => $l->id, $lots))->toBe([$this->lot->id, $b->id])->and(array_map(fn (UnitData $l): string => $l->id, $lots))->not->toContain($etranger->id)
+        ->and(propertiesCode(fn () => C::dans($this->org, fn () => app(UnitDirectory::class)->ofProperty((string) Str::uuid7()))))->toBe('property_not_found')
+        ->and(propertiesCode(fn () => C::dans($this->org, fn () => app(UnitDirectory::class)->ofProperty('pas-un-uuid'))))->toBe('property_not_found');
 });

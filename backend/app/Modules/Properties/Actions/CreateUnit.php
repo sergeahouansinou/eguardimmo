@@ -15,6 +15,9 @@ use App\Modules\Properties\Models\Unit;
 use App\Modules\Properties\Queries\Properties;
 use App\Modules\Properties\Support\UnitCharacteristics;
 use App\Modules\Properties\Support\UnitPlacement;
+use App\Modules\Subscriptions\Enums\Feature;
+use App\Modules\Subscriptions\PublicApi\Entitlements;
+use App\Shared\Tenancy\CurrentOrganization;
 use Illuminate\Support\Facades\DB;
 
 final readonly class CreateUnit
@@ -25,11 +28,14 @@ final readonly class CreateUnit
         private CustomFieldValidator $champs,
         private UnitPlacement $placement,
         private SyncTags $etiquettes,
+        private Entitlements $droits,
+        private CurrentOrganization $organisation,
     ) {}
 
     public function handle(NewUnitData $donnees): Unit
     {
         return DB::transaction(function () use ($donnees): Unit {
+            $this->droits->assertWithin($this->organisation->id(), Feature::Properties, fn (): int => Unit::query()->whereNull('archived_at')->count());
             $site = $this->properties->locked($donnees->propertyId);
 
             if ($site->archived_at !== null) {

@@ -62,7 +62,7 @@ final readonly class UpdateParty
                 'lock_version' => $partie->lock_version + 1,
             ]);
 
-            foreach (['address', 'language'] as $champ) {
+            foreach (['address', 'language', 'note'] as $champ) {
                 if (array_key_exists($champ, $changements->fields)) {
                     $partie->setAttribute($champ, $changements->fields[$champ] === [] ? null : $changements->fields[$champ]);
                 }

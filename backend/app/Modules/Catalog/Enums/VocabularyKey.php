@@ -14,6 +14,11 @@ enum VocabularyKey: string
     case LeaseComponent = 'lease_component';
     case CertificateType = 'certificate_type';
     case ExpenseCategory = 'expense_category';
+    case MandateType = 'mandate_type';
+    case InvoiceItem = 'invoice_item';
+    case TaxRate = 'tax_rate';
+    case InterventionNature = 'intervention_nature';
+    case ChargeRubric = 'charge_rubric';
 
     public function title(): string
     {
@@ -24,12 +29,25 @@ enum VocabularyKey: string
             self::LeaseComponent => 'Composantes du loyer',
             self::CertificateType => 'Types de pièces à échéance',
             self::ExpenseCategory => 'Catégories de dépenses',
+            self::MandateType => 'Types de mandats',
+            self::InvoiceItem => 'Natures de lignes de facture',
+            self::TaxRate => 'Taux de taxe',
+            self::InterventionNature => 'Natures d\'intervention',
+            self::ChargeRubric => 'Rubriques de charges récupérables',
         };
     }
 
     public function extensible(): bool
     {
-        return $this !== self::LegalForm;
+        return $this !== self::LegalForm && $this !== self::TaxRate && $this !== self::ChargeRubric;
+    }
+
+    /**
+     * Un taux de taxe et une rubrique de charges sont des données légales : l'organisation ne les renomme ni ne les masque.
+     */
+    public function overridable(): bool
+    {
+        return $this !== self::TaxRate && $this !== self::ChargeRubric;
     }
 
     public function hierarchical(): bool
@@ -49,6 +67,11 @@ enum VocabularyKey: string
             self::LeaseComponent => LeaseComponentSemantic::cases(),
             self::CertificateType => CertificateTypeSemantic::cases(),
             self::ExpenseCategory => ExpenseCategorySemantic::cases(),
+            self::MandateType => MandateTypeSemantic::cases(),
+            self::InvoiceItem => InvoiceItemSemantic::cases(),
+            self::TaxRate => [],
+            self::InterventionNature => InterventionNatureSemantic::cases(),
+            self::ChargeRubric => [],
         };
 
         return array_map(fn (\BackedEnum $sens): string => (string) $sens->value, $cas);
@@ -68,6 +91,21 @@ enum VocabularyKey: string
     {
         return match ($this) {
             self::LegalForm => ['country' => ['nullable', 'string', 'regex:/^[A-Z]{2}$/']],
+            self::TaxRate => [
+                'country' => ['required', 'string', 'regex:/^[A-Z]{2}$/'],
+                'tax_code' => ['required', 'string', 'in:vat,gst,qst'],
+                'category' => ['required', 'string', 'in:S,Z,E,AE,O'],
+                'rate_pcm' => ['required', 'integer', 'min:0', 'max:100000'],
+                'effective_from' => ['required', 'date_format:Y-m-d'],
+                'effective_to' => ['nullable', 'date_format:Y-m-d'],
+            ],
+            self::InterventionNature => [
+                'tenant_chargeable' => ['nullable', 'boolean'],
+                'insurance_required' => ['nullable', 'boolean'],
+                'default_responsibility' => ['nullable', 'string', 'in:owner,tenant,shared,undetermined'],
+                'expense_semantic' => ['nullable', 'string', 'in:'.implode(',', array_map(fn (ExpenseCategorySemantic $sens): string => $sens->value, ExpenseCategorySemantic::cases()))],
+            ],
+            self::ExpenseCategory => ['recoverable_by_default' => ['nullable', 'boolean']],
             self::CertificateType => [
                 'default_validity_months' => ['nullable', 'integer', 'min:1', 'max:600'],
                 'reminder_days' => ['nullable', 'integer', 'min:0', 'max:730'],

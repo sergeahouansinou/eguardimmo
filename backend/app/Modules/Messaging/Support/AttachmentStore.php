@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Messaging\Support;
 
+use App\Modules\Documents\PublicApi\ImageScrubber;
 use Closure;
 use finfo;
 use Illuminate\Http\UploadedFile;
@@ -58,14 +59,32 @@ final class AttachmentStore
         $type = self::typeReel($fichier) ?? throw new InvalidArgumentException('Type de fichier non validé.');
         $chemin = $dossier.'/'.Str::uuid7()->toString().'.'.self::TYPES[$type];
 
-        Storage::disk(self::DISQUE)->putFileAs($dossier, $fichier, basename($chemin));
+        $nettoyeur = app(ImageScrubber::class);
+        $nettoye = $nettoyeur->applies($type) ? $nettoyeur->clean((string) $fichier->getRealPath(), $type) : null;
+
+        if ($nettoye === null) {
+            Storage::disk(self::DISQUE)->putFileAs($dossier, $fichier, basename($chemin));
+        } else {
+            try {
+                $flux = fopen($nettoye, 'rb');
+                Storage::disk(self::DISQUE)->put($chemin, $flux === false ? '' : $flux);
+            } finally {
+                @unlink($nettoye);
+            }
+        }
 
         return [
-            'original_name' => Str::limit(self::nomLisible($fichier->getClientOriginalName()), 250, ''),
+            'original_name' => self::displayName($fichier),
             'mime_type' => $type,
+            // Taille reçue, non celle du fichier réencodé : PostSupportMessage::matches() s'en sert pour reconnaître un rejeu.
             'size_bytes' => (int) $fichier->getSize(),
             'path' => $chemin,
         ];
+    }
+
+    public static function displayName(UploadedFile $fichier): string
+    {
+        return Str::limit(self::nomLisible($fichier->getClientOriginalName()), 250, '');
     }
 
     private static function nomLisible(string $nom): string

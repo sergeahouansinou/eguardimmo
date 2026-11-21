@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Modules\Identity\Models\PersonalAccessToken;
 use App\Modules\Identity\Models\User;
 use Firebase\JWT\JWT;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Fortify\Fortify;
 use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
@@ -77,4 +79,33 @@ function idTokenApple(OpenSSLAsymmetricKey $cle, array $surcharges = []): string
         'name' => null,
         'nonce' => hash('sha256', NONCE_MOBILE),
     ], $surcharges));
+}
+
+/**
+ * Preuve de double authentification d'une écriture console : le code courant, avec l'anti-rejeu vidé pour qu'un test enchaîne plusieurs écritures.
+ *
+ * @return array{two_factor_code: string}
+ */
+function preuveConsole(string $jeton): array
+{
+    $user = PersonalAccessToken::findToken($jeton)?->tokenable;
+
+    if (! $user instanceof User) {
+        throw new RuntimeException('Jeton console inconnu.');
+    }
+
+    $code = codeTotp((string) Fortify::currentEncrypter()->decrypt((string) $user->two_factor_secret));
+    Cache::forget('identity:totp-utilise:'.$user->id.':'.hash('sha256', $code));
+    Cache::forget('fortify.2fa_codes.'.md5($code));
+
+    return ['two_factor_code' => $code];
+}
+
+/**
+ * @param  array<string, mixed>  $corps
+ * @return array<string, mixed>
+ */
+function avecPreuve(string $jeton, array $corps = []): array
+{
+    return [...$corps, ...preuveConsole($jeton)];
 }

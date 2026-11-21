@@ -17,6 +17,25 @@ final class FileNames
         return Str::limit($propre === '' ? 'document' : $propre, 250, '');
     }
 
+    /**
+     * Nom affiché dont l'extension suit le type détecté : un PDF envoyé sous le nom `x.html` ressort `x.pdf`.
+     *
+     * @param  list<string>  $extensions  extensions admises pour le type détecté, la première sert au remplacement
+     */
+    public static function aligned(string $nom, array $extensions): string
+    {
+        $propre = self::display($nom);
+        $extension = mb_strtolower(pathinfo($propre, PATHINFO_EXTENSION));
+
+        if (in_array($extension, $extensions, true)) {
+            return $propre;
+        }
+
+        $racine = $extension === '' || str_ends_with($propre, '.') ? rtrim($propre, '.') : substr($propre, 0, -(strlen($extension) + 1));
+
+        return Str::limit($racine === '' ? 'document' : $racine, 250 - strlen($extensions[0]) - 1, '').'.'.$extensions[0];
+    }
+
     public static function archiveEntry(string $nom): string
     {
         $nom = mb_scrub($nom, 'UTF-8');

@@ -17,11 +17,12 @@ final class LedgerAnomalies
     /**
      * @return list<LedgerAnomalyData>
      */
-    public function find(): array
+    public function find(?string $organizationId = null): array
     {
         $anomalies = [];
 
         $desequilibrees = DB::table('journal_lines')
+            ->when($organizationId !== null, fn (Builder $q): Builder => $q->where('organization_id', $organizationId))
             ->select('organization_id', 'journal_entry_id', 'currency')
             ->selectRaw('sum(debit) as total_debit, sum(credit) as total_credit')
             ->groupBy('organization_id', 'journal_entry_id', 'currency')
@@ -34,6 +35,7 @@ final class LedgerAnomalies
         }
 
         $incompletes = DB::table('journal_entries as e')
+            ->when($organizationId !== null, fn (Builder $q): Builder => $q->where('e.organization_id', $organizationId))
             ->leftJoin('journal_lines as l', 'l.journal_entry_id', '=', 'e.id')
             ->select('e.organization_id', 'e.id')
             ->selectRaw('count(l.id) as lignes')
@@ -47,6 +49,7 @@ final class LedgerAnomalies
         }
 
         $invalides = DB::table('journal_lines')
+            ->when($organizationId !== null, fn (Builder $q): Builder => $q->where('organization_id', $organizationId))
             ->select('organization_id', 'journal_entry_id', 'id')
             ->where(fn (Builder $q): Builder => $q->where(fn (Builder $s): Builder => $s->where('debit', '>', 0)->where('credit', '>', 0))
                 ->orWhere(fn (Builder $s): Builder => $s->where('debit', 0)->where('credit', 0)))
@@ -58,6 +61,7 @@ final class LedgerAnomalies
         }
 
         $trous = DB::table('journal_entries')
+            ->when($organizationId !== null, fn (Builder $q): Builder => $q->where('organization_id', $organizationId))
             ->select('organization_id', 'fiscal_year')
             ->selectRaw('count(*) as total, max(number) as dernier, min(number) as premier')
             ->groupBy('organization_id', 'fiscal_year')

@@ -7,6 +7,7 @@ namespace App\Modules\Identity\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -20,6 +21,8 @@ final class Operator extends Model
 {
     use HasUuids;
 
+    protected $dateFormat = 'Y-m-d H:i:s.u';
+
     protected $guarded = ['id'];
 
     /**
@@ -28,6 +31,14 @@ final class Operator extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return HasMany<OperatorRoleAssignment, $this>
+     */
+    public function roles(): HasMany
+    {
+        return $this->hasMany(OperatorRoleAssignment::class);
     }
 
     protected function casts(): array

@@ -34,4 +34,15 @@ final readonly class LeaseParticipants
     {
         return $this->lignes->tenantsAt($leaseId, $date);
     }
+
+    /**
+     * Comme tenantsAt() pour plusieurs baux en une requête ; un bail inconnu ou d'une autre organisation est absent du résultat.
+     *
+     * @param  list<string>  $leaseIds
+     * @return array<string, list<LeasePartyData>> par identifiant de bail
+     */
+    public function tenantsAtMany(array $leaseIds, CarbonImmutable $date): array
+    {
+        return $this->lignes->tenantsAtMany($leaseIds, $date);
+    }
 }

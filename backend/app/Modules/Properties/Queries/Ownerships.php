@@ -51,6 +51,26 @@ final readonly class Ownerships
     }
 
     /**
+     * @param  list<string>  $unitIds
+     * @return array<string, list<OwnerShareData>> par lot ; un lot sans droit en vigueur est absent
+     */
+    public function ownersAtMany(array $unitIds, DateTimeInterface $date): array
+    {
+        $parts = [];
+
+        foreach (array_chunk(array_values(array_unique($unitIds)), 500) as $lot) {
+            $lignes = UnitOwnership::query()->whereIn('unit_id', $lot);
+            $this->inForceOn($lignes, $date->format('Y-m-d'));
+
+            foreach ($lignes->orderByDesc('valid_from')->orderBy('nature')->orderBy('id')->get() as $ligne) {
+                $parts[$ligne->unit_id][] = new OwnerShareData($ligne->party_id, $ligne->share_bp, $ligne->nature, $ligne->valid_from->toDateString(), $ligne->valid_to?->toDateString());
+            }
+        }
+
+        return $parts;
+    }
+
+    /**
      * @return list<OwnerShareData>
      */
     public function ownersAt(string $unitId, DateTimeInterface $date): array

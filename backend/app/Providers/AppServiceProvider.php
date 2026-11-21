@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Shared\Approval\ApprovalHandlers;
 use App\Shared\Tenancy\CurrentOrganization;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -18,6 +19,7 @@ final class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->scoped(CurrentOrganization::class);
+        $this->app->singleton(ApprovalHandlers::class);
     }
 
     public function boot(): void

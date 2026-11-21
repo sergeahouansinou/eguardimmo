@@ -46,7 +46,9 @@ it('déclare les référentiels et liste les valeurs de la plateforme par positi
 
     $this->getJson(C::url($this->org, '/vocabularies'))
         ->assertOk()
-        ->assertJsonCount(6, 'data')
+        ->assertJsonCount(11, 'data')
+        ->assertJsonFragment(['key' => 'charge_rubric', 'extensible' => false, 'hierarchical' => false, 'semantic_required' => false])
+        ->assertJsonFragment(['key' => 'intervention_nature', 'extensible' => true, 'hierarchical' => false])
         ->assertJsonFragment(['key' => 'legal_form', 'extensible' => false, 'hierarchical' => false])
         ->assertJsonFragment(['key' => 'expense_category', 'extensible' => true, 'hierarchical' => true, 'semantic_required' => true]);
 

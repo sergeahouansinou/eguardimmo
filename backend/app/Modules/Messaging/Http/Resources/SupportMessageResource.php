@@ -14,16 +14,26 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 final class SupportMessageResource extends JsonResource
 {
+    public function __construct(SupportTicketMessage $resource, private readonly bool $vueSupport)
+    {
+        parent::__construct($resource);
+    }
+
     /**
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
     {
         $message = $this->resource;
+        $anonyme = ! $this->vueSupport && $message->from_support;
 
         return [
             'id' => $message->id,
-            'author' => ['id' => $message->author_user_id, 'name' => $message->author->name, 'support' => $message->from_support],
+            'author' => [
+                'id' => $anonyme ? null : $message->author_user_id,
+                'name' => $anonyme ? TicketSummaryResource::LIBELLE_SUPPORT : $message->author->name,
+                'support' => $message->from_support,
+            ],
             'body' => $message->body,
             'internal' => $message->internal,
             'sent_at' => $message->sent_at->toIso8601String(),

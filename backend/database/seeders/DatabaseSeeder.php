@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use App\Modules\Catalog\PublicApi\PlatformCatalog;
 use App\Modules\Identity\Models\User;
+use App\Modules\Subscriptions\PublicApi\PlanCatalog;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -16,6 +17,7 @@ final class DatabaseSeeder extends Seeder
     public function run(): void
     {
         app(PlatformCatalog::class)->seed();
+        app(PlanCatalog::class)->seed();
 
         if (! app()->environment('local', 'testing')) {
             return;

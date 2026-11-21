@@ -13,6 +13,8 @@ final readonly class NewPartyData
      * @param  array<string, mixed>  $customFields
      * @param  list<string>  $categoryIds
      * @param  list<string>  $tagIds
+     * @param  list<NewContactPointData>  $contactPoints
+     * @param  list<NewIdentifierData>  $identifiers
      */
     public function __construct(
         public PartyKind $kind,
@@ -26,5 +28,9 @@ final readonly class NewPartyData
         public array $customFields,
         public array $categoryIds,
         public array $tagIds,
+        public ?string $note = null,
+        public array $contactPoints = [],
+        public array $identifiers = [],
+        public bool $allowDuplicate = false,
     ) {}
 }

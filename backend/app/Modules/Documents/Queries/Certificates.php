@@ -40,6 +40,14 @@ final readonly class Certificates
             $this->filterByState($requete, $filtres->state);
         }
 
+        if ($filtres->expiresFrom !== null) {
+            $requete->where('expires_on', '>=', $filtres->expiresFrom);
+        }
+
+        if ($filtres->expiresTo !== null) {
+            $requete->where('expires_on', '<', $filtres->expiresTo);
+        }
+
         return $requete->cursorPaginate($parPage);
     }
 

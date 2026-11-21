@@ -21,6 +21,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 final readonly class EnterOrganization
 {
+    /**
+     * Une organisation suspendue garde ses lectures ; seules l'accès de support (révoquer) et les demandes RGPD (traiter) restent possibles.
+     */
+    private const PREFIXES_ECRITURE_AUTORISEE = ['messaging.support_access.', 'privacy.org.'];
+
     public function __construct(
         private Memberships $adhesions,
         private CurrentOrganization $contexte,
@@ -62,10 +67,31 @@ final readonly class EnterOrganization
             throw ErrorCode::RoleForbidden->problem();
         }
 
+        if ($organisation->isSuspended() && ! $this->estAutorisee($request, $route)) {
+            throw ErrorCode::OrganizationSuspended->problem();
+        }
+
         $this->contexte->set($organisation->id);
         OrganizationContext::store($request, $organisation, $membre);
         $route->forgetParameter('organization');
 
         return $next($request);
+    }
+
+    private function estAutorisee(Request $request, Route $route): bool
+    {
+        if ($request->isMethodSafe()) {
+            return true;
+        }
+
+        $nom = (string) $route->getName();
+
+        foreach (self::PREFIXES_ECRITURE_AUTORISEE as $prefixe) {
+            if (str_starts_with($nom, $prefixe)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

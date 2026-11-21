@@ -6,6 +6,7 @@ namespace App\Modules\Catalog\Actions;
 
 use App\Modules\Catalog\Data\TermData;
 use App\Modules\Catalog\Enums\ErrorCode;
+use App\Modules\Catalog\Enums\VocabularyKey;
 use App\Modules\Catalog\Models\Term;
 use App\Modules\Catalog\Models\TermOverride;
 use App\Modules\Catalog\Queries\VisibleTerms;
@@ -25,6 +26,10 @@ final readonly class OverrideTerm
     {
         if (! $valeur->isPlatform()) {
             throw ErrorCode::TermNotPlatform->problem();
+        }
+
+        if (VocabularyKey::tryFrom($valeur->vocabulary)?->overridable() === false) {
+            throw ErrorCode::VocabularyClosed->problem();
         }
 
         return ConcurrentWrite::replayOnce(fn (): TermData => DB::transaction(function () use ($valeur, $labels, $hidden, $position): TermData {

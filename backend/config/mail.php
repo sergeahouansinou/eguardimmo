@@ -51,6 +51,25 @@ return [
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
+        // Mailtrap, flux transactionnel (notifications) puis flux Bulk (diffusions) : deux sous-domaines d'envoi, ADR 0033 décision 13.
+        'mailtrap_transactional' => [
+            'transport' => 'smtp',
+            'host' => env('MAILTRAP_TRANSACTIONAL_HOST', 'live.smtp.mailtrap.io'),
+            'port' => env('MAILTRAP_TRANSACTIONAL_PORT', 587),
+            'username' => env('MAILTRAP_TRANSACTIONAL_USERNAME', 'api'),
+            'password' => env('MAILTRAP_TRANSACTIONAL_PASSWORD'),
+            'timeout' => 15,
+            'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+        ],
+        'mailtrap_bulk' => [
+            'transport' => 'smtp',
+            'host' => env('MAILTRAP_BULK_HOST', 'bulk.smtp.mailtrap.io'),
+            'port' => env('MAILTRAP_BULK_PORT', 587),
+            'username' => env('MAILTRAP_BULK_USERNAME', 'api'),
+            'password' => env('MAILTRAP_BULK_PASSWORD'),
+            'timeout' => 15,
+            'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+        ],
         'ses' => [
             'transport' => 'ses',
         ],

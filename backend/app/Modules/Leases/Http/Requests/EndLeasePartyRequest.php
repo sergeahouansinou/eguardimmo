@@ -22,6 +22,7 @@ final class EndLeasePartyRequest extends FormRequest
         return [
             'lock_version' => ['required', 'integer', 'min:1'],
             'valid_to' => ['required', 'date_format:Y-m-d', 'after_or_equal:2000-01-01', 'before_or_equal:2100-12-31'],
+            'notice_request_id' => ['sometimes', 'nullable', 'uuid'],
         ];
     }
 
@@ -33,6 +34,7 @@ final class EndLeasePartyRequest extends FormRequest
         return new EndLeasePartyData(
             lockVersion: (int) $v['lock_version'],
             validTo: (string) $v['valid_to'],
+            noticeRequestId: isset($v['notice_request_id']) ? (string) $v['notice_request_id'] : null,
         );
     }
 }

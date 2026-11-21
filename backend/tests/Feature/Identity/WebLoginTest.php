@@ -149,7 +149,7 @@ it('ferme la session au-delà de la durée absolue', function (): void {
 
 it('limite la session d\'un opérateur à 60 minutes', function (): void {
     $user = User::factory()->create();
-    $user->operator()->create(['granted_at' => now()]);
+    $user->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'admin', 'granted_at' => now()]);
     $this->postJson('/auth/login', ['email' => $user->email, 'password' => 'password'])->assertOk();
 
     $this->withHeader('Referer', 'http://localhost:3000/')->getJson('/api/v1/me')->assertOk();

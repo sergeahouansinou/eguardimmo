@@ -21,7 +21,7 @@ function verrouiller(string $email): void
 
 it('verrouille la console après des codes TOTP faux répétés, malgré le bon mot de passe', function (): void {
     $user = User::factory()->create(['email' => 'ops@exemple.fr']);
-    $user->operator()->create(['granted_at' => now()]);
+    $user->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'admin', 'granted_at' => now()]);
     $secret = activerDeuxFacteurs($user);
 
     foreach (range(1, AccountLockout::ECHECS_MAX_PAR_HEURE) as $essai) {
@@ -94,7 +94,7 @@ it('ne remet le compteur à zéro qu\'après une connexion complète', function 
 
 it('refuse de rejouer un code TOTP déjà utilisé', function (): void {
     $user = User::factory()->create(['email' => 'ops@exemple.fr']);
-    $user->operator()->create(['granted_at' => now()]);
+    $user->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'admin', 'granted_at' => now()]);
     $code = codeTotp(activerDeuxFacteurs($user));
 
     $this->postJson('/api/v1/console/auth/token', ['email' => 'ops@exemple.fr', 'password' => 'password', 'code' => $code])->assertCreated();

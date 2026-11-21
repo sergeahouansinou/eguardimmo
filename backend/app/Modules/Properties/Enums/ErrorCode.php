@@ -26,6 +26,9 @@ enum ErrorCode: string
     case OwnershipClosed = 'ownership_closed';
     case OwnershipPeriodInvalid = 'ownership_period_invalid';
     case OwnerAnonymized = 'owner_anonymized';
+    case PropertyContactNotFound = 'property_contact_not_found';
+    case PropertyContactExists = 'property_contact_exists';
+    case ContactAnonymized = 'property_contact_party_anonymized';
 
     public function problem(): ApiProblem
     {
@@ -35,7 +38,7 @@ enum ErrorCode: string
     public function status(): int
     {
         return match ($this) {
-            self::PropertyNotFound, self::UnitNotFound, self::OwnershipNotFound => 404,
+            self::PropertyNotFound, self::UnitNotFound, self::OwnershipNotFound, self::PropertyContactNotFound => 404,
             self::UnitParentOtherProperty, self::UnitParentCycle, self::OwnershipPeriodInvalid => 422,
             default => 409,
         };
@@ -62,6 +65,9 @@ enum ErrorCode: string
             self::OwnershipClosed => 'Propriété déjà terminée',
             self::OwnershipPeriodInvalid => 'Période invalide',
             self::OwnerAnonymized => 'Contact anonymisé',
+            self::PropertyContactNotFound => 'Lien de contact introuvable',
+            self::PropertyContactExists => 'Contact déjà rattaché',
+            self::ContactAnonymized => 'Contact anonymisé',
         };
     }
 
@@ -86,6 +92,9 @@ enum ErrorCode: string
             self::OwnershipClosed => 'Cette propriété a déjà une date de fin.',
             self::OwnershipPeriodInvalid => 'La date de fin doit suivre la date de début.',
             self::OwnerAnonymized => 'Un contact anonymisé ne peut plus être déclaré propriétaire.',
+            self::PropertyContactNotFound => 'Ce lien n\'existe pas pour ce site.',
+            self::PropertyContactExists => 'Ce contact est déjà rattaché à ce site ou à ce lot.',
+            self::ContactAnonymized => 'Un contact anonymisé ne peut plus être rattaché à un bien.',
         };
     }
 }

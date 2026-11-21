@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Accounting\Data;
 
 use App\Modules\Accounting\Enums\Journal;
+use App\Modules\Accounting\Enums\OnClosedPeriod;
 use App\Modules\Accounting\Enums\SourceType;
 use Carbon\CarbonImmutable;
 
@@ -21,5 +22,6 @@ final readonly class EntryData
         public string $sourceId,
         public string $idempotencyKey,
         public array $lines,
+        public OnClosedPeriod $onClosedPeriod = OnClosedPeriod::Refuse,
     ) {}
 }

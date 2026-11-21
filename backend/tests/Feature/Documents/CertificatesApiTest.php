@@ -245,3 +245,27 @@ it('refuse un émetteur inconnu ou d\'une autre organisation : 404 party_not_fou
 
     $this->postJson($this->url, ($this->corps)('boiler_service', ['issuer_party_id' => D::partie($this->org)]))->assertCreated();
 });
+
+it('filtre les pièces par échéance sur une période semi-ouverte, sans jamais sortir de l\'organisation', function (): void {
+    $this->actingAs($this->titulaire);
+    $creer = fn (string $echeance): string => $this->postJson($this->url, ($this->corps)('gas', ['expires_on' => $echeance]))->assertCreated()->json('data.id');
+    $a = $creer('2026-07-01');
+    $b = $creer('2026-08-01');
+    $c = $creer('2026-09-01');
+    $ids = fn (string $requete): array => $this->getJson("{$this->url}?{$requete}")->assertOk()->json('data.*.id');
+
+    expect($ids('expires_from=2026-07-01&expires_to=2026-08-01'))->toBe([$a])
+        ->and($ids('expires_from=2026-08-01'))->toEqualCanonicalizing([$b, $c])
+        ->and($ids('expires_to=2026-08-01'))->toBe([$a])
+        ->and($ids('expires_from=2026-07-02&expires_to=2026-07-31'))->toBe([])
+        ->and($ids(''))->toHaveCount(3);
+
+    $autre = D::organisation();
+    D::changerDeCompte($this, D::titulaire($autre));
+    $this->getJson(D::url($autre, '/certificates?expires_from=2026-07-01&expires_to=2026-12-31'))->assertOk()->assertJsonCount(0, 'data');
+
+    D::changerDeCompte($this, $this->titulaire);
+    foreach (['expires_from=2026/07/01', 'expires_from=2026-08-01&expires_to=2026-07-01', 'expires_to=2101-01-01'] as $invalide) {
+        $this->getJson("{$this->url}?{$invalide}")->assertUnprocessable();
+    }
+});

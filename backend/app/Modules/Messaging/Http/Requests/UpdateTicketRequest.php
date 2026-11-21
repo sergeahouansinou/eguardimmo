@@ -23,9 +23,10 @@ final class UpdateTicketRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required_without_all:priority,assignee_id', Rule::enum(TicketStatus::class)],
+            'status' => ['required_without_all:priority,assignee_id,read', Rule::enum(TicketStatus::class)],
             'priority' => ['sometimes', Rule::enum(TicketPriority::class)],
             'assignee_id' => ['sometimes', 'nullable', 'uuid'],
+            'read' => ['sometimes', 'accepted'],
         ];
     }
 
@@ -36,6 +37,7 @@ final class UpdateTicketRequest extends FormRequest
             $this->has('priority') ? TicketPriority::from((string) $this->string('priority')) : null,
             $this->exists('assignee_id'),
             $this->filled('assignee_id') ? strtolower((string) $this->string('assignee_id')) : null,
+            $this->has('read'),
         );
     }
 }

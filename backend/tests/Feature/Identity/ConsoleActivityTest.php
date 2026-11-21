@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Notification;
 beforeEach(function (): void {
     Notification::fake();
     $this->operateur = User::factory()->create(['name' => 'Ops', 'email' => 'ops@exemple.fr']);
-    $this->operateur->operator()->create(['granted_at' => now()]);
+    $this->operateur->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'admin', 'granted_at' => now()]);
     activerDeuxFacteurs($this->operateur);
     $this->jeton = $this->operateur->createToken('console', ['operator'])->plainTextToken;
 });

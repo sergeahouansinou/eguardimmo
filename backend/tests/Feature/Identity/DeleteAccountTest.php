@@ -164,7 +164,7 @@ it('verrouille le compte après des mots de passe erronés répétés, sous la l
 });
 
 it('retire le rôle opérateur et ses jetons', function (): void {
-    $this->user->operator()->create(['granted_at' => now()]);
+    $this->user->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'admin', 'granted_at' => now()]);
 
     supprimer($this, ['password' => MDP_COMPTE])->assertNoContent();
 

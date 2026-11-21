@@ -23,6 +23,7 @@ final class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'email_verified_at' => $this->email_verified_at?->toIso8601String(),
+            'phone' => $this->phone,
             'last_login_at' => $this->last_login_at?->toIso8601String(),
             'previous_login_at' => $this->previous_login_at?->toIso8601String(),
         ];

@@ -15,7 +15,7 @@ final class ListActivityController
     public function __invoke(ListActivityRequest $request, ActivityLog $journal, RecordAudit $audit): AnonymousResourceCollection
     {
         $filtres = $request->toData();
-        $page = $journal->list($filtres);
+        $page = $journal->list($filtres, (string) $request->user()?->getAuthIdentifier());
 
         $audit->handle('console.activity.listed', metadata: $filtres->toAuditMetadata());
 

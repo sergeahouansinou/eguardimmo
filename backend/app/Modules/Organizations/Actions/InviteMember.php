@@ -11,21 +11,32 @@ use App\Modules\Organizations\Enums\OrganizationKind;
 use App\Modules\Organizations\Models\Organization;
 use App\Modules\Organizations\Models\OrganizationMember;
 use App\Modules\Organizations\Notifications\MemberInvitationNotification;
+use App\Modules\Organizations\Support\InvitationLimits;
 use App\Modules\Organizations\Support\InvitationToken;
+use App\Modules\Subscriptions\Enums\Feature;
+use App\Modules\Subscriptions\PublicApi\Entitlements;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 
-final class InviteMember
+final readonly class InviteMember
 {
+    public function __construct(private RefuseUnsupportedScope $refus, private Entitlements $droits, private InvitationLimits $limites) {}
+
     public function handle(Organization $organisation, OrganizationMember $auteur, InvitationData $donnees): OrganizationMember
     {
         if ($organisation->kind === OrganizationKind::Individual) {
             throw ErrorCode::SingleMemberOrganization->problem();
         }
 
+        $this->refus->handle($donnees->scope);
+
         $email = mb_strtolower($donnees->email);
 
-        [$membre, $jeton] = DB::transaction(function () use ($auteur, $donnees, $email): array {
+        $this->limites->beforeInvite($organisation, $email);
+
+        [$membre, $jeton] = DB::transaction(function () use ($organisation, $auteur, $donnees, $email): array {
+            $this->droits->assertWithin($organisation->id, Feature::Users, fn (): int => OrganizationMember::query()->count());
+
             $existant = OrganizationMember::query()->withTrashed()->where('email', $email)->lockForUpdate()->first();
 
             if ($existant !== null && ! $existant->trashed()) {

@@ -23,6 +23,7 @@ final class StoredFileMapper
             $fichier->subject_type !== null && $fichier->subject_id !== null ? new DocumentSubject($fichier->subject_type, $fichier->subject_id) : null,
             $fichier->retention_until === null ? null : CarbonImmutable::instance($fichier->retention_until),
             CarbonImmutable::instance($fichier->created_at),
+            $fichier->scan_status,
         );
     }
 }

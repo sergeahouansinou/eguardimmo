@@ -12,4 +12,5 @@ enum Journal: string
     case Deposits = 'deposits';
     case Recovery = 'recovery';
     case Adjustments = 'adjustments';
+    case Purchases = 'purchases';
 }

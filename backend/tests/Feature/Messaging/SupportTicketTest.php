@@ -7,7 +7,6 @@ use App\Modules\Messaging\Models\SupportTicket;
 use App\Modules\Organizations\Actions\CreateOrganization;
 use App\Modules\Organizations\Data\NewOrganizationData;
 use App\Modules\Organizations\Enums\OrganizationKind;
-use App\Shared\Audit\AuditLog;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -16,7 +15,7 @@ beforeEach(function (): void {
     Notification::fake();
     Storage::fake('local');
     $this->operateur = User::factory()->create(['name' => 'Ops Support']);
-    $this->operateur->operator()->create(['granted_at' => now()]);
+    $this->operateur->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'admin', 'granted_at' => now()]);
     activerDeuxFacteurs($this->operateur);
     $this->jeton = $this->operateur->createToken('console', ['operator'])->plainTextToken;
 });
@@ -24,7 +23,7 @@ beforeEach(function (): void {
 function ouvrirDemande(mixed $test, User $user, array $surcharges = []): string
 {
     return (string) $test->actingAs($user)->post('/api/v1/support/tickets', [
-        'space' => 'tenant',
+        'space' => 'marketplace',
         'category' => 'account',
         'subject' => 'Je ne vois pas ma quittance',
         'body' => 'Bonjour, la quittance de mars est absente.',
@@ -43,7 +42,7 @@ it('ouvre une demande avec pièce jointe, référencée et ouverte', function ()
     $pdf = UploadedFile::fake()->createWithContent('quittance.pdf', "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF");
 
     $reponse = $this->actingAs($user)->post('/api/v1/support/tickets', [
-        'space' => 'tenant', 'category' => 'documents', 'subject' => 'Quittance', 'body' => 'Voir pièce jointe', 'attachments' => [$pdf],
+        'space' => 'marketplace', 'category' => 'documents', 'subject' => 'Quittance', 'body' => 'Voir pièce jointe', 'attachments' => [$pdf],
         'status' => 'resolved', 'priority' => 'high',
     ], ['Accept' => 'application/json'])->assertCreated();
 
@@ -62,7 +61,7 @@ it('refuse une pièce jointe dont le contenu n\'est pas un PDF ou une image', fu
     $faux = UploadedFile::fake()->createWithContent('facture.pdf', '<?php echo "x";');
 
     $this->actingAs(User::factory()->create())->post('/api/v1/support/tickets', [
-        'space' => 'tenant', 'category' => 'documents', 'subject' => 'X', 'body' => 'Y', 'attachments' => [$faux],
+        'space' => 'marketplace', 'category' => 'documents', 'subject' => 'X', 'body' => 'Y', 'attachments' => [$faux],
     ], ['Accept' => 'application/json'])->assertUnprocessable()->assertJsonValidationErrors('attachments.0');
 });
 
@@ -122,16 +121,16 @@ it('traite une demande de bout en bout depuis la console', function (): void {
         ->assertJsonPath('counts.open', 1)
         ->assertJsonPath('meta.total', 1);
 
-    $this->withToken($this->jeton)->patchJson("/api/v1/console/support/tickets/{$id}", ['priority' => 'high', 'assignee_id' => $this->operateur->id])
+    $this->withToken($this->jeton)->patchJson("/api/v1/console/support/tickets/{$id}", avecPreuve($this->jeton, ['priority' => 'high', 'assignee_id' => $this->operateur->id]))
         ->assertOk()->assertJsonPath('data.priority', 'high')->assertJsonPath('data.assignee.name', 'Ops Support');
 
-    $this->withToken($this->jeton)->patchJson("/api/v1/console/support/tickets/{$id}", ['assignee_id' => $demandeur->id])
+    $this->withToken($this->jeton)->patchJson("/api/v1/console/support/tickets/{$id}", avecPreuve($this->jeton, ['assignee_id' => $demandeur->id]))
         ->assertUnprocessable()->assertJsonPath('code', 'assignee_not_operator');
 
-    $this->withToken($this->jeton)->postJson("/api/v1/console/support/tickets/{$id}/messages", ['body' => 'Note interne', 'internal' => true])
+    $this->withToken($this->jeton)->postJson("/api/v1/console/support/tickets/{$id}/messages", avecPreuve($this->jeton, ['body' => 'Note interne', 'internal' => true]))
         ->assertOk()->assertJsonPath('data.status', 'open')->assertJsonPath('data.first_response_at', null);
 
-    $this->withToken($this->jeton)->postJson("/api/v1/console/support/tickets/{$id}/messages", ['body' => 'La quittance est en ligne.'])
+    $this->withToken($this->jeton)->postJson("/api/v1/console/support/tickets/{$id}/messages", avecPreuve($this->jeton, ['body' => 'La quittance est en ligne.']))
         ->assertOk()->assertJsonPath('data.status', 'waiting')->assertJsonCount(3, 'data.messages');
 
     $this->withToken($this->jeton)->getJson('/api/v1/console/support/stats')
@@ -147,21 +146,23 @@ it('traite une demande de bout en bout depuis la console', function (): void {
     $this->postJson("/api/v1/support/tickets/{$id}/messages", ['body' => 'Merci, réglé.'])->assertOk()->assertJsonPath('data.status', 'open');
 
     auth()->forgetGuards();
-    $this->withToken($this->jeton)->patchJson("/api/v1/console/support/tickets/{$id}", ['status' => 'resolved'])->assertOk()->assertJsonPath('data.status', 'resolved');
+    $this->withToken($this->jeton)->patchJson("/api/v1/console/support/tickets/{$id}", avecPreuve($this->jeton, ['status' => 'resolved']))->assertOk()->assertJsonPath('data.status', 'resolved');
 
     auth()->forgetGuards();
-    $this->actingAs($demandeur)->postJson("/api/v1/support/tickets/{$id}/messages", ['body' => 'Encore'])->assertConflict()->assertJsonPath('code', 'ticket_resolved');
+    $this->actingAs($demandeur)->postJson("/api/v1/support/tickets/{$id}/messages", ['body' => 'Encore'])->assertOk()->assertJsonPath('data.status', 'open');
+
+    auth()->forgetGuards();
+    $this->withToken($this->jeton)->patchJson("/api/v1/console/support/tickets/{$id}", avecPreuve($this->jeton, ['status' => 'resolved']))->assertOk();
+    $this->travelTo(now()->addDays(15));
+    auth()->forgetGuards();
+    $this->actingAs($demandeur)->postJson("/api/v1/support/tickets/{$id}/messages", ['body' => 'Trop tard'])->assertConflict()->assertJsonPath('code', 'ticket_resolved');
 });
 
-it('journalise l\'accès du support aux données du client', function (): void {
+it('a retiré la route d\'accès décidée par l\'opérateur seul', function (): void {
     $id = ouvrirDemande($this, User::factory()->create());
     auth()->forgetGuards();
 
-    $this->withToken($this->jeton)->postJson("/api/v1/console/support/tickets/{$id}/access", ['reason' => 'court'])->assertUnprocessable();
-    $this->withToken($this->jeton)->postJson("/api/v1/console/support/tickets/{$id}/access", ['reason' => 'Vérifier la quittance manquante de mars'])
-        ->assertOk()->assertJsonPath('data.access.reason', 'Vérifier la quittance manquante de mars');
-
-    expect(AuditLog::query()->where('action', 'messaging.support_access.granted')->where('subject_id', $id)->exists())->toBeTrue();
+    $this->withToken($this->jeton)->postJson("/api/v1/console/support/tickets/{$id}/access", avecPreuve($this->jeton, ['reason' => 'Vérifier la quittance manquante de mars']))->assertNotFound();
 });
 
 it('numérote les demandes en séquence continue', function (): void {

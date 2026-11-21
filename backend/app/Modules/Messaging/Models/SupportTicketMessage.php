@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property bool $from_support
  * @property bool $internal
  * @property string $body
+ * @property string|null $client_id
  * @property Carbon $sent_at
  * @property-read User $author
  * @property-read SupportTicket $ticket

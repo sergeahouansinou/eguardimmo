@@ -14,6 +14,7 @@ final readonly class LeaseData
      * @param  string  $startsOn  Y-m-d
      * @param  ?string  $endsOn  Y-m-d, exclu
      * @param  ?string  $noticeDepartureOn  Y-m-d, départ annoncé par le préavis
+     * @param  ?string  $noticeReceivedOn  Y-m-d, réception du préavis
      * @param  list<LeaseUnitData>  $units  lots du bail, principal d'abord
      */
     public function __construct(
@@ -32,5 +33,6 @@ final readonly class LeaseData
         public string $currency,
         public bool $isArchived,
         public array $units,
+        public ?string $noticeReceivedOn = null,
     ) {}
 }

@@ -88,6 +88,16 @@ final class UnfurnishedResidentialRegime implements LeaseRegime
         return $reduit ? 1 : 3;
     }
 
+    public function tenantNoticeReasons(array $jurisdictionData): array
+    {
+        return [...FrFields::standardNotice(FrFields::flag($jurisdictionData, 'tense_zone') ? 1 : 3), ...FrFields::reducedNoticeReasons()];
+    }
+
+    public function tenantEarliestDeparture(array $jurisdictionData, CarbonImmutable $receivedOn, string $reasonKey): CarbonImmutable
+    {
+        return FrFields::earliestDeparture($this->tenantNoticeReasons($jurisdictionData), $receivedOn, $reasonKey);
+    }
+
     public function landlordNoticeMonths(array $jurisdictionData): int
     {
         return 6;

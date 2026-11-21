@@ -7,6 +7,7 @@ namespace App\Modules\Messaging\Actions;
 use App\Modules\Identity\Models\User;
 use App\Modules\Messaging\Data\NewConversationData;
 use App\Modules\Messaging\Enums\ErrorCode;
+use App\Modules\Messaging\Enums\MessageSide;
 use App\Modules\Messaging\Models\Conversation;
 use App\Modules\Organizations\Data\TeamMemberData;
 use App\Modules\Organizations\PublicApi\MembershipDirectory;
@@ -38,7 +39,7 @@ final readonly class StartConversation
             $conversation->participants()->create(['user_id' => $auteur->id, 'last_read_at' => now()]);
             $conversation->participants()->create(['user_id' => $donnees->recipientUserId]);
 
-            $this->poster->handle($conversation, $auteur, $donnees->body, $donnees->attachments);
+            $this->poster->handle($conversation, $auteur, MessageSide::Staff, $donnees->body, $donnees->attachments, $donnees->clientId);
 
             return $conversation;
         });

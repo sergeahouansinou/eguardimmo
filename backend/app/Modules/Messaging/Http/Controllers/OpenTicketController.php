@@ -17,8 +17,8 @@ final class OpenTicketController
     {
         /** @var User $user */
         $user = $request->user();
-        $ticket = $ouvrir->handle($user, $request->toData());
+        $ouverte = $ouvrir->handle($user, $request->toData());
 
-        return (new TicketDetailResource(TicketLoader::forRequester($request, $ticket->id), vueSupport: false))->response()->setStatusCode(201);
+        return (new TicketDetailResource(TicketLoader::forRequester($request, $ouverte->ticket->id), vueSupport: false))->response()->setStatusCode($ouverte->replayed ? 200 : 201);
     }
 }

@@ -5,18 +5,21 @@ declare(strict_types=1);
 namespace App\Modules\Messaging\Models;
 
 use App\Modules\Identity\Models\User;
+use App\Modules\Messaging\Enums\MessageSide;
+use App\Shared\Audit\PreciseTimestamp;
 use App\Shared\Tenancy\BelongsToOrganization;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Carbon;
 
 /**
  * @property string $id
  * @property string $conversation_id
  * @property string $user_id
- * @property Carbon|null $last_read_at
- * @property Carbon|null $archived_at
+ * @property MessageSide $side
+ * @property CarbonImmutable|null $last_read_at
+ * @property CarbonImmutable|null $archived_at
  * @property-read User $user
  * @property-read Conversation $conversation
  */
@@ -47,6 +50,6 @@ final class ConversationParticipant extends Model
 
     protected function casts(): array
     {
-        return ['last_read_at' => 'datetime', 'archived_at' => 'datetime'];
+        return ['side' => MessageSide::class, 'last_read_at' => PreciseTimestamp::class, 'archived_at' => PreciseTimestamp::class];
     }
 }

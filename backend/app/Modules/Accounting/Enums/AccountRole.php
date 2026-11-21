@@ -17,13 +17,23 @@ enum AccountRole: string
     case FeeRevenue = 'fee_revenue';
     case CollectionFees = 'collection_fees';
     case Expenses = 'expenses';
+    case CustomerReceivable = 'customer_receivable';
+    case VatDeferred = 'vat_deferred';
+    case SupplierPayable = 'supplier_payable';
+    case WorksPending = 'works_pending';
+    case TrustBank = 'trust_bank';
+    case OwnerRentCalled = 'owner_rent_called';
+    case OwnerChargesCalled = 'owner_charges_called';
+    case OwnerVatCalled = 'owner_vat_called';
+    case PayoutsInTransit = 'payouts_in_transit';
+    case BankCharges = 'bank_charges';
 
     public function normalSide(): Side
     {
         return match ($this) {
-            self::Bank, self::Cash, self::TenantReceivable, self::Expenses => Side::Debit,
-            self::OwnerPayable, self::SecurityDeposits, self::VatCollected, self::RentRevenue,
-            self::ChargesRecovered, self::FeeRevenue, self::CollectionFees => Side::Credit,
+            self::Bank, self::TrustBank, self::Cash, self::TenantReceivable, self::CustomerReceivable, self::WorksPending, self::Expenses, self::BankCharges => Side::Debit,
+            self::OwnerPayable, self::SecurityDeposits, self::VatCollected, self::VatDeferred, self::SupplierPayable, self::RentRevenue,
+            self::ChargesRecovered, self::FeeRevenue, self::CollectionFees, self::OwnerRentCalled, self::OwnerChargesCalled, self::OwnerVatCalled, self::PayoutsInTransit => Side::Credit,
         };
     }
 
@@ -41,6 +51,16 @@ enum AccountRole: string
             self::FeeRevenue => '4200',
             self::CollectionFees => '4300',
             self::Expenses => '5000',
+            self::CustomerReceivable => '2100',
+            self::VatDeferred => '3210',
+            self::SupplierPayable => '2200',
+            self::WorksPending => '2300',
+            self::TrustBank => '1010',
+            self::OwnerRentCalled => '3010',
+            self::OwnerChargesCalled => '3020',
+            self::OwnerVatCalled => '3030',
+            self::PayoutsInTransit => '3300',
+            self::BankCharges => '5100',
         };
     }
 
@@ -58,6 +78,16 @@ enum AccountRole: string
             self::FeeRevenue => 'Honoraires',
             self::CollectionFees => 'Frais de recouvrement',
             self::Expenses => 'Charges',
+            self::CustomerReceivable => 'Clients',
+            self::VatDeferred => 'TVA collectée à exigibilité différée',
+            self::SupplierPayable => 'Fournisseurs',
+            self::WorksPending => 'Travaux à imputer',
+            self::TrustBank => 'Banque, compte de tiers (fonds des mandants)',
+            self::OwnerRentCalled => 'Loyers appelés pour le compte des mandants, non encaissés',
+            self::OwnerChargesCalled => 'Charges appelées pour le compte des mandants, non encaissées',
+            self::OwnerVatCalled => 'TVA appelée pour le compte des mandants, non encaissée',
+            self::PayoutsInTransit => 'Reversements validés, non exécutés',
+            self::BankCharges => 'Frais bancaires',
         };
     }
 }

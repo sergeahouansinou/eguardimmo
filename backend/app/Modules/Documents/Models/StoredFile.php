@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Documents\Models;
 
+use App\Modules\Documents\Data\DocumentSubject;
 use App\Modules\Documents\Enums\FileCategory;
+use App\Modules\Documents\Enums\ScanStatus;
 use App\Shared\Audit\Auditable;
 use App\Shared\Tenancy\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -25,6 +27,9 @@ use LogicException;
  * @property string|null $subject_type
  * @property string|null $subject_id
  * @property Carbon|null $retention_until
+ * @property ScanStatus $scan_status
+ * @property Carbon|null $scanned_at
+ * @property Carbon|null $scan_attempted_at
  * @property string|null $uploaded_by_user_id
  * @property Carbon $created_at
  */
@@ -33,6 +38,8 @@ final class StoredFile extends Model
     use Auditable;
     use BelongsToOrganization;
     use HasUuids;
+
+    public const string SUJET_MESSAGERIE = 'conversation_message';
 
     private const FIGES = ['disk', 'path', 'mime_type', 'size_bytes', 'sha256', 'category', 'subject_type', 'subject_id'];
 
@@ -62,6 +69,24 @@ final class StoredFile extends Model
         });
     }
 
+    public function isConversationFile(): bool
+    {
+        return $this->subject_type === self::SUJET_MESSAGERIE;
+    }
+
+    public function isTenantSpaceFile(): bool
+    {
+        return $this->subject_type === DocumentSubject::TENANT_SPACE;
+    }
+
+    /**
+     * Seuls les justificatifs sans conservation légale se retirent avant leur échéance : sans objet, ou pièce de messagerie.
+     */
+    public function allowsEarlyPurge(): bool
+    {
+        return $this->category === FileCategory::Supporting && ($this->subject_type === null || $this->isConversationFile());
+    }
+
     /**
      * @return list<string>
      */
@@ -76,6 +101,9 @@ final class StoredFile extends Model
             'category' => FileCategory::class,
             'size_bytes' => 'integer',
             'retention_until' => 'datetime',
+            'scan_status' => ScanStatus::class,
+            'scanned_at' => 'datetime',
+            'scan_attempted_at' => 'datetime',
         ];
     }
 }

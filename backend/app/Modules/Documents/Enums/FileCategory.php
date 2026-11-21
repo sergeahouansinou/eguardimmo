@@ -10,6 +10,7 @@ enum FileCategory: string
     case Certificate = 'certificate';
     case Issued = 'issued';
     case Bundle = 'bundle';
+    case BankStatement = 'bank_statement';
 
     public const PDF = 'application/pdf';
 
@@ -29,6 +30,7 @@ enum FileCategory: string
             ],
             self::Issued => [self::PDF => 'pdf'],
             self::Bundle => [self::ZIP => 'zip'],
+            self::BankStatement => ['text/plain' => 'txt', 'text/csv' => 'csv', 'application/csv' => 'csv', 'text/xml' => 'xml', 'application/xml' => 'xml'],
         };
     }
 
@@ -46,5 +48,15 @@ enum FileCategory: string
     public static function uploadable(): array
     {
         return [self::Supporting->value, self::Certificate->value];
+    }
+
+    /**
+     * Catégories dont les fichiers passent par l'analyseur : celles que l'utilisateur dépose, plus les relevés bancaires (ADR 0035).
+     *
+     * @return list<string>
+     */
+    public static function scanned(): array
+    {
+        return [...self::uploadable(), self::BankStatement->value];
     }
 }

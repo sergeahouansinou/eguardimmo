@@ -18,7 +18,7 @@ final class ReplyTicketController
         /** @var User $operateur */
         $operateur = $request->user();
 
-        $poster->handle(TicketLoader::forSupport($ticket), $operateur, fromSupport: true, internal: $request->boolean('internal'), body: MessageInput::body($request), attachments: MessageInput::attachments($request));
+        $poster->handle(TicketLoader::forSupport($ticket), $operateur, fromSupport: true, internal: $request->boolean('internal'), body: MessageInput::body($request), attachments: MessageInput::attachments($request), clientId: MessageInput::clientId($request));
 
         return new TicketDetailResource(TicketLoader::forSupport($ticket), vueSupport: true);
     }

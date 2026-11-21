@@ -52,7 +52,7 @@ it('enregistre la dernière connexion mobile', function (): void {
 
 it('enregistre la dernière connexion console', function (): void {
     $user = User::factory()->create(['email' => 'ops@exemple.fr']);
-    $user->operator()->create(['granted_at' => now()]);
+    $user->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'admin', 'granted_at' => now()]);
     $secret = activerDeuxFacteurs($user);
 
     $this->postJson('/api/v1/console/auth/token', ['email' => 'ops@exemple.fr', 'password' => 'password', 'code' => codeTotp($secret)])->assertCreated();

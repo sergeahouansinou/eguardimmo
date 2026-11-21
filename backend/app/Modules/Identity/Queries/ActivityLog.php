@@ -6,6 +6,7 @@ namespace App\Modules\Identity\Queries;
 
 use App\Modules\Identity\Data\ActivityFilters;
 use App\Modules\Identity\Models\User;
+use App\Shared\Audit\ActivityDisclosure;
 use App\Shared\Audit\AuditLog;
 use App\Shared\Audit\AuditLogBuilder;
 use Illuminate\Contracts\Pagination\CursorPaginator;
@@ -15,10 +16,14 @@ final class ActivityLog
 {
     public const RELATION_AUTEUR = 'actor';
 
+    public const ATTRIBUT_DIVULGUE = 'disclosed';
+
+    public function __construct(private readonly ActivityDisclosure $divulgation) {}
+
     /**
      * @return CursorPaginator<int, AuditLog>
      */
-    public function list(ActivityFilters $filtres): CursorPaginator
+    public function list(ActivityFilters $filtres, string $operateurId): CursorPaginator
     {
         /** @var AuditLogBuilder $requete */
         $requete = AuditLog::query();
@@ -34,17 +39,36 @@ final class ActivityLog
             ->newestFirst()
             ->cursorPaginate($filtres->perPage);
 
-        $this->joindreAuteurs(collect($page->items()));
+        $entrees = collect($page->items());
+        $this->marquerDivulgation($entrees, $operateurId);
+        $this->joindreAuteurs($entrees);
 
         return $page;
     }
 
-    public function find(string $id): AuditLog
+    public function find(string $id, string $operateurId): AuditLog
     {
         $entree = AuditLog::query()->findOrFail($id);
+        $this->marquerDivulgation(collect([$entree]), $operateurId);
         $this->joindreAuteurs(collect([$entree]));
 
         return $entree;
+    }
+
+    /**
+     * Une entrée qui porte une organisation n'est servie en entier qu'à un opérateur qui a un accès de support vivant sur elle.
+     *
+     * @param  Collection<int, AuditLog>  $entrees
+     */
+    private function marquerDivulgation(Collection $entrees, string $operateurId): void
+    {
+        $verdicts = [];
+
+        $entrees->each(function (AuditLog $entree) use ($operateurId, &$verdicts): void {
+            $organisation = $entree->organization_id;
+            $divulgue = $organisation === null || ($verdicts[$organisation] ??= $this->divulgation->allows($operateurId, $organisation));
+            $entree->setAttribute(self::ATTRIBUT_DIVULGUE, $divulgue);
+        });
     }
 
     /**
@@ -52,7 +76,7 @@ final class ActivityLog
      */
     private function joindreAuteurs(Collection $entrees): void
     {
-        $identifiants = $entrees->pluck('actor_user_id')->filter()->unique()->values();
+        $identifiants = $entrees->filter(fn (AuditLog $entree): bool => $entree->getAttribute(self::ATTRIBUT_DIVULGUE) === true)->pluck('actor_user_id')->filter()->unique()->values();
         $auteurs = User::withTrashed()->whereIn('id', $identifiants)->get(['id', 'name', 'email'])->keyBy('id');
 
         $entrees->each(fn (AuditLog $entree) => $entree->setRelation(self::RELATION_AUTEUR, $auteurs->get((string) $entree->actor_user_id)));

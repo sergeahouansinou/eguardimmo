@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Identity\Actions;
 
+use App\Modules\Identity\Enums\ErrorCode;
 use App\Modules\Identity\Enums\LoginChannel;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Security\AccountLockout;
@@ -38,6 +39,12 @@ final readonly class AttemptPasswordLogin
             ]);
 
             return null;
+        }
+
+        if ($user->isSuspended()) {
+            $this->audit->handle('auth.login.denied', $user->id, ['channel' => $canal->value, 'reason' => 'account_suspended']);
+
+            throw ErrorCode::AccountSuspended->problem();
         }
 
         return $user;

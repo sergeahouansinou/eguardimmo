@@ -7,6 +7,8 @@ namespace App\Modules\Documents\Support;
 use App\Modules\Documents\Data\DocumentSubject;
 use App\Modules\Documents\Data\FileSource;
 use App\Modules\Documents\Enums\FileCategory;
+use App\Modules\Documents\Enums\ScanStatus;
+use App\Modules\Documents\Jobs\ScanStoredFile;
 use App\Modules\Documents\Models\StoredFile;
 use App\Shared\Tenancy\CurrentOrganization;
 use Carbon\CarbonInterface;
@@ -22,7 +24,10 @@ final readonly class StoredFileWriter
 {
     public const DISK = 'documents';
 
-    public function __construct(private CurrentOrganization $organisation) {}
+    public function __construct(
+        private CurrentOrganization $organisation,
+        private ScanPolicy $politique,
+    ) {}
 
     public function write(
         FileSource $source,
@@ -31,7 +36,7 @@ final readonly class StoredFileWriter
         ?DocumentSubject $subject,
         ?CarbonInterface $retentionUntil,
     ): StoredFile {
-        if ($subject !== null && Relation::getMorphedModel($subject->type) === null) {
+        if ($subject !== null && $subject->type !== DocumentSubject::TENANT_SPACE && Relation::getMorphedModel($subject->type) === null) {
             throw new InvalidArgumentException("Type d'objet inconnu : {$subject->type}.");
         }
 
@@ -56,6 +61,19 @@ final readonly class StoredFileWriter
         }
 
         $type = (string) FileInspector::detectedType($chemin);
+        $nettoye = ImageSanitizer::applies($type) ? ImageSanitizer::clean($chemin, $type) : null;
+
+        try {
+            return $this->persist($nettoye ?? $chemin, $type, $nom, $categorie, $sujet, $conservation);
+        } finally {
+            if ($nettoye !== null) {
+                @unlink($nettoye);
+            }
+        }
+    }
+
+    private function persist(string $chemin, string $type, string $nom, FileCategory $categorie, ?DocumentSubject $sujet, ?CarbonInterface $conservation): StoredFile
+    {
         $extension = $categorie->allowedTypes()[$type];
         $stocke = $this->organisation->id().'/'.now()->format('Y/m').'/'.Str::uuid7()->toString().'.'.$extension;
 
@@ -84,10 +102,10 @@ final readonly class StoredFileWriter
         });
 
         try {
-            return StoredFile::query()->create([
+            $fichier = StoredFile::query()->create([
                 'disk' => self::DISK,
                 'path' => $stocke,
-                'display_name' => FileNames::display($nom),
+                'display_name' => FileNames::aligned($nom, self::extensions($type, $extension)),
                 'mime_type' => $type,
                 'size_bytes' => (int) filesize($chemin),
                 'sha256' => (string) hash_file('sha256', $chemin),
@@ -95,6 +113,7 @@ final readonly class StoredFileWriter
                 'subject_type' => $sujet?->type,
                 'subject_id' => $sujet?->id,
                 'retention_until' => $conservation,
+                'scan_status' => $this->politique->initial($categorie),
                 'uploaded_by_user_id' => is_string(auth()->id()) ? auth()->id() : null,
             ]);
         } catch (Throwable $erreur) {
@@ -102,6 +121,20 @@ final readonly class StoredFileWriter
 
             throw $erreur;
         }
+
+        if ($fichier->scan_status === ScanStatus::Pending) {
+            ScanStoredFile::dispatch($this->organisation->id(), $fichier->id)->afterCommit();
+        }
+
+        return $fichier;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function extensions(string $type, string $stockee): array
+    {
+        return $type === 'image/jpeg' ? ['jpg', 'jpeg'] : [$stockee];
     }
 
     private function temporaire(string $contenu): string

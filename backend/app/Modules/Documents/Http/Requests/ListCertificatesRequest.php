@@ -33,6 +33,8 @@ final class ListCertificatesRequest extends FormRequest
             'subject_id' => ['nullable', 'uuid', 'required_with:subject_type'],
             'certificate_type_term_id' => ['nullable', 'uuid'],
             'include_replaced' => ['nullable', 'boolean'],
+            'expires_from' => ['nullable', 'date_format:Y-m-d', 'after:2000-01-01', 'before:2100-01-01'],
+            'expires_to' => ['nullable', 'date_format:Y-m-d', 'after:2000-01-01', 'before:2100-01-02', ...($this->filled('expires_from') ? ['after:expires_from'] : [])],
         ];
     }
 
@@ -43,6 +45,8 @@ final class ListCertificatesRequest extends FormRequest
             $this->filled('subject_type') ? new DocumentSubject((string) $this->validated('subject_type'), (string) $this->validated('subject_id')) : null,
             $this->filled('certificate_type_term_id') ? (string) $this->validated('certificate_type_term_id') : null,
             $this->boolean('include_replaced'),
+            $this->filled('expires_from') ? (string) $this->validated('expires_from') : null,
+            $this->filled('expires_to') ? (string) $this->validated('expires_to') : null,
         );
     }
 }

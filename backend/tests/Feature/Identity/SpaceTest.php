@@ -54,7 +54,7 @@ it('ouvre l\'espace au titulaire du profil, mais pas à un autre compte', functi
 
 it('liste les profils de l\'utilisateur', function (): void {
     $user = User::factory()->create();
-    $user->operator()->create(['granted_at' => now()]);
+    $user->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'admin', 'granted_at' => now()]);
     donnerProfilLocataire($user->id);
 
     $this->withToken($user->createToken('t', ['mobile'])->plainTextToken)

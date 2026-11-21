@@ -11,6 +11,6 @@ final class DownloadFileController
 {
     public function __invoke(string $file, StreamFile $lire): StreamedResponse
     {
-        return $lire->handle($file);
+        return $lire->handle($file, generic: true);
     }
 }

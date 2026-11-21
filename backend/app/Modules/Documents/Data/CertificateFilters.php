@@ -13,5 +13,7 @@ final readonly class CertificateFilters
         public ?DocumentSubject $subject = null,
         public ?string $certificateTypeTermId = null,
         public bool $includeReplaced = false,
+        public ?string $expiresFrom = null,
+        public ?string $expiresTo = null,
     ) {}
 }

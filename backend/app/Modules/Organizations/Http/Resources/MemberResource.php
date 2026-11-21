@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Organizations\Http\Resources;
 
 use App\Modules\Identity\Models\User;
+use App\Modules\Organizations\Enums\MemberStatus;
 use App\Modules\Organizations\Models\OrganizationMember;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -24,6 +25,7 @@ final class MemberResource extends JsonResource
 
         return [
             'id' => $membre->id,
+            'user_id' => $membre->status === MemberStatus::Active ? $membre->user_id : null,
             'first_name' => $membre->first_name,
             'last_name' => $membre->last_name,
             'email' => $membre->email,

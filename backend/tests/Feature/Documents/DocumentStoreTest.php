@@ -111,6 +111,19 @@ it('n\'autorise aucune suppression avant la fin de la conservation, ni modificat
     });
 });
 
+it('ne purge avant la fin de la conservation que par la voie du retrait, journalisée', function (): void {
+    $fichier = D::dans($this->org, fn () => $this->store->store(FileSource::contents(D::PDF), 'erreur.pdf', FileCategory::Supporting, null, CarbonImmutable::now()->addYears(5)));
+
+    expect(documentsRefus(fn () => D::dans($this->org, fn () => $this->store->purge($fichier->id))))->toBe('retention_active')
+        ->and(Storage::disk('documents')->allFiles())->toHaveCount(1);
+
+    D::dans($this->org, fn () => $this->store->purgeEarly($fichier->id));
+
+    expect(Storage::disk('documents')->allFiles())->toHaveCount(0)
+        ->and(D::dans($this->org, fn () => $this->store->exists($fichier->id)))->toBeFalse()
+        ->and(DB::table('audit_logs')->where('action', 'documents.file.purged')->where('metadata', 'like', '%"early":true%')->count())->toBe(1);
+});
+
 it('efface le fichier écrit quand la transaction de l\'appelant est annulée', function (): void {
     $stocke = null;
 

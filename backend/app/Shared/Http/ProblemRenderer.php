@@ -44,7 +44,7 @@ final class ProblemRenderer
 
         return match (true) {
             $e instanceof HttpResponseException => null,
-            $e instanceof ApiProblem => $this->reponse($e->problemCode, $e->status, $e->title, $e->getMessage(), $e->headers),
+            $e instanceof ApiProblem => $this->reponse($e->problemCode, $e->status, $e->title, $e->getMessage(), $e->headers, $e->extensions),
             $e instanceof ValidationException => $this->standard($e->status, [], ['errors' => $e->errors()]),
             $e instanceof AuthenticationException => $this->standard(401),
             $e instanceof HttpExceptionInterface => $this->standard($e->getStatusCode(), $e->getHeaders()),
