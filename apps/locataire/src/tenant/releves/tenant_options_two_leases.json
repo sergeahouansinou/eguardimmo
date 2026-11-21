@@ -1,0 +1,103 @@
+{
+    "status": 200,
+    "body": {
+        "data": [
+            {
+                "lease_id": "01a1ef81-510a-7245-bda2-8edc22179452",
+                "label": "BL-2026-13214",
+                "units": [
+                    {
+                        "id": "01a1ef81-510a-7245-bda2-8edc20dbf092",
+                        "label": "Résidence Imbert - LOT-62415"
+                    }
+                ],
+                "common_area_allowed": true,
+                "natures": [
+                    {
+                        "id": "01a1ef81-4f89-72ac-b62c-60d007a91b12",
+                        "key": "plumbing",
+                        "label": "Plomberie"
+                    },
+                    {
+                        "id": "01a1ef81-4f89-72ac-b62c-60d0090b30f2",
+                        "key": "electrical",
+                        "label": "Électricité"
+                    },
+                    {
+                        "id": "01a1ef81-4f8a-736e-8448-0d71dba95aeb",
+                        "key": "heating",
+                        "label": "Chauffage"
+                    },
+                    {
+                        "id": "01a1ef81-4f8a-736e-8448-0d71dc3075bb",
+                        "key": "locksmith",
+                        "label": "Serrurerie"
+                    },
+                    {
+                        "id": "01a1ef81-4f8a-736e-8448-0d71dd193514",
+                        "key": "humidity",
+                        "label": "Humidité"
+                    },
+                    {
+                        "id": "01a1ef81-4f8b-705a-a329-d0489a11f246",
+                        "key": "pests",
+                        "label": "Nuisibles"
+                    },
+                    {
+                        "id": "01a1ef81-4f8b-705a-a329-d0489afe422f",
+                        "key": "other",
+                        "label": "Autre"
+                    }
+                ]
+            },
+            {
+                "lease_id": "01a1ef81-5107-7167-b6e7-543f9d525ae0",
+                "label": "BL-2026-61754",
+                "units": [
+                    {
+                        "id": "01a1ef81-5105-723b-abb8-1afba1977b84",
+                        "label": "Résidence Roussel - LOT-3684"
+                    }
+                ],
+                "common_area_allowed": true,
+                "natures": [
+                    {
+                        "id": "01a1ef81-4f89-72ac-b62c-60d007a91b12",
+                        "key": "plumbing",
+                        "label": "Plomberie"
+                    },
+                    {
+                        "id": "01a1ef81-4f89-72ac-b62c-60d0090b30f2",
+                        "key": "electrical",
+                        "label": "Électricité"
+                    },
+                    {
+                        "id": "01a1ef81-4f8a-736e-8448-0d71dba95aeb",
+                        "key": "heating",
+                        "label": "Chauffage"
+                    },
+                    {
+                        "id": "01a1ef81-4f8a-736e-8448-0d71dc3075bb",
+                        "key": "locksmith",
+                        "label": "Serrurerie"
+                    },
+                    {
+                        "id": "01a1ef81-4f8a-736e-8448-0d71dd193514",
+                        "key": "humidity",
+                        "label": "Humidité"
+                    },
+                    {
+                        "id": "01a1ef81-4f8b-705a-a329-d0489a11f246",
+                        "key": "pests",
+                        "label": "Nuisibles"
+                    },
+                    {
+                        "id": "01a1ef81-4f8b-705a-a329-d0489afe422f",
+                        "key": "other",
+                        "label": "Autre"
+                    }
+                ]
+            }
+        ]
+    }
+}

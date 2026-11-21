@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ScreenState";
 import { conversationIds } from "@/data/staticParams";
+import { MessageRoute } from "@/features/conversations/MessageRoute";
+import { dataSource } from "@/lib/env";
 
 export const metadata: Metadata = { title: "Conversation" };
 
@@ -13,7 +15,7 @@ export function generateStaticParams() {
 export default function Page({ params }: PageProps<"/messages/[id]">) {
   return (
     <Suspense fallback={<Skeleton />}>
-      <Screen params={params} />
+      {dataSource === "api" ? <MessageRoute params={params} /> : <Screen params={params} />}
     </Suspense>
   );
 }

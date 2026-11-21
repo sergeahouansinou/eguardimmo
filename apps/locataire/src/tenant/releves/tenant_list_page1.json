@@ -1,0 +1,62 @@
+{
+    "status": 200,
+    "body": {
+        "data": [
+            {
+                "id": "01a1ef81-509b-72a6-b78e-36d2c9ec12f1",
+                "reference": "INT-2026-0004",
+                "state": "reported",
+                "nature": {
+                    "key": "electrical",
+                    "label": "Électricité"
+                },
+                "title": "Prise électrique HS",
+                "description": "De l'eau coule sous l'évier de la cuisine.",
+                "room": null,
+                "availability": null,
+                "reported_urgency": "soon",
+                "place": "Résidence Roy - LOT-28755",
+                "reported_on": "2026-11-18",
+                "decline": null,
+                "completed_on": null,
+                "visits": [],
+                "cancellable": true
+            },
+            {
+                "id": "01a1ef81-508b-7159-bcb5-3ec8b29c4721",
+                "reference": "INT-2026-0003",
+                "state": "declined",
+                "nature": {
+                    "key": "heating",
+                    "label": "Chauffage"
+                },
+                "title": "Bruit au plafond",
+                "description": "De l'eau coule sous l'évier de la cuisine.",
+                "room": null,
+                "availability": null,
+                "reported_urgency": "soon",
+                "place": "Résidence Roy - LOT-28755",
+                "reported_on": "2026-11-18",
+                "decline": {
+                    "reason": "not_an_issue",
+                    "note": "Aucun désordre constaté."
+                },
+                "completed_on": null,
+                "visits": [],
+                "cancellable": false
+            }
+        ],
+        "links": {
+            "first": null,
+            "last": null,
+            "prev": null,
+            "next": "https://api.eguardimmo.test/api/v1/tenant/interventions?cursor=eyJpZCI6IjAxYTFlZjgxLTUwOGItNzE1OS1iY2I1LTNlYzhiMjljNDcyMSIsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0"
+        },
+        "meta": {
+            "path": "https://api.eguardimmo.test/api/v1/tenant/interventions",
+            "per_page": 2,
+            "next_cursor": "eyJpZCI6IjAxYTFlZjgxLTUwOGItNzE1OS1iY2I1LTNlYzhiMjljNDcyMSIsIl9wb2ludHNUb05leHRJdGVtcyI6dHJ1ZX0",
+            "prev_cursor": null
+        }
+    }
+}

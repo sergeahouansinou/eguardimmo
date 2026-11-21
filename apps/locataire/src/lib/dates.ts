@@ -31,6 +31,10 @@ function pad(value: number): string {
   return String(value).padStart(2, '0');
 }
 
+export function todayIso(now: Date = new Date()): string {
+  return `${String(now.getFullYear())}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
 export function formatDate(iso: string): string {
   const { year, month, day } = parts(iso);
   return `${pad(day)}/${pad(month)}/${String(year)}`;

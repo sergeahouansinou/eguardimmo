@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { securityHeadersForAllRoutes } from "@eguardimmo/config/next/security-headers";
+import { securityHeadersForApp } from "@eguardimmo/config/next/security-headers";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
       },
     },
   },
-  headers: securityHeadersForAllRoutes,
+  headers: securityHeadersForApp({ connectOrigins: [process.env.NEXT_PUBLIC_API_URL] }),
 };
 
 export default nextConfig;

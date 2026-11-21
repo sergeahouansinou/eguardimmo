@@ -20,7 +20,8 @@ export interface DataTableProps<Row> {
 
 export function DataTable<Row>({ label, columns, rows, rowKey, rowClassName }: DataTableProps<Row>) {
   return (
-    <div className="min-w-0 overflow-x-auto max-sm:overflow-visible">
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+    <div role="region" aria-label={`${label}, défilement horizontal`} tabIndex={0} className="min-w-0 overflow-x-auto max-sm:overflow-visible focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
       <table aria-label={label} className="w-full border-collapse text-body max-sm:block">
         <thead className="max-sm:hidden">
           <tr className="border-b border-line">
@@ -55,7 +56,7 @@ export function DataTable<Row>({ label, columns, rows, rowKey, rowClassName }: D
                     'min-h-11 px-2 py-1.5 align-middle',
                     column.numeric && 'text-right tabular-nums',
                     column.primary && 'font-semibold text-fg',
-                    'max-sm:flex max-sm:min-h-0 max-sm:items-center max-sm:justify-between max-sm:gap-2 max-sm:p-0 max-sm:text-right',
+                    'max-sm:flex max-sm:empty:hidden max-sm:min-h-0 max-sm:items-center max-sm:justify-between max-sm:gap-2 max-sm:p-0 max-sm:text-right',
                     column.primary && 'max-sm:block max-sm:text-left',
                     mobileLabel !== '' && 'max-sm:before:text-caption max-sm:before:font-medium max-sm:before:text-fg-subtle max-sm:before:content-[attr(data-label)]',
                   )}

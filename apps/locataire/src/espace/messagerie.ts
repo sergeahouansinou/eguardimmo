@@ -1,4 +1,4 @@
-import type { MessagerieRoutes } from "@eguardimmo/messagerie";
+import type { ExternalRoutes, MessagerieRoutes } from "@eguardimmo/messagerie";
 
 export const messagerieRoutes: MessagerieRoutes = {
   inbox: "/messages",
@@ -10,4 +10,10 @@ export const messagerieRoutes: MessagerieRoutes = {
   help: "/aide",
   supportBoard: "/messages",
   ticket: () => "/messages",
+};
+
+export const externalMessagerieRoutes: ExternalRoutes = {
+  inbox: "/messages",
+  thread: (id) => `/messages/${id}`,
+  newThread: "/messages/nouveau",
 };

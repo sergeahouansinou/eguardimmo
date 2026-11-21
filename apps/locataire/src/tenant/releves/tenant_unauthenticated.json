@@ -1,0 +1,11 @@
+{
+    "status": 401,
+    "body": {
+        "type": "https://api.eguardimmo.test/problems/unauthenticated",
+        "title": "Non authentifié",
+        "status": 401,
+        "detail": "Connectez-vous pour continuer.",
+        "code": "unauthenticated",
+        "request_id": "01a1ef81-5101-73cc-87a7-aa2853373921"
+    }
+}

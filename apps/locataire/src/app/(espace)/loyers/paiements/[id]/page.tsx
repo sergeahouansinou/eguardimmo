@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ScreenState";
+import { RentRoute } from "@/features/rent/RentRoute";
+import { dataSource } from "@/lib/env";
 import { paymentIds } from "@/data/staticParams";
 import { PaymentStatusScreen } from "@/features/loyers/PaymentStatusScreen";
 
@@ -13,7 +15,7 @@ export function generateStaticParams() {
 export default function Page({ params }: PageProps<"/loyers/paiements/[id]">) {
   return (
     <Suspense fallback={<Skeleton />}>
-      <Screen params={params} />
+      {dataSource === "api" ? <RentRoute kind="paiement" params={params} /> : <Screen params={params} />}
     </Suspense>
   );
 }

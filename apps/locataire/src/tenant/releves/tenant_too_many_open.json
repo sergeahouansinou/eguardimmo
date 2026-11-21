@@ -1,0 +1,11 @@
+{
+    "status": 422,
+    "body": {
+        "type": "https://api.eguardimmo.test/problems/intervention_too_many_open",
+        "title": "Trop de demandes ouvertes sur ce bail",
+        "status": 422,
+        "detail": "Trop de demandes ouvertes sur ce bail.",
+        "code": "intervention_too_many_open",
+        "request_id": "01a1ef81-5144-7138-a3ac-9b1463fdc9c1"
+    }
+}

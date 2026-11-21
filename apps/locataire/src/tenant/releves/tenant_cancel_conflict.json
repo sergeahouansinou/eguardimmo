@@ -1,0 +1,11 @@
+{
+    "status": 409,
+    "body": {
+        "type": "https://api.eguardimmo.test/problems/intervention_transition_invalid",
+        "title": "Transition d'état interdite",
+        "status": 409,
+        "detail": "Transition d'état interdite.",
+        "code": "intervention_transition_invalid",
+        "request_id": "01a1ef81-5096-73a6-a81c-0eb0cb81e713"
+    }
+}

@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ScreenState";
 import { interventionIds } from "@/data/staticParams";
 import { DetailScreen } from "@/features/interventions/DetailScreen";
+import { InterventionRoute } from "@/features/interventions/InterventionRoute";
+import { dataSource } from "@/lib/env";
 
 export const metadata: Metadata = { title: "Intervention" };
 
@@ -13,7 +15,7 @@ export function generateStaticParams() {
 export default function Page({ params }: PageProps<"/interventions/[id]">) {
   return (
     <Suspense fallback={<Skeleton />}>
-      <Screen params={params} />
+      {dataSource === "api" ? <InterventionRoute params={params} /> : <Screen params={params} />}
     </Suspense>
   );
 }

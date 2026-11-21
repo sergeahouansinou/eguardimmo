@@ -1,0 +1,11 @@
+{
+    "status": 403,
+    "body": {
+        "type": "https://api.eguardimmo.test/problems/space_forbidden",
+        "title": "Espace non autorisé",
+        "status": 403,
+        "detail": "Vous n'avez pas accès à cet espace.",
+        "code": "space_forbidden",
+        "request_id": "01a1ef81-5102-7359-88a3-21fc2d1ae2aa"
+    }
+}

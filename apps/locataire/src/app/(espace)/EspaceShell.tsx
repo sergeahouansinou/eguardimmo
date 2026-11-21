@@ -16,8 +16,14 @@ import {
   searchPages,
 } from "@/espace/config";
 import { FlashRegion } from "@/components/flash";
+import { dataSource } from "@/lib/env";
+import { ApiShell } from "./ApiShell";
 
 export function EspaceShell({ children }: { children: ReactNode }) {
+  return dataSource === "api" ? <ApiShell>{children}</ApiShell> : <DemoShell>{children}</DemoShell>;
+}
+
+function DemoShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const unread = useInboxStats().data?.unread;

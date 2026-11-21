@@ -1,0 +1,55 @@
+{
+    "status": 200,
+    "body": {
+        "data": [
+            {
+                "lease_id": "01a1ef81-50fc-734a-907c-b71f0a989f1a",
+                "label": "BL-2026-89638",
+                "units": [
+                    {
+                        "id": "01a1ef81-50fb-737a-ac16-3acf67a04dda",
+                        "label": "Résidence Roche - LOT-65840"
+                    }
+                ],
+                "common_area_allowed": true,
+                "natures": [
+                    {
+                        "id": "01a1ef81-4f89-72ac-b62c-60d007a91b12",
+                        "key": "plumbing",
+                        "label": "Plomberie"
+                    },
+                    {
+                        "id": "01a1ef81-4f89-72ac-b62c-60d0090b30f2",
+                        "key": "electrical",
+                        "label": "Électricité"
+                    },
+                    {
+                        "id": "01a1ef81-4f8a-736e-8448-0d71dba95aeb",
+                        "key": "heating",
+                        "label": "Chauffage"
+                    },
+                    {
+                        "id": "01a1ef81-4f8a-736e-8448-0d71dc3075bb",
+                        "key": "locksmith",
+                        "label": "Serrurerie"
+                    },
+                    {
+                        "id": "01a1ef81-4f8a-736e-8448-0d71dd193514",
+                        "key": "humidity",
+                        "label": "Humidité"
+                    },
+                    {
+                        "id": "01a1ef81-4f8b-705a-a329-d0489a11f246",
+                        "key": "pests",
+                        "label": "Nuisibles"
+                    },
+                    {
+                        "id": "01a1ef81-4f8b-705a-a329-d0489afe422f",
+                        "key": "other",
+                        "label": "Autre"
+                    }
+                ]
+            }
+        ]
+    }
+}

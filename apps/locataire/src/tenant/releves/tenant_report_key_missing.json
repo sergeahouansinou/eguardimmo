@@ -1,0 +1,11 @@
+{
+    "status": 422,
+    "body": {
+        "type": "https://api.eguardimmo.test/problems/idempotency_key_required",
+        "title": "Clé d'idempotence obligatoire",
+        "status": 422,
+        "detail": "L'en-tête Idempotency-Key est obligatoire (8 à 64 caractères : lettres, chiffres, . _ : -).",
+        "code": "idempotency_key_required",
+        "request_id": "01a1ef81-4ff3-715b-aea8-734ce28d9d36"
+    }
+}

@@ -178,7 +178,7 @@ function NoticeForm({ lease, items, today }: { lease: Lease; items: Installment[
                 legend="Mode d'envoi"
                 value="lre"
                 onValueChange={() => undefined}
-                options={[{ value: 'lre', label: 'Lettre recommandée électronique', detail: 'Valeur juridique, accusé de réception daté', icon: Mail }]}
+                options={[{ value: 'lre', label: 'Demande de congé en ligne', detail: 'Transmise à votre agence, qui en accuse réception à une date certaine', icon: Mail }]}
               />
               <CheckboxField {...register('confirm')} error={formState.errors.confirm?.message}>
                 Je confirme donner congé du logement {lease.property.unit}, {lease.property.street}
@@ -222,7 +222,7 @@ function NoticeForm({ lease, items, today }: { lease: Lease; items: Installment[
         open={pending !== null}
         onOpenChange={(open) => { if (!open) setPending(null); }}
         title="Envoyer votre congé ?"
-        description={`Votre congé sera envoyé à ${lease.landlord.name} par lettre recommandée électronique, pour un départ le ${pending ? formatDate(pending.departureOn) : ''}. Cette démarche a une valeur juridique et ne peut pas être annulée.`}
+        description={`Votre congé sera envoyé à ${lease.landlord.name} en ligne, pour un départ le ${pending ? formatDate(pending.departureOn) : ''}. L’agence en accuse réception à une date certaine.`}
         confirmLabel="Confirmer l'envoi du congé"
         loading={give.isPending}
         onConfirm={send}

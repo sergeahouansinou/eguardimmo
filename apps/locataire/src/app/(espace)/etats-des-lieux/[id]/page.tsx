@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ScreenState";
 import { inspectionIds } from "@/data/staticParams";
-import { EtatDetailScreen } from "@/features/etats/EtatDetailScreen";
+import { EtatRoute } from "@/features/etats/EtatRoute";
 
 export const metadata: Metadata = { title: "État des lieux" };
 
@@ -13,12 +13,7 @@ export function generateStaticParams() {
 export default function Page({ params }: PageProps<"/etats-des-lieux/[id]">) {
   return (
     <Suspense fallback={<Skeleton />}>
-      <Screen params={params} />
+      <EtatRoute params={params} />
     </Suspense>
   );
-}
-
-async function Screen({ params }: Pick<PageProps<"/etats-des-lieux/[id]">, "params">) {
-  const { id } = await params;
-  return <EtatDetailScreen inspectionId={id} />;
 }

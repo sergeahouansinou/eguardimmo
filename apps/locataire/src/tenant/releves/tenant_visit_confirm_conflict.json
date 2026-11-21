@@ -1,0 +1,11 @@
+{
+    "status": 409,
+    "body": {
+        "type": "https://api.eguardimmo.test/problems/visit_status_invalid",
+        "title": "État de la visite incompatible",
+        "status": 409,
+        "detail": "État de la visite incompatible.",
+        "code": "visit_status_invalid",
+        "request_id": "01a1ef81-5077-7234-b7f4-23c049149880"
+    }
+}
