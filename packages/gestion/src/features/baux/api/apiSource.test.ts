@@ -353,7 +353,7 @@ describe('erreurs', () => {
 describe('fonctions sans route', () => {
   it('liste explicitement les fonctions sans route et déclare l’occupation dérivée du serveur', () => {
     const { source } = setup({});
-    expect(source.unavailableInApiMode).toEqual(BAUX_FEATURES);
+    expect(source.unavailableInApiMode).toEqual(BAUX_FEATURES.filter((feature) => feature !== 'schedule'));
     expect(source.derivesOccupancy).toBe(true);
   });
 

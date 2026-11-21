@@ -91,7 +91,7 @@ function AbonnementContent({ subscription }: { subscription: Subscription }) {
           title={dialog.billing === 'annuel' ? 'Passer en paiement annuel ?' : 'Passer en paiement mensuel ?'}
           description={
             dialog.billing === 'annuel'
-              ? `${priceLabel(priceOf(plan, 'annuel'), 'annuel').amount} facturés par an, soit 2 mois offerts, à partir du ${formatDate(subscription.nextChargeDate)}.`
+              ? `${priceLabel(priceOf(plan, 'annuel'), 'annuel').amount} facturés par an, à partir du ${formatDate(subscription.nextChargeDate)}.`
               : `${priceLabel(priceOf(plan, 'mensuel'), 'mensuel').amount} facturés chaque mois, à partir du ${formatDate(subscription.nextChargeDate)}.`
           }
           confirmLabel="Confirmer"

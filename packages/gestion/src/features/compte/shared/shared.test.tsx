@@ -2,9 +2,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { csvCell } from '@eguardimmo/shell';
 import { expectNoA11yViolations } from '../../../../test/axe';
 import { addDays, formatDate, formatDateTimeOffset, formatDay, formatTime, isoDay } from './dates';
-import { csvCell, downloadFile, toCsv } from './download';
+import { downloadFile, toCsv } from './download';
 import { Toggle } from './Toggle';
 
 describe('dates', () => {
@@ -31,7 +32,11 @@ describe('CSV', () => {
   });
 
   it('neutralise les formules de tableur', () => {
-    for (const dangerous of ['=1+1', '+33', '-2', '@SUM(A1)']) expect(csvCell(dangerous)).toBe(`'${dangerous}`);
+    for (const dangerous of ['=1+1', '+33', '-2+3', '@SUM(A1)']) expect(csvCell(dangerous)).toBe(`'${dangerous}`);
+  });
+
+  it('neutralise une formule HYPERLINK dans le fichier produit', () => {
+    expect(toCsv([['Nom'], ['=HYPERLINK("http://x";"y")']])).toBe('﻿Nom\r\n"\'=HYPERLINK(""http://x"";""y"")"\r\n');
   });
 
   it('produit un fichier avec BOM et fins de ligne CRLF', () => {
@@ -63,6 +68,11 @@ describe('Toggle', () => {
     await userEvent.click(toggle);
     expect(toggle.getAttribute('aria-checked')).toBe('true');
     await expectNoA11yViolations(container);
+  });
+
+  it('offre une zone cliquable d’au moins 24 px de haut', () => {
+    render(<Toggle label="Mode expert" checked={false} onCheckedChange={() => undefined} />);
+    expect(screen.getByRole('switch', { name: 'Mode expert' }).className).toContain('h-6');
   });
 
   it('ne réagit pas quand il est désactivé', async () => {

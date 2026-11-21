@@ -1,0 +1,74 @@
+{
+    "status": 200,
+    "body": {
+        "data": {
+            "id": "01a1ef81-50b4-707a-b35e-e22f1bbb6a42",
+            "intervention_id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+            "supplier_party_id": "01a1ef81-4fb6-73dc-ade1-26fdb67f4d34",
+            "billed_party_id": "01a1ef81-4fa9-716f-939a-e4080ffe20bc",
+            "number": "F-RELEVE-1",
+            "invoice_on": "2026-11-21",
+            "due_on": null,
+            "total_net": {
+                "amount": 60000,
+                "currency": "EUR"
+            },
+            "total_tax": {
+                "amount": 12000,
+                "currency": "EUR"
+            },
+            "total_gross": {
+                "amount": 72000,
+                "currency": "EUR"
+            },
+            "status": "allocated",
+            "exceeds_approved_amount": false,
+            "taxes": [
+                {
+                    "category": "S",
+                    "rate_pcm": 20000,
+                    "base_amount": 60000,
+                    "tax_amount": 12000
+                }
+            ],
+            "allocations": [
+                {
+                    "id": "01a1ef81-50c1-7390-bbed-a299f92e6a43",
+                    "supplier_invoice_id": "01a1ef81-50b4-707a-b35e-e22f1bbb6a42",
+                    "target": "owner",
+                    "party_id": "01a1ef81-4fa9-716f-939a-e4080ffe20bc",
+                    "lease_id": null,
+                    "share_amount": {
+                        "amount": 72000,
+                        "currency": "EUR"
+                    },
+                    "wear_basis_points": 0,
+                    "charged_amount": {
+                        "amount": 72000,
+                        "currency": "EUR"
+                    },
+                    "basis_note": null,
+                    "cancelled_at": null,
+                    "replayed": null
+                }
+            ],
+            "payments": [
+                {
+                    "id": "01a1ef81-50c8-71fe-9878-e5e5d5fa198f",
+                    "supplier_invoice_id": "01a1ef81-50b4-707a-b35e-e22f1bbb6a42",
+                    "amount": {
+                        "amount": 30000,
+                        "currency": "EUR"
+                    },
+                    "method": "transfer",
+                    "paid_on": "2026-11-21",
+                    "reference": null,
+                    "cancelled_at": null,
+                    "replayed": null
+                }
+            ],
+            "lock_version": 2,
+            "replayed": null
+        }
+    }
+}

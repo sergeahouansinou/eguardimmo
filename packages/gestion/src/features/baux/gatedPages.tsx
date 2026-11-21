@@ -1,7 +1,7 @@
 'use client';
 
 import type { ComponentType } from 'react';
-import { BailEcheancierPage as Schedule } from './BailEcheancierPage';
+import { BailEcheancierPage as DemoSchedule } from './BailEcheancierPage';
 import { EtatLieuxComparePage as EdlCompare } from './EtatLieuxComparePage';
 import { EtatLieuxFormPage as EdlForm } from './EtatLieuxFormPage';
 import { EtatLieuxPage as Edl } from './EtatLieuxPage';
@@ -12,7 +12,9 @@ import { ReservationFormPage as ReservationForm } from './ReservationFormPage';
 import { ReservationsPage as Reservations } from './ReservationsPage';
 import type { BauxFeature } from './capabilities';
 import { bauxPaths } from './paths';
+import { LeaseSchedulePage } from '../finances/rent/LeaseSchedulePage';
 import { PageHeader } from '../locataires/kit';
+import { useGestionDataMode } from '../locataires/kit/sourceContext';
 import { links } from '../locataires/kit/links';
 
 function gated<P extends object>(feature: BauxFeature, title: string, Page: ComponentType<P>): ComponentType<P> {
@@ -28,6 +30,10 @@ function gated<P extends object>(feature: BauxFeature, title: string, Page: Comp
   }
   Gated.displayName = `Gated(${title})`;
   return Gated;
+}
+
+function Schedule({ id }: { id: string }) {
+  return useGestionDataMode() === 'api' ? <LeaseSchedulePage id={id} /> : <DemoSchedule id={id} />;
 }
 
 export const BailEcheancierPage = gated('schedule', 'Échéancier', Schedule);

@@ -1,0 +1,11 @@
+{
+    "status": 422,
+    "body": {
+        "type": "https://api.eguardimmo.test/problems/intervention_approval_required",
+        "title": "Accord du mandant requis",
+        "status": 422,
+        "detail": "Accord du mandant requis.",
+        "code": "intervention_approval_required",
+        "request_id": "01a1ef81-5049-73e7-a970-0b26bbb5f97f"
+    }
+}

@@ -33,7 +33,7 @@ function RowMenu({ member, members, onAction }: { member: Member; members: reado
         <MenuItem disabled={roleBlocked} meta={roleBlocked ? blockTag(member) : undefined} onSelect={() => { onAction('role', member); }}>
           Modifier le rôle
         </MenuItem>
-        <MenuItem onSelect={() => { onAction('scope', member); }}>Modifier les biens accessibles</MenuItem>
+        {member.scope.type === 'selected' ? <MenuItem onSelect={() => { onAction('scope', member); }}>Rétablir « Tous les biens »</MenuItem> : null}
         <MenuSeparator />
         {member.status === 'actif' ? (
           <MenuItem disabled={deactivateBlocked} meta={deactivateBlocked ? blockTag(member) : undefined} onSelect={() => { onAction('deactivate', member); }}>

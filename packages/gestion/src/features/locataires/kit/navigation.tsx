@@ -4,10 +4,18 @@ import { createContext, use } from 'react';
 import type { ReactNode } from 'react';
 import type { LinkComponent } from '@eguardimmo/ui';
 
+export interface WriteToTenantTarget {
+  partyId: string;
+  partyName: string;
+  leases: readonly { id: string; label: string }[];
+  defaultLeaseId?: string;
+}
+
 export interface GestionNavigation {
   Link: LinkComponent;
   push: (href: string) => void;
   search: URLSearchParams;
+  writeToTenant?: (target: WriteToTenantTarget) => ReactNode;
 }
 
 const NavigationContext = createContext<GestionNavigation | null>(null);

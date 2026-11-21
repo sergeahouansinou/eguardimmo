@@ -1,13 +1,10 @@
-export type CsvCell = string | number;
+import { csvDocument } from '@eguardimmo/shell';
+import type { CsvCell } from '@eguardimmo/shell';
 
-function escape(cell: CsvCell): string {
-  if (typeof cell === 'number') return String(cell);
-  const safe = /^[=+\-@\t\r]/.test(cell) ? `'${cell}` : cell;
-  return /[;"\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-}
+export type { CsvCell };
 
 export function toCsv(rows: readonly (readonly CsvCell[])[]): string {
-  return rows.map((row) => row.map(escape).join(';')).join('\r\n');
+  return csvDocument(rows);
 }
 
 export function downloadCsv(filename: string, rows: readonly (readonly CsvCell[])[]): void {

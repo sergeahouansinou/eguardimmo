@@ -26,6 +26,13 @@ describe('translateApiError', () => {
     expect(error).toMatchObject({ kind: 'stale_version', status: 409, message: STALE_VERSION_MESSAGE });
   });
 
+  it('formule la limite de plan en français sur un 409 et sur un 403', () => {
+    const quota = translateApiError(new ApiError(409, 'plan_quota_reached', 'Texte serveur.', {}, null, { feature: 'leases', limit: 30, current: 30 }));
+    const absent = translateApiError(new ApiError(403, 'feature_not_in_plan', 'Texte serveur.', {}, null, { feature: 'inspections' }));
+    expect(quota).toMatchObject({ kind: 'conflict', code: 'plan_quota_reached', message: 'Limite de votre plan atteinte : 30 baux sur 30. Passez à une formule supérieure pour continuer.' });
+    expect(absent).toMatchObject({ kind: 'forbidden', code: 'feature_not_in_plan', message: expect.stringContaining('n’est pas incluse dans votre plan') as string });
+  });
+
   it('garde les autres 409 comme conflits avec leur code', () => {
     const error = translateApiError(apiError(409, 'lease_overlap', 'Un autre bail occupe déjà l\'un de ces lots pendant tout ou partie de cette période.'));
     expect(error).toMatchObject({ kind: 'conflict', code: 'lease_overlap', message: 'Un autre bail occupe déjà l\'un de ces lots pendant tout ou partie de cette période.' });

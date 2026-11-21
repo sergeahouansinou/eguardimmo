@@ -6,7 +6,9 @@ import { dismissFlash } from '../../outils/kit';
 import { navigate, renderScreen, screenProps } from '../shared/testing';
 import { EquipeInvitePage } from './EquipeInvitePage';
 import { EquipePage, seatsMessage } from './EquipePage';
+import { ApiError } from '@eguardimmo/api';
 import { demoTeam } from './demo';
+import { SCOPE_UNSUPPORTED_MESSAGE } from './errors';
 import { SeatLimitError, TeamRuleError } from './rules';
 import { EquipeSourceProvider, createDemoEquipeSource, resetEquipeDemo } from './source';
 
@@ -15,6 +17,9 @@ beforeEach(() => {
   dismissFlash();
   navigate.mockClear();
 });
+
+const cappedTeam = { ...demoTeam, seatLimit: 3 };
+const cappedSource = () => createDemoEquipeSource(cappedTeam);
 
 function rowOf(name: string): HTMLElement {
   const email = `${name.toLowerCase().replace(' ', '.')}@example.com`;
@@ -29,7 +34,7 @@ describe('EquipePage', () => {
   it('affiche les membres, les compteurs, les rôles et la sécurité de la maquette', async () => {
     const { container } = renderScreen(<EquipePage {...screenProps} />);
     expect(await screen.findByText('awa.diallo@example.com')).toBeTruthy();
-    expect(screen.getByText("Formule Essentiel : 2 membres actifs sur 3. L'invitation en attente occupera la dernière place.")).toBeTruthy();
+    expect(screen.getByText('Formule Silver : plusieurs membres inclus.')).toBeTruthy();
     const tabs = screen.getByRole('tablist', { name: 'Filtrer les membres par état' });
     expect(within(tabs).getByRole('tab', { name: /Tous\s*4/ })).toBeTruthy();
     expect(within(tabs).getByRole('tab', { name: /Actifs\s*2/ })).toBeTruthy();
@@ -39,7 +44,7 @@ describe('EquipePage', () => {
     expect(within(rowOf('Fatou Ndiaye')).getByText('Invitation envoyée')).toBeTruthy();
     expect(within(rowOf('Fatou Ndiaye')).getByText("À l'acceptation")).toBeTruthy();
     expect(within(rowOf('Fatou Ndiaye')).getByText('Jamais')).toBeTruthy();
-    expect(within(rowOf('Julien Morel')).getByText('Les Tilleuls')).toBeTruthy();
+    expect(within(rowOf('Julien Morel')).getByText('Les Tilleuls (périmètre non appliqué)')).toBeTruthy();
     expect(within(rowOf('Julien Morel')).getByText('12/06/2026')).toBeTruthy();
     expect(within(rowOf('Julien Morel')).getByText('Non activée')).toBeTruthy();
     expect(within(rowOf('Awa Diallo')).getByText("Aujourd'hui, 08:42")).toBeTruthy();
@@ -53,6 +58,13 @@ describe('EquipePage', () => {
     expect(screen.getByRole('link', { name: 'Inviter un membre' }).getAttribute('href')).toBe('/equipe/inviter');
     expect(within(rowOf('Awa Diallo')).getByRole('link', { name: /Modifier/ }).getAttribute('href')).toBe('/compte');
     await expectNoA11yViolations(container);
+  });
+
+  it('masque le lien vers le journal quand l’espace n’en a pas', async () => {
+    renderScreen(<EquipePage {...screenProps} journal={false} />);
+    await screen.findByText('awa.diallo@example.com');
+    expect(screen.queryByRole('link', { name: "Journal d'activité" })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Inviter un membre' })).toBeTruthy();
   });
 
   it('filtre par onglet, par recherche et par rôle', async () => {
@@ -86,7 +98,7 @@ describe('EquipePage', () => {
   });
 
   it("annule une invitation après confirmation et libère la place", async () => {
-    const source = createDemoEquipeSource();
+    const source = cappedSource();
     renderScreen(
       <EquipeSourceProvider source={source}>
         <EquipePage {...screenProps} />
@@ -98,7 +110,7 @@ describe('EquipePage', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: "Annuler l'invitation" }));
     expect(await screen.findByText("Invitation de Fatou Ndiaye annulée.")).toBeTruthy();
     expect((await source.getTeam()).members.map((member) => member.id)).not.toContain('fatou-ndiaye');
-    expect(await screen.findByText('Formule Essentiel : 2 membres actifs sur 3. 1 place disponible.')).toBeTruthy();
+    expect(await screen.findByText('Formule Silver : 2 membres actifs sur 3. 1 place disponible.')).toBeTruthy();
   });
 
   it('change le rôle d’un membre', async () => {
@@ -117,7 +129,7 @@ describe('EquipePage', () => {
     expect((await source.getTeam()).members.find((member) => member.id === 'fatou-ndiaye')?.role).toBe('gestionnaire');
   });
 
-  it('modifie les biens accessibles et refuse une sélection vide', async () => {
+  it('propose de rétablir « Tous les biens » seulement pour un membre au périmètre non appliqué', async () => {
     const source = createDemoEquipeSource();
     renderScreen(
       <EquipeSourceProvider source={source}>
@@ -125,18 +137,33 @@ describe('EquipePage', () => {
       </EquipeSourceProvider>,
     );
     await userEvent.click(await screen.findByRole('button', { name: "Plus d'actions pour Fatou Ndiaye" }));
-    await userEvent.click(await screen.findByRole('menuitem', { name: 'Modifier les biens accessibles' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Biens accessibles à Fatou Ndiaye' });
-    await userEvent.click(within(dialog).getByRole('radio', { name: 'Biens choisis' }));
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }));
-    expect(within(dialog).getByText('Choisissez au moins un bien.')).toBeTruthy();
-    await userEvent.click(within(dialog).getByRole('checkbox', { name: 'Résidence du Parc' }));
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Enregistrer' }));
-    expect(await screen.findByText('Biens accessibles de Fatou Ndiaye mis à jour.')).toBeTruthy();
-    expect((await source.getTeam()).members.find((member) => member.id === 'fatou-ndiaye')?.scope).toEqual({
-      type: 'selected',
-      buildings: ['Résidence du Parc'],
-    });
+    expect(screen.queryByRole('menuitem', { name: /Tous les biens/ })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Modifier les biens accessibles' })).toBeNull();
+    await userEvent.keyboard('{Escape}');
+
+    expect(within(rowOf('Julien Morel')).getByText('Les Tilleuls (périmètre non appliqué)')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: "Plus d'actions pour Julien Morel" }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Rétablir « Tous les biens »' }));
+    const dialog = await screen.findByRole('dialog', { name: "Rétablir l'accès à tous les biens pour Julien Morel ?" });
+    expect(within(dialog).queryByRole('radio')).toBeNull();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Rétablir « Tous les biens »' }));
+    expect(await screen.findByText('Julien Morel a accès à tous les biens.')).toBeTruthy();
+    expect((await source.getTeam()).members.find((member) => member.id === 'julien-morel')?.scope).toEqual({ type: 'all' });
+  });
+
+  it('affiche le refus member_scope_unsupported du serveur en français', async () => {
+    const source = createDemoEquipeSource();
+    source.changeScope = () => Promise.reject(new ApiError(422, 'member_scope_unsupported', 'Texte du serveur', {}, null));
+    renderScreen(
+      <EquipeSourceProvider source={source}>
+        <EquipePage {...screenProps} />
+      </EquipeSourceProvider>,
+    );
+    await userEvent.click(await screen.findByRole('button', { name: "Plus d'actions pour Julien Morel" }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Rétablir « Tous les biens »' }));
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Rétablir « Tous les biens »' }));
+    expect(await screen.findByText(SCOPE_UNSUPPORTED_MESSAGE)).toBeTruthy();
+    expect(screen.queryByText('Texte du serveur')).toBeNull();
   });
 
   it('désactive un membre actif après confirmation, puis le réactive', async () => {
@@ -244,7 +271,7 @@ describe('règles de l’équipe (source)', () => {
   });
 
   it('refuse une invitation au-delà des places et une adresse déjà présente', async () => {
-    const source = createDemoEquipeSource();
+    const source = cappedSource();
     const input = { firstName: 'Ibrahim', lastName: 'Yao', email: 'ibrahim.yao@example.com', role: 'gestionnaire' as const, scope: { type: 'all' as const }, message: '' };
     await expect(source.invite(input)).rejects.toBeInstanceOf(SeatLimitError);
     await source.cancelInvitation('fatou-ndiaye');
@@ -255,15 +282,15 @@ describe('règles de l’équipe (source)', () => {
   });
 
   it('compte les places sur les membres actifs et invités uniquement', () => {
-    expect(seatsMessage(demoTeam)).toContain('2 membres actifs sur 3');
-    expect(seatsMessage({ ...demoTeam, seatLimit: null })).toBe('Formule Essentiel : membres illimités.');
-    expect(seatsMessage({ ...demoTeam, members: demoTeam.members.filter((member) => member.status === 'actif') })).toContain('1 place disponible.');
+    expect(seatsMessage(cappedTeam)).toContain('2 membres actifs sur 3');
+    expect(seatsMessage(demoTeam)).toBe('Formule Silver : plusieurs membres inclus.');
+    expect(seatsMessage({ ...cappedTeam, members: cappedTeam.members.filter((member) => member.status === 'actif') })).toContain('1 place disponible.');
   });
 });
 
 describe('EquipeInvitePage', () => {
   async function freeSeatSource() {
-    const source = createDemoEquipeSource();
+    const source = cappedSource();
     await source.cancelInvitation('fatou-ndiaye');
     return source;
   }
@@ -281,14 +308,63 @@ describe('EquipeInvitePage', () => {
     expect(screen.getByText("L'invitation est envoyée à cette adresse.")).toBeTruthy();
     expect(screen.getByText('Le membre reçoit un lien valable 7 jours pour créer son accès.')).toBeTruthy();
     expect(screen.getByRole<HTMLInputElement>('radio', { name: /Comptable/ }).checked).toBe(true);
-    const rights = screen.getByRole('region', { name: 'Droits du rôle' });
-    expect(within(rights).getByText('Finances, paiements, dépenses')).toBeTruthy();
-    expect(within(rights).getAllByText('Modifier')).toHaveLength(2);
-    expect(within(rights).getAllByText('Lecture')).toHaveLength(2);
+    const rights = await screen.findByRole('region', { name: 'Droits du rôle' });
+    expect(within(rights).getByText('Loyers, encaissements, dépenses')).toBeTruthy();
+    expect(within(rights).getAllByText('Modifier')).toHaveLength(1);
+    expect(within(rights).getAllByText('Modifier, 2FA')).toHaveLength(1);
+    expect(within(rights).getAllByText('Lecture')).toHaveLength(3);
     expect(within(rights).getAllByText('Aucun')).toHaveLength(2);
     expect(screen.getByText('Double authentification exigée à la connexion.')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Annuler' }).getAttribute('href')).toBe('/equipe');
     await expectNoA11yViolations(container);
+  });
+
+  it("n'offre plus de périmètre par bien et l'explique", async () => {
+    const source = await freeSeatSource();
+    renderScreen(
+      <EquipeSourceProvider source={source}>
+        <EquipeInvitePage {...screenProps} />
+      </EquipeSourceProvider>,
+    );
+    const card = await screen.findByRole('region', { name: 'Biens accessibles' });
+    expect(within(card).getByText('Tous les biens')).toBeTruthy();
+    expect(within(card).getByText(/n'est pas appliqué par le serveur/)).toBeTruthy();
+    expect(screen.queryByRole('radio', { name: 'Biens choisis' })).toBeNull();
+    expect(screen.queryByRole('checkbox', { name: 'Les Tilleuls' })).toBeNull();
+  });
+
+  it("affiche le refus member_scope_unsupported du serveur à l'invitation", async () => {
+    const source = await freeSeatSource();
+    source.invite = () => Promise.reject(new ApiError(422, 'member_scope_unsupported', 'Texte du serveur', {}, null));
+    renderScreen(
+      <EquipeSourceProvider source={source}>
+        <EquipeInvitePage {...screenProps} />
+      </EquipeSourceProvider>,
+    );
+    await userEvent.type(await screen.findByLabelText('Prénom *'), 'Ibrahim');
+    await userEvent.type(screen.getByLabelText('Nom *'), 'Yao');
+    await userEvent.type(screen.getByLabelText('E-mail *'), 'ibrahim.yao@example.com');
+    await userEvent.click(screen.getByRole('button', { name: "Envoyer l'invitation" }));
+    expect(await screen.findByText(SCOPE_UNSUPPORTED_MESSAGE)).toBeTruthy();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("affiche la limite de membres du plan avec le lien vers l'abonnement", async () => {
+    const source = await freeSeatSource();
+    source.invite = () => Promise.reject(new ApiError(409, 'plan_quota_reached', 'Texte du serveur', {}, null, { feature: 'users', limit: 3, current: 3 }));
+    renderScreen(
+      <EquipeSourceProvider source={source}>
+        <EquipeInvitePage {...screenProps} />
+      </EquipeSourceProvider>,
+    );
+    await userEvent.type(await screen.findByLabelText('Prénom *'), 'Ibrahim');
+    await userEvent.type(screen.getByLabelText('Nom *'), 'Yao');
+    await userEvent.type(screen.getByLabelText('E-mail *'), 'ibrahim.yao@example.com');
+    await userEvent.click(screen.getByRole('button', { name: "Envoyer l'invitation" }));
+    expect(await screen.findByText(/Limite de votre plan atteinte : 3 membres sur 3\./)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Voir mon abonnement' }).getAttribute('href')).toBe('/compte/abonnement');
+    expect(screen.queryByText("L'invitation n'a pas pu être envoyée")).toBeNull();
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   it('met à jour les droits affichés quand le rôle change', async () => {
@@ -299,8 +375,9 @@ describe('EquipeInvitePage', () => {
       </EquipeSourceProvider>,
     );
     await userEvent.click(await screen.findByRole('radio', { name: /Administrateur/ }));
-    const rights = screen.getByRole('region', { name: 'Droits du rôle' });
+    const rights = await screen.findByRole('region', { name: 'Droits du rôle' });
     expect(within(rights).getAllByText('Modifier')).toHaveLength(6);
+    expect(within(rights).getAllByText('Modifier, 2FA')).toHaveLength(1);
   });
 
   it('valide prénom, nom et e-mail avec un message par champ, sans appeler la source', async () => {
@@ -330,17 +407,19 @@ describe('EquipeInvitePage', () => {
     await userEvent.type(screen.getByLabelText('Nom *'), 'Yao');
     await userEvent.type(screen.getByLabelText('E-mail *'), 'ibrahim.yao@example.com');
     await userEvent.click(screen.getByRole('radio', { name: /Gestionnaire/ }));
-    await userEvent.click(screen.getByRole('radio', { name: 'Biens choisis' }));
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Les Tilleuls' }));
     await userEvent.type(screen.getByLabelText('Message personnel'), 'Bienvenue');
     await userEvent.click(screen.getByRole('button', { name: "Envoyer l'invitation" }));
     await waitFor(() => { expect(navigate).toHaveBeenCalledWith('/equipe'); });
     const created = (await source.getTeam()).members.find((member) => member.email === 'ibrahim.yao@example.com');
-    expect(created).toMatchObject({ role: 'gestionnaire', status: 'invite', scope: { type: 'selected', buildings: ['Les Tilleuls'] }, message: 'Bienvenue' });
+    expect(created).toMatchObject({ role: 'gestionnaire', status: 'invite', scope: { type: 'all' }, message: 'Bienvenue' });
   });
 
   it('bloque l’envoi quand toutes les places sont utilisées', async () => {
-    renderScreen(<EquipeInvitePage {...screenProps} />);
+    renderScreen(
+      <EquipeSourceProvider source={cappedSource()}>
+        <EquipeInvitePage {...screenProps} />
+      </EquipeSourceProvider>,
+    );
     expect(await screen.findByText('Aucune place disponible')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'changez de formule' }).getAttribute('href')).toBe('/compte/abonnement');
     expect(screen.getByRole('button', { name: "Envoyer l'invitation" }).hasAttribute('disabled')).toBe(true);

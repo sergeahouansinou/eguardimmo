@@ -9,6 +9,8 @@ import { QueryBoundary, SkeletonRows } from '../../components/QueryState';
 import { useBiensEnvironment } from '../../environment';
 import { WhenAvailable, useFeatureUnavailable } from '../../FeatureGate';
 import { errorMessage } from '../../hooks/useCommand';
+import { PlanLimitAlert } from '../../../orgapi/PlanLimitAlert';
+import { isPlanLimitError } from '../../../orgapi/planLimit';
 import { useZodForm } from '../../hooks/useZodForm';
 import { toMajorInput } from '../../lib/amount';
 import { HEATING_LABELS, LOT_TYPE_LABELS } from '../../lib/labels';
@@ -52,11 +54,12 @@ function valuesOf(detail: LotDetail, currency: Currency) {
 }
 
 function LotFormBody({ id, currency, immeubles, detail }: { id?: string; currency: Currency; immeubles: readonly ImmeubleRow[]; detail: LotDetail | null }) {
-  const { push } = useBiensEnvironment();
+  const { push, Link } = useBiensEnvironment();
   const toast = useToast();
   const schema = useMemo(() => lotFormSchema(currency), [currency]);
   const form = useZodForm(schema, detail ? valuesOf(detail, currency) : blankValues());
   const [failure, setFailure] = useState<string | null>(null);
+  const [planError, setPlanError] = useState<unknown>(null);
   const inheritedAddress = useFeatureUnavailable('lotDetails');
   const save = useBiensAction((source, input: { values: Parameters<typeof source.createLot>[0] }) =>
     id ? source.updateLot(id, input.values).then(() => ({ id })) : source.createLot(input.values),
@@ -75,6 +78,7 @@ function LotFormBody({ id, currency, immeubles, detail }: { id?: string; currenc
   const submit = form.submit((values, submitter) => {
       const another = submitter?.dataset.mode === 'another';
       setFailure(null);
+      setPlanError(null);
       save.mutate(
         { values },
         {
@@ -83,7 +87,10 @@ function LotFormBody({ id, currency, immeubles, detail }: { id?: string; currenc
             if (another) form.reset(blankValues(values.immeubleId));
             else push(biensPaths.lot(result.id));
           },
-          onError: (error) => { setFailure(errorMessage(error)); },
+          onError: (error) => {
+            if (isPlanLimitError(error)) setPlanError(error);
+            else setFailure(errorMessage(error));
+          },
         },
       );
   });
@@ -93,6 +100,7 @@ function LotFormBody({ id, currency, immeubles, detail }: { id?: string; currenc
   return (
     <form noValidate onSubmit={submit} className="flex max-w-4xl flex-col gap-4">
       <FormError message={failure} />
+      <PlanLimitAlert error={planError} Link={Link} />
       <FormSection title="Identité du lot">
         <TextField label="Nom du lot *" placeholder="Apt A3" {...form.field('name')} />
         <Select

@@ -14,18 +14,16 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 export const ROLE_SUMMARIES: Record<Role, string> = {
   titulaire: "Tout le compte, y compris l'abonnement",
-  administrateur: "Tout, sauf l'abonnement et la clôture",
-  gestionnaire: 'Biens, locataires, baux, documents',
-  comptable: 'Finances et rapports, le reste en lecture',
+  administrateur: 'Mêmes droits que le titulaire, clôture comprise',
+  gestionnaire: 'Biens, locataires, baux, loyers ; prépare les reversements',
+  comptable: 'Finances, banque et reversements ; le reste en lecture',
 };
 
-export const BUILDINGS = ['Les Tilleuls', 'Résidence du Parc', 'Maison Rivière'] as const;
-
-export const scopeSchema = z.union([
-  z.object({ type: z.literal('all') }),
-  z.object({ type: z.literal('selected'), buildings: z.array(z.enum(BUILDINGS)).min(1, 'Choisissez au moins un bien.') }),
-]);
+export const scopeSchema = z.object({ type: z.literal('all') });
 export type Scope = z.infer<typeof scopeSchema>;
+
+export const memberScopeSchema = z.union([scopeSchema, z.object({ type: z.literal('selected'), buildings: z.array(z.string().min(1)) })]);
+export type MemberScope = z.infer<typeof memberScopeSchema>;
 
 export const STATUSES = ['actif', 'invite', 'desactive'] as const;
 export type MemberStatus = (typeof STATUSES)[number];
@@ -36,7 +34,7 @@ export const memberSchema = z.object({
   lastName: z.string().min(1),
   email: z.email(),
   role: z.enum(ROLES),
-  scope: scopeSchema,
+  scope: memberScopeSchema,
   twoFactor: z.enum(['activee', 'non-activee', 'a-l-acceptation']),
   lastLogin: z.iso.datetime({ offset: true }).nullable(),
   online: z.boolean(),
@@ -67,11 +65,12 @@ export type InviteInput = z.infer<typeof inviteSchema>;
 
 export const roleChangeSchema = z.enum(INVITABLE_ROLES);
 
-export type RightLevel = 'modifier' | 'lecture' | 'aucun';
+export type RightLevel = 'modifier' | 'modifier-2fa' | 'preparation' | 'lecture' | 'aucun';
 
 export const RIGHT_AREAS = [
-  'Finances, paiements, dépenses',
-  'Rapports et exports',
+  'Loyers, encaissements, dépenses',
+  'Reversements, banque, clôture',
+  'Comptes rendus : publication',
   'Biens, locataires, baux',
   'Documents et quittances',
   'Messages aux locataires',
@@ -79,8 +78,8 @@ export const RIGHT_AREAS = [
 ] as const;
 
 export const ROLE_RIGHTS: Record<Role, readonly RightLevel[]> = {
-  titulaire: ['modifier', 'modifier', 'modifier', 'modifier', 'modifier', 'modifier'],
-  administrateur: ['modifier', 'modifier', 'modifier', 'modifier', 'modifier', 'modifier'],
-  gestionnaire: ['lecture', 'lecture', 'modifier', 'modifier', 'modifier', 'aucun'],
-  comptable: ['modifier', 'modifier', 'lecture', 'lecture', 'aucun', 'aucun'],
+  titulaire: ['modifier', 'modifier-2fa', 'modifier', 'modifier', 'modifier', 'modifier', 'modifier'],
+  administrateur: ['modifier', 'modifier-2fa', 'modifier', 'modifier', 'modifier', 'modifier', 'modifier'],
+  gestionnaire: ['modifier', 'preparation', 'modifier', 'modifier', 'modifier', 'modifier', 'lecture'],
+  comptable: ['modifier', 'modifier-2fa', 'aucun', 'lecture', 'lecture', 'aucun', 'lecture'],
 };

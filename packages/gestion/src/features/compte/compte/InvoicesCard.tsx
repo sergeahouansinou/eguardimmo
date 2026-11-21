@@ -15,7 +15,7 @@ const STATUS_LABELS: Record<Invoice['status'], string> = { payee: 'Payée', 'en-
 
 export function invoicesToCsv(invoices: readonly Invoice[]): string {
   return toCsv([
-    ['Numéro', 'Date', 'Formule', 'Montant TTC', 'Statut'],
+    ['Numéro', 'Date', 'Formule', 'Montant HT', 'Statut'],
     ...invoices.map((invoice) => [
       invoice.id,
       formatDate(invoice.date),
@@ -62,7 +62,7 @@ function InvoiceDialog({ invoice, onClose }: { invoice: Invoice; onClose: () => 
                     <td className="border-b border-line py-1 text-right tabular-nums">{formatMoney(invoice.amount, 'EUR')}</td>
                   </tr>
                   <tr>
-                    <th scope="row" className="py-1 text-left font-semibold">Total TTC</th>
+                    <th scope="row" className="py-1 text-left font-semibold">Total HT</th>
                     <td className="py-1 text-right font-semibold tabular-nums">{formatMoney(invoice.amount, 'EUR')}</td>
                   </tr>
                 </tbody>

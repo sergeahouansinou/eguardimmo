@@ -1,10 +1,40 @@
-export const CURRENCIES = ['EUR', 'XOF'] as const;
+export const CURRENCIES = ['EUR', 'XOF', 'CAD'] as const;
 export type Currency = (typeof CURRENCIES)[number];
 
-const MINOR_DIGITS: Record<Currency, number> = { EUR: 2, XOF: 0 };
+const MINOR_DIGITS: Record<Currency, number> = { EUR: 2, XOF: 0, CAD: 2 };
+
+export const isCurrency = (code: string): code is Currency => CURRENCIES.some((currency) => currency === code);
 
 export function minorDigits(currency: Currency): number {
   return MINOR_DIGITS[currency];
+}
+
+const SPACES = /[\s\u00a0\u202f]/g;
+const MAX_WHOLE_DIGITS = 9;
+
+const DIGITS = /^[0-9]+$/;
+
+const onlyDigits = (text: string): boolean => DIGITS.test(text);
+
+export function parseAmount(text: string, currency: Currency): number | null {
+  const digits = MINOR_DIGITS[currency];
+  const parts = text.replace(SPACES, '').replace(',', '.').split('.');
+  if (parts.length > 2) return null;
+  const [whole = '', fraction = ''] = parts;
+  if (!onlyDigits(whole) || whole.length > MAX_WHOLE_DIGITS) return null;
+  if (parts.length === 2 && (!onlyDigits(fraction) || fraction.length > digits)) return null;
+  return Number(`${whole}${fraction.padEnd(digits, '0')}`);
+}
+
+export function formatAmountInput(minor: number, currency: Currency): string {
+  if (!Number.isSafeInteger(minor)) throw new RangeError(`Montant en unités mineures non entier : ${String(minor)}`);
+  const digits = MINOR_DIGITS[currency];
+  const factor = 10 ** digits;
+  const sign = minor < 0 ? '-' : '';
+  const abs = Math.abs(minor);
+  const whole = Math.trunc(abs / factor);
+  const fraction = abs % factor;
+  return fraction === 0 ? `${sign}${String(whole)}` : `${sign}${String(whole)},${String(fraction).padStart(digits, '0')}`;
 }
 
 export interface MoneyFormatOptions {

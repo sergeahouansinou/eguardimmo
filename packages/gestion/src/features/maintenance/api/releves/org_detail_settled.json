@@ -1,0 +1,536 @@
+{
+    "status": 200,
+    "body": {
+        "data": {
+            "id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+            "reference": "INT-2026-0001",
+            "origin": "tenant",
+            "status": "invoiced",
+            "priority": "normal",
+            "reported_urgency": "soon",
+            "nature_term_id": "01a1ef81-4f89-72ac-b62c-60d007a91b12",
+            "title": "Fuite sous l'évier",
+            "description": "De l'eau coule sous l'évier de la cuisine.",
+            "room": null,
+            "availability": null,
+            "property_id": "01a1ef81-4fa7-73e7-83f2-ee41e69f4bee",
+            "unit_id": "01a1ef81-4fa8-7008-9649-57ef36d615d7",
+            "unit": {
+                "id": "01a1ef81-4fa8-7008-9649-57ef36d615d7",
+                "reference": "LOT-28755",
+                "property_name": "Résidence Roy"
+            },
+            "lease_id": "01a1ef81-4fb4-70fa-a070-6b296b02b3e9",
+            "mandate_id": "01a1ef81-4faa-70cd-ae82-16006b88c739",
+            "mandant": {
+                "id": "01a1ef81-4fa9-716f-939a-e4080ffe20bc",
+                "name": "Franck Renault"
+            },
+            "reporter": {
+                "id": "01a1ef81-4fb3-73be-8cc0-2f2e71a78ae5",
+                "name": "Édouard Gillet"
+            },
+            "supplier": {
+                "id": "01a1ef81-4fb6-73dc-ade1-26fdb67f4d34",
+                "name": "Ramonage du Port SARL"
+            },
+            "responsibility": "owner",
+            "reported_on": "2026-11-18",
+            "due_on": null,
+            "estimated_amount": {
+                "amount": 60000,
+                "currency": "EUR"
+            },
+            "ceiling_amount": {
+                "amount": 50000,
+                "currency": "EUR"
+            },
+            "approval_basis": "owner_approved",
+            "emergency_reason": null,
+            "decline_reason": null,
+            "decline_note": null,
+            "completed_on": "2026-11-20",
+            "completion_note": "Siphon remplacé.",
+            "closed_at": null,
+            "follows_intervention_id": null,
+            "custom_fields": null,
+            "lock_version": 9,
+            "created_at": "2026-11-18T11:01:00+00:00",
+            "committed_amount": {
+                "amount": 72000,
+                "currency": "EUR"
+            },
+            "events": [
+                {
+                    "id": "01a1ef81-4fe2-71d9-bc07-559fc4da1193",
+                    "kind": "reported",
+                    "actor_kind": "tenant",
+                    "text": "Demande signalée.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5002-709b-a12e-e0d1615408e8",
+                    "kind": "file_added",
+                    "actor_kind": "tenant",
+                    "text": "Une photo a été ajoutée.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5006-7184-8da2-16868ccc3242",
+                    "kind": "comment",
+                    "actor_kind": "tenant",
+                    "text": "Merci de passer vite.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5012-73d7-ad53-298c64c66a84",
+                    "kind": "comment",
+                    "actor_kind": "team",
+                    "text": "Un plombier passera cette semaine.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5016-73f1-ad9a-cf712cc9b782",
+                    "kind": "file_added",
+                    "actor_kind": "team",
+                    "text": "Une photo a été ajoutée.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5025-711b-87ca-8c467e6c1591",
+                    "kind": "qualified",
+                    "actor_kind": "team",
+                    "text": "Demande qualifiée.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5025-711b-87ca-8c467f6b5fe3",
+                    "kind": "updated",
+                    "actor_kind": "system",
+                    "text": "Votre demande a été prise en charge.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-502e-7016-a9ce-186b5ed53743",
+                    "kind": "supplier_assigned",
+                    "actor_kind": "team",
+                    "text": "Prestataire désigné.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5037-7386-ae84-9b0e250e3417",
+                    "kind": "file_added",
+                    "actor_kind": "team",
+                    "text": "Une pièce a été ajoutée.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-503d-7214-9e76-90de18650ee0",
+                    "kind": "quote_recorded",
+                    "actor_kind": "team",
+                    "text": "Devis reçu.",
+                    "metadata": {
+                        "quote_id": "01a1ef81-503c-73bd-bbd5-e38ebc741e7b"
+                    },
+                    "visible_to_owner": false,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5041-723b-ab58-fd3687aba916",
+                    "kind": "quote_submitted",
+                    "actor_kind": "team",
+                    "text": "Devis soumis.",
+                    "metadata": {
+                        "quote_id": "01a1ef81-503c-73bd-bbd5-e38ebc741e7b"
+                    },
+                    "visible_to_owner": false,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5042-71c0-878d-a7f08bec8e08",
+                    "kind": "approval_requested",
+                    "actor_kind": "team",
+                    "text": "Accord du mandant demandé.",
+                    "metadata": {
+                        "approval_id": "01a1ef81-5041-723b-ab58-fd3688761645"
+                    },
+                    "visible_to_owner": false,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-504e-7262-9aaa-ece54eb20b35",
+                    "kind": "file_added",
+                    "actor_kind": "team",
+                    "text": "Une pièce a été ajoutée.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5053-7233-88dc-8081c200a996",
+                    "kind": "approved",
+                    "actor_kind": "owner",
+                    "text": "Travaux engagés.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5053-7233-88dc-8081c33dfca3",
+                    "kind": "quote_accepted",
+                    "actor_kind": "owner",
+                    "text": "Devis accepté.",
+                    "metadata": {
+                        "quote_id": "01a1ef81-503c-73bd-bbd5-e38ebc741e7b"
+                    },
+                    "visible_to_owner": false,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5053-7233-88dc-8081c46fe8f9",
+                    "kind": "approval_decided",
+                    "actor_kind": "owner",
+                    "text": "Décision du mandant enregistrée : accepted.",
+                    "metadata": {
+                        "approval_id": "01a1ef81-5041-723b-ab58-fd3688761645"
+                    },
+                    "visible_to_owner": true,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-505d-7074-b8dd-4878e5c55353",
+                    "kind": "visit_proposed",
+                    "actor_kind": "team",
+                    "text": "Rendez-vous proposé.",
+                    "metadata": {
+                        "visit_id": "01a1ef81-505d-7074-b8dd-4878e552a0c0"
+                    },
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5065-70b3-bfe4-28515f9dfb8c",
+                    "kind": "visit_reschedule_requested",
+                    "actor_kind": "tenant",
+                    "text": "Un autre créneau a été demandé.",
+                    "metadata": {
+                        "visit_id": "01a1ef81-505d-7074-b8dd-4878e552a0c0"
+                    },
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5070-73ae-91e6-6dc5eccd3623",
+                    "kind": "visit_proposed",
+                    "actor_kind": "team",
+                    "text": "Rendez-vous modifié.",
+                    "metadata": {
+                        "visit_id": "01a1ef81-505d-7074-b8dd-4878e552a0c0"
+                    },
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5075-7250-a431-979384350b36",
+                    "kind": "visit_confirmed",
+                    "actor_kind": "tenant",
+                    "text": "Rendez-vous confirmé.",
+                    "metadata": {
+                        "visit_id": "01a1ef81-505d-7074-b8dd-4878e552a0c0"
+                    },
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-50a0-72b5-9e68-7d156b3f08d4",
+                    "kind": "started",
+                    "actor_kind": "team",
+                    "text": "Intervention en cours.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-21T14:04:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-50a1-736b-9758-6b25963b9473",
+                    "kind": "visit_done",
+                    "actor_kind": "team",
+                    "text": "Visite effectuée.",
+                    "metadata": {
+                        "visit_id": "01a1ef81-505d-7074-b8dd-4878e552a0c0"
+                    },
+                    "visible_to_owner": false,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-21T14:04:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-50a7-7325-9559-877383bc217a",
+                    "kind": "completed",
+                    "actor_kind": "team",
+                    "text": "Intervention terminée.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-21T14:04:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-50ae-731e-8eb3-fff59a3c8eff",
+                    "kind": "file_added",
+                    "actor_kind": "team",
+                    "text": "Une pièce a été ajoutée.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-21T14:04:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-50ba-72f5-8ad2-4f615da25cad",
+                    "kind": "invoiced",
+                    "actor_kind": "team",
+                    "text": "Facture reçue enregistrée.",
+                    "metadata": {
+                        "invoice_id": "01a1ef81-50b4-707a-b35e-e22f1bbb6a42"
+                    },
+                    "visible_to_owner": false,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-21T14:04:00+00:00"
+                }
+            ],
+            "files": [
+                {
+                    "id": "01a1ef81-5001-71af-be78-b8828b6906eb",
+                    "intervention_id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+                    "kind": "photo_before",
+                    "uploaded_by_kind": "tenant",
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5016-73f1-ad9a-cf712bed7b3a",
+                    "intervention_id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+                    "kind": "photo_before",
+                    "uploaded_by_kind": "team",
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5037-7386-ae84-9b0e23fa661b",
+                    "intervention_id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+                    "kind": "quote",
+                    "uploaded_by_kind": "team",
+                    "visible_to_owner": false,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-504e-7262-9aaa-ece54daadc61",
+                    "intervention_id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+                    "kind": "proof",
+                    "uploaded_by_kind": "team",
+                    "visible_to_owner": false,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-50ad-71d9-814a-ce3ddc4898d0",
+                    "intervention_id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+                    "kind": "invoice",
+                    "uploaded_by_kind": "team",
+                    "visible_to_owner": false,
+                    "visible_to_tenant": false,
+                    "created_at": "2026-11-21T14:04:00+00:00"
+                }
+            ],
+            "visits": [
+                {
+                    "id": "01a1ef81-505d-7074-b8dd-4878e552a0c0",
+                    "intervention_id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+                    "supplier_party_id": "01a1ef81-4fb6-73dc-ade1-26fdb67f4d34",
+                    "scheduled_on": "2026-11-19",
+                    "slot": "afternoon",
+                    "presence_required": true,
+                    "status": "done",
+                    "requested_on": null,
+                    "requested_slot": null,
+                    "contact_name": "Plomberie Dupont",
+                    "contact_phone": "0491000000",
+                    "lock_version": 5
+                }
+            ],
+            "quotes": [
+                {
+                    "id": "01a1ef81-503c-73bd-bbd5-e38ebc741e7b",
+                    "intervention_id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+                    "supplier_party_id": "01a1ef81-4fb6-73dc-ade1-26fdb67f4d34",
+                    "reference": "DEV-830a3d",
+                    "kind": "initial",
+                    "status": "accepted",
+                    "issued_on": "2026-11-17",
+                    "valid_until": "2026-12-31",
+                    "proposed_on": null,
+                    "message": null,
+                    "total_net": {
+                        "amount": 60000,
+                        "currency": "EUR"
+                    },
+                    "total_tax": {
+                        "amount": 12000,
+                        "currency": "EUR"
+                    },
+                    "total_gross": {
+                        "amount": 72000,
+                        "currency": "EUR"
+                    },
+                    "lines": [
+                        {
+                            "position": 1,
+                            "label": "Réparation du siphon",
+                            "quantity_milli": 1000,
+                            "unit": "forfait",
+                            "unit_price": 60000,
+                            "net_amount": 60000,
+                            "tax_category": "S",
+                            "tax_rate_pcm": 20000
+                        }
+                    ],
+                    "lock_version": 3
+                }
+            ],
+            "approvals": [
+                {
+                    "id": "01a1ef81-5041-723b-ab58-fd3688761645",
+                    "intervention_id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+                    "quote_id": "01a1ef81-503c-73bd-bbd5-e38ebc741e7b",
+                    "amount": {
+                        "amount": 72000,
+                        "currency": "EUR"
+                    },
+                    "ceiling_amount": {
+                        "amount": 50000,
+                        "currency": "EUR"
+                    },
+                    "status": "accepted",
+                    "requested_at": "2026-11-18T11:01:00+00:00",
+                    "decide_before": "2026-11-20T11:01:00+00:00",
+                    "decided_at": "2026-11-18T11:01:00+00:00",
+                    "decided_via": "agency_recorded",
+                    "comment": "Courriel du mandant.",
+                    "proof_file_id": "01a1ef81-504e-7262-9aaa-ece54daadc61",
+                    "lock_version": 2,
+                    "replayed": null
+                }
+            ],
+            "invoices": [
+                {
+                    "id": "01a1ef81-50b4-707a-b35e-e22f1bbb6a42",
+                    "intervention_id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+                    "supplier_party_id": "01a1ef81-4fb6-73dc-ade1-26fdb67f4d34",
+                    "billed_party_id": "01a1ef81-4fa9-716f-939a-e4080ffe20bc",
+                    "number": "F-RELEVE-1",
+                    "invoice_on": "2026-11-21",
+                    "due_on": null,
+                    "total_net": {
+                        "amount": 60000,
+                        "currency": "EUR"
+                    },
+                    "total_tax": {
+                        "amount": 12000,
+                        "currency": "EUR"
+                    },
+                    "total_gross": {
+                        "amount": 72000,
+                        "currency": "EUR"
+                    },
+                    "status": "allocated",
+                    "exceeds_approved_amount": false,
+                    "taxes": [
+                        {
+                            "category": "S",
+                            "rate_pcm": 20000,
+                            "base_amount": 60000,
+                            "tax_amount": 12000
+                        }
+                    ],
+                    "allocations": [
+                        {
+                            "id": "01a1ef81-50c1-7390-bbed-a299f92e6a43",
+                            "supplier_invoice_id": "01a1ef81-50b4-707a-b35e-e22f1bbb6a42",
+                            "target": "owner",
+                            "party_id": "01a1ef81-4fa9-716f-939a-e4080ffe20bc",
+                            "lease_id": null,
+                            "share_amount": {
+                                "amount": 72000,
+                                "currency": "EUR"
+                            },
+                            "wear_basis_points": 0,
+                            "charged_amount": {
+                                "amount": 72000,
+                                "currency": "EUR"
+                            },
+                            "basis_note": null,
+                            "cancelled_at": null,
+                            "replayed": null
+                        }
+                    ],
+                    "payments": [
+                        {
+                            "id": "01a1ef81-50c8-71fe-9878-e5e5d5fa198f",
+                            "supplier_invoice_id": "01a1ef81-50b4-707a-b35e-e22f1bbb6a42",
+                            "amount": {
+                                "amount": 30000,
+                                "currency": "EUR"
+                            },
+                            "method": "transfer",
+                            "paid_on": "2026-11-21",
+                            "reference": null,
+                            "cancelled_at": null,
+                            "replayed": null
+                        }
+                    ],
+                    "lock_version": 2,
+                    "replayed": null
+                }
+            ]
+        }
+    }
+}

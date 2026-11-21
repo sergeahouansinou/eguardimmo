@@ -14,7 +14,8 @@ export { LocatairesApiError, TenantStaleVersionError, isTenantStaleVersion } fro
 export type { LocatairesApiErrorKind } from './api/apiErrors';
 export type { BankAccount, ContactPoint, Identifier } from './api/apiMapping';
 export { locatairesPaths } from './paths';
-export { GestionNavigationProvider, PendingNotice } from './kit';
+export { GestionNavigationProvider, PendingNotice, useGestionNavigation } from './kit';
 export { GestionDataModeProvider, MissingSourceError, useGestionDataMode } from './kit/sourceContext';
 export type { GestionDataMode } from './kit/sourceContext';
-export type { GestionNavigation } from './kit';
+export type { GestionNavigation, WriteToTenantTarget } from './kit';
+export * from './access';

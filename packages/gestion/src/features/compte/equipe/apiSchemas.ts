@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ACCESS_LEVELS } from './roles';
 
 export const API_ROLES = { owner: 'titulaire', admin: 'administrateur', manager: 'gestionnaire', accountant: 'comptable' } as const;
 export const API_STATUSES = { active: 'actif', invited: 'invite', disabled: 'desactive' } as const;
@@ -29,3 +30,19 @@ export const apiTeamSchema = z.object({
 });
 
 export const apiMemberEnvelopeSchema = z.object({ data: apiMemberSchema });
+
+const apiLevel = z.enum(ACCESS_LEVELS);
+
+export const apiRolesSchema = z.object({
+  data: z.object({
+    current_role: z.enum(['owner', 'admin', 'manager', 'accountant']),
+    domains: z.array(
+      z.object({
+        key: z.string().min(1),
+        levels: z.object({ owner: apiLevel, admin: apiLevel, manager: apiLevel, accountant: apiLevel }),
+        two_factor: z.boolean(),
+      }),
+    ),
+  }),
+});
+export type ApiRoles = z.infer<typeof apiRolesSchema>['data'];

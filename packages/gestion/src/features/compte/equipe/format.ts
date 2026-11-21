@@ -8,5 +8,7 @@ export function lastLoginLabel(member: Member, today: string): string {
 }
 
 export function scopeLabel(member: Pick<Member, 'scope'>): string {
-  return member.scope.type === 'all' ? 'Tous les biens' : member.scope.buildings.join(', ');
+  if (member.scope.type === 'all') return 'Tous les biens';
+  const names = member.scope.buildings.join(', ');
+  return names === '' ? 'Périmètre non appliqué' : `${names} (périmètre non appliqué)`;
 }

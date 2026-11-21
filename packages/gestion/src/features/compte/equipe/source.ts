@@ -1,13 +1,16 @@
 'use client';
 
 import { DEMO_NOW, NotFoundError, createSourceContext, nextId, slugify, useScreenQuery, useSourceMutation } from '../../outils/kit';
-import { demoTeam } from './demo';
+import { demoRoleMatrix, demoTeam } from './demo';
+import { roleMatrixSchema } from './roles';
+import type { RoleMatrix } from './roles';
 import { SeatLimitError, TeamRuleError, deactivationBlock, removalBlock, roleChangeBlock, seatsUsed } from './rules';
 import { inviteSchema, roleChangeSchema, scopeSchema, teamSchema } from './schemas';
 import type { InviteInput, InvitableRole, Member, Scope, TeamData } from './schemas';
 
 export interface EquipeSource {
   getTeam: () => Promise<TeamData>;
+  getRoles: () => Promise<RoleMatrix>;
   invite: (input: InviteInput) => Promise<Member>;
   resendInvitation: (id: string) => Promise<Member>;
   cancelInvitation: (id: string) => Promise<void>;
@@ -45,6 +48,7 @@ export function createDemoEquipeSource(initial: TeamData = demoTeam): EquipeSour
 
   return {
     getTeam: () => Promise.resolve(structuredClone(team)),
+    getRoles: () => Promise.resolve(demoRoleMatrix(team.members.find((member) => member.self)?.role ?? 'titulaire')),
     invite: (input) =>
       guard(() => {
         const data = inviteSchema.parse(input);
@@ -117,11 +121,16 @@ export const EquipeSourceProvider = context.Provider;
 export const useEquipeSource = context.useSource;
 export const resetEquipeDemo = context.resetDefault;
 
-export const equipeKeys = { team: ['compte', 'equipe'] as const };
+export const equipeKeys = { team: ['compte', 'equipe'] as const, roles: ['compte', 'equipe-roles'] as const };
 
 export function useTeam() {
   const source = useEquipeSource();
   return useScreenQuery(equipeKeys.team, () => source.getTeam(), teamSchema);
+}
+
+export function useRoles() {
+  const source = useEquipeSource();
+  return useScreenQuery(equipeKeys.roles, () => source.getRoles(), roleMatrixSchema);
 }
 
 const invalidate = [equipeKeys.team] as const;

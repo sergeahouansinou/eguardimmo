@@ -156,7 +156,7 @@ export function createApiBauxSource(
     ...unconnectedOperations,
     ...operations,
     leasePage,
-    unavailableInApiMode: BAUX_FEATURES,
+    unavailableInApiMode: BAUX_FEATURES.filter((feature) => feature !== 'schedule'),
     derivesOccupancy: true,
     leases: async () => (await loadAll()).map((lease) => toLeaseRow(lease, context.today())),
     exits: async () => (await loadAll()).flatMap((lease) => toLeaseExit(lease) ?? []),

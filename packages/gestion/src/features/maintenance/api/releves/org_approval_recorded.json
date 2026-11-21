@@ -1,0 +1,27 @@
+{
+    "status": 200,
+    "body": {
+        "data": {
+            "id": "01a1ef81-5041-723b-ab58-fd3688761645",
+            "intervention_id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+            "quote_id": "01a1ef81-503c-73bd-bbd5-e38ebc741e7b",
+            "amount": {
+                "amount": 72000,
+                "currency": "EUR"
+            },
+            "ceiling_amount": {
+                "amount": 50000,
+                "currency": "EUR"
+            },
+            "status": "accepted",
+            "requested_at": "2026-11-18T11:01:00+00:00",
+            "decide_before": "2026-11-20T11:01:00+00:00",
+            "decided_at": "2026-11-18T11:01:00+00:00",
+            "decided_via": "agency_recorded",
+            "comment": "Courriel du mandant.",
+            "proof_file_id": "01a1ef81-504e-7262-9aaa-ece54daadc61",
+            "lock_version": 2,
+            "replayed": false
+        }
+    }
+}

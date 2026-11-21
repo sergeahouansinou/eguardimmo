@@ -1,0 +1,16 @@
+export const reportingPaths = {
+  home: '/',
+  reports: '/comptes-rendus',
+  generate: '/comptes-rendus/nouveau',
+  report: (id: string) => `/comptes-rendus/${encodeURIComponent(id)}/apercu`,
+  statement: (mandantId?: string) => (mandantId ? `/comptes-rendus/releve?mandant=${encodeURIComponent(mandantId)}` : '/comptes-rendus/releve'),
+  payouts: '/finances/reversements',
+  mandant: (id: string) => `/mandants/${encodeURIComponent(id)}`,
+  mandate: (id: string) => `/mandats/${encodeURIComponent(id)}`,
+  mandates: '/mandats',
+  arrears: '/finances/impayes',
+  conformity: '/conformite',
+  leases: '/baux',
+  units: '/biens',
+  security: '/compte/securite',
+};

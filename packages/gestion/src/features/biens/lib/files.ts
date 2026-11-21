@@ -1,9 +1,7 @@
+import { csvDocument } from '@eguardimmo/shell';
+
 export function toCsv(rows: readonly (readonly (string | number)[])[]): string {
-  const quote = (cell: string | number) => {
-    const text = String(cell);
-    return /[";\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-  };
-  return `﻿${rows.map((row) => row.map(quote).join(';')).join('\r\n')}`;
+  return `\ufeff${csvDocument(rows)}`;
 }
 
 export function parseCsv(content: string): string[][] {

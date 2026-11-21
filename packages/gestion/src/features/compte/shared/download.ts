@@ -1,12 +1,7 @@
-const FORMULA_START = /^[=+\-@\t\r]/;
-
-export function csvCell(value: string): string {
-  const safe = FORMULA_START.test(value) ? `'${value}` : value;
-  return /[";\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-}
+import { csvDocument } from '@eguardimmo/shell';
 
 export function toCsv(rows: readonly (readonly string[])[]): string {
-  return `﻿${rows.map((row) => row.map(csvCell).join(';')).join('\r\n')}\r\n`;
+  return `﻿${csvDocument(rows)}\r\n`;
 }
 
 export function downloadFile(filename: string, content: string, type: string): void {

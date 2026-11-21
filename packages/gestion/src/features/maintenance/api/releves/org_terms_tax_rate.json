@@ -1,0 +1,191 @@
+{
+    "status": 200,
+    "body": {
+        "data": [
+            {
+                "id": "01a1ef81-4f8b-705a-a329-d0489c510d5b",
+                "vocabulary": "tax_rate",
+                "key": "fr_vat_normal",
+                "labels": {
+                    "fr": "TVA 20 %"
+                },
+                "semantic_key": null,
+                "parent_id": null,
+                "position": 0,
+                "metadata": {
+                    "country": "FR",
+                    "tax_code": "vat",
+                    "category": "S",
+                    "rate_pcm": 20000,
+                    "effective_from": "2014-01-01"
+                },
+                "platform": true,
+                "system": true,
+                "archived": false,
+                "hidden": false,
+                "overridden": false
+            },
+            {
+                "id": "01a1ef81-4f8c-72da-9b57-debb9a102e4c",
+                "vocabulary": "tax_rate",
+                "key": "fr_vat_intermediate",
+                "labels": {
+                    "fr": "TVA 10 %"
+                },
+                "semantic_key": null,
+                "parent_id": null,
+                "position": 1,
+                "metadata": {
+                    "country": "FR",
+                    "tax_code": "vat",
+                    "category": "S",
+                    "rate_pcm": 10000,
+                    "effective_from": "2014-01-01"
+                },
+                "platform": true,
+                "system": true,
+                "archived": false,
+                "hidden": false,
+                "overridden": false
+            },
+            {
+                "id": "01a1ef81-4f8c-72da-9b57-debb9ab91455",
+                "vocabulary": "tax_rate",
+                "key": "fr_vat_reduced",
+                "labels": {
+                    "fr": "TVA 5,5 %"
+                },
+                "semantic_key": null,
+                "parent_id": null,
+                "position": 2,
+                "metadata": {
+                    "country": "FR",
+                    "tax_code": "vat",
+                    "category": "S",
+                    "rate_pcm": 5500,
+                    "effective_from": "2014-01-01"
+                },
+                "platform": true,
+                "system": true,
+                "archived": false,
+                "hidden": false,
+                "overridden": false
+            },
+            {
+                "id": "01a1ef81-4f8c-72da-9b57-debb9ad0089c",
+                "vocabulary": "tax_rate",
+                "key": "fr_vat_super_reduced",
+                "labels": {
+                    "fr": "TVA 2,1 %"
+                },
+                "semantic_key": null,
+                "parent_id": null,
+                "position": 3,
+                "metadata": {
+                    "country": "FR",
+                    "tax_code": "vat",
+                    "category": "S",
+                    "rate_pcm": 2100,
+                    "effective_from": "2014-01-01"
+                },
+                "platform": true,
+                "system": true,
+                "archived": false,
+                "hidden": false,
+                "overridden": false
+            },
+            {
+                "id": "01a1ef81-4f8d-73e1-90f5-46d14b7fea7c",
+                "vocabulary": "tax_rate",
+                "key": "fr_vat_zero",
+                "labels": {
+                    "fr": "TVA à taux zéro"
+                },
+                "semantic_key": null,
+                "parent_id": null,
+                "position": 4,
+                "metadata": {
+                    "country": "FR",
+                    "tax_code": "vat",
+                    "category": "Z",
+                    "rate_pcm": 0,
+                    "effective_from": "2014-01-01"
+                },
+                "platform": true,
+                "system": true,
+                "archived": false,
+                "hidden": false,
+                "overridden": false
+            },
+            {
+                "id": "01a1ef81-4f8d-73e1-90f5-46d14c6eeea1",
+                "vocabulary": "tax_rate",
+                "key": "fr_vat_exempt",
+                "labels": {
+                    "fr": "Exonéré de TVA"
+                },
+                "semantic_key": null,
+                "parent_id": null,
+                "position": 5,
+                "metadata": {
+                    "country": "FR",
+                    "tax_code": "vat",
+                    "category": "E",
+                    "rate_pcm": 0,
+                    "effective_from": "2014-01-01"
+                },
+                "platform": true,
+                "system": true,
+                "archived": false,
+                "hidden": false,
+                "overridden": false
+            },
+            {
+                "id": "01a1ef81-4f8d-73e1-90f5-46d14d7c69f5",
+                "vocabulary": "tax_rate",
+                "key": "fr_vat_reverse_charge",
+                "labels": {
+                    "fr": "Autoliquidation de la TVA"
+                },
+                "semantic_key": null,
+                "parent_id": null,
+                "position": 6,
+                "metadata": {
+                    "country": "FR",
+                    "tax_code": "vat",
+                    "category": "AE",
+                    "rate_pcm": 0,
+                    "effective_from": "2014-01-01"
+                },
+                "platform": true,
+                "system": true,
+                "archived": false,
+                "hidden": false,
+                "overridden": false
+            },
+            {
+                "id": "01a1ef81-4f8e-70bb-a0c8-0b072c906b17",
+                "vocabulary": "tax_rate",
+                "key": "fr_vat_outside_scope",
+                "labels": {
+                    "fr": "Hors champ de la TVA"
+                },
+                "semantic_key": null,
+                "parent_id": null,
+                "position": 7,
+                "metadata": {
+                    "country": "FR",
+                    "tax_code": "vat",
+                    "category": "O",
+                    "rate_pcm": 0,
+                    "effective_from": "2014-01-01"
+                },
+                "platform": true,
+                "system": true,
+                "archived": false,
+                "hidden": false,
+                "overridden": false
+            }
+        ]
+    }
+}

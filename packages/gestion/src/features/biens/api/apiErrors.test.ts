@@ -31,6 +31,13 @@ describe('erreurs du serveur', () => {
     expect(stale).toMatchObject({ kind: 'stale_version', message: expect.stringContaining('modifié entre-temps') as string });
   });
 
+  it('formule la limite de plan en français sur un 409 et sur un 403', () => {
+    const quota = translateApiError(new ApiError(409, 'plan_quota_reached', 'Texte serveur.', {}, null, { feature: 'properties', limit: 20, current: 20 }));
+    const absent = translateApiError(new ApiError(403, 'feature_not_in_plan', 'Texte serveur.', {}, null, { feature: 'properties' }));
+    expect(quota).toMatchObject({ kind: 'conflict', code: 'plan_quota_reached', message: 'Limite de votre plan atteinte : 20 lots sur 20. Passez à une formule supérieure pour continuer.' });
+    expect(absent).toMatchObject({ kind: 'forbidden', code: 'feature_not_in_plan', message: expect.stringContaining('n’est pas incluse dans votre plan') as string });
+  });
+
   it('traduit un 422 avec le premier message de champ', () => {
     const error = translateApiError(new ApiError(422, 'validation_failed', 'Invalide', { 'address.country': ['Pays invalide.'] }));
     expect(error).toMatchObject({ kind: 'invalid', message: 'Pays invalide.', fieldErrors: { 'address.country': ['Pays invalide.'] } });

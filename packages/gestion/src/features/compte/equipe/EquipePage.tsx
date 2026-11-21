@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Alert, Button, Card, Icon, Select, Tab, TabList, TabPanel, Tabs, TextField } from '@eguardimmo/ui';
 import { EmptyBlock, PageHeader, QueryState, pushFlash } from '../../outils/kit';
 import type { ScreenProps } from '../../outils/kit';
+import { teamErrorMessage } from './errors';
 import { MemberDialogs } from './MemberDialogs';
 import type { DialogState } from './MemberDialogs';
 import { MemberTable } from './MemberTable';
@@ -26,7 +27,7 @@ const fold = (text: string) => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toL
 export function seatsMessage(team: TeamData): string {
   const active = team.members.filter((member) => member.status === 'actif').length;
   const invited = team.members.filter((member) => member.status === 'invite').length;
-  if (team.seatLimit === null) return `Formule ${team.planName} : membres illimités.`;
+  if (team.seatLimit === null) return `Formule ${team.planName} : plusieurs membres inclus.`;
   const base = `Formule ${team.planName} : ${String(active)} ${active > 1 ? 'membres actifs' : 'membre actif'} sur ${String(team.seatLimit)}.`;
   if (invited > 0 && seatsUsed(team.members) >= team.seatLimit) {
     return `${base} ${invited > 1 ? 'Les invitations en attente occuperont' : "L'invitation en attente occupera"} la dernière place.`;
@@ -58,7 +59,7 @@ function TeamContent({ Link, team }: { Link: ScreenProps['Link']; team: TeamData
       await task();
       pushFlash(message);
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "L'opération a échoué. Réessayez.");
+      setError(teamErrorMessage(failure, "L'opération a échoué. Réessayez."));
     }
     setDialog(null);
   };
@@ -111,7 +112,7 @@ function TeamContent({ Link, team }: { Link: ScreenProps['Link']; team: TeamData
         </Tabs>
       </Card>
       <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <RolesCard />
+        <RolesCard Link={Link} />
         <SecurityCard
           required={team.twoFactorRequired}
           pending={actions.setTwoFactorRequired.isPending}
@@ -128,13 +129,13 @@ function TeamContent({ Link, team }: { Link: ScreenProps['Link']; team: TeamData
         onCancel={(member) => { void run(() => actions.cancelInvitation.mutateAsync(member.id), `Invitation de ${fullName(member)} annulée.`); }}
         onDeactivate={(member) => { void run(() => actions.deactivate.mutateAsync(member.id), `${fullName(member)} a été désactivé.`); }}
         onRole={(member, role) => { void run(() => actions.changeRole.mutateAsync({ id: member.id, role }), `Rôle de ${fullName(member)} : ${ROLE_LABELS[role]}.`); }}
-        onScope={(member, scope) => { void run(() => actions.changeScope.mutateAsync({ id: member.id, scope }), `Biens accessibles de ${fullName(member)} mis à jour.`); }}
+        onScope={(member) => { void run(() => actions.changeScope.mutateAsync({ id: member.id, scope: { type: 'all' } }), `${fullName(member)} a accès à tous les biens.`); }}
       />
     </>
   );
 }
 
-export function EquipePage({ Link }: ScreenProps) {
+export function EquipePage({ Link, journal = true }: ScreenProps & { journal?: boolean }) {
   const query = useTeam();
   return (
     <>
@@ -145,12 +146,14 @@ export function EquipePage({ Link }: ScreenProps) {
         description="Personnes qui gèrent le compte avec vous. Le rôle limite ce que chacune voit et modifie."
         actions={
           <>
-            <Button variant="ghost" asChild>
-              <Link href="/journal">
-                <Icon icon={ScrollText} />
-                Journal d'activité
-              </Link>
-            </Button>
+            {journal ? (
+              <Button variant="ghost" asChild>
+                <Link href="/journal">
+                  <Icon icon={ScrollText} />
+                  Journal d'activité
+                </Link>
+              </Button>
+            ) : null}
             <Button asChild>
               <Link href="/equipe/inviter">
                 <Icon icon={UserPlus} />

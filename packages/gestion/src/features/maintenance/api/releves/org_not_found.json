@@ -1,0 +1,11 @@
+{
+    "status": 404,
+    "body": {
+        "type": "https://api.eguardimmo.test/problems/intervention_not_found",
+        "title": "Intervention introuvable",
+        "status": 404,
+        "detail": "Intervention introuvable.",
+        "code": "intervention_not_found",
+        "request_id": "01a1ef81-50dd-7367-9b5b-4dd6f1bf6f22"
+    }
+}

@@ -1,0 +1,11 @@
+{
+    "status": 409,
+    "body": {
+        "type": "https://api.eguardimmo.test/problems/quote_status_invalid",
+        "title": "État du devis incompatible",
+        "status": 409,
+        "detail": "État du devis incompatible.",
+        "code": "quote_status_invalid",
+        "request_id": "01a1ef81-5059-70cd-8e0c-cbe76f12d7ca"
+    }
+}

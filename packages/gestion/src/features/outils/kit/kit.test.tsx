@@ -6,6 +6,7 @@ import { expectNoA11yViolations } from '../../../../test/axe';
 import { TestLink } from '../../../../test/render';
 import { createCollection, NotFoundError, slugify } from './collection';
 import { Checkbox, FilterChip, Segmented, Switch } from './controls';
+import { DataTable, Td } from './DataTable';
 import { ConfirmDialog } from './ConfirmDialog';
 import { dismissFlash, pushFlash } from './flash';
 import { PageHeader } from './PageHeader';
@@ -106,6 +107,45 @@ describe('PageHeader et message de succès', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Fermer le message' }));
     expect(screen.queryByRole('status')).toBeNull();
     dismissFlash();
+  });
+});
+
+describe('DataTable', () => {
+  it('donne aux liens de cellule une zone cliquable d’au moins 24 px', () => {
+    render(
+      <DataTable caption="Baux">
+        <tbody>
+          <tr>
+            <Td>
+              <a href="/baux/1">Bail 1</a>
+            </Td>
+          </tr>
+        </tbody>
+      </DataTable>,
+    );
+    const cell = screen.getByRole('link', { name: 'Bail 1' }).closest('td');
+    expect(cell?.className).toContain('[&_a]:min-h-6');
+    expect(cell?.className).toContain('[&_a]:py-1.5');
+  });
+
+  it('rend la zone de défilement atteignable au clavier', () => {
+    render(
+      <DataTable caption="Membres de l'équipe">
+        <tbody>
+          <tr>
+            <Td>Camille</Td>
+          </tr>
+        </tbody>
+      </DataTable>,
+    );
+    const region = screen.getByRole('region', { name: "Membres de l'équipe, défilement horizontal" });
+    expect(region.getAttribute('tabindex')).toBe('0');
+    expect(region.querySelector('table')).not.toBeNull();
+  });
+
+  it('laisse le titre d’une page se couper quand le texte est long', () => {
+    render(<PageHeader Link={TestLink} crumbs={[{ label: 'Outils' }]} title="Référence-sans-espace" description="Texte" />);
+    expect(screen.getByRole('heading', { level: 1 }).className).toContain('[overflow-wrap:anywhere]');
   });
 });
 

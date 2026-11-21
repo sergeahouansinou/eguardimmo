@@ -5,7 +5,8 @@ import type { ShellCounts } from '@eguardimmo/shell';
 import type { LinkComponent } from '@eguardimmo/ui';
 import { useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
-import { addMenu, buildNavigation, helpMenu } from '../navigation/routes';
+import { TIMEZONE_HREF, addMenu, buildNavigation, helpMenu, supportSearchPages } from '../navigation/routes';
+import type { SupportNavigation } from '../navigation/routes';
 import {
   SEARCH_NOTE,
   SEARCH_PLACEHOLDER,
@@ -31,16 +32,25 @@ export interface GestionShellProps {
   linkComponent: LinkComponent;
   onNavigate: (href: string) => void;
   unreadMessages?: number;
+  rent?: boolean;
+  compliance?: boolean;
+  tax?: boolean;
+  support?: SupportNavigation;
+  timezone?: boolean;
   children: ReactNode;
 }
 
-export function GestionShell({ children, unreadMessages, ...props }: GestionShellProps) {
+export function GestionShell({ children, unreadMessages, rent = false, compliance = rent, tax = rent, support, timezone = false, ...props }: GestionShellProps) {
   const { onNavigate } = props;
   const accountMenu = useMemo(() => buildAccountMenu(), []);
   const navigation = useMemo(
     () => (counts: ShellCounts | undefined) =>
-      buildNavigation(unreadMessages === undefined ? counts : { ...counts, unreadMessages }),
-    [unreadMessages],
+      buildNavigation(unreadMessages === undefined ? counts : { ...counts, unreadMessages }, { rent, compliance, tax, timezone, ...(support ? { support } : {}) }),
+    [unreadMessages, rent, compliance, tax, support, timezone],
+  );
+  const searchable = useMemo(
+    () => [...pages, ...(support ? supportSearchPages : []), ...(timezone ? [{ href: TIMEZONE_HREF, label: 'Réglages, fuseau horaire de l’organisation' }] : [])],
+    [support, timezone],
   );
 
   useEffect(() => {
@@ -63,7 +73,7 @@ export function GestionShell({ children, unreadMessages, ...props }: GestionShel
       helpMenu={helpMenu}
       accountMenu={accountMenu}
       notifications={notifications}
-      searchPages={pages}
+      searchPages={searchable}
       searchPlaceholder={SEARCH_PLACEHOLDER}
       searchNote={SEARCH_NOTE}
     >

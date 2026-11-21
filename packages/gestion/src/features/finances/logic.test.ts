@@ -5,6 +5,7 @@ import { addDays, addMonths, daysBetween, formatDate, isIsoDate, parseFrenchDate
 import { createDemoFinances } from './demo';
 import { bilanView, dossierSteps, dossierTotals, echeanceEtat, estimateSchedule, impayes, instalments, nextNumber, periodKpis, pretAvancement, regularisationSolde, resteDu, tauxLabel } from './derive';
 import { divRound, formatDecimal, formatMoneyInput, parseMoneyInput, percentOf, splitEvenly, sum } from './money';
+import { moneyText } from './forms';
 import { formatRate, parseRate, parseSchedule } from './prets/schedule';
 import { norm } from './testing/render';
 
@@ -26,6 +27,20 @@ describe('montants en unités mineures', () => {
     expect(formatMoneyInput(85050)).toBe('850,50');
     expect(formatMoneyInput(-5)).toBe('-0,05');
     expect(norm(formatDecimal(123456))).toBe('1 234,56');
+  });
+
+  it('gère les francs CFA sans décimales', () => {
+    expect(parseMoneyInput('250 000', 'XOF')).toBe(250_000);
+    expect(parseMoneyInput('250 000,5', 'XOF')).toBeNull();
+    expect(formatMoneyInput(250_000, 'XOF')).toBe('250000');
+    expect(norm(formatDecimal(250_000, 'XOF'))).toBe('250 000');
+    expect(norm(formatDecimal(-1_250_000, 'XOF'))).toBe('-1 250 000');
+  });
+
+  it('valide un montant selon la devise du champ', () => {
+    expect(moneyText('Loyer', { currency: 'XOF' }).safeParse('250 000')).toMatchObject({ success: true, data: 250_000 });
+    expect(moneyText('Loyer', { currency: 'XOF' }).safeParse('250 000,50').success).toBe(false);
+    expect(moneyText('Loyer').safeParse('850,50')).toMatchObject({ success: true, data: 85_050 });
   });
 
   it('arrondit au centime par un calcul entier', () => {
@@ -62,6 +77,10 @@ describe('dates', () => {
 describe('CSV', () => {
   it('neutralise les formules et protège les séparateurs', () => {
     expect(toCsv([['=SOMME(A1)', 'a;b', 'dit "oui"', 12]])).toBe('\'=SOMME(A1);"a;b";"dit ""oui""";12');
+  });
+
+  it('neutralise une formule HYPERLINK', () => {
+    expect(toCsv([['=HYPERLINK("http://x";"y")']])).toBe('"\'=HYPERLINK(""http://x"";""y"")"');
   });
 
   it('relit un tableau séparé par des points-virgules', () => {

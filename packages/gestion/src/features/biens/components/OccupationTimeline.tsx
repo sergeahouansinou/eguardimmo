@@ -25,7 +25,7 @@ export function OccupationTimeline({ periods, asOf }: { periods: readonly Period
           return (
             <li key={period.id} className="min-w-[3px]" style={{ flexGrow: share, flexBasis: 0 }}>
               <Tooltip content={text}>
-                <button type="button" aria-label={text} className={cx('block h-full w-full focus-visible:outline-2 focus-visible:outline-focus', tone)} />
+                <span role="img" aria-label={text} className={cx('block h-full w-full', tone)} />
               </Tooltip>
             </li>
           );

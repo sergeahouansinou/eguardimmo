@@ -1,0 +1,22 @@
+{
+    "status": 422,
+    "body": {
+        "type": "https://api.eguardimmo.test/problems/validation_failed",
+        "title": "Données invalides",
+        "status": 422,
+        "detail": "Certaines informations sont invalides.",
+        "code": "validation_failed",
+        "errors": {
+            "nature_term_id": [
+                "Le champ nature term id est obligatoire."
+            ],
+            "title": [
+                "Le champ title doit contenir au moins 3 caractères."
+            ],
+            "description": [
+                "Le champ description est obligatoire."
+            ]
+        },
+        "request_id": "01a1ef81-50de-70f4-9de5-f943b9f4b72c"
+    }
+}

@@ -20,16 +20,14 @@ export function Toggle({ checked, onCheckedChange, label, disabled = false, clas
       disabled={disabled}
       onClick={() => { onCheckedChange(!checked); }}
       className={cx(
-        'relative inline-block h-[18px] w-8 shrink-0 cursor-pointer rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+        'relative inline-flex h-6 w-8 shrink-0 cursor-pointer items-center rounded-full disabled:cursor-not-allowed disabled:opacity-50',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
-        checked ? 'bg-action' : 'bg-line-toggle',
         className,
       )}
     >
-      <span
-        aria-hidden="true"
-        className={cx('absolute top-0.5 size-3.5 rounded-full bg-surface transition-[left]', checked ? 'left-4' : 'left-0.5')}
-      />
+      <span aria-hidden="true" className={cx('relative block h-[18px] w-8 rounded-full transition-colors', checked ? 'bg-action' : 'bg-line-toggle')}>
+        <span className={cx('absolute top-0.5 size-3.5 rounded-full bg-surface transition-[left]', checked ? 'left-4' : 'left-0.5')} />
+      </span>
     </button>
   );
 }

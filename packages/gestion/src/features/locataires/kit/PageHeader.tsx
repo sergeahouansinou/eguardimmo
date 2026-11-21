@@ -30,10 +30,10 @@ export function PageHeader({
           {lead}
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-page-title">{title}</h1>
+              <h1 className="text-page-title [overflow-wrap:anywhere]">{title}</h1>
               {badges}
             </div>
-            {subtitle ? <p className="mt-0.5 text-body text-fg-muted">{subtitle}</p> : null}
+            {subtitle ? <p className="mt-0.5 text-body text-fg-muted [overflow-wrap:anywhere]">{subtitle}</p> : null}
           </div>
         </div>
         {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}

@@ -146,6 +146,19 @@ describe('LocataireDetailPage', () => {
     await expectNoA11yViolations(container);
   });
 
+  it('remplace le lien « Écrire » par l’action fournie par l’application, avec le locataire et ses baux', async () => {
+    const writeToTenant = vi.fn(() => <button type="button">Écrire (messagerie)</button>);
+    renderLot(<LocataireDetailPage id="koffi-adjovi" />, { writeToTenant });
+    expect(await screen.findByRole('button', { name: 'Écrire (messagerie)' })).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'Écrire' })).toBeNull();
+    expect(writeToTenant).toHaveBeenCalledWith(expect.objectContaining({ partyId: 'koffi-adjovi', partyName: 'Koffi Adjovi', leases: expect.arrayContaining([expect.objectContaining({ id: 'apt-a1' })]) as unknown }));
+  });
+
+  it('garde le lien « Écrire » sans action fournie', async () => {
+    renderLot(<LocataireDetailPage id="koffi-adjovi" />);
+    expect((await screen.findByRole('link', { name: 'Écrire' })).getAttribute('href')).toContain('/messages/nouveau');
+  });
+
   it('déduit l’impayé d’un locataire sans fiche détaillée', async () => {
     renderLot(<LocataireDetailPage id="clarisse-hounkpatin" />);
     expect(await screen.findByText('Échéance de novembre non réglée')).toBeTruthy();

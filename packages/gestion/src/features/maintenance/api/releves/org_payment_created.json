@@ -1,0 +1,18 @@
+{
+    "status": 201,
+    "body": {
+        "data": {
+            "id": "01a1ef81-50c8-71fe-9878-e5e5d5fa198f",
+            "supplier_invoice_id": "01a1ef81-50b4-707a-b35e-e22f1bbb6a42",
+            "amount": {
+                "amount": 30000,
+                "currency": "EUR"
+            },
+            "method": "transfer",
+            "paid_on": "2026-11-21",
+            "reference": null,
+            "cancelled_at": null,
+            "replayed": false
+        }
+    }
+}

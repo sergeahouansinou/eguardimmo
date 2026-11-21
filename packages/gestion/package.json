@@ -18,8 +18,10 @@
     "@eguardimmo/api": "workspace:*",
     "@eguardimmo/shell": "workspace:*",
     "@eguardimmo/ui": "workspace:*",
+    "@hookform/resolvers": "catalog:",
     "@tanstack/react-query": "catalog:",
     "lucide-react": "catalog:",
+    "react-hook-form": "catalog:",
     "zod": "catalog:"
   },
   "peerDependencies": {

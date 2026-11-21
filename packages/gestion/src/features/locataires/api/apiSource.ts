@@ -1,4 +1,6 @@
 import type { ApiClient } from '@eguardimmo/api';
+import { createConfirmProof } from '../../reauth/proof';
+import type { ConfirmProof } from '../../reauth/proof';
 import { LOCATAIRES_FEATURES } from '../capabilities';
 import { todayIso } from '../kit/dates';
 import { tenantInputSchema, tenantNameOf } from '../schemas';
@@ -32,6 +34,7 @@ export type ApiLocatairesSource = LocatairesSource &
   ReturnType<typeof partyOperations> & {
     tenantPage: (query?: TenantPageQuery) => Promise<TenantPage>;
     anonymizeTenant: (id: string) => Promise<Tenant>;
+    confirmTwoFactor: ConfirmProof;
   };
 
 const ID_NUMBER_REQUIRED = 'Indiquez le numéro de la pièce d’identité.';
@@ -213,6 +216,7 @@ export function createApiLocatairesSource({ client, organizationId }: ApiLocatai
     updateTenant,
     setTenantArchived,
     anonymizeTenant,
+    confirmTwoFactor: createConfirmProof(client),
     deleteTenant: noRoute('Supprimer un locataire'),
     inviteTenant: noRoute('Inviter un locataire'),
     invitePortal: noRoute('Inviter sur l’espace locataire'),

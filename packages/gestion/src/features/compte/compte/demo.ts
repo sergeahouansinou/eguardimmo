@@ -19,12 +19,12 @@ export const demoProfile: Profile = {
 };
 
 export const demoSubscription: Subscription = {
-  planId: 'essentiel',
+  planId: 'silver',
   billing: 'mensuel',
   nextChargeDate: '2026-12-01',
   cancelAt: null,
   paymentMethod: { brand: 'Visa', last4: '4242' },
-  usage: { lots: 11, users: 2, signatures: 8, storageMb: 1_200 },
+  usage: { lots: 4, users: 2, signatures: 8, storageMb: 320 },
 };
 
 export const demoInvoices: Invoice[] = Array.from({ length: 11 }, (_, index) => {
@@ -32,9 +32,9 @@ export const demoInvoices: Invoice[] = Array.from({ length: 11 }, (_, index) => 
   return {
     id: `FA-2026-${String(number).padStart(4, '0')}`,
     date: `2026-${String(number).padStart(2, '0')}-01`,
-    amount: 990,
+    amount: 490,
     status: 'payee' as const,
-    planId: 'essentiel' as const,
+    planId: 'silver' as const,
     billing: 'mensuel' as const,
   };
 });

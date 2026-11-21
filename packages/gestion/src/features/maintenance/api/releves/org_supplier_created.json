@@ -1,0 +1,20 @@
+{
+    "status": 201,
+    "body": {
+        "data": {
+            "id": "01a1ef81-501e-73e9-82a5-f2a1e6dddd48",
+            "party": {
+                "id": "01a1ef81-4fb6-73dc-ade1-26fdb67f4d34",
+                "name": "Ramonage du Port SARL",
+                "is_anonymized": false
+            },
+            "status": "active",
+            "preferred": false,
+            "payment_terms_days": null,
+            "internal_note": null,
+            "trade_term_ids": [],
+            "custom_fields": null,
+            "lock_version": 1
+        }
+    }
+}

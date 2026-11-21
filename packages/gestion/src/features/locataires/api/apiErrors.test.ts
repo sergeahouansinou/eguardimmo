@@ -1,6 +1,6 @@
 import { ApiError, ApiUnreachableError } from '@eguardimmo/api';
 import { describe, expect, it } from 'vitest';
-import { LocatairesApiError, STALE_VERSION_MESSAGE, TenantStaleVersionError, isTenantStaleVersion, translateApiError } from './apiErrors';
+import { LocatairesApiError, PAYOUT_REQUEST_MESSAGE, REAUTHENTICATION_MESSAGE, STALE_VERSION_MESSAGE, TWO_FACTOR_MESSAGE, TenantStaleVersionError, isTenantStaleVersion, translateApiError } from './apiErrors';
 
 const apiError = (status: number, code: string, message: string, fields: Record<string, string[]> = {}) => new ApiError(status, code, message, fields);
 
@@ -40,6 +40,21 @@ describe('translateApiError', () => {
   it('traduit 422 avec la première erreur de champ', () => {
     const error = translateApiError(apiError(422, 'validation_failed', 'Certaines informations sont invalides.', { last_name: ['Le nom est obligatoire.'] }));
     expect(error).toMatchObject({ kind: 'invalid', status: 422, message: 'Le nom est obligatoire.', fieldErrors: { last_name: ['Le nom est obligatoire.'] } });
+  });
+
+  it('distingue la 2FA manquante et la preuve récente manquante', () => {
+    expect(translateApiError(apiError(403, 'two_factor_required', 'x'))).toMatchObject({ kind: 'two_factor_required', code: 'two_factor_required', message: TWO_FACTOR_MESSAGE });
+    expect(translateApiError(apiError(403, 'reauthentication_required', 'x'))).toMatchObject({ kind: 'reauthentication_required', message: REAUTHENTICATION_MESSAGE });
+  });
+
+  it('explique qu’un mandant avec accès change son compte depuis son espace', () => {
+    expect(translateApiError(apiError(409, 'owner_access_requires_payout_request', 'x'))).toMatchObject({ kind: 'payout_request_required', status: 409, message: PAYOUT_REQUEST_MESSAGE });
+  });
+
+  it('traduit 429 et 503 en français, avec le délai quand le serveur le donne', () => {
+    expect(translateApiError(new ApiError(429, 'too_many_requests', 'x', {}, 30))).toMatchObject({ kind: 'rate_limited', message: expect.stringContaining('dans 30 secondes') as string });
+    expect(translateApiError(new ApiError(429, 'too_many_requests', 'x', {}, 150))).toMatchObject({ message: expect.stringContaining('dans 3 minutes') as string });
+    expect(translateApiError(apiError(503, 'unavailable', 'x'))).toMatchObject({ kind: 'unavailable', message: expect.stringContaining('momentanément indisponible') as string });
   });
 
   it('laisse passer les autres statuts et les pannes réseau sans les déguiser', () => {

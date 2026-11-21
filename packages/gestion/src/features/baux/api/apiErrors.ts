@@ -1,4 +1,5 @@
 import { ApiError } from '@eguardimmo/api';
+import { planLimitMessage } from '../../orgapi/planLimit';
 
 export type BauxApiErrorKind =
   | 'unauthenticated'
@@ -49,10 +50,11 @@ export const unsupported = (message: string): BauxApiError => new BauxApiError('
 export function translateApiError(error: unknown): unknown {
   if (!(error instanceof ApiError)) return error;
   const common = { status: error.status, code: error.code, fieldErrors: error.fieldErrors, cause: error };
+  const planLimit = planLimitMessage(error);
   if (error.status === 401) return new BauxApiError('unauthenticated', 'Votre session a expiré. Reconnectez-vous.', common);
-  if (error.status === 403) return new BauxApiError('forbidden', 'Vous n’avez pas le droit d’effectuer cette action sur les baux.', common);
+  if (error.status === 403) return new BauxApiError('forbidden', planLimit ?? 'Vous n’avez pas le droit d’effectuer cette action sur les baux.', common);
   if (error.status === 404) return new BauxApiError('not_found', error.message, common);
-  if (error.status === 409) return error.code === 'lease_stale_version' ? new LeaseStaleVersionError(error) : new BauxApiError('conflict', error.message, common);
+  if (error.status === 409) return error.code === 'lease_stale_version' ? new LeaseStaleVersionError(error) : new BauxApiError('conflict', planLimit ?? error.message, common);
   if (error.status === 422) return new BauxApiError('invalid', error.firstFieldError() ?? error.message, common);
   return error;
 }

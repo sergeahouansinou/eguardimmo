@@ -7,11 +7,14 @@ import { ToastProvider, TooltipProvider } from '@eguardimmo/ui';
 import { expectNoA11yViolations } from '../../../../test/axe';
 import { FROZEN_NOW, norm, renderLot } from '../../../../test/lots';
 import { CandidatDossierPage, CandidatInvitePage, CandidatsPage } from '../gatedPages';
+import { RentSourceProvider, createApiRentSource } from '../../finances/rent';
+import { TenantRequestsAccessProvider, tenantRequestsPermissions } from '../../tenantRequests';
 import { LocataireDetailPage } from '../LocataireDetailPage';
 import { LocataireFormPage } from '../LocataireFormPage';
 import { LocatairesPage } from '../LocatairesPage';
 import { useUpdateTenant } from '../hooks';
 import { GestionNavigationProvider } from '../kit';
+import { GestionDataModeProvider } from '../kit/sourceContext';
 import { LocatairesSourceProvider, createDemoLocatairesSource } from '../source';
 import type { LocatairesSource } from '../source';
 import { createApiLocatairesSource } from './apiSource';
@@ -36,7 +39,7 @@ function Providers({ source, client, children }: { source: LocatairesSource; cli
       <TooltipProvider>
         <ToastProvider>
           <GestionNavigationProvider value={{ Link, push: vi.fn(), search: new URLSearchParams() }}>
-            <LocatairesSourceProvider source={source}>{children}</LocatairesSourceProvider>
+            <LocatairesSourceProvider source={source}><TenantRequestsAccessProvider source={tenantRequestsPermissions(null)}>{children}</TenantRequestsAccessProvider></LocatairesSourceProvider>
           </GestionNavigationProvider>
         </ToastProvider>
       </TooltipProvider>
@@ -125,6 +128,32 @@ describe('liste des locataires en mode API', () => {
     const { source } = apiSource({ [`GET ${org('/parties')}`]: () => ({ body: api.pageOf([]) }) });
     renderApi(<LocatairesPage />, source);
     expect(screen.getByRole('status', { name: 'Chargement des locataires' })).toBeTruthy();
+  });
+});
+
+describe('soldes de la fiche locataire en mode API', () => {
+  it('lit le solde de chaque bail du locataire sur l’API de loyers, sans solde local', async () => {
+    const { source } = apiSource(listRoutes());
+    const rentMock = mockApi({
+      [`GET ${org(`/rent/leases/${api.IDS.lease}/balance`)}`]: { body: { data: { lease_id: api.IDS.lease, balance: { amount: -30000, currency: 'EUR' }, overdue: { amount: 30000, currency: 'EUR' }, advance: { amount: 0, currency: 'EUR' }, unpaid_count: 1, oldest_unpaid_due_date: '2026-11-05' } } },
+    });
+    const rent = createApiRentSource({ client: rentMock.client, organizationId: api.IDS.org, role: 'manager' }, { fetchImpl: rentMock.fetchImpl });
+    render(
+      <GestionDataModeProvider mode="api">
+        <Providers source={source} client={newClient()}>
+          <RentSourceProvider source={rent}>
+            <LocataireDetailPage id={api.IDS.awa} />
+          </RentSourceProvider>
+        </Providers>
+      </GestionDataModeProvider>,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Awa Diallo' })).toBeTruthy();
+    const balance = await screen.findByRole('region', { name: /^Solde du bail/ });
+    expect(await within(balance).findByText('Échéances impayées')).toBeTruthy();
+    expect(norm(balance.textContent)).toContain('Solde au grand livre-300 €');
+    expect(rentMock.calls.map((call) => call.path)).toContain(org(`/rent/leases/${api.IDS.lease}/balance`));
+    expect(norm(document.body.textContent)).not.toContain('Solde du compte');
   });
 });
 

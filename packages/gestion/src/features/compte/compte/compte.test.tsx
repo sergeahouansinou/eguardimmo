@@ -117,23 +117,23 @@ describe('ComptePage', () => {
 describe('AbonnementPage', () => {
   it('affiche formule, offres, utilisation et factures de la maquette', async () => {
     const { container } = renderScreen(<AbonnementPage {...screenProps} />);
-    expect(await screen.findByText('Essentiel, paiement mensuel')).toBeTruthy();
+    expect(await screen.findByText('Silver, paiement mensuel')).toBeTruthy();
     expect(screen.getByText('Prochain prélèvement le 01/12/2026, Visa •••• 4242')).toBeTruthy();
-    expect(screen.getAllByText(/9,90\s€/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/4,90\s€/).length).toBeGreaterThan(0);
     const plans = screen.getByRole('region', { name: 'Changer de formule' });
-    expect(within(plans).getByText('Découverte')).toBeTruthy();
+    expect(within(plans).getByText('Gratuit')).toBeTruthy();
     expect(within(plans).getByText('Actuelle')).toBeTruthy();
-    expect(within(plans).getByText('24,90 €', { exact: false })).toBeTruthy();
+    expect(within(plans).getByText('10,90 €', { exact: false })).toBeTruthy();
     expect(within(plans).getByRole('button', { name: 'Formule actuelle' }).hasAttribute('disabled')).toBe(true);
-    expect(within(plans).getByRole('button', { name: 'Passer à Pro' })).toBeTruthy();
-    expect(within(plans).getByRole('button', { name: 'Passer à Découverte' })).toBeTruthy();
+    expect(within(plans).getByRole('button', { name: 'Passer à Gold' })).toBeTruthy();
+    expect(within(plans).getByRole('button', { name: 'Passer à Gratuit' })).toBeTruthy();
     const usage = screen.getByRole('region', { name: 'Utilisation' });
-    expect(within(usage).getByText('11 / 15')).toBeTruthy();
-    expect(within(usage).getByText('2 / 3')).toBeTruthy();
+    expect(within(usage).getByText('4 / 5')).toBeTruthy();
+    expect(within(usage).getByText('2 / selon le plan')).toBeTruthy();
     expect(within(usage).getByText('8 / 10')).toBeTruthy();
-    expect(within(usage).getByText('1,2 Go / 5 Go')).toBeTruthy();
-    expect(within(usage).getByRole('img', { name: '73 % utilisé' })).toBeTruthy();
-    expect(within(usage).getByRole('img', { name: '80 % utilisé' })).toBeTruthy();
+    expect(within(usage).getByText('320 Mo / 500 Mo')).toBeTruthy();
+    expect(within(usage).getAllByRole('img', { name: '80 % utilisé' })).toHaveLength(2);
+    expect(within(usage).getByRole('img', { name: '64 % utilisé' })).toBeTruthy();
     expect(await screen.findByText('FA-2026-0011')).toBeTruthy();
     expect(screen.getByText('FA-2026-0009')).toBeTruthy();
     expect(screen.queryByText('FA-2026-0008')).toBeNull();
@@ -157,34 +157,34 @@ describe('AbonnementPage', () => {
   it('change de formule après confirmation et met à jour la source', async () => {
     const source = createDemoCompteSource();
     withSource(source, <AbonnementPage {...screenProps} />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Passer à Pro' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Passer à la formule Pro ?' });
-    expect(within(dialog).getByText(/24,90\s€ par mois\) prend effet immédiatement/)).toBeTruthy();
+    await userEvent.click(await screen.findByRole('button', { name: 'Passer à Gold' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Passer à la formule Gold ?' });
+    expect(within(dialog).getByText(/10,90\s€ par mois\) prend effet immédiatement/)).toBeTruthy();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Confirmer le changement' }));
-    expect(await screen.findByText('Formule Pro activée.')).toBeTruthy();
-    expect((await source.getSubscription()).planId).toBe('pro');
-    expect(await screen.findByText('Pro, paiement mensuel')).toBeTruthy();
-    expect(screen.getByText('11 / illimité')).toBeTruthy();
+    expect(await screen.findByText('Formule Gold activée.')).toBeTruthy();
+    expect((await source.getSubscription()).planId).toBe('gold');
+    expect(await screen.findByText('Gold, paiement mensuel')).toBeTruthy();
+    expect(screen.getByText('4 / illimité')).toBeTruthy();
   });
 
   it("n'applique pas le changement si on annule dans le dialogue", async () => {
     const source = createDemoCompteSource();
     withSource(source, <AbonnementPage {...screenProps} />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Passer à Pro' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Passer à Gold' }));
     await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Annuler' }));
-    expect((await source.getSubscription()).planId).toBe('essentiel');
+    expect((await source.getSubscription()).planId).toBe('silver');
   });
 
-  it("refuse un passage à Découverte quand l'utilisation dépasse les limites", async () => {
+  it("refuse un passage à Gratuit quand l'utilisation dépasse les limites", async () => {
     const source = createDemoCompteSource();
     withSource(source, <AbonnementPage {...screenProps} />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Passer à Découverte' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Passer à Gratuit' }));
     const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByText(/11 lots utilisés pour 2 inclus/)).toBeTruthy();
+    expect(within(dialog).getByText(/4 lots utilisés pour 1 inclus/)).toBeTruthy();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Confirmer le changement' }));
-    expect(await screen.findByText(/Passage impossible : 11 lots utilisés pour 2 inclus/)).toBeTruthy();
-    expect((await source.getSubscription()).planId).toBe('essentiel');
-    await expect(source.changePlan({ planId: 'decouverte', billing: 'mensuel' })).rejects.toBeInstanceOf(PlanChangeError);
+    expect(await screen.findByText(/Passage impossible : 4 lots utilisés pour 1 inclus/)).toBeTruthy();
+    expect((await source.getSubscription()).planId).toBe('silver');
+    await expect(source.changePlan({ planId: 'gratuit', billing: 'mensuel' })).rejects.toBeInstanceOf(PlanChangeError);
   });
 
   it('bascule en paiement annuel avec confirmation et affiche le prix annuel', async () => {
@@ -193,20 +193,20 @@ describe('AbonnementPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Passer en annuel' }));
     const dialog = await screen.findByRole('dialog', { name: 'Passer en paiement annuel ?' });
     await userEvent.click(within(dialog).getByRole('button', { name: 'Confirmer' }));
-    expect(await screen.findByText('Essentiel, paiement annuel')).toBeTruthy();
+    expect(await screen.findByText('Silver, paiement annuel')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Passer en mensuel' })).toBeTruthy();
     expect((await source.getSubscription()).billing).toBe('annuel');
   });
 
-  it('affiche les prix annuels dans la comparaison et propose Essentiel annuel', async () => {
+  it('affiche les prix annuels dans la comparaison et propose Silver annuel', async () => {
     renderScreen(<AbonnementPage {...screenProps} />);
     const plans = await screen.findByRole('region', { name: 'Changer de formule' });
-    await userEvent.click(within(plans).getByRole('radio', { name: 'Annuel, 2 mois offerts' }));
-    expect(within(plans).getByText(/99\s€/)).toBeTruthy();
-    expect(within(plans).getByText(/249\s€/)).toBeTruthy();
+    await userEvent.click(within(plans).getByRole('radio', { name: 'Annuel' }));
+    expect(within(plans).getByText(/58\s€/)).toBeTruthy();
+    expect(within(plans).getByText(/118\s€/)).toBeTruthy();
     expect(within(plans).getAllByText('par an')).toHaveLength(2);
     expect(within(plans).queryByText('Actuelle')).toBeNull();
-    expect(within(plans).getByRole('button', { name: 'Passer à Essentiel' })).toBeTruthy();
+    expect(within(plans).getByRole('button', { name: 'Passer à Silver' })).toBeTruthy();
   });
 
   it('résilie avec confirmation puis annule la résiliation', async () => {
@@ -244,7 +244,7 @@ describe('AbonnementPage', () => {
     await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Télécharger en CSV' }));
     expect(click).toHaveBeenCalledTimes(1);
     const text = await created[0]?.text();
-    expect(text).toContain('FA-2026-0011;01/11/2026;Essentiel, mensuel;');
+    expect(text).toContain('FA-2026-0011;01/11/2026;Silver, mensuel;');
     expect(text).not.toContain('FA-2026-0010');
   });
 
@@ -258,28 +258,32 @@ describe('AbonnementPage', () => {
     const source: CompteSource = { ...createDemoCompteSource(), listInvoices: () => Promise.reject(new Error('panne')) };
     withSource(source, <AbonnementPage {...screenProps} />);
     expect(await screen.findByText("Les factures n'ont pas pu être chargées")).toBeTruthy();
-    expect(screen.getByText('Essentiel, paiement mensuel')).toBeTruthy();
+    expect(screen.getByText('Silver, paiement mensuel')).toBeTruthy();
   });
 });
 
 describe('formules', () => {
   it('calcule les prix en unités mineures, sans flottant', () => {
-    expect(priceOf(planOf('essentiel'), 'mensuel')).toBe(990);
-    expect(priceOf(planOf('essentiel'), 'annuel')).toBe(9900);
-    expect(priceOf(planOf('pro'), 'annuel')).toBe(24900);
+    expect(priceOf(planOf('gratuit'), 'mensuel')).toBe(0);
+    expect(priceOf(planOf('gratuit'), 'annuel')).toBe(0);
+    expect(priceOf(planOf('silver'), 'mensuel')).toBe(490);
+    expect(priceOf(planOf('silver'), 'annuel')).toBe(5800);
+    expect(priceOf(planOf('gold'), 'mensuel')).toBe(1090);
+    expect(priceOf(planOf('gold'), 'annuel')).toBe(11800);
     expect(priceLabel(0, 'mensuel').unit).toBe('pour toujours');
   });
 
   it('détecte les dépassements de limites', () => {
-    const usage = { lots: 11, users: 2, signatures: 8, storageMb: 1_200 };
-    expect(limitsExceeded(planOf('essentiel'), usage)).toEqual([]);
-    expect(limitsExceeded(planOf('pro'), usage)).toEqual([]);
-    expect(limitsExceeded(planOf('decouverte'), usage)).toHaveLength(4);
+    const usage = { lots: 4, users: 2, signatures: 8, storageMb: 320 };
+    expect(limitsExceeded(planOf('silver'), usage)).toEqual([]);
+    expect(limitsExceeded(planOf('gold'), usage)).toEqual([]);
+    expect(limitsExceeded(planOf('gratuit'), usage)).toHaveLength(3);
+    expect(limitsExceeded(planOf('silver'), { ...usage, lots: 6, signatures: 11, storageMb: 501 })).toHaveLength(3);
   });
 
   it('exporte les factures en CSV avec montants formatés', () => {
     const csv = invoicesToCsv(demoInvoices.slice(0, 1));
-    expect(csv).toContain('Numéro;Date;Formule;Montant TTC;Statut');
-    expect(csv).toMatch(/FA-2026-0011;01\/11\/2026;Essentiel, mensuel;9,90\s€;Payée/);
+    expect(csv).toContain('Numéro;Date;Formule;Montant HT;Statut');
+    expect(csv).toMatch(/FA-2026-0011;01\/11\/2026;Silver, mensuel;4,90\s€;Payée/);
   });
 });

@@ -1,0 +1,14 @@
+{
+    "status": 201,
+    "body": {
+        "data": {
+            "id": "01a1ef81-50d5-723f-b02e-38648950e644",
+            "intervention_id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+            "kind": "photo_after",
+            "uploaded_by_kind": "team",
+            "visible_to_owner": false,
+            "visible_to_tenant": true,
+            "created_at": "2026-11-21T14:04:00+00:00"
+        }
+    }
+}

@@ -300,6 +300,19 @@ describe('BailDetailPage', () => {
     await expectNoA11yViolations(container);
   });
 
+  it('propose d’écrire à chaque locataire du bail, avec ce bail', async () => {
+    const writeToTenant = vi.fn(() => <button type="button">Écrire (messagerie)</button>);
+    renderLot(<BailDetailPage id="apt-a1" />, { writeToTenant });
+    expect(await screen.findByRole('button', { name: 'Écrire (messagerie)' })).toBeTruthy();
+    expect(writeToTenant).toHaveBeenCalledWith(expect.objectContaining({ leases: [{ id: 'apt-a1', label: 'BL-2023-0007' }], defaultLeaseId: 'apt-a1' }));
+  });
+
+  it('n’ajoute aucune action d’écriture sans slot fourni', async () => {
+    renderLot(<BailDetailPage id="apt-a1" />);
+    await screen.findByRole('heading', { name: /Bail BL-2023-0007/ });
+    expect(screen.queryByRole('button', { name: /Écrire/ })).toBeNull();
+  });
+
   it('complète le résumé : impayés, avis, révision, parties, dernières échéances et aperçus', async () => {
     renderLot(<BailDetailPage id="apt-a1" />);
     expect(await screen.findByText('1 échéance impayée')).toBeTruthy();

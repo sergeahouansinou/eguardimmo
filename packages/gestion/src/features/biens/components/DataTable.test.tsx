@@ -46,6 +46,13 @@ function Harness({ rows = ITEMS, footer, selectable = false }: { rows?: Item[]; 
 const bodyRows = () => within(screen.getByRole('table', { name: 'Éléments' })).getAllByRole('row').slice(1);
 
 describe('DataTable', () => {
+  it('rend la zone de défilement atteignable au clavier', () => {
+    render(<Harness />);
+    const region = screen.getByRole('region', { name: 'Éléments, défilement horizontal' });
+    expect(region.getAttribute('tabindex')).toBe('0');
+    expect(within(region).getByRole('table', { name: 'Éléments' })).toBeTruthy();
+  });
+
   it('affiche la première page triée avec la pagination', () => {
     render(<Harness />);
     expect(bodyRows()).toHaveLength(10);

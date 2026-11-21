@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { z } from 'zod';
 import { LeaseGate } from './LeaseGate';
 import { useCreateLease, useLeases, useUpdateLease } from './hooks';
+import { PlanLimitAlert } from '../orgapi/PlanLimitAlert';
+import { isPlanLimitError } from '../orgapi/planLimit';
 import { bauxPaths } from './paths';
 import { PAYMENT_METHODS, leaseInputSchema, paymentMethodLabel } from './schemas';
 import type { Lease } from './schemas';
@@ -87,8 +89,9 @@ function Closed({ lease }: { lease: Lease }) {
 }
 
 function LeaseForm({ lease, initial }: { lease?: Lease; initial: Values }) {
-  const { push } = useGestionNavigation();
+  const { push, Link } = useGestionNavigation();
   const notify = useNotify();
+  const [planError, setPlanError] = useState<unknown>(null);
   const units = useUnits();
   const tenants = useTenants();
   const leases = useLeases();
@@ -131,12 +134,14 @@ function LeaseForm({ lease, initial }: { lease?: Lease; initial: Values }) {
       if (target >= 0) setStep(target);
       return;
     }
+    setPlanError(null);
     try {
       const saved = lease ? await update.mutateAsync(values.data) : await create.mutateAsync(values.data);
       noticeAfterNavigation({ title: asDraft ? 'Brouillon enregistré' : editing ? 'Bail modifié' : 'Bail créé', description: saved.reference });
       push(bauxPaths.detail(saved.id));
     } catch (error) {
-      notify({ tone: 'danger', title: 'Enregistrement impossible', description: errorMessage(error) });
+      if (isPlanLimitError(error)) setPlanError(error);
+      else notify({ tone: 'danger', title: 'Enregistrement impossible', description: errorMessage(error) });
     }
   };
 
@@ -163,6 +168,7 @@ function LeaseForm({ lease, initial }: { lease?: Lease; initial: Values }) {
         title={editing ? `Modifier le bail ${lease.reference}` : 'Nouveau bail'}
         subtitle="Quatre étapes. Vous pouvez enregistrer un brouillon à tout moment."
       />
+      <PlanLimitAlert error={planError} Link={Link} />
       <Steps steps={STEPS} current={step} label="Étapes du bail" />
       {units.isError || tenants.isError ? <LoadError title="Les données du formulaire n’ont pas pu être chargées" /> : null}
       {units.isPending || tenants.isPending ? <ListLoading label="Chargement du formulaire" /> : null}

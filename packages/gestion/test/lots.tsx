@@ -6,6 +6,7 @@ import { ToastProvider, TooltipProvider } from '@eguardimmo/ui';
 import { BauxSourceProvider, createDemoBauxSource } from '../src/features/baux';
 import { CourriersSourceProvider, createDemoCourriersSource } from '../src/features/courriers';
 import { GestionNavigationProvider, LocatairesSourceProvider, createDemoLocatairesSource } from '../src/features/locataires';
+import type { GestionNavigation } from '../src/features/locataires';
 
 export const FROZEN_NOW = new Date('2026-11-13T09:00:00Z');
 
@@ -13,7 +14,7 @@ function TestLink({ href, children, ...props }: ComponentProps<'a'> & { href: st
   return <a href={href} {...props}>{children}</a>;
 }
 
-export function renderLot(ui: ReactElement, { search = '' }: { search?: string } = {}) {
+export function renderLot(ui: ReactElement, { search = '', writeToTenant }: { search?: string; writeToTenant?: GestionNavigation['writeToTenant'] } = {}) {
   const push = vi.fn<(href: string) => void>();
   const tenants = createDemoLocatairesSource();
   const baux = createDemoBauxSource();
@@ -23,7 +24,7 @@ export function renderLot(ui: ReactElement, { search = '' }: { search?: string }
     <QueryClientProvider client={client}>
       <TooltipProvider>
         <ToastProvider>
-          <GestionNavigationProvider value={{ Link: TestLink, push, search: new URLSearchParams(search) }}>
+          <GestionNavigationProvider value={{ Link: TestLink, push, search: new URLSearchParams(search), ...(writeToTenant ? { writeToTenant } : {}) }}>
             <LocatairesSourceProvider source={tenants}>
               <BauxSourceProvider source={baux}>
                 <CourriersSourceProvider source={courriers}>{ui}</CourriersSourceProvider>

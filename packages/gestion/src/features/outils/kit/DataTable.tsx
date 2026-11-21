@@ -8,7 +8,8 @@ export type SortDirection = 'asc' | 'desc';
 
 export function DataTable({ caption, className, children, ...props }: Omit<ComponentProps<'table'>, 'children'> & { caption: string; children: ReactNode }) {
   return (
-    <div className="relative max-w-full overflow-x-auto">
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+    <div role="region" aria-label={`${caption}, défilement horizontal`} tabIndex={0} className="relative max-w-full overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
       <table {...props} className={cx('w-full border-collapse text-body text-fg-muted', className)}>
         <caption className="sr-only">{caption}</caption>
         {children}
@@ -62,7 +63,7 @@ export function Td({ numeric = false, strong = false, className, ...props }: Com
     <td
       {...props}
       className={cx(
-        'h-9 border-b border-line px-2 whitespace-nowrap',
+        'h-9 border-b border-line px-2 whitespace-nowrap [&_a]:min-h-6 [&_a]:py-1.5',
         numeric && 'text-right tabular-nums',
         strong && 'font-medium text-fg',
         className,

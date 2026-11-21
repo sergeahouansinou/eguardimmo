@@ -3,12 +3,15 @@
 import { Send } from 'lucide-react';
 import { useState } from 'react';
 import { Alert, Button, Card, CardTitle, Icon, TextField, Textarea, cx } from '@eguardimmo/ui';
-import { Checkbox, PageHeader, QueryState, Segmented, pushFlash } from '../../outils/kit';
+import { PageHeader, QueryState, pushFlash } from '../../outils/kit';
 import type { ScreenProps } from '../../outils/kit';
+import { PlanLimitAlert } from '../../orgapi/PlanLimitAlert';
+import { isPlanLimitError } from '../../orgapi/planLimit';
+import { teamErrorMessage } from './errors';
 import { RoleRights } from './RoleRights';
 import { seatsUsed } from './rules';
-import { BUILDINGS, INVITABLE_ROLES, ROLE_LABELS, ROLE_SUMMARIES, inviteSchema } from './schemas';
-import type { InvitableRole, Scope, TeamData } from './schemas';
+import { INVITABLE_ROLES, ROLE_LABELS, ROLE_SUMMARIES, inviteSchema } from './schemas';
+import type { InvitableRole, TeamData } from './schemas';
 import { useInviteMember, useTeam } from './source';
 
 interface Draft {
@@ -16,12 +19,10 @@ interface Draft {
   lastName: string;
   email: string;
   role: InvitableRole;
-  scopeType: Scope['type'];
-  buildings: readonly string[];
   message: string;
 }
 
-const INITIAL: Draft = { firstName: '', lastName: '', email: '', role: 'comptable', scopeType: 'all', buildings: [], message: '' };
+const INITIAL: Draft = { firstName: '', lastName: '', email: '', role: 'comptable', message: '' };
 
 function RoleChoices({ value, onChange }: { value: InvitableRole; onChange: (role: InvitableRole) => void }) {
   return (
@@ -58,6 +59,7 @@ function InviteForm({ Link, navigate, team }: ScreenProps & { team: TeamData }) 
   const [draft, setDraft] = useState(INITIAL);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [failure, setFailure] = useState<string | null>(null);
+  const [planError, setPlanError] = useState<unknown>(null);
   const full = team.seatLimit !== null && seatsUsed(team.members) >= team.seatLimit;
   const set = (patch: Partial<Draft>) => {
     setDraft((previous) => ({ ...previous, ...patch }));
@@ -65,14 +67,12 @@ function InviteForm({ Link, navigate, team }: ScreenProps & { team: TeamData }) 
   };
 
   const submit = () => {
-    const scope: Scope =
-      draft.scopeType === 'all' ? { type: 'all' } : { type: 'selected', buildings: BUILDINGS.filter((name) => draft.buildings.includes(name)) };
     const parsed = inviteSchema.safeParse({
       firstName: draft.firstName,
       lastName: draft.lastName,
       email: draft.email,
       role: draft.role,
-      scope,
+      scope: { type: 'all' },
       message: draft.message,
     });
     if (!parsed.success) {
@@ -82,13 +82,18 @@ function InviteForm({ Link, navigate, team }: ScreenProps & { team: TeamData }) 
       return;
     }
     setFailure(null);
+    setPlanError(null);
     invite.mutate(parsed.data, {
       onSuccess: (member) => {
         pushFlash(`Invitation envoyée à ${member.email}.`);
         navigate('/equipe');
       },
       onError: (error) => {
-        setFailure(error.message);
+        if (isPlanLimitError(error)) {
+          setPlanError(error);
+          return;
+        }
+        setFailure(teamErrorMessage(error, "L'invitation n'a pas pu être envoyée. Réessayez."));
       },
     });
   };
@@ -104,6 +109,7 @@ function InviteForm({ Link, navigate, team }: ScreenProps & { team: TeamData }) 
           .
         </Alert>
       ) : null}
+      <PlanLimitAlert error={planError} Link={Link} />
       {failure ? <Alert tone="danger" title="L'invitation n'a pas pu être envoyée">{failure}</Alert> : null}
       <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-3">
@@ -131,31 +137,10 @@ function InviteForm({ Link, navigate, team }: ScreenProps & { team: TeamData }) 
             <CardTitle as="h2" id="ei-b">
               Biens accessibles
             </CardTitle>
-            <Segmented
-              label="Biens accessibles"
-              value={draft.scopeType}
-              onValueChange={(scopeType) => { set({ scopeType }); }}
-              options={[
-                { value: 'all', label: 'Tous les biens' },
-                { value: 'selected', label: 'Biens choisis' },
-              ]}
-              className="self-start"
-            />
-            {draft.scopeType === 'selected' ? (
-              <div className="flex flex-col gap-2">
-                {BUILDINGS.map((name) => (
-                  <Checkbox
-                    key={name}
-                    label={name}
-                    checked={draft.buildings.includes(name)}
-                    onCheckedChange={(checked) => { set({ buildings: checked ? [...draft.buildings, name] : draft.buildings.filter((item) => item !== name) }); }}
-                  />
-                ))}
-                {errors.scope ? <p className="text-caption text-fg-danger">{errors.scope}</p> : null}
-              </div>
-            ) : (
-              <span className="text-caption text-fg-subtle">Les biens ajoutés plus tard seront aussi accessibles.</span>
-            )}
+            <p className="text-body font-medium text-fg">Tous les biens</p>
+            <span className="text-caption text-fg-subtle">
+              Le périmètre limité à certains biens n'est pas appliqué par le serveur : le membre voit tous les biens, y compris ceux ajoutés plus tard, dans la limite des droits de son rôle.
+            </span>
           </Card>
           <Card role="region" aria-labelledby="ei-msg" className="px-4 py-3">
             <CardTitle as="h2" id="ei-msg">
@@ -171,7 +156,7 @@ function InviteForm({ Link, navigate, team }: ScreenProps & { team: TeamData }) 
           </Card>
         </div>
         <aside className="flex min-w-0 flex-col gap-3">
-          <RoleRights role={draft.role} />
+          <RoleRights role={draft.role} Link={Link} />
           {team.twoFactorRequired ? <Alert tone="warning">Double authentification exigée à la connexion.</Alert> : null}
         </aside>
       </div>

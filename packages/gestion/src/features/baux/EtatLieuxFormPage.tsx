@@ -1,7 +1,10 @@
 'use client';
 
 import { Button, Card, CardTitle, Checkbox, RadioGroup, Select, TextField } from '@eguardimmo/ui';
+import { useState } from 'react';
 import type { z } from 'zod';
+import { PlanLimitAlert } from '../orgapi/PlanLimitAlert';
+import { isPlanLimitError } from '../orgapi/planLimit';
 import { useCreateEdl, useEdls, useEdlTemplates, useLeases, useUpdateEdl } from './hooks';
 import { bauxPaths } from './paths';
 import { EDL_TYPES, ROOMS, edlInputSchema, edlTypeLabel } from './schemas';
@@ -39,8 +42,9 @@ export function EtatLieuxFormPage({ id }: { id?: string }) {
 }
 
 function EdlForm({ edl, initial }: { edl?: Edl; initial: Values }) {
-  const { push } = useGestionNavigation();
+  const { push, Link } = useGestionNavigation();
   const notify = useNotify();
+  const [planError, setPlanError] = useState<unknown>(null);
   const units = useUnits();
   const tenants = useTenants();
   const leases = useLeases();
@@ -64,12 +68,14 @@ function EdlForm({ edl, initial }: { edl?: Edl; initial: Values }) {
   const save = async (asDraft: boolean) => {
     const values = form.submit();
     if (!values) return;
+    setPlanError(null);
     try {
       const saved = edl ? await update.mutateAsync(values) : await create.mutateAsync({ input: values, asDraft });
       noticeAfterNavigation({ title: editing ? 'État des lieux modifié' : asDraft ? 'Brouillon enregistré' : 'État des lieux créé, commencez le relevé', description: saved.reference });
       push(bauxPaths.edl(saved.id));
     } catch (error) {
-      notify({ tone: 'danger', title: 'Enregistrement impossible', description: errorMessage(error) });
+      if (isPlanLimitError(error)) setPlanError(error);
+      else notify({ tone: 'danger', title: 'Enregistrement impossible', description: errorMessage(error) });
     }
   };
 
@@ -80,6 +86,7 @@ function EdlForm({ edl, initial }: { edl?: Edl; initial: Values }) {
         title={editing ? `Modifier ${edl.reference}` : 'Nouvel état des lieux'}
         subtitle="Un état par pièce. Les anomalies se signalent avec une photo."
       />
+      <PlanLimitAlert error={planError} Link={Link} />
       {units.isError || tenants.isError || templates.isError ? <LoadError title="Les données du formulaire n’ont pas pu être chargées" /> : null}
       {loading ? <ListLoading label="Chargement du formulaire" /> : null}
       {units.data && tenants.data && templates.data ? (

@@ -1,0 +1,100 @@
+{
+    "status": 200,
+    "body": {
+        "data": {
+            "id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+            "reference": "INT-2026-0001",
+            "origin": "tenant",
+            "status": "reported",
+            "priority": "normal",
+            "reported_urgency": "soon",
+            "nature_term_id": "01a1ef81-4f89-72ac-b62c-60d007a91b12",
+            "title": "Fuite sous l'évier",
+            "description": "De l'eau coule sous l'évier de la cuisine.",
+            "room": null,
+            "availability": null,
+            "property_id": "01a1ef81-4fa7-73e7-83f2-ee41e69f4bee",
+            "unit_id": "01a1ef81-4fa8-7008-9649-57ef36d615d7",
+            "unit": {
+                "id": "01a1ef81-4fa8-7008-9649-57ef36d615d7",
+                "reference": "LOT-28755",
+                "property_name": "Résidence Roy"
+            },
+            "lease_id": "01a1ef81-4fb4-70fa-a070-6b296b02b3e9",
+            "mandate_id": null,
+            "mandant": null,
+            "reporter": {
+                "id": "01a1ef81-4fb3-73be-8cc0-2f2e71a78ae5",
+                "name": "Édouard Gillet"
+            },
+            "supplier": null,
+            "responsibility": "undetermined",
+            "reported_on": "2026-11-18",
+            "due_on": null,
+            "estimated_amount": null,
+            "ceiling_amount": null,
+            "approval_basis": null,
+            "emergency_reason": null,
+            "decline_reason": null,
+            "decline_note": null,
+            "completed_on": null,
+            "completion_note": null,
+            "closed_at": null,
+            "follows_intervention_id": null,
+            "custom_fields": null,
+            "lock_version": 1,
+            "created_at": "2026-11-18T11:01:00+00:00",
+            "committed_amount": {
+                "amount": null,
+                "currency": "EUR"
+            },
+            "events": [
+                {
+                    "id": "01a1ef81-4fe2-71d9-bc07-559fc4da1193",
+                    "kind": "reported",
+                    "actor_kind": "tenant",
+                    "text": "Demande signalée.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5002-709b-a12e-e0d1615408e8",
+                    "kind": "file_added",
+                    "actor_kind": "tenant",
+                    "text": "Une photo a été ajoutée.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5006-7184-8da2-16868ccc3242",
+                    "kind": "comment",
+                    "actor_kind": "tenant",
+                    "text": "Merci de passer vite.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                }
+            ],
+            "files": [
+                {
+                    "id": "01a1ef81-5001-71af-be78-b8828b6906eb",
+                    "intervention_id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+                    "kind": "photo_before",
+                    "uploaded_by_kind": "tenant",
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T11:01:00+00:00"
+                }
+            ],
+            "visits": [],
+            "quotes": [],
+            "approvals": [],
+            "invoices": []
+        }
+    }
+}

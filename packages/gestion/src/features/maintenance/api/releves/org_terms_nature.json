@@ -1,0 +1,161 @@
+{
+    "status": 200,
+    "body": {
+        "data": [
+            {
+                "id": "01a1ef81-4f89-72ac-b62c-60d007a91b12",
+                "vocabulary": "intervention_nature",
+                "key": "plumbing",
+                "labels": {
+                    "fr": "Plomberie"
+                },
+                "semantic_key": "plumbing",
+                "parent_id": null,
+                "position": 0,
+                "metadata": {
+                    "tenant_chargeable": false,
+                    "insurance_required": true,
+                    "default_responsibility": "owner",
+                    "expense_semantic": "expense.repairs"
+                },
+                "platform": true,
+                "system": true,
+                "archived": false,
+                "hidden": false,
+                "overridden": false
+            },
+            {
+                "id": "01a1ef81-4f89-72ac-b62c-60d0090b30f2",
+                "vocabulary": "intervention_nature",
+                "key": "electrical",
+                "labels": {
+                    "fr": "Électricité"
+                },
+                "semantic_key": "electrical",
+                "parent_id": null,
+                "position": 1,
+                "metadata": {
+                    "tenant_chargeable": false,
+                    "insurance_required": true,
+                    "default_responsibility": "owner",
+                    "expense_semantic": "expense.repairs"
+                },
+                "platform": true,
+                "system": true,
+                "archived": false,
+                "hidden": false,
+                "overridden": false
+            },
+            {
+                "id": "01a1ef81-4f8a-736e-8448-0d71dba95aeb",
+                "vocabulary": "intervention_nature",
+                "key": "heating",
+                "labels": {
+                    "fr": "Chauffage"
+                },
+                "semantic_key": "heating",
+                "parent_id": null,
+                "position": 2,
+                "metadata": {
+                    "tenant_chargeable": true,
+                    "insurance_required": true,
+                    "default_responsibility": "shared",
+                    "expense_semantic": "expense.maintenance"
+                },
+                "platform": true,
+                "system": true,
+                "archived": false,
+                "hidden": false,
+                "overridden": false
+            },
+            {
+                "id": "01a1ef81-4f8a-736e-8448-0d71dc3075bb",
+                "vocabulary": "intervention_nature",
+                "key": "locksmith",
+                "labels": {
+                    "fr": "Serrurerie"
+                },
+                "semantic_key": "locksmith",
+                "parent_id": null,
+                "position": 3,
+                "metadata": {
+                    "tenant_chargeable": true,
+                    "insurance_required": false,
+                    "default_responsibility": "undetermined",
+                    "expense_semantic": "expense.repairs"
+                },
+                "platform": true,
+                "system": true,
+                "archived": false,
+                "hidden": false,
+                "overridden": false
+            },
+            {
+                "id": "01a1ef81-4f8a-736e-8448-0d71dd193514",
+                "vocabulary": "intervention_nature",
+                "key": "humidity",
+                "labels": {
+                    "fr": "Humidité"
+                },
+                "semantic_key": "humidity",
+                "parent_id": null,
+                "position": 4,
+                "metadata": {
+                    "tenant_chargeable": false,
+                    "insurance_required": false,
+                    "default_responsibility": "owner",
+                    "expense_semantic": "expense.repairs"
+                },
+                "platform": true,
+                "system": true,
+                "archived": false,
+                "hidden": false,
+                "overridden": false
+            },
+            {
+                "id": "01a1ef81-4f8b-705a-a329-d0489a11f246",
+                "vocabulary": "intervention_nature",
+                "key": "pests",
+                "labels": {
+                    "fr": "Nuisibles"
+                },
+                "semantic_key": "pests",
+                "parent_id": null,
+                "position": 5,
+                "metadata": {
+                    "tenant_chargeable": false,
+                    "insurance_required": false,
+                    "default_responsibility": "undetermined",
+                    "expense_semantic": "expense.maintenance"
+                },
+                "platform": true,
+                "system": true,
+                "archived": false,
+                "hidden": false,
+                "overridden": false
+            },
+            {
+                "id": "01a1ef81-4f8b-705a-a329-d0489afe422f",
+                "vocabulary": "intervention_nature",
+                "key": "other",
+                "labels": {
+                    "fr": "Autre"
+                },
+                "semantic_key": "other",
+                "parent_id": null,
+                "position": 6,
+                "metadata": {
+                    "tenant_chargeable": false,
+                    "insurance_required": false,
+                    "default_responsibility": "undetermined",
+                    "expense_semantic": "expense.other"
+                },
+                "platform": true,
+                "system": true,
+                "archived": false,
+                "hidden": false,
+                "overridden": false
+            }
+        ]
+    }
+}

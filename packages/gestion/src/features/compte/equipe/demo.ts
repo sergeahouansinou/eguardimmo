@@ -1,8 +1,10 @@
-import type { TeamData } from './schemas';
+import type { AccessLevel, RoleMatrix } from './roles';
+import { RIGHT_AREAS, ROLE_RIGHTS, ROLES } from './schemas';
+import type { RightLevel, Role, TeamData } from './schemas';
 
 export const demoTeam: TeamData = {
-  seatLimit: 3,
-  planName: 'Essentiel',
+  seatLimit: null,
+  planName: 'Silver',
   twoFactorRequired: true,
   members: [
     {
@@ -60,3 +62,28 @@ export const demoTeam: TeamData = {
     },
   ],
 };
+
+const DEMO_LEVELS: Record<RightLevel, AccessLevel> = {
+  modifier: 'write',
+  'modifier-2fa': 'write_two_factor',
+  preparation: 'prepare',
+  lecture: 'read',
+  aucun: 'none',
+};
+
+export function demoRoleMatrix(currentRole: Role): RoleMatrix {
+  const level = (role: Role, index: number): AccessLevel => DEMO_LEVELS[ROLE_RIGHTS[role][index] ?? 'aucun'];
+  return {
+    currentRole,
+    domains: RIGHT_AREAS.map((label, index) => {
+      const [titulaire, administrateur, gestionnaire, comptable] = ROLES.map((role) => level(role, index));
+      return {
+        key: label,
+        label,
+        levels: { titulaire: titulaire ?? 'none', administrateur: administrateur ?? 'none', gestionnaire: gestionnaire ?? 'none', comptable: comptable ?? 'none' },
+        twoFactor: ROLES.some((role) => level(role, index) === 'write_two_factor'),
+        highlighted: true,
+      };
+    }),
+  };
+}

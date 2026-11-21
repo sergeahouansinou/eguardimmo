@@ -1,0 +1,80 @@
+{
+    "status": 200,
+    "body": {
+        "data": {
+            "id": "01a1ef81-508b-7159-bcb5-3ec8b29c4721",
+            "reference": "INT-2026-0003",
+            "origin": "tenant",
+            "status": "declined",
+            "priority": "normal",
+            "reported_urgency": "soon",
+            "nature_term_id": "01a1ef81-4f8a-736e-8448-0d71dba95aeb",
+            "title": "Bruit au plafond",
+            "description": "De l'eau coule sous l'évier de la cuisine.",
+            "room": null,
+            "availability": null,
+            "property_id": "01a1ef81-4fa7-73e7-83f2-ee41e69f4bee",
+            "unit_id": "01a1ef81-4fa8-7008-9649-57ef36d615d7",
+            "unit": {
+                "id": "01a1ef81-4fa8-7008-9649-57ef36d615d7",
+                "reference": "LOT-28755",
+                "property_name": "Résidence Roy"
+            },
+            "lease_id": "01a1ef81-4fb4-70fa-a070-6b296b02b3e9",
+            "mandate_id": null,
+            "mandant": null,
+            "reporter": {
+                "id": "01a1ef81-4fb3-73be-8cc0-2f2e71a78ae5",
+                "name": "Édouard Gillet"
+            },
+            "supplier": null,
+            "responsibility": "undetermined",
+            "reported_on": "2026-11-18",
+            "due_on": null,
+            "estimated_amount": null,
+            "ceiling_amount": null,
+            "approval_basis": null,
+            "emergency_reason": null,
+            "decline_reason": "not_an_issue",
+            "decline_note": "Aucun désordre constaté.",
+            "completed_on": null,
+            "completion_note": null,
+            "closed_at": null,
+            "follows_intervention_id": null,
+            "custom_fields": null,
+            "lock_version": 2,
+            "created_at": "2026-11-18T13:03:00+00:00",
+            "committed_amount": {
+                "amount": null,
+                "currency": "EUR"
+            },
+            "events": [
+                {
+                    "id": "01a1ef81-508b-7159-bcb5-3ec8b32f95d8",
+                    "kind": "reported",
+                    "actor_kind": "tenant",
+                    "text": "Demande signalée.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T13:03:00+00:00"
+                },
+                {
+                    "id": "01a1ef81-5090-7164-b498-89156a3d15b4",
+                    "kind": "declined",
+                    "actor_kind": "team",
+                    "text": "Aucun désordre constaté.",
+                    "metadata": null,
+                    "visible_to_owner": false,
+                    "visible_to_tenant": true,
+                    "created_at": "2026-11-18T13:03:00+00:00"
+                }
+            ],
+            "files": [],
+            "visits": [],
+            "quotes": [],
+            "approvals": [],
+            "invoices": []
+        }
+    }
+}

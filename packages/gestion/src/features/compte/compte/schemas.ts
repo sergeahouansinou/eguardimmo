@@ -56,7 +56,7 @@ export const profileSchema = z.object({
 });
 export type Profile = z.infer<typeof profileSchema>;
 
-export const PLAN_IDS = ['decouverte', 'essentiel', 'pro'] as const;
+export const PLAN_IDS = ['gratuit', 'silver', 'gold'] as const;
 export type PlanId = (typeof PLAN_IDS)[number];
 export const BILLINGS = ['mensuel', 'annuel'] as const;
 export type Billing = (typeof BILLINGS)[number];

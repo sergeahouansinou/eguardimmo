@@ -82,7 +82,7 @@ export function DataTable<T>({
 
   return (
     <div className="flex flex-col gap-2">
-      <Table aria-label={label}>
+      <Table aria-label={label} scrollLabel={`${label}, défilement horizontal`}>
         <TableHead>
           <TableRow>
             {selectable ? (

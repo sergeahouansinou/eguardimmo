@@ -42,4 +42,9 @@ describe('buildCsv', () => {
     expect(csv).toContain("'=CMD();5\r\n");
     expect(csv).toContain('"Dit ""bonjour""; ok";\r\n');
   });
+
+  it('neutralise une formule HYPERLINK et garde un montant négatif lisible', () => {
+    const csv = buildCsv({ columns: ['Lot', 'Montant'], rows: [['=HYPERLINK("http://x";"y")', { minor: -123456 }]] });
+    expect(csv).toContain('"\'=HYPERLINK(""http://x"";""y"")";-1234,56\r\n');
+  });
 });

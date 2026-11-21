@@ -1,43 +1,47 @@
 import { formatMoney } from '../../../format/money';
 import type { Billing, PlanId, Subscription } from './schemas';
 
+export type Quota = number | 'illimite' | 'non-fixe';
+
 export interface Plan {
   id: PlanId;
   name: string;
   monthly: number;
-  limits: { lots: number | null; users: number | null; signatures: number | null; storageMb: number };
+  yearly: number;
+  limits: { lots: Quota; users: Quota; signatures: Quota; storageMb: number };
   features: readonly string[];
   switchLabel: string;
 }
 
 export const PLANS: readonly Plan[] = [
   {
-    id: 'decouverte',
-    name: 'Découverte',
+    id: 'gratuit',
+    name: 'Gratuit',
     monthly: 0,
-    limits: { lots: 2, users: 1, signatures: 0, storageMb: 1_000 },
-    features: ['2 lots', '1 utilisateur', 'Quittances et avis', 'Suivi des loyers'],
-    switchLabel: 'Passer à Découverte',
+    yearly: 0,
+    limits: { lots: 1, users: 1, signatures: 'non-fixe', storageMb: 50 },
+    features: ['1 lot', '1 utilisateur', '2 locataires, 2 baux, 4 états des lieux', '50 Mo de stockage'],
+    switchLabel: 'Passer à Gratuit',
   },
   {
-    id: 'essentiel',
-    name: 'Essentiel',
-    monthly: 990,
-    limits: { lots: 15, users: 3, signatures: 10, storageMb: 5_000 },
-    features: ['15 lots', '3 utilisateurs', 'Relances automatiques', '10 signatures'],
-    switchLabel: 'Passer à Essentiel',
+    id: 'silver',
+    name: 'Silver',
+    monthly: 490,
+    yearly: 5_800,
+    limits: { lots: 5, users: 'non-fixe', signatures: 10, storageMb: 500 },
+    features: ['2 à 5 lots', 'Plusieurs utilisateurs', 'Locataires, baux et états des lieux illimités', '500 Mo de stockage', '10 signatures par mois'],
+    switchLabel: 'Passer à Silver',
   },
   {
-    id: 'pro',
-    name: 'Pro',
-    monthly: 2490,
-    limits: { lots: null, users: null, signatures: null, storageMb: 50_000 },
-    features: ['Lots illimités', 'Utilisateurs illimités', 'Paiement en ligne', 'Rapports et exports'],
-    switchLabel: 'Passer à Pro',
+    id: 'gold',
+    name: 'Gold',
+    monthly: 1_090,
+    yearly: 11_800,
+    limits: { lots: 'illimite', users: 'non-fixe', signatures: 20, storageMb: 5_000 },
+    features: ['Lots illimités', 'Plusieurs utilisateurs', 'Locataires, baux et états des lieux illimités', '5 Go de stockage', '20 signatures par mois'],
+    switchLabel: 'Passer à Gold',
   },
 ];
-
-export const ANNUAL_MONTHS = 10;
 
 export function planOf(id: PlanId): Plan {
   const plan = PLANS.find((candidate) => candidate.id === id);
@@ -46,7 +50,7 @@ export function planOf(id: PlanId): Plan {
 }
 
 export function priceOf(plan: Plan, billing: Billing): number {
-  return billing === 'annuel' ? plan.monthly * ANNUAL_MONTHS : plan.monthly;
+  return billing === 'annuel' ? plan.yearly : plan.monthly;
 }
 
 export function priceLabel(minor: number, billing: Billing): { amount: string; unit: string } {
@@ -56,13 +60,13 @@ export function priceLabel(minor: number, billing: Billing): { amount: string; u
 
 export function limitsExceeded(plan: Plan, usage: Subscription['usage']): string[] {
   const problems: string[] = [];
-  if (plan.limits.lots !== null && usage.lots > plan.limits.lots) {
+  if (typeof plan.limits.lots === 'number' && usage.lots > plan.limits.lots) {
     problems.push(`${String(usage.lots)} lots utilisés pour ${String(plan.limits.lots)} inclus`);
   }
-  if (plan.limits.users !== null && usage.users > plan.limits.users) {
+  if (typeof plan.limits.users === 'number' && usage.users > plan.limits.users) {
     problems.push(`${String(usage.users)} utilisateurs pour ${String(plan.limits.users)} inclus`);
   }
-  if (plan.limits.signatures !== null && usage.signatures > plan.limits.signatures) {
+  if (typeof plan.limits.signatures === 'number' && usage.signatures > plan.limits.signatures) {
     problems.push(`${String(usage.signatures)} signatures ce mois pour ${String(plan.limits.signatures)} incluses`);
   }
   if (usage.storageMb > plan.limits.storageMb) problems.push('stockage au-delà de la capacité incluse');

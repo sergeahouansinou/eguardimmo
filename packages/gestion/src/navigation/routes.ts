@@ -1,4 +1,5 @@
 import {
+  BadgeCheck,
   BookUser,
   Building,
   Calendar,
@@ -7,20 +8,66 @@ import {
   FilePenLine,
   Folder,
   House,
+  LifeBuoy,
   ListChecks,
   MessageSquare,
+  ReceiptText,
   Settings,
   Users,
   UsersRound,
   Wallet,
   Wrench,
 } from 'lucide-react';
-import type { NavLink } from '@eguardimmo/ui';
+import type { NavEntry, NavLink } from '@eguardimmo/ui';
 import type { HelpMenuItem, ShellCounts, ShellNavigation } from '@eguardimmo/shell';
 
 export type Navigation = ShellNavigation;
 
-export function buildNavigation(counts?: ShellCounts): Navigation {
+export interface SupportNavigation {
+  manageAccess: boolean;
+  requests?: number | undefined;
+  access?: number | undefined;
+}
+
+export interface NavigationOptions {
+  rent: boolean;
+  compliance?: boolean;
+  tax?: boolean;
+  support?: SupportNavigation;
+  timezone?: boolean;
+}
+
+export const TIMEZONE_HREF = '/reglages/fuseau-horaire';
+
+export const SUPPORT_ACCESS_HREF = '/reglages/acces-support';
+
+export const supportSearchPages: { href: string; label: string }[] = [
+  { href: '/support', label: 'Support, mes demandes' },
+  { href: '/support/nouvelle', label: 'Nouvelle demande au support' },
+  { href: SUPPORT_ACCESS_HREF, label: 'Réglages, accès du support à vos données' },
+];
+
+function settingsEntry(support: SupportNavigation | undefined, timezone: boolean): NavEntry {
+  const entry: NavEntry = { id: 'reglages', label: 'Réglages', href: '/reglages', icon: Settings };
+  const manageAccess = support?.manageAccess === true;
+  if (!manageAccess && !timezone) return entry;
+  return {
+    ...entry,
+    ...(support?.access ? { count: support.access } : {}),
+    children: [
+      { id: 'reglages-generaux', label: 'Réglages', href: '/reglages' },
+      ...(timezone ? [{ id: 'reglages-fuseau', label: 'Fuseau horaire', href: TIMEZONE_HREF }] : []),
+      ...(manageAccess ? [{ id: 'reglages-acces-support', label: 'Accès du support', href: SUPPORT_ACCESS_HREF }] : []),
+    ],
+  };
+}
+
+function supportEntries(support: SupportNavigation | undefined): NavEntry[] {
+  if (support === undefined) return [];
+  return [{ id: 'support', label: 'Support', href: '/support', icon: LifeBuoy, ...(support.requests ? { count: support.requests } : {}) }];
+}
+
+export function buildNavigation(counts?: ShellCounts, options: NavigationOptions = { rent: false }): Navigation {
   return {
     sections: [
       {
@@ -76,9 +123,16 @@ export function buildNavigation(counts?: ShellCounts): Navigation {
               { id: 'regularisation', label: 'Régularisation', href: '/finances/regularisation' },
               { id: 'bilan', label: 'Bilan', href: '/finances/bilan' },
               { id: 'prets', label: 'Prêts', href: '/finances/prets' },
+              ...(options.tax === true
+                ? [
+                    { id: 'cout-de-revient', label: 'Coût de revient', href: '/finances/cout-de-revient' },
+                    { id: 'fiscalite', label: 'Fiscalité', href: '/finances/fiscalite' },
+                  ]
+                : []),
               { id: 'import-bancaire', label: 'Import bancaire', href: '/finances/import-bancaire' },
             ],
           },
+          ...(options.rent ? [{ id: 'loyers', label: 'Loyers', href: '/finances/loyers', icon: ReceiptText }] : []),
           {
             id: 'documents',
             label: 'Documents',
@@ -102,6 +156,7 @@ export function buildNavigation(counts?: ShellCounts): Navigation {
           { id: 'interventions', label: 'Interventions', href: '/interventions', icon: Wrench, count: counts?.openInterventions },
           { id: 'agenda', label: 'Agenda', href: '/agenda', icon: Calendar },
           { id: 'taches', label: 'Tâches et rappels', href: '/taches', icon: ListChecks },
+          ...(options.compliance === true ? [{ id: 'conformite', label: 'Conformité', href: '/conformite', icon: BadgeCheck }] : []),
         ],
       },
       {
@@ -127,10 +182,7 @@ export function buildNavigation(counts?: ShellCounts): Navigation {
         ],
       },
     ],
-    footer: [
-      { id: 'reglages', label: 'Réglages', href: '/reglages', icon: Settings },
-      { id: 'equipe', label: 'Équipe', href: '/equipe', icon: UsersRound },
-    ],
+    footer: [settingsEntry(options.support, options.timezone === true), { id: 'equipe', label: 'Équipe', href: '/equipe', icon: UsersRound }, ...supportEntries(options.support)],
   };
 }
 

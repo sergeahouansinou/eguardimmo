@@ -159,11 +159,11 @@ function composeLease(api: ApiLease, amounts: LeaseAmounts): Lease {
 
 export function toLease(api: ApiLease, today: string = todayIso()): Lease {
   assertEuro(api.currency);
-  if (api.end_date === null || api.duration_months === null) {
+  if (api.duration_months === null) {
     throw unsupported(`Le bail ${api.reference} n’a pas de terme : les baux sans fin ne sont pas pris en charge par ces écrans.`);
   }
   return composeLease(api, {
-    end: api.end_date,
+    end: api.end_date ?? addDays(addMonths(api.starts_on, api.duration_months), -1),
     rent: groupAmount(api.terms, 'rent'),
     charges: groupAmount(api.terms, 'charges'),
     deposit: groupAmount(api.terms, 'deposit'),

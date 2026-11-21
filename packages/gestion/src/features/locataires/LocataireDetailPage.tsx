@@ -7,10 +7,13 @@ import type { LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { TenantAvatar, TenantStateBadge, tenantKindLabel } from './TenantParts';
 import { FeatureUnavailable, useFeatureUnavailable } from './FeatureGate';
+import { LeaseBalances } from '../finances/rent/LeaseBalances';
 import { useTenant, useTenantDetail, useUnits } from './hooks';
-import { DescriptionList, ItemRow, LinkButton, ListLoading, LoadError, NotFoundPanel, PageHeader, SectionCard } from './kit';
+import { DescriptionList, ItemRow, LinkButton, ListLoading, LoadError, NotFoundPanel, PageHeader, SectionCard, useGestionNavigation } from './kit';
 import { daysBetween, formatDateFr, todayIso } from './kit/dates';
 import { links } from './kit/links';
+import { useGestionDataMode } from './kit/sourceContext';
+import { TenantContactUpdates } from '../tenantRequests/sections';
 import { money } from './kit/money';
 import { formatMoney } from '../../format/money';
 import { locatairesPaths } from './paths';
@@ -71,7 +74,10 @@ export function LocataireDetailPage({ id }: { id: string }) {
 }
 
 function TenantSheet({ tenant, detail, unitLabel, tab, onTab }: { tenant: Tenant; detail: TenantDetail; unitLabel: string | null; tab: string; onTab: (tab: string) => void }) {
+  const navigation = useGestionNavigation();
   const balanceOff = useFeatureUnavailable('balance');
+  const apiMode = useGestionDataMode() === 'api';
+  const rentBalances = balanceOff && apiMode;
   const documentsOff = useFeatureUnavailable('documents');
   const messagesOff = useFeatureUnavailable('messages');
   const extrasOff = useFeatureUnavailable('identityExtras');
@@ -112,7 +118,11 @@ function TenantSheet({ tenant, detail, unitLabel, tab, onTab }: { tenant: Tenant
     </Table>
   );
 
-  const paymentsSection = balanceOff ? (
+  const paymentsSection = rentBalances ? (
+    <SectionCard id="loc-paiements" title="Soldes des baux">
+      {detail.leases.length === 0 ? <p className="py-3 text-body text-fg-subtle">Aucun bail pour ce locataire.</p> : <LeaseBalances leases={detail.leases.map((row) => ({ id: row.id, label: row.title }))} />}
+    </SectionCard>
+  ) : balanceOff ? (
     <SectionCard id="loc-paiements" title="Derniers paiements">
       <FeatureUnavailable feature="balance" />
     </SectionCard>
@@ -231,7 +241,11 @@ function TenantSheet({ tenant, detail, unitLabel, tab, onTab }: { tenant: Tenant
         subtitle={`${tenantKindLabel(tenant.kind)}${tenant.since === '' ? '' : ` · Locataire depuis le ${formatDateFr(tenant.since)}`}${unitLabel ? ` · ${unitLabel}` : ''}`}
         actions={
           <>
-            <LinkButton href={links.newMessage(tenant.id)} icon={Send}>Écrire</LinkButton>
+            {navigation.writeToTenant ? (
+              navigation.writeToTenant({ partyId: tenant.id, partyName: name, leases: detail.leases.map((row) => ({ id: row.id, label: row.title })) })
+            ) : (
+              <LinkButton href={links.newMessage(tenant.id)} icon={Send}>Écrire</LinkButton>
+            )}
             <LinkButton href={locatairesPaths.edit(tenant.id)} icon={Pencil}>Modifier</LinkButton>
             {tenant.state === 'retard' ? (
               <LinkButton href={links.newCourrier({ modele: 'relance-de-loyer-impaye', locataire: tenant.id })} variant="primary" icon={Mail}>
@@ -274,6 +288,7 @@ function TenantSheet({ tenant, detail, unitLabel, tab, onTab }: { tenant: Tenant
               <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                 {paymentsSection}
                 {contactSection}
+                <TenantContactUpdates partyId={tenant.id} />
               </div>
               <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
                 {activitiesSection}

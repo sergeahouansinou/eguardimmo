@@ -1,6 +1,7 @@
 import { ShieldCheck, ShieldHalf, UserCog, Wallet, Crown } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Icon } from '@eguardimmo/ui';
+import type { LinkComponent } from '@eguardimmo/ui';
 import { SettingsCard } from '../shared/SettingRow';
 import { Toggle } from '../shared/Toggle';
 import { ROLES, ROLE_LABELS, ROLE_SUMMARIES } from './schemas';
@@ -13,9 +14,13 @@ const ROLE_ICONS: Record<Role, LucideIcon> = {
   comptable: Wallet,
 };
 
-export function RolesCard() {
+export function RolesCard({ Link }: { Link: LinkComponent }) {
   return (
-    <SettingsCard id="eq-r" title="Rôles" aside={<span className="text-caption text-fg-subtle">{String(ROLES.length)}</span>}>
+    <SettingsCard id="eq-r" title="Rôles" aside={
+        <Link href="/equipe/roles" className="inline-flex min-h-6 items-center text-caption font-medium text-action-on-subtle underline">
+          Voir les droits
+        </Link>
+      }>
       <ul className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
         {ROLES.map((role) => (
           <li key={role} className="flex min-h-11 items-center gap-2 border-t border-line first:border-t-0 sm:nth-[2]:border-t-0">

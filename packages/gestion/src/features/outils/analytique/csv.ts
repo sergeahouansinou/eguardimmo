@@ -1,3 +1,4 @@
+import { csvDocument } from '@eguardimmo/shell';
 import { formatMoney } from '../../../format/money';
 
 export type Cell = string | number | { minor: number } | null;
@@ -7,25 +8,21 @@ export interface Dataset {
   rows: readonly (readonly Cell[])[];
 }
 
-const SEPARATOR = ';';
 const BOM = '﻿';
-const FORMULA_START = /^[=+\-@\t\r]/;
 
 function decimal(value: number, digits: number): string {
   return value.toFixed(digits).replace('.', ',');
 }
 
-function csvCell(cell: Cell): string {
+function plainCell(cell: Cell): string {
   if (cell === null) return '';
   if (typeof cell === 'number') return decimal(cell, Number.isInteger(cell) ? 0 : 2);
   if (typeof cell === 'object') return decimal(cell.minor / 100, 2);
-  const safe = FORMULA_START.test(cell) ? `'${cell}` : cell;
-  return /[";\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+  return cell;
 }
 
 export function buildCsv(dataset: Dataset): string {
-  const lines = [dataset.columns.map((column) => csvCell(column)), ...dataset.rows.map((row) => row.map(csvCell))];
-  return `${BOM}${lines.map((line) => line.join(SEPARATOR)).join('\r\n')}\r\n`;
+  return `${BOM}${csvDocument([dataset.columns, ...dataset.rows.map((row) => row.map(plainCell))])}\r\n`;
 }
 
 export function downloadCsv(filename: string, dataset: Dataset): void {

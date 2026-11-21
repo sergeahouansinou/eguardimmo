@@ -1,0 +1,24 @@
+{
+    "status": 201,
+    "body": {
+        "data": {
+            "id": "01a1ef81-50c1-7390-bbed-a299f92e6a43",
+            "supplier_invoice_id": "01a1ef81-50b4-707a-b35e-e22f1bbb6a42",
+            "target": "owner",
+            "party_id": "01a1ef81-4fa9-716f-939a-e4080ffe20bc",
+            "lease_id": null,
+            "share_amount": {
+                "amount": 72000,
+                "currency": "EUR"
+            },
+            "wear_basis_points": 0,
+            "charged_amount": {
+                "amount": 72000,
+                "currency": "EUR"
+            },
+            "basis_note": null,
+            "cancelled_at": null,
+            "replayed": false
+        }
+    }
+}

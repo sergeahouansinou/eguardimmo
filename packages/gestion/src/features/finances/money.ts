@@ -1,18 +1,12 @@
-export function parseMoneyInput(text: string): number | null {
-  const cleaned = text.replace(/[\s  ]/g, '').replace(',', '.');
-  const match = /^(\d{1,9})(?:\.(\d{1,2}))?$/.exec(cleaned);
-  if (!match) return null;
-  const whole = Number(match[1]);
-  const cents = Number((match[2] ?? '').padEnd(2, '0'));
-  return whole * 100 + cents;
+import { formatAmountInput, minorDigits, parseAmount } from '../../format/money';
+import type { Currency } from '../../format/money';
+
+export function parseMoneyInput(text: string, currency: Currency = 'EUR'): number | null {
+  return parseAmount(text, currency);
 }
 
-export function formatMoneyInput(minor: number): string {
-  const sign = minor < 0 ? '-' : '';
-  const abs = Math.abs(minor);
-  const whole = Math.trunc(abs / 100);
-  const cents = abs % 100;
-  return cents === 0 ? `${sign}${String(whole)}` : `${sign}${String(whole)},${String(cents).padStart(2, '0')}`;
+export function formatMoneyInput(minor: number, currency: Currency = 'EUR'): string {
+  return formatAmountInput(minor, currency);
 }
 
 export function divRound(numerator: number, denominator: number): number {
@@ -34,9 +28,11 @@ export function sum(values: readonly number[]): number {
   return values.reduce((acc, value) => acc + value, 0);
 }
 
-export function formatDecimal(minor: number): string {
+export function formatDecimal(minor: number, currency: Currency = 'EUR'): string {
+  const digits = minorDigits(currency);
+  const factor = 10 ** digits;
   const sign = minor < 0 ? '-' : '';
   const abs = Math.abs(minor);
-  const whole = new Intl.NumberFormat('fr-FR').format(Math.trunc(abs / 100)).replace(/[  ]/g, ' ');
-  return `${sign}${whole},${String(abs % 100).padStart(2, '0')}`;
+  const whole = new Intl.NumberFormat('fr-FR').format(Math.trunc(abs / factor)).replace(/[  ]/g, ' ');
+  return digits === 0 ? `${sign}${whole}` : `${sign}${whole},${String(abs % factor).padStart(digits, '0')}`;
 }

@@ -34,7 +34,7 @@ function PlanCard({ plan, billing, current, onChoose }: { plan: Plan; billing: B
           Formule actuelle
         </Button>
       ) : (
-        <Button variant={plan.id === 'pro' ? 'primary' : 'secondary'} className="mt-auto" onClick={() => { onChoose(plan); }}>
+        <Button variant={plan.id === 'gold' ? 'primary' : 'secondary'} className="mt-auto" onClick={() => { onChoose(plan); }}>
           {plan.switchLabel}
         </Button>
       )}
@@ -53,7 +53,7 @@ export function PlanCards({ subscription, onChoose }: { subscription: Subscripti
           label="Périodicité"
           value={billing}
           onValueChange={setBilling}
-          options={BILLINGS.map((value) => ({ value, label: value === 'mensuel' ? 'Mensuel' : 'Annuel, 2 mois offerts' }))}
+          options={BILLINGS.map((value) => ({ value, label: value === 'mensuel' ? 'Mensuel' : 'Annuel' }))}
         />
       }
     >
@@ -68,7 +68,7 @@ export function PlanCards({ subscription, onChoose }: { subscription: Subscripti
           />
         ))}
       </ul>
-      <span className="text-caption text-fg-subtle">Prix TTC. Un changement prend effet immédiatement, au prorata de la période en cours.</span>
+      <span className="text-caption text-fg-subtle">Prix HT, TVA ajoutée à la facturation. Un changement prend effet immédiatement, au prorata de la période en cours.</span>
     </SettingsCard>
   );
 }

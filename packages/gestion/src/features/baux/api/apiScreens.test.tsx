@@ -12,9 +12,11 @@ import { BailDetailPage } from '../BailDetailPage';
 import { BauxPage } from '../BauxPage';
 import { ReviseRentDialog } from '../ReviseRentDialog';
 import { useCreateEdl, useCreateReservation, useImportLeases, useLeases, useMarkReturned, useSetExitStep, useUpdateLease } from '../hooks';
-import { BailEcheancierPage, EtatsLieuxPage, ReservationsPage } from '../gatedPages';
+import { EtatsLieuxPage, ReservationsPage } from '../gatedPages';
 import { BauxSourceProvider, createDemoBauxSource } from '../source';
 import type { BauxSource } from '../source';
+import { RentSourceProvider, createApiRentSource } from '../../finances/rent';
+import { TenantRequestsAccessProvider, tenantRequestsPermissions } from '../../tenantRequests';
 import { createApiBauxSource } from './apiSource';
 import * as api from './responses.fixtures';
 import { mockApi, orgPath } from './testing';
@@ -38,6 +40,11 @@ function apiSource(routes: Record<string, MockRoute>) {
   return { ...mock, source: createApiBauxSource({ client: mock.client, organizationId: api.IDS.org }, { now: () => FROZEN_NOW }) };
 }
 
+const balanceRoute = `GET ${org(`/rent/leases/${api.IDS.lease}/balance`)}`;
+const unpaidBalance = { data: { lease_id: api.IDS.lease, balance: { amount: -30000, currency: 'EUR' }, overdue: { amount: 30000, currency: 'EUR' }, advance: { amount: 0, currency: 'EUR' }, unpaid_count: 1, oldest_unpaid_due_date: '2026-11-05' } };
+const rentMock = mockApi({ [balanceRoute]: { body: unpaidBalance } });
+const rentSource = createApiRentSource({ client: rentMock.client, organizationId: api.IDS.org, role: 'manager' }, { fetchImpl: rentMock.fetchImpl });
+
 function Providers({ source, client, children }: { source: BauxSource; client: QueryClient; children: ReactNode }) {
   return (
     <QueryClientProvider client={client}>
@@ -47,7 +54,7 @@ function Providers({ source, client, children }: { source: BauxSource; client: Q
             <GestionNavigationProvider value={{ Link, push: vi.fn(), search: new URLSearchParams() }}>
               <LocatairesSourceProvider source={createDemoLocatairesSource()}>
                 <CourriersSourceProvider source={createUnavailableCourriersSource()}>
-                  <BauxSourceProvider source={source}>{children}</BauxSourceProvider>
+                  <BauxSourceProvider source={source}><RentSourceProvider source={rentSource}><TenantRequestsAccessProvider source={tenantRequestsPermissions(null)}>{children}</TenantRequestsAccessProvider></RentSourceProvider></BauxSourceProvider>
                 </CourriersSourceProvider>
               </LocatairesSourceProvider>
             </GestionNavigationProvider>
@@ -223,6 +230,18 @@ describe('fiche d’un bail en mode API', () => {
     expect(text).not.toContain('non reçu');
   });
 
+  it('lit le solde du bail sur l’API de loyers au lieu d’un solde local', async () => {
+    const { source } = apiSource(listRoutes());
+    renderApi(<BailDetailPage id={api.IDS.lease} />, source);
+
+    const balance = await screen.findByRole('region', { name: 'Solde du bail' });
+    expect(await within(balance).findByText('Échéances impayées')).toBeTruthy();
+    expect(norm(balance.textContent)).toContain('Solde au grand livre-300 €');
+    expect(norm(balance.textContent)).toContain('En retard300 €');
+    expect(rentMock.calls.some((call) => call.path === org(`/rent/leases/${api.IDS.lease}/balance`))).toBe(true);
+    expect(norm(document.body.textContent)).not.toContain('Solde du compte');
+  });
+
   it('calcule la prochaine révision depuis le loyer indexé du bail', async () => {
     const { source } = apiSource(listRoutes());
     renderApi(<BailDetailPage id={api.IDS.lease} />, source);
@@ -248,7 +267,6 @@ describe('fiche d’un bail en mode API', () => {
 
 describe('écrans sans route serveur', () => {
   it.each([
-    ['échéancier', <BailEcheancierPage key="a" id={api.IDS.lease} />],
     ['états des lieux', <EtatsLieuxPage key="b" />],
     ['réservations', <ReservationsPage key="c" />],
   ])('%s : état « bientôt disponible », sans appel serveur ni donnée d’exemple', (_name, page) => {

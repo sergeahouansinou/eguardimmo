@@ -11,7 +11,7 @@ export const demoShell: ShellData = {
     initials: 'MC',
     email: 'marc.chevalier@example.com',
   },
-  workspace: { name: 'Gestion Les Tilleuls', ownerName: 'Awa Diallo', role: 'admin', plan: 'Essentiel', members: 2 },
+  workspace: { name: 'Gestion Les Tilleuls', ownerName: 'Awa Diallo', role: 'admin', plan: 'Silver', members: 2 },
   counts: { lots: 14, tenants: 10, unreadMessages: 2, openInterventions: 3 },
   notifications: [
     { id: 'n1', tone: 'danger', title: 'Loyer de novembre impayé', detail: 'Koffi Adjovi · 850 € · il y a 2 j', unread: true, href: '/finances/impayes' },

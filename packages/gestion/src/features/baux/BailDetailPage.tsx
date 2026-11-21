@@ -2,7 +2,7 @@
 
 import { BellRing, CalendarClock, CircleAlert, FilePlus, FileText, LogOut, Pencil } from 'lucide-react';
 import { Alert, Badge, Card, StatCard, Tab, TabList, TabPanel, Tabs } from '@eguardimmo/ui';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { LatestInstallments, LeaseParties, LeasePreview } from './BailResume';
 import { LeaseStatusBadge, leasePeriod, useLeaseLookups } from './BauxParts';
 import { FeatureUnavailable, useFeatureUnavailable } from './FeatureGate';
@@ -12,9 +12,12 @@ import { bauxPaths } from './paths';
 import { edlTypeLabel, paymentMethodLabel } from './schemas';
 import type { Lease } from './schemas';
 import { courriersPaths, noticeIdOf } from '../courriers/paths';
+import { LeaseBalanceCard } from '../finances/rent/LeaseBalanceCard';
+import { LeaseTenantRequests } from '../tenantRequests/sections';
 import { DescriptionList, ItemRow, LinkButton, ListLoading, LoadError, NoRows, PageHeader, SectionCard, useGestionNavigation } from '../locataires/kit';
 import { daysBetween, formatDateFr, todayIso } from '../locataires/kit/dates';
 import { links } from '../locataires/kit/links';
+import { useGestionDataMode } from '../locataires/kit/sourceContext';
 import { money } from '../locataires/kit/money';
 import { locatairesPaths } from '../locataires/paths';
 
@@ -24,7 +27,7 @@ export function BailDetailPage({ id }: { id: string }) {
 
 function LeaseSheet({ lease }: { lease: Lease }) {
   const lookups = useLeaseLookups();
-  const { Link } = useGestionNavigation();
+  const { Link, writeToTenant } = useGestionNavigation();
   const extras = useLeaseExtras(lease.id);
   const edls = useEdls();
   const exits = useExits();
@@ -32,6 +35,8 @@ function LeaseSheet({ lease }: { lease: Lease }) {
   const [tab, setTab] = useState('resume');
   const extrasOff = useFeatureUnavailable('extras');
   const balanceOff = useFeatureUnavailable('balance');
+  const apiMode = useGestionDataMode() === 'api';
+  const rentBalance = balanceOff && apiMode;
   const edlOff = useFeatureUnavailable('edl');
 
   const exit = exits.data?.find((entry) => entry.leaseId === lease.id);
@@ -55,6 +60,13 @@ function LeaseSheet({ lease }: { lease: Lease }) {
         subtitle={`${lookups.unitLabel(lease.unitId)}, ${lookups.tenantsOf(lease)}`}
         actions={
           <>
+            {writeToTenant
+              ? lease.tenantIds.map((tenantId) => (
+                  <Fragment key={tenantId}>
+                    {writeToTenant({ partyId: tenantId, partyName: lookups.tenantName(tenantId), leases: [{ id: lease.id, label: lease.reference }], defaultLeaseId: lease.id })}
+                  </Fragment>
+                ))
+              : null}
             {lease.status !== 'termine' ? <LinkButton href={bauxPaths.edit(lease.id)} icon={Pencil}>Modifier</LinkButton> : null}
             {lease.status !== 'brouillon' ? <LinkButton href={bauxPaths.schedule(lease.id)} icon={CalendarClock}>Échéancier</LinkButton> : null}
             {canExit ? <LinkButton href={nextNotice ? courriersPaths.notice(noticeIdOf(lease.id, nextNotice.month)) : courriersPaths.notices} icon={FilePlus}>Émettre l’avis d’échéance</LinkButton> : null}
@@ -95,6 +107,9 @@ function LeaseSheet({ lease }: { lease: Lease }) {
           </span>
         </StatCard>
       </div>
+
+      {rentBalance ? <LeaseBalanceCard leaseId={lease.id} /> : null}
+      <LeaseTenantRequests leaseId={lease.id} />
 
       <Card role="region" aria-label="Détail du bail" className="gap-3">
         <Tabs value={tab} onValueChange={setTab} defaultValue="resume">

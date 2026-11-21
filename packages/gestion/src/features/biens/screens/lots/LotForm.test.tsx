@@ -1,7 +1,9 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ApiError } from '@eguardimmo/api';
 import { describe, expect, it } from 'vitest';
 import { expectNoA11yViolations } from '../../../../../test/axe';
+import { translateApiError } from '../../api/apiErrors';
 import { createDemoBiensSource } from '../../demo/store';
 import { lotDetailSchema } from '../../schemas/lots';
 import { failingSource, renderBiens } from '../../testing/harness';
@@ -56,6 +58,19 @@ describe('LotForm', () => {
     await userEvent.type(screen.getByRole('textbox', { name: 'Loyer mensuel, € *' }), '700');
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer le lot' }));
     expect(await screen.findByText('Un bien nommé « Apt A1 » existe déjà dans cet immeuble.')).toBeTruthy();
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it('affiche la limite de lots du plan avec le lien vers l’abonnement', async () => {
+    const source = createDemoBiensSource({ latencyMs: 0 });
+    const translated = translateApiError(new ApiError(409, 'plan_quota_reached', 'Texte serveur.', {}, null, { feature: 'properties', limit: 20, current: 20 }));
+    if (!(translated instanceof Error)) throw new Error('Erreur traduite attendue');
+    source.createLot = () => Promise.reject(translated);
+    const { push } = renderBiens(<LotForm />, { source, pathname: '/biens/nouveau' });
+    await fillNewLot();
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer le lot' }));
+    expect(await screen.findByText(/Limite de votre plan atteinte : 20 lots sur 20\./)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Voir mon abonnement' }).getAttribute('href')).toBe('/compte/abonnement');
     expect(push).not.toHaveBeenCalled();
   });
 

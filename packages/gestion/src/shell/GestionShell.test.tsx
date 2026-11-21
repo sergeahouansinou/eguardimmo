@@ -63,6 +63,18 @@ describe('GestionShell', () => {
     expect(within(side).queryByRole('link', { name: /Messages\s*\d/ })).toBeNull();
   });
 
+  it('n’affiche l’entrée Loyers que lorsque les loyers ont une source', () => {
+    const { unmount } = renderShell('/');
+    expect(within(screen.getByRole('navigation', { name: 'Navigation principale' })).queryByRole('link', { name: 'Loyers' })).toBeNull();
+    unmount();
+
+    renderShell('/finances/loyers/paiements', { rent: true });
+    const link = within(screen.getByRole('navigation', { name: 'Navigation principale' })).getByRole('link', { name: 'Loyers' });
+    expect(link.getAttribute('href')).toBe('/finances/loyers');
+    expect(link.querySelector('svg')?.classList.contains('lucide-receipt-text')).toBe(true);
+    expect(link.getAttribute('aria-current')).toBe('page');
+  });
+
   it('replie la barre latérale et mémorise le choix', async () => {
     renderShell();
     await userEvent.click(screen.getByRole('button', { name: 'Replier la barre latérale' }));

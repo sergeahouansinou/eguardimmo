@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { Button, Dialog, DialogClose, DialogContent, RadioGroup } from '@eguardimmo/ui';
-import { Checkbox, ConfirmDialog, Segmented } from '../../outils/kit';
+import { ConfirmDialog } from '../../outils/kit';
 import { fullName } from './rules';
-import { BUILDINGS, INVITABLE_ROLES, ROLE_LABELS, ROLE_SUMMARIES } from './schemas';
-import type { InvitableRole, Member, Scope } from './schemas';
+import { INVITABLE_ROLES, ROLE_LABELS, ROLE_SUMMARIES } from './schemas';
+import type { InvitableRole, Member } from './schemas';
 
 export type DialogState =
   | { kind: 'remove' | 'cancel' | 'deactivate' | 'role' | 'scope'; member: Member }
@@ -43,63 +43,6 @@ export function RoleDialog({ member, pending, onClose, onSave }: Common & { onSa
   );
 }
 
-export function ScopeDialog({ member, pending, onClose, onSave }: Common & { onSave: (scope: Scope) => void }) {
-  const [type, setType] = useState<Scope['type']>(member.scope.type);
-  const [selected, setSelected] = useState<readonly string[]>(member.scope.type === 'selected' ? member.scope.buildings : []);
-  const [problem, setProblem] = useState<string | null>(null);
-  const save = () => {
-    if (type === 'all') {
-      onSave({ type: 'all' });
-      return;
-    }
-    const buildings = BUILDINGS.filter((name) => selected.includes(name));
-    if (buildings.length === 0) {
-      setProblem('Choisissez au moins un bien.');
-      return;
-    }
-    setProblem(null);
-    onSave({ type: 'selected', buildings });
-  };
-  return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent title={`Biens accessibles à ${fullName(member)}`} description="Les biens ajoutés plus tard seront accessibles si « Tous les biens » est choisi." className="max-w-md">
-        <div className="flex flex-col gap-3 p-4">
-          <Segmented
-            label="Biens accessibles"
-            value={type}
-            onValueChange={setType}
-            options={[
-              { value: 'all', label: 'Tous les biens' },
-              { value: 'selected', label: 'Biens choisis' },
-            ]}
-          />
-          {type === 'selected' ? (
-            <div className="flex flex-col gap-2">
-              {BUILDINGS.map((name) => (
-                <Checkbox
-                  key={name}
-                  label={name}
-                  checked={selected.includes(name)}
-                  onCheckedChange={(checked) => { setSelected((previous) => (checked ? [...previous, name] : previous.filter((item) => item !== name))); }}
-                />
-              ))}
-              {problem ? <p className="text-caption text-fg-danger">{problem}</p> : null}
-            </div>
-          ) : null}
-          <div className="flex flex-wrap justify-end gap-2">
-            <DialogClose asChild>
-              <Button variant="secondary">Annuler</Button>
-            </DialogClose>
-            <Button loading={pending} onClick={save} data-autofocus>
-              Enregistrer
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export interface DialogsProps {
   dialog: DialogState;
   pending: boolean;
@@ -108,7 +51,7 @@ export interface DialogsProps {
   onCancel: (member: Member) => void;
   onDeactivate: (member: Member) => void;
   onRole: (member: Member, role: InvitableRole) => void;
-  onScope: (member: Member, scope: Scope) => void;
+  onScope: (member: Member) => void;
 }
 
 export function MemberDialogs({ dialog, pending, onClose, onRemove, onCancel, onDeactivate, onRole, onScope }: DialogsProps) {
@@ -116,7 +59,6 @@ export function MemberDialogs({ dialog, pending, onClose, onRemove, onCancel, on
   const { member } = dialog;
   const name = fullName(member);
   if (dialog.kind === 'role') return <RoleDialog member={member} pending={pending} onClose={onClose} onSave={(role) => { onRole(member, role); }} />;
-  if (dialog.kind === 'scope') return <ScopeDialog member={member} pending={pending} onClose={onClose} onSave={(scope) => { onScope(member, scope); }} />;
   const confirm = {
     remove: {
       title: `Retirer ${name} du compte ?`,
@@ -129,6 +71,12 @@ export function MemberDialogs({ dialog, pending, onClose, onRemove, onCancel, on
       description: 'Le lien envoyé ne fonctionnera plus. Vous pourrez inviter à nouveau cette personne.',
       confirmLabel: "Annuler l'invitation",
       run: onCancel,
+    },
+    scope: {
+      title: `Rétablir l'accès à tous les biens pour ${name} ?`,
+      description: "Le périmètre limité à certains biens n'est pas appliqué par le serveur : ce membre voit déjà tous les biens. Cette action met sa fiche en accord avec cet état.",
+      confirmLabel: 'Rétablir « Tous les biens »',
+      run: onScope,
     },
     deactivate: {
       title: `Désactiver ${name} ?`,
@@ -145,6 +93,7 @@ export function MemberDialogs({ dialog, pending, onClose, onRemove, onCancel, on
       description={confirm.description}
       confirmLabel={confirm.confirmLabel}
       cancelLabel="Garder"
+      tone={dialog.kind === 'scope' ? 'primary' : 'danger'}
       pending={pending}
       onConfirm={() => { confirm.run(member); }}
     />

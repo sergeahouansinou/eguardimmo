@@ -1,16 +1,17 @@
 import { z } from 'zod';
 import type { ZodError } from 'zod';
+import type { Currency } from '../../format/money';
 import { parseMoneyInput } from './money';
 
-export const moneyText = (label: string, options: { allowZero?: boolean } = {}) =>
+export const moneyText = (label: string, options: { allowZero?: boolean; currency?: Currency } = {}) =>
   z
     .string()
     .trim()
     .min(1, `${label} : saisissez un montant.`)
     .transform((text, ctx) => {
-      const value = parseMoneyInput(text);
+      const value = parseMoneyInput(text, options.currency);
       if (value === null || (!options.allowZero && value === 0)) {
-        ctx.addIssue({ code: 'custom', message: `${label} : montant invalide (ex. 850 ou 850,50).` });
+        ctx.addIssue({ code: 'custom', message: `${label} : montant invalide (ex. ${options.currency === 'XOF' ? '250 000' : '850 ou 850,50'}).` });
         return z.NEVER;
       }
       return value;

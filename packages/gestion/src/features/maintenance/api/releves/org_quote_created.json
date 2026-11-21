@@ -1,0 +1,42 @@
+{
+    "status": 201,
+    "body": {
+        "data": {
+            "id": "01a1ef81-503c-73bd-bbd5-e38ebc741e7b",
+            "intervention_id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+            "supplier_party_id": "01a1ef81-4fb6-73dc-ade1-26fdb67f4d34",
+            "reference": "DEV-830a3d",
+            "kind": "initial",
+            "status": "received",
+            "issued_on": "2026-11-17",
+            "valid_until": "2026-12-31",
+            "proposed_on": null,
+            "message": null,
+            "total_net": {
+                "amount": 60000,
+                "currency": "EUR"
+            },
+            "total_tax": {
+                "amount": 12000,
+                "currency": "EUR"
+            },
+            "total_gross": {
+                "amount": 72000,
+                "currency": "EUR"
+            },
+            "lines": [
+                {
+                    "position": 1,
+                    "label": "Réparation du siphon",
+                    "quantity_milli": 1000,
+                    "unit": "forfait",
+                    "unit_price": 60000,
+                    "net_amount": 60000,
+                    "tax_category": "S",
+                    "tax_rate_pcm": 20000
+                }
+            ],
+            "lock_version": 1
+        }
+    }
+}

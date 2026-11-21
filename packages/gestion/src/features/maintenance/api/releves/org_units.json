@@ -1,0 +1,40 @@
+{
+    "status": 200,
+    "body": {
+        "data": [
+            {
+                "id": "01a1ef81-4fa8-7008-9649-57ef36d615d7",
+                "property": {
+                    "id": "01a1ef81-4fa7-73e7-83f2-ee41e69f4bee",
+                    "name": "Résidence Roy"
+                },
+                "parent_unit_id": null,
+                "unit_type": {
+                    "id": "01a1ef81-4f78-70f7-83fe-3e04de951419",
+                    "key": "apartment",
+                    "label": "Appartement",
+                    "semantic_key": "residential"
+                },
+                "reference": "LOT-28755",
+                "floor": 1,
+                "surface_hundredths": 5200,
+                "characteristics": [],
+                "custom_fields": [],
+                "lock_version": 1,
+                "archived_at": null
+            }
+        ],
+        "links": {
+            "first": null,
+            "last": null,
+            "prev": null,
+            "next": null
+        },
+        "meta": {
+            "path": "https://api.eguardimmo.test/api/v1/org/01a1ef81-4fa4-73ad-ab23-9b20322e4204/units",
+            "per_page": 25,
+            "next_cursor": null,
+            "prev_cursor": null
+        }
+    }
+}

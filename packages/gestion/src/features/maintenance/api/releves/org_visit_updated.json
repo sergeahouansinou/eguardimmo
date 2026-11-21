@@ -1,0 +1,19 @@
+{
+    "status": 200,
+    "body": {
+        "data": {
+            "id": "01a1ef81-505d-7074-b8dd-4878e552a0c0",
+            "intervention_id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+            "supplier_party_id": "01a1ef81-4fb6-73dc-ade1-26fdb67f4d34",
+            "scheduled_on": "2026-11-19",
+            "slot": "afternoon",
+            "presence_required": true,
+            "status": "proposed",
+            "requested_on": null,
+            "requested_slot": null,
+            "contact_name": "Plomberie Dupont",
+            "contact_phone": "0491000000",
+            "lock_version": 3
+        }
+    }
+}
