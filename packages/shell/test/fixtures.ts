@@ -5,7 +5,7 @@ import type { ShellSource } from '../src/data/source';
 
 export const testShell: ShellData = {
   user: { firstName: 'Awa', fullName: 'Awa Diallo', initials: 'AD', email: 'awa.diallo@example.com' },
-  workspace: { name: 'Espace test', ownerName: 'Awa Diallo', role: 'admin', plan: 'Essentiel', members: 2 },
+  workspace: { name: 'Espace test', ownerName: 'Awa Diallo', role: 'admin', plan: 'Silver', members: 2 },
   counts: { lots: 4 },
   notifications: [
     { id: 'n1', tone: 'danger', title: 'Loyer impayé', detail: 'Il y a 2 j', unread: true, href: '/impayes' },

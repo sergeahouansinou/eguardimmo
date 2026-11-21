@@ -18,6 +18,8 @@ import { Fragment } from 'react';
 import type { ShellData } from '../data/schemas';
 import type { AccountMenuConfig, AddMenuGroup, HelpMenuItem, NotificationsConfig } from '../config/types';
 import { AccountMenu } from './AccountMenu';
+import { useNotificationsApi } from '../notifications/api/context';
+import { ApiNotificationsPanel } from '../notifications/api/ApiNotificationsPanel';
 import { NotificationsPanel } from './NotificationsPanel';
 
 export interface TopBarProps {
@@ -51,6 +53,7 @@ export function TopBar({
   onNavigate,
   Link,
 }: TopBarProps) {
+  const notificationsApi = useNotificationsApi();
   return (
     <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-1.5 border-b border-line bg-surface px-3 md:gap-3 md:px-4">
       <span className="hidden md:contents">
@@ -131,7 +134,11 @@ export function TopBar({
         ) : null}
         {shell ? (
           <>
-            <NotificationsPanel notifications={shell.notifications} config={notifications} Link={Link} onNavigate={onNavigate} />
+            {notificationsApi ? (
+              <ApiNotificationsPanel api={notificationsApi} config={notifications} Link={Link} onNavigate={onNavigate} />
+            ) : (
+              <NotificationsPanel notifications={shell.notifications} config={notifications} Link={Link} onNavigate={onNavigate} />
+            )}
             <AccountMenu shell={shell} config={accountMenu} onNavigate={onNavigate} />
           </>
         ) : (

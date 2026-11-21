@@ -112,7 +112,7 @@ export function SpaceShell({
             linkComponent={Link}
           />
         </div>
-        <main id="contenu" tabIndex={-1} className="flex min-w-0 flex-1 flex-col gap-3 px-4 pt-4 pb-6 outline-none md:px-6">
+        <main id="contenu" tabIndex={-1} className="flex min-w-0 flex-1 flex-col gap-3 px-4 pt-4 pb-32 outline-none md:px-6 md:pb-24">
           {shell.isError ? (
             <Alert tone="danger" title="Le compte n’a pas pu être chargé">
               Les compteurs et notifications sont indisponibles. Rechargez la page.
