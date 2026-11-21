@@ -645,12 +645,18 @@ importers:
       '@eguardimmo/ui':
         specifier: workspace:*
         version: link:../ui
+      '@hookform/resolvers':
+        specifier: 'catalog:'
+        version: 7.0.6(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.0))(zod@4.6.7)
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.107.1(@types/react@19.3.0)(react@19.3.0)
       lucide-react:
         specifier: 'catalog:'
         version: 1.64.0(@types/react@19.3.0)(react@19.3.0)
+      react-hook-form:
+        specifier: 'catalog:'
+        version: 7.92.0(@types/react@19.3.0)(react@19.3.0)
       zod:
         specifier: 'catalog:'
         version: 4.6.7
