@@ -233,7 +233,6 @@ Après modification du dossier `deploy/`, le recopier sur le serveur et relancer
 - SeBook lit l'API depuis le serveur : toutes ses lectures publiques partagent la limite de 60 requêtes par minute d'une seule adresse IP. Un seul visiteur insistant peut donc priver SeBook de ses annonces : à corriger avant l'ouverture au public.
 - La limitation de la console tient à Nginx (liste d'adresses, routes de l'API réservées au serveur) ; l'API elle-même n'exige pas la clé de relais.
 - Sur `api` et `auth`, le journal d'erreurs de Nginx ne garde que les pannes graves : chercher les 502 dans le journal d'accès, `journalctl` et les journaux de l'API.
-- Un cache Next écrit sur disque échoue en lecture seule (`EACCES` dans `journalctl`) tant que `experimental.isrFlushToDisk: false` n'est pas dans les `next.config.ts`.
 - Aucune page `/a-propos` n'existe, et `/conditions` n'est servie que par SeBook : liens légaux masqués tant que `NEXT_PUBLIC_LEGAL_BASE_URL` est vide.
 - Paiement en ligne désactivé (`PAYMENTS_GATEWAY=none`), diffusions désactivées (`MAIL_PROVIDER` vide).
 - Relevés bancaires XML : fournir les schémas (`BANKING_XSD_DIRECTORY`).

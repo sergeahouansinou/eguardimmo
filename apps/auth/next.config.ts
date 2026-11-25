@@ -6,6 +6,8 @@ const appHeaders = securityHeadersForApp({ connectOrigins: [process.env.NEXT_PUB
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  // Le build est en lecture seule sur le serveur : le cache ISR reste en mémoire.
+  experimental: { isrFlushToDisk: false },
   cacheComponents: true,
   partialPrefetching: true,
   transpilePackages: ["@eguardimmo/ui", "@eguardimmo/tokens", "@eguardimmo/config", "@eguardimmo/shell"],
