@@ -8,6 +8,7 @@ use App\Modules\Identity\Actions\RecordDeviceLogin;
 use App\Modules\Identity\Actions\RecordSuccessfulLogin;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Security\AbsoluteSession;
+use App\Modules\Identity\Security\PendingTwoFactorSetup;
 use App\Shared\Audit\RecordAudit;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ final readonly class StartWebSession
         private RecordSuccessfulLogin $derniereConnexion,
         private RecordAudit $audit,
         private Request $request,
+        private PendingTwoFactorSetup $activation,
     ) {}
 
     public function handle(Login $evenement): void
@@ -30,6 +32,7 @@ final readonly class StartWebSession
 
         if ($this->request->hasSession()) {
             $this->session->start($this->request->session(), $evenement->user);
+            $this->activation->forget($this->request->session());
         }
 
         $this->derniereConnexion->handle($evenement->user);

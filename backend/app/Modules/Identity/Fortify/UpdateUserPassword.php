@@ -6,9 +6,9 @@ namespace App\Modules\Identity\Fortify;
 
 use App\Modules\Identity\Actions\UpdatePassword;
 use App\Modules\Identity\Models\User;
-use App\Modules\Identity\Support\AccountPasswordRule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
 use Laravel\Fortify\Contracts\UpdatesUserPasswords;
 
 final readonly class UpdateUserPassword implements UpdatesUserPasswords
@@ -26,7 +26,7 @@ final readonly class UpdateUserPassword implements UpdatesUserPasswords
     {
         $valide = Validator::make($input, [
             'current_password' => ['required', 'string', 'current_password:web'],
-            'password' => ['required', 'string', 'max:255', AccountPasswordRule::for($user), 'confirmed'],
+            'password' => ['required', 'string', 'max:255', Password::defaults(), 'confirmed'],
         ], [
             'current_password.current_password' => 'Le mot de passe actuel est incorrect.',
         ])->validateWithBag('updatePassword');

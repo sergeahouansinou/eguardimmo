@@ -113,6 +113,11 @@ describe("source API : double authentification", () => {
     });
   });
 
+  it("traduit 409 two_factor_setup_expired en configuration à reprendre", async () => {
+    expect(await setup([problem(409, "two_factor_setup_expired")]).source.enableTwoFactor("123456")).toEqual({ status: "setup_expired" });
+    await expect(setup([problem(409, "two_factor_already_enabled")]).source.enableTwoFactor("123456")).rejects.toMatchObject({ status: 409 });
+  });
+
   it("désactive la 2FA", async () => {
     const { source, call } = setup([emptyJson(200)]);
 

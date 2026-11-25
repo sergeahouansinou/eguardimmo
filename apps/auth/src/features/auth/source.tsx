@@ -72,6 +72,7 @@ export type ChangePasswordResult =
 export type TwoFactorSetupResult =
   | { status: "ok"; backupCodes: string[] }
   | { status: "invalid_code" }
+  | { status: "setup_expired" }
   | { status: "confirmation_required"; needsCode: boolean };
 
 export type LinkResult =

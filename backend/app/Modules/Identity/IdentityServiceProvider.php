@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Identity;
 
 use App\Modules\Identity\Actions\CheckAccountPassword;
+use App\Modules\Identity\Console\EnrollOperatorTwoFactorCommand;
 use App\Modules\Identity\Console\ExpireOwnerInvitationsCommand;
 use App\Modules\Identity\Console\GrantOperatorCommand;
 use App\Modules\Identity\Console\PurgeEmailChangesCommand;
@@ -115,7 +116,7 @@ final class IdentityServiceProvider extends ServiceProvider
         Event::listen(SocialiteWasCalled::class, [AppleExtendSocialite::class, 'handle']);
 
         if ($this->app->runningInConsole()) {
-            $this->commands([GrantOperatorCommand::class, RevokeOperatorCommand::class, SetOperatorRolesCommand::class, RevokeDeferredAppleTokensCommand::class, ExpireOwnerInvitationsCommand::class, PurgeEmailChangesCommand::class]);
+            $this->commands([GrantOperatorCommand::class, EnrollOperatorTwoFactorCommand::class, RevokeOperatorCommand::class, SetOperatorRolesCommand::class, RevokeDeferredAppleTokensCommand::class, ExpireOwnerInvitationsCommand::class, PurgeEmailChangesCommand::class]);
         }
     }
 

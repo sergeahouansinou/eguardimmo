@@ -2,11 +2,16 @@
 
 declare(strict_types=1);
 
+use App\Modules\Identity\Actions\GrantOperator;
+use App\Modules\Identity\Enums\OperatorRole;
+use App\Modules\Identity\Models\OperatorRoleAssignment;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Notifications\OperatorGrantedNotification;
 use App\Modules\Identity\Notifications\OperatorRolesChangedNotification;
 use App\Shared\Audit\AuditLog;
 use Illuminate\Support\Facades\Notification;
+
+const QUESTION_CODE_ATTRIBUTION = 'Code à 6 chiffres affiché par l\'application du titulaire';
 
 beforeEach(function (): void {
     Notification::fake();
@@ -22,9 +27,11 @@ it('attribue le rôle opérateur à un compte existant, audite et prévient les 
     $existant = User::factory()->create();
     $existant->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'admin', 'granted_at' => now()]);
     $user = User::factory()->create(['email' => 'nouveau@exemple.fr']);
+    $secret = imposerSecretTotp();
 
     $this->artisan('identity:grant-operator', ['email' => 'Nouveau@Exemple.fr', '--role' => ['support', 'compliance']])
         ->expectsConfirmation('Attribuer le rôle opérateur (support, compliance) à nouveau@exemple.fr ?', 'yes')
+        ->expectsQuestion(QUESTION_CODE_ATTRIBUTION, codeTotp($secret))
         ->assertSuccessful();
 
     expect($user->refresh()->isActiveOperator())->toBeTrue()
@@ -87,6 +94,7 @@ it('remplace les rôles d\'un opérateur, audite le changement et prévient les 
     ($this->autreAdmin)();
     $user = User::factory()->create(['email' => 'ops@exemple.fr']);
     $user->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'admin', 'granted_at' => now()]);
+    activerDeuxFacteurs($user);
 
     $this->artisan('identity:set-operator-roles', ['email' => 'ops@exemple.fr', '--role' => ['billing']])
         ->expectsConfirmation('Fixer les rôles de ops@exemple.fr à : billing ?', 'yes')
@@ -142,6 +150,7 @@ it('refuse de révoquer le dernier administrateur sans --force, puis l\'accepte 
 it('refuse de retirer le rôle administrateur du dernier administrateur sans --force, mais autorise un changement qui le conserve', function (): void {
     $user = User::factory()->create(['email' => 'ops@exemple.fr']);
     $user->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'admin', 'granted_at' => now()]);
+    activerDeuxFacteurs($user);
 
     $this->artisan('identity:set-operator-roles', ['email' => 'ops@exemple.fr', '--role' => ['billing']])
         ->expectsConfirmation('Fixer les rôles de ops@exemple.fr à : billing ?', 'yes')
@@ -172,4 +181,74 @@ it('retire sans --force un opérateur non administrateur, même quand il n\'y a 
         ->assertSuccessful();
 
     expect($admin->refresh()->isActiveOperator())->toBeTrue();
+});
+
+it('n\'attribue ni rôle ni second facteur quand le code saisi est faux', function (): void {
+    $user = User::factory()->create(['email' => 'nouveau@exemple.fr']);
+    $user->createToken('mobile', ['mobile']);
+    imposerSecretTotp();
+
+    $this->artisan('identity:grant-operator', ['email' => 'nouveau@exemple.fr', '--role' => ['admin']])
+        ->expectsConfirmation('Attribuer le rôle opérateur (admin) à nouveau@exemple.fr ?', 'yes')
+        ->expectsQuestion(QUESTION_CODE_ATTRIBUTION, '000000x')
+        ->assertFailed();
+
+    expect($user->refresh()->operator()->count())->toBe(0)
+        ->and($user->two_factor_secret)->toBeNull()
+        ->and($user->tokens()->count())->toBe(1)
+        ->and(AuditLog::query()->where('action', 'identity.operator.granted')->count())->toBe(0);
+    Notification::assertNothingSent();
+});
+
+it('réactive un opérateur révoqué avec un nouveau second facteur et ferme ses sessions', function (): void {
+    $user = User::factory()->create(['email' => 'ancien@exemple.fr']);
+    $user->operator()->create(['granted_at' => now(), 'revoked_at' => now()]);
+    activerDeuxFacteurs($user);
+    $ancien = $user->two_factor_secret;
+    $user->createToken('mobile', ['mobile']);
+    $secret = imposerSecretTotp();
+
+    $this->artisan('identity:grant-operator', ['email' => 'ancien@exemple.fr', '--role' => ['admin']])
+        ->expectsConfirmation('Attribuer le rôle opérateur (admin) à ancien@exemple.fr ?', 'yes')
+        ->expectsQuestion(QUESTION_CODE_ATTRIBUTION, codeTotp($secret))
+        ->assertSuccessful();
+
+    expect($user->refresh()->isActiveOperator())->toBeTrue()
+        ->and($user->two_factor_secret)->not->toBe($ancien)
+        ->and($user->recoveryCodes())->toHaveCount(8)
+        ->and($user->tokens()->count())->toBe(0);
+});
+
+it('défait l\'enrôlement quand l\'attribution échoue après lui', function (): void {
+    $user = User::factory()->create(['email' => 'nouveau@exemple.fr']);
+    $secret = imposerSecretTotp();
+    OperatorRoleAssignment::creating(fn () => throw new RuntimeException('panne'));
+
+    expect(fn () => app(GrantOperator::class)->handle($user, [OperatorRole::Admin], $secret, codeTotp($secret)))
+        ->toThrow(RuntimeException::class);
+
+    expect($user->refresh()->two_factor_secret)->toBeNull()
+        ->and($user->operator()->count())->toBe(0);
+    Notification::assertNothingSent();
+});
+
+it('n\'ajoute aucun rôle à un opérateur sans double authentification, mais permet d\'en retirer', function (): void {
+    ($this->autreAdmin)();
+    $user = User::factory()->create(['email' => 'ops@exemple.fr']);
+    $operateur = $user->operator()->create(['granted_at' => now()]);
+    $operateur->roles()->create(['role' => 'support', 'granted_at' => now()]);
+    $operateur->roles()->create(['role' => 'billing', 'granted_at' => now()]);
+
+    $this->artisan('identity:set-operator-roles', ['email' => 'ops@exemple.fr', '--role' => ['support', 'admin']])
+        ->expectsConfirmation('Fixer les rôles de ops@exemple.fr à : support, admin ?', 'yes')
+        ->expectsOutputToContain('identity:enroll-operator-two-factor')
+        ->assertFailed();
+
+    expect(array_map(fn ($r) => $r->value, $user->fresh()?->operatorRoles() ?? []))->toEqualCanonicalizing(['support', 'billing']);
+
+    $this->artisan('identity:set-operator-roles', ['email' => 'ops@exemple.fr', '--role' => ['support']])
+        ->expectsConfirmation('Fixer les rôles de ops@exemple.fr à : support ?', 'yes')
+        ->assertSuccessful();
+
+    expect(array_map(fn ($r) => $r->value, $user->fresh()?->operatorRoles() ?? []))->toBe(['support']);
 });

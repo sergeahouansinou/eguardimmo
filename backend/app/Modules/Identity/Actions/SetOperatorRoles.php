@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Identity\Actions;
 
+use App\Modules\Identity\Enums\ErrorCode;
 use App\Modules\Identity\Enums\OperatorRole;
 use App\Modules\Identity\Models\Operator;
 use App\Modules\Identity\Models\OperatorRoleAssignment;
@@ -33,6 +34,10 @@ final readonly class SetOperatorRoles
 
             if ($garderUnAdministrateur && in_array(OperatorRole::Admin->value, $avant, true) && ! in_array(OperatorRole::Admin->value, $apres, true)) {
                 LastAdministratorGuard::assertAnotherAdministrator($operateur->user_id);
+            }
+
+            if (array_diff($apres, $avant) !== [] && $operateur->user()->first()?->hasConfirmedTwoFactor() !== true) {
+                throw ErrorCode::TwoFactorNotEnabled->problem();
             }
 
             $operateur->roles()->whereNotIn('role', $apres)->delete();

@@ -229,6 +229,29 @@ it('réinitialise la double authentification par double validation, révoque tou
     expect($audit->metadata['verification_method'])->toBe('video_call');
 });
 
+it('ne réinitialise pas la double authentification d\'un compte devenu opérateur après la demande', function (): void {
+    activerDeuxFacteurs($this->cible);
+    $id = C::ecrire($this, $this->support['jeton'], 'POST', '/api/v1/console/approvals', [
+        'action' => 'identity.account.reset_two_factor', 'subject_id' => $this->cible->id, 'reason' => 'Téléphone perdu, identité vérifiée',
+        'payload' => ['verification_method' => 'video_call'],
+    ])->assertCreated()->json('data.id');
+    $this->cible->operator()->create(['granted_at' => now()])->roles()->create(['role' => 'support', 'granted_at' => now()]);
+
+    C::ecrire($this, $this->admin['jeton'], 'POST', "/api/v1/console/approvals/{$id}/approve")->assertConflict()->assertJsonPath('code', 'approval_stale');
+
+    expect($this->cible->fresh()?->hasConfirmedTwoFactor())->toBeTrue();
+    Notification::assertNothingSentTo($this->cible);
+});
+
+it('refuse de demander la réinitialisation 2FA d\'un compte opérateur', function (): void {
+    C::ecrire($this, $this->support['jeton'], 'POST', '/api/v1/console/approvals', [
+        'action' => 'identity.account.reset_two_factor', 'subject_id' => $this->admin2['user']->id, 'reason' => 'Téléphone perdu, identité vérifiée',
+        'payload' => ['verification_method' => 'video_call'],
+    ])->assertForbidden()->assertJsonPath('code', 'operator_account_protected');
+
+    expect($this->admin2['user']->fresh()?->hasConfirmedTwoFactor())->toBeTrue();
+});
+
 it('refuse la réinitialisation 2FA sans méthode de vérification valide ou sans 2FA active', function (): void {
     $corps = fn (array $charge): array => ['action' => 'identity.account.reset_two_factor', 'subject_id' => $this->cible->id, 'reason' => 'Téléphone perdu, identité vérifiée', 'payload' => $charge];
 

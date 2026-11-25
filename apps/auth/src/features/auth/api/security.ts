@@ -130,6 +130,7 @@ export function securityMethods(context: AuthContext): SecurityMethods {
         return handled<TwoFactorSetupResult>(error, (failure) => {
           if (failure.status === 423) return PASSWORD_CONFIRMATION_REQUIRED;
           if (failure.status === 422 && hasFieldError(failure, "code")) return { status: "invalid_code" };
+          if (failure.status === 409 && failure.code === "two_factor_setup_expired") return { status: "setup_expired" };
           return null;
         });
       }

@@ -275,3 +275,9 @@ Ma recommandation est toujours la première.
 ## Amendement du 2026-11-25 (ADR 0042)
 
 - La console gagne les familles « marketing » et « notifications » (rôle `admin`, preuve 2FA sur chaque écriture) ; les réglages de notification et les règles de rappel sont modifiables en ligne.
+
+## Amendement du 2026-11-25 (double authentification des opérateurs, ADR 0004)
+
+- Attribution : second facteur neuf enregistré sur le serveur avec le titulaire, dans la même transaction ; aucun rôle ajouté sans 2FA confirmée.
+- La 2FA et les codes de secours d'un opérateur ne se gèrent plus depuis le hub : `identity:enroll-operator-two-factor {email}` les active ou les remplace sur le serveur. Remplace sur ces deux points le renvoi aux pages de sécurité du hub (mot de passe inchangé).
+- La réinitialisation 2FA par double validation continue de refuser tout compte opérateur, à la demande comme à l'exécution.

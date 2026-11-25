@@ -31,7 +31,7 @@ export function Activation2FAScreen() {
   const ready = data !== undefined && confirmed && data.hasPassword && !data.twoFactor.enabled;
   const setup = useTwoFactorSetup(ready);
   const [code, setCode] = useState("");
-  const [problem, setProblem] = useState<"format" | "invalid" | "technical" | null>(null);
+  const [problem, setProblem] = useState<"format" | "invalid" | "expired" | "technical" | null>(null);
 
   useEffect(() => {
     if (!data) return;
@@ -53,6 +53,9 @@ export function Activation2FAScreen() {
         router.push(ROUTES.codesSecours);
       } else if (result.status === "invalid_code") {
         setProblem("invalid");
+        setCode("");
+      } else if (result.status === "setup_expired") {
+        setProblem("expired");
         setCode("");
       } else {
         requireConfirmation(result.needsCode);
@@ -122,6 +125,11 @@ export function Activation2FAScreen() {
                     </form>
                   </div>
                 </div>
+                {problem === "expired" ? (
+                  <FormAlert tone="warning" title="La clé de configuration a changé." focusOnMount>
+                    Scannez le nouveau code, puis saisissez le code à 6 chiffres affiché.
+                  </FormAlert>
+                ) : null}
                 {problem === "technical" ? (
                   <FormAlert tone="danger" title="Activation impossible pour le moment." focusOnMount>
                     Une erreur est survenue. Réessayez dans un instant.

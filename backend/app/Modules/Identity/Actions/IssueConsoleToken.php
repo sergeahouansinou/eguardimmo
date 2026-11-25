@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Modules\Identity\Actions;
 
 use App\Modules\Identity\Enums\LoginChannel;
+use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Security\AccountLockout;
 use App\Shared\Audit\RecordAudit;
+use Illuminate\Support\Facades\DB;
 use SensitiveParameter;
 
 final readonly class IssueConsoleToken
@@ -33,25 +35,29 @@ final readonly class IssueConsoleToken
             return null;
         }
 
-        if (! $user->isActiveOperator()) {
-            $this->lockout->recordFailure($user->email);
-            $this->audit->handle('auth.console.denied', $user->id);
+        return DB::transaction(function () use ($user, $code, $codeDeSecours): ?string {
+            $compte = User::query()->lockForUpdate()->find($user->id);
 
-            return null;
-        }
+            if ($compte === null || ! $compte->isActiveOperator()) {
+                $this->lockout->recordFailure($user->email);
+                $this->audit->handle('auth.console.denied', $user->id);
 
-        if (! $this->verification->handle($user, $code, $codeDeSecours)) {
-            $this->audit->handle('auth.console.denied', $user->id);
+                return null;
+            }
 
-            return null;
-        }
+            if (! $this->verification->handle($compte, $code, $codeDeSecours)) {
+                $this->audit->handle('auth.console.denied', $compte->id);
 
-        $minutes = config('identity.console_token_ttl_minutes');
-        $jeton = $user->createToken('console', [self::CAPACITE], now()->addMinutes(is_int($minutes) ? $minutes : 240));
+                return null;
+            }
 
-        $this->derniereConnexion->handle($user);
-        $this->audit->handle('auth.token.issued', $user->id, ['channel' => 'console', 'token_id' => $jeton->accessToken->id]);
+            $minutes = config('identity.console_token_ttl_minutes');
+            $jeton = $compte->createToken('console', [self::CAPACITE], now()->addMinutes(is_int($minutes) ? $minutes : 240));
 
-        return $jeton->plainTextToken;
+            $this->derniereConnexion->handle($compte);
+            $this->audit->handle('auth.token.issued', $compte->id, ['channel' => 'console', 'token_id' => $jeton->accessToken->id]);
+
+            return $jeton->plainTextToken;
+        });
     }
 }

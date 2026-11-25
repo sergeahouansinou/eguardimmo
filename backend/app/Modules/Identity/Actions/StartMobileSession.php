@@ -8,6 +8,7 @@ use App\Modules\Identity\Data\MobileLoginResult;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Security\TwoFactorChallenges;
 use App\Shared\Audit\RecordAudit;
+use Illuminate\Support\Facades\DB;
 
 final readonly class StartMobileSession
 {
@@ -19,12 +20,16 @@ final readonly class StartMobileSession
 
     public function handle(User $user, string $nomAppareil): MobileLoginResult
     {
-        if ($user->hasConfirmedTwoFactor()) {
-            $this->audit->handle('auth.two_factor.challenged', $user->id, ['channel' => 'mobile']);
+        return DB::transaction(function () use ($user, $nomAppareil): MobileLoginResult {
+            $compte = User::query()->lockForUpdate()->findOrFail($user->id);
 
-            return MobileLoginResult::challenge($this->defis->create($user->id, $nomAppareil));
-        }
+            if ($compte->hasConfirmedTwoFactor()) {
+                $this->audit->handle('auth.two_factor.challenged', $compte->id, ['channel' => 'mobile']);
 
-        return MobileLoginResult::token($this->jetons->handle($user, $nomAppareil));
+                return MobileLoginResult::challenge($this->defis->create($compte->id, $nomAppareil));
+            }
+
+            return MobileLoginResult::token($this->jetons->handle($compte, $nomAppareil));
+        });
     }
 }

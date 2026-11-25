@@ -8,6 +8,7 @@ use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Security\AccountLockout;
 use App\Shared\Audit\RecordAudit;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 use Laravel\Fortify\Fortify;
 use SensitiveParameter;
@@ -54,8 +55,11 @@ final readonly class VerifyTwoFactorCode
 
     private function consommerCodeDeSecours(User $user, string $codeDeSecours, string $cle): bool
     {
-        return (bool) Cache::lock('identity:recovery-codes:'.$user->id, 10)
-            ->block(5, fn (): bool => $this->remplacerSiValide($user->refresh(), $codeDeSecours, $cle));
+        return DB::transaction(function () use ($user, $codeDeSecours, $cle): bool {
+            User::query()->whereKey($user->id)->lockForUpdate()->first();
+
+            return $this->remplacerSiValide($user->refresh(), $codeDeSecours, $cle);
+        });
     }
 
     private function remplacerSiValide(User $user, string $codeDeSecours, string $cle): bool

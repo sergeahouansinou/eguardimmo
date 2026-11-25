@@ -81,7 +81,7 @@ describe("MotDePasseNouveauScreen", () => {
   it("affiche sous le champ le refus du serveur", async () => {
     setLocation("/mot-de-passe/nouveau?jeton=valide");
     const environment = createTestEnvironment("marc");
-    const refus = "Le champ mot de passe doit contenir au moins 12 caractères.";
+    const refus = "Le champ mot de passe ne doit pas dépasser 255 caractères.";
     const resetPassword = vi.fn(() => Promise.reject(new ApiError(422, "validation_failed", "Certains champs sont invalides.", { password: [refus] })));
     renderWithAuth(<MotDePasseNouveauScreen />, { ...environment, source: { ...environment.source, resetPassword } });
     const user = userEvent.setup();

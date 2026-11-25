@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useCodesStore } from "@/features/auth/codesStore";
 import { securitySchema } from "@/features/auth/schemas";
 import { createTestEnvironment, renderWithAuth } from "../../../test/render";
@@ -140,6 +140,22 @@ describe("Activation de la 2FA", () => {
     await user.click(screen.getByRole("button", { name: "Confirmer et activer" }));
     expect(await screen.findByText(/Code incorrect/)).toBeTruthy();
     expect(router.push).not.toHaveBeenCalledWith("/compte/securite/codes-de-secours");
+  });
+
+  it("recharge la clé et le dit quand la configuration n’est plus valable", async () => {
+    setLocation("/compte/securite/double-authentification");
+    const environment = await confirmed("marc");
+    const startTwoFactorSetup = vi.fn(environment.source.startTwoFactorSetup);
+    const enableTwoFactor = vi.fn(() => Promise.resolve({ status: "setup_expired" as const }));
+    renderWithAuth(<Activation2FAScreen />, { ...environment, source: { ...environment.source, startTwoFactorSetup, enableTwoFactor } });
+    const user = userEvent.setup();
+    const champ = await screen.findByLabelText(/Code à 6 chiffres/);
+    await user.type(champ, "481305");
+    await user.click(screen.getByRole("button", { name: "Confirmer et activer" }));
+    expect(await screen.findByText("La clé de configuration a changé.")).toBeTruthy();
+    await waitFor(() => { expect(startTwoFactorSetup).toHaveBeenCalledTimes(2); });
+    expect((champ as HTMLInputElement).value).toBe("");
+    expect(router.push).not.toHaveBeenCalled();
   });
 });
 

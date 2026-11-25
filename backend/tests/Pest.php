@@ -7,7 +7,9 @@ use App\Modules\Identity\Models\User;
 use Firebase\JWT\JWT;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider as ContratTwoFactorAuthenticationProvider;
 use Laravel\Fortify\Fortify;
+use Laravel\Fortify\TwoFactorAuthenticationProvider;
 use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
@@ -34,6 +36,16 @@ function activerDeuxFacteurs(User $user): string
 function codeTotp(string $secret): string
 {
     return app(Google2FA::class)->getCurrentOtp($secret);
+}
+
+function imposerSecretTotp(): string
+{
+    $secret = app(Google2FA::class)->generateSecretKey();
+    $fournisseur = Mockery::mock(TwoFactorAuthenticationProvider::class, [app(Google2FA::class), app('cache.store')])->makePartial();
+    $fournisseur->shouldReceive('generateSecretKey')->andReturn($secret);
+    app()->instance(ContratTwoFactorAuthenticationProvider::class, $fournisseur);
+
+    return $secret;
 }
 
 /**

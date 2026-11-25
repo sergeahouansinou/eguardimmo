@@ -40,12 +40,14 @@ enum ErrorCode: string
     case OperatorProofRequired = 'operator_proof_required';
     case OperatorProofInvalid = 'operator_proof_invalid';
     case OperatorAccountProtected = 'operator_account_protected';
+    case OperatorTwoFactorServerOnly = 'operator_two_factor_server_only';
     case AccountSuspended = 'account_suspended';
     case AccountNotFound = 'account_not_found';
     case AccountAlreadySuspended = 'account_already_suspended';
     case AccountNotSuspended = 'account_not_suspended';
     case TwoFactorNotEnabled = 'two_factor_not_enabled';
     case TwoFactorAlreadyEnabled = 'two_factor_already_enabled';
+    case TwoFactorSetupExpired = 'two_factor_setup_expired';
     case SuspensionReviewForbidden = 'suspension_review_forbidden';
     case LastOperatorAdministrator = 'last_operator_administrator';
 
@@ -62,12 +64,12 @@ enum ErrorCode: string
     {
         return match ($this) {
             self::NoAccount, self::TenantInvitationInvalid, self::OwnerInvitationInvalid, self::AccountNotFound => 404,
-            self::AccountExistsLinkRequired, self::IdentityAlreadyLinked, self::ProviderAlreadyLinked, self::TenantAccessAlreadyGranted, self::AccountAlreadySuspended, self::AccountNotSuspended, self::TwoFactorNotEnabled, self::TwoFactorAlreadyEnabled, self::LastOperatorAdministrator => 409,
+            self::AccountExistsLinkRequired, self::IdentityAlreadyLinked, self::ProviderAlreadyLinked, self::TenantAccessAlreadyGranted, self::AccountAlreadySuspended, self::AccountNotSuspended, self::TwoFactorNotEnabled, self::TwoFactorAlreadyEnabled, self::TwoFactorSetupExpired, self::LastOperatorAdministrator => 409,
             self::EmailRequired, self::InvalidIdToken, self::NoTokenToRevoke, self::TenantInvitationConsentRequired, self::OwnerInvitationCodeInvalid, self::OwnerInvitationConsentRequired, self::EmailChangeCodeInvalid, self::PhoneInvalid, self::OperatorProofRequired, self::OperatorProofInvalid => 422,
             self::InvitationDailyLimitReached, self::EmailChangeAttemptsExceeded => 429,
             self::ProviderUnavailable => 503,
             self::ProviderError => 502,
-            self::InvalidState, self::EmailUnverified, self::SpaceForbidden, self::OperatorTokenRequired, self::OperatorTokenForbidden, self::ReauthenticationRequired, self::EmailVerificationLinkInvalid, self::TenantInvitationEmailMismatch, self::OwnerInvitationEmailMismatch, self::OperatorRoleRequired, self::OperatorAccountProtected, self::AccountSuspended, self::SuspensionReviewForbidden => 403,
+            self::InvalidState, self::EmailUnverified, self::SpaceForbidden, self::OperatorTokenRequired, self::OperatorTokenForbidden, self::ReauthenticationRequired, self::EmailVerificationLinkInvalid, self::TenantInvitationEmailMismatch, self::OwnerInvitationEmailMismatch, self::OperatorRoleRequired, self::OperatorAccountProtected, self::OperatorTwoFactorServerOnly, self::AccountSuspended, self::SuspensionReviewForbidden => 403,
         };
     }
 
@@ -106,12 +108,14 @@ enum ErrorCode: string
             self::OperatorProofRequired => 'Code de double authentification requis',
             self::OperatorProofInvalid => 'Code de double authentification invalide',
             self::OperatorAccountProtected => 'Compte opérateur protégé',
+            self::OperatorTwoFactorServerOnly => 'Gestion réservée au serveur',
             self::AccountSuspended => 'Compte suspendu',
             self::AccountNotFound => 'Compte introuvable',
             self::AccountAlreadySuspended => 'Compte déjà suspendu',
             self::AccountNotSuspended => 'Compte non suspendu',
             self::TwoFactorNotEnabled => 'Double authentification non activée',
             self::TwoFactorAlreadyEnabled => 'Double authentification déjà activée',
+            self::TwoFactorSetupExpired => 'Activation à reprendre',
             self::SuspensionReviewForbidden => 'Revue de suspension refusée',
             self::LastOperatorAdministrator => 'Dernier administrateur de la console',
         };
@@ -152,12 +156,14 @@ enum ErrorCode: string
             self::OperatorProofRequired => 'Saisissez un code de double authentification pour confirmer cette opération.',
             self::OperatorProofInvalid => 'Ce code de double authentification est incorrect ou a déjà été utilisé.',
             self::OperatorAccountProtected => 'Un compte opérateur ne se modifie pas depuis la console.',
+            self::OperatorTwoFactorServerOnly => 'La double authentification d\'un opérateur se gère sur le serveur, avec un administrateur technique : elle ne s\'active, ne se consulte et ne se désactive pas depuis cette page.',
             self::AccountSuspended => 'Ce compte est suspendu. Contactez le support de eGuardImmo.',
             self::AccountNotFound => 'Aucun compte ne correspond à cette recherche.',
             self::AccountAlreadySuspended => 'Ce compte est déjà suspendu.',
             self::AccountNotSuspended => 'Ce compte n\'est pas suspendu.',
             self::TwoFactorNotEnabled => 'Ce compte n\'a pas de double authentification confirmée.',
             self::TwoFactorAlreadyEnabled => 'La double authentification est déjà confirmée : désactivez-la avant d\'en créer une nouvelle.',
+            self::TwoFactorSetupExpired => 'La clé de configuration n\'est plus valable pour cette session : relancez l\'activation et scannez la nouvelle clé.',
             self::LastOperatorAdministrator => 'Ce changement retirerait le dernier opérateur administrateur : la console n\'aurait plus personne pour attribuer les rôles et valider. Ajoutez d\'abord un autre administrateur, ou confirmez avec --force.',
             self::SuspensionReviewForbidden => 'La revue d\'une suspension revient à un autre opérateur que celui qui l\'a prononcée.',
         };

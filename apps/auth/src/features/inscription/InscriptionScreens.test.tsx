@@ -78,12 +78,12 @@ describe("Inscription bailleur", () => {
   it("affiche le message 422 du serveur au lieu d’une erreur générique", async () => {
     const environment = createTestEnvironment();
     const register = vi.fn(() =>
-      Promise.reject(new ApiError(422, "validation_failed", "Certains champs sont invalides.", { password: ["Le mot de passe doit contenir au moins un symbole."] })),
+      Promise.reject(new ApiError(422, "validation_failed", "Certains champs sont invalides.", { password: ["Le champ mot de passe ne doit pas dépasser 255 caractères."] })),
     );
     renderWithAuth(<BailleurRegister />, { ...environment, source: { ...environment.source, register } });
     const user = await fillPerson("lea.martin@example.com", "Mot-De-Passe-2026");
     await user.click(screen.getByRole("button", { name: "Créer mon espace" }));
-    expect((await screen.findByRole("alert")).textContent).toContain("Le mot de passe doit contenir au moins un symbole.");
+    expect((await screen.findByRole("alert")).textContent).toContain("Le champ mot de passe ne doit pas dépasser 255 caractères.");
     expect(screen.queryByText(/Une erreur est survenue/)).toBeNull();
     expect(router.push).not.toHaveBeenCalled();
   });

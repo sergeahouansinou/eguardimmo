@@ -38,7 +38,7 @@ describe("ChangePasswordDialog", () => {
 
   it("affiche sous le champ le refus du serveur", async () => {
     const environment = createTestEnvironment("marc");
-    const refus = "Le champ mot de passe doit contenir au moins 12 caractères.";
+    const refus = "Le champ mot de passe ne doit pas dépasser 255 caractères.";
     const changePassword = vi.fn(() => Promise.reject(new ApiError(422, "validation_failed", "Certains champs sont invalides.", { password: [refus] })));
     const onOpenChange = await submit({ ...environment, source: { ...environment.source, changePassword } }, "azerty");
     expect(await screen.findByText(refus)).toBeTruthy();

@@ -22,13 +22,6 @@ return [
         'string' => 'Le champ :attribute doit contenir au moins :min caractères.',
         'array' => 'Le champ :attribute doit contenir au moins :min éléments.',
     ],
-    'password' => [
-        'letters' => 'Le mot de passe doit contenir au moins une lettre.',
-        'mixed' => 'Le mot de passe doit contenir au moins une majuscule et une minuscule.',
-        'numbers' => 'Le mot de passe doit contenir au moins un chiffre.',
-        'symbols' => 'Le mot de passe doit contenir au moins un symbole.',
-        'uncompromised' => 'Ce mot de passe figure dans une fuite de données connue : choisissez-en un autre.',
-    ],
     'attributes' => [
         'name' => 'nom',
         'email' => 'adresse e-mail',

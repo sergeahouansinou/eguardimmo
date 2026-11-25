@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { paginate } from './common';
 import { inviteInputSchema } from './equipe';
 import { loginInputSchema } from './auth';
+import { changePasswordInputSchema } from './parametres';
 import { restoreFormSchema } from './sauvegardes';
 import { suspendInputSchema } from './organisations';
 
@@ -25,6 +26,13 @@ describe('validation des entrées', () => {
     expect(loginInputSchema.safeParse({ email: 'a@b.fr', password: 'x'.repeat(12), code: '123456' }).success).toBe(true);
     expect(loginInputSchema.safeParse({ email: 'a@b.fr', password: 'x'.repeat(12), code: '12' }).success).toBe(false);
     expect(loginInputSchema.safeParse({ email: 'nope', password: '', code: '' }).success).toBe(false);
+  });
+
+  it('changement de mot de passe : 6 caractères suffisent, sans composition, 5 sont refusés', () => {
+    const change = (next: string) => changePasswordInputSchema.safeParse({ current: 'ancien', next, confirm: next });
+    for (const accepted of ['123456', 'azerty', '!?-_*#', 'x'.repeat(255)]) expect(change(accepted).success).toBe(true);
+    for (const refused of ['', '12345', '😀😀😀', 'x'.repeat(256)]) expect(change(refused).success).toBe(false);
+    expect(change('azert').error?.issues.map((issue) => issue.message)).toEqual(['Au moins 6 caractères.']);
   });
 
   it('invitation : rôle limité à la liste blanche', () => {

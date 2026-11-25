@@ -41,6 +41,8 @@ final readonly class AttemptPasswordLogin
             return null;
         }
 
+        $user->refresh();
+
         if ($user->isSuspended()) {
             $this->audit->handle('auth.login.denied', $user->id, ['channel' => $canal->value, 'reason' => 'account_suspended']);
 

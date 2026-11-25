@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Identity\Console;
 
 use App\Modules\Identity\Actions\SetOperatorRoles;
+use App\Modules\Identity\Enums\ErrorCode;
 use App\Modules\Identity\Enums\OperatorRole;
 use App\Modules\Identity\Models\User;
 use App\Shared\Http\ApiProblem;
@@ -45,6 +46,10 @@ final class SetOperatorRolesCommand extends Command
             $modifie = $roles->handle($user, $souhaites, contexte: ['via' => 'artisan', 'host' => (string) gethostname(), 'os_user' => get_current_user()], garderUnAdministrateur: ! $this->option('force'));
         } catch (ApiProblem $probleme) {
             $this->error($probleme->getMessage());
+
+            if ($probleme->problemCode === ErrorCode::TwoFactorNotEnabled->value) {
+                $this->line("Activez-la d'abord avec le titulaire : php artisan identity:enroll-operator-two-factor {$user->email}");
+            }
 
             return self::FAILURE;
         }

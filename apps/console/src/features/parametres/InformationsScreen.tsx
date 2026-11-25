@@ -8,7 +8,7 @@ import { Controller } from 'react-hook-form';
 import { errorMessage } from '@/console/hooks/core';
 import { useChangePassword, useSaveProfile } from '@/console/hooks/mutations';
 import { useProfile } from '@/console/hooks/queries';
-import { changePasswordInputSchema, profileInputSchema } from '@/console/schemas';
+import { PASSWORD_MIN_LENGTH, changePasswordInputSchema, profileInputSchema } from '@/console/schemas';
 import type { Profile } from '@/console/schemas';
 import { formatDate, formatDateTime } from '@/lib/format';
 import { useZodForm } from '@/lib/useZodForm';
@@ -165,14 +165,14 @@ function PasswordDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
         onOpenChange(next);
       }}
       title="Changer le mot de passe"
-      description="Au moins 14 caractères. Vos autres sessions sont révoquées."
+      description={`Au moins ${String(PASSWORD_MIN_LENGTH)} caractères. Vos autres sessions sont révoquées.`}
       submitLabel="Changer le mot de passe"
       pending={formState.isSubmitting}
       failure={failure}
       onSubmit={(event) => void submit(event)}
     >
       <TextField label="Mot de passe actuel" type="password" autoComplete="current-password" placeholder="Votre mot de passe actuel" error={formState.errors.current?.message} {...register('current')} />
-      <TextField label="Nouveau mot de passe" type="password" autoComplete="new-password" placeholder="14 caractères au moins" error={formState.errors.next?.message} {...register('next')} />
+      <TextField label="Nouveau mot de passe" type="password" autoComplete="new-password" placeholder={`${String(PASSWORD_MIN_LENGTH)} caractères au moins`} error={formState.errors.next?.message} {...register('next')} />
       <TextField label="Confirmation" type="password" autoComplete="new-password" placeholder="Saisissez-le à nouveau" error={formState.errors.confirm?.message} {...register('confirm')} />
     </FormDialog>
   );

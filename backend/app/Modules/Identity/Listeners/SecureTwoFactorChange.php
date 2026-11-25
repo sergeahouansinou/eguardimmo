@@ -8,6 +8,7 @@ use App\Modules\Identity\Actions\RevokeUserCredentials;
 use App\Modules\Identity\Http\Middleware\EnsureRecentReauthentication;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Notifications\TwoFactorChangedNotification;
+use App\Modules\Identity\Security\PendingTwoFactorSetup;
 use App\Shared\Audit\RecordAudit;
 use Illuminate\Http\Request;
 use Laravel\Fortify\Events\TwoFactorAuthenticationConfirmed;
@@ -20,6 +21,7 @@ final readonly class SecureTwoFactorChange
         private RevokeUserCredentials $revoke,
         private RecordAudit $audit,
         private Request $request,
+        private PendingTwoFactorSetup $activation,
     ) {}
 
     public function handle(TwoFactorAuthenticationConfirmed|TwoFactorAuthenticationDisabled|TwoFactorAuthenticationEnabled $evenement): void
@@ -33,6 +35,10 @@ final readonly class SecureTwoFactorChange
         $remplace = $evenement instanceof TwoFactorAuthenticationEnabled;
 
         if ($remplace && ! $user->hasConfirmedTwoFactor()) {
+            if ($this->request->hasSession()) {
+                $this->activation->remember($this->request->session(), $user);
+            }
+
             return;
         }
 

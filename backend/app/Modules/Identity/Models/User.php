@@ -24,6 +24,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\TransientToken;
@@ -61,7 +63,9 @@ final class User extends Authenticatable implements MustVerifyEmail
     use HasApiTokens;
 
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
+    use HasFactory, Notifiable, SoftDeletes, TwoFactorAuthenticatable {
+        TwoFactorAuthenticatable::replaceRecoveryCode as private remplacerCodeDeSecours;
+    }
 
     /** @var array<string, mixed> */
     protected $attributes = [
@@ -145,6 +149,20 @@ final class User extends Authenticatable implements MustVerifyEmail
     public function isSuspended(): bool
     {
         return $this->suspended_at !== null;
+    }
+
+    public function replaceRecoveryCode(#[\SensitiveParameter] string $code): void
+    {
+        DB::transaction(function () use ($code): void {
+            self::query()->whereKey($this->id)->lockForUpdate()->first();
+            $this->refresh();
+
+            if ($this->two_factor_recovery_codes === null || ! in_array($code, $this->recoveryCodes(), true)) {
+                throw ValidationException::withMessages(['recovery_code' => [__('The provided two factor recovery code was invalid.')]]);
+            }
+
+            $this->remplacerCodeDeSecours($code);
+        });
     }
 
     public function hasConfirmedTwoFactor(): bool

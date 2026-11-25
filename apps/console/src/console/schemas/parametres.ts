@@ -151,10 +151,15 @@ export const profileInputSchema = z.object({
 });
 export type ProfileInput = z.infer<typeof profileInputSchema>;
 
+export const PASSWORD_MIN_LENGTH = 6;
+
 export const changePasswordInputSchema = z
   .object({
     current: z.string().min(1, 'Saisissez votre mot de passe actuel.'),
-    next: z.string().min(14, 'Au moins 14 caractères.').max(128),
+    next: z
+      .string()
+      .max(255, '255 caractères au maximum.')
+      .refine((value) => Array.from(value).length >= PASSWORD_MIN_LENGTH, { error: `Au moins ${String(PASSWORD_MIN_LENGTH)} caractères.` }),
     confirm: z.string(),
   })
   .refine((value) => value.next === value.confirm, { path: ['confirm'], message: 'Les deux mots de passe diffèrent.' })
