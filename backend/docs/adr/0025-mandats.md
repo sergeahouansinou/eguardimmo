@@ -63,3 +63,8 @@ Lecture : propriétaire, administrateur, gestionnaire, comptable (sans la note i
 
 - `mandate_end_requests.status` gagne `dismissed` (rejet par l'agence) et `fulfilled` (clôturée par `terminate`) ; colonnes `decided_at`, `decided_by_user_id`, `decision_note` (500 caractères, jamais dans le journal ni les notifications). La demande vivante reste la seule `pending` par mandat.
 - Cycle de vie : `pending` → `cancelled` (mandant), `dismissed` (agence, `POST /org/{organization}/mandates/{mandate}/end-request/dismiss`, rejouable en 200) ou `fulfilled` (`terminate`). Une demande déjà annulée ou satisfaite ne se rejette pas (`mandate_end_request_not_pending` 409). Événement `MandateEndRequestDecided` ⇢ Notifications (`owner.mandate_end_dismissed`, `owner.mandate_end_fulfilled`).
+
+## Amendement du 2026-11-21 (lecture de la dernière demande de fin de mandat)
+
+- `GET /org/{organization}/mandates/{mandate}/end-request` renvoie la demande **la plus récente** du mandat, quel que soit son statut (`pending`, `dismissed`, `fulfilled`, `cancelled`), classée par `created_at` puis `id` décroissants ; `data: null` si le mandat n'a jamais eu de demande. Champs : `id`, `mandate_id`, `status`, `reason`, `requested_at`, `cancelled_at`, `decided_at`, `decision_note`. Le client déduit « demande vivante » de `status = pending`.
+- L'espace propriétaire garde la demande vivante seule (`pending`) et lit une Resource distincte, sans `decision_note` : la note de l'agence ne sort jamais vers le mandant.

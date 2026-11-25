@@ -50,10 +50,12 @@ it('l\'export CSV neutralise aussi les champs qui commencent par une tabulation 
 
     $contenu = $this->get(F::url($this->org, "/batches/{$ids['batch']}/export"))->assertOk()->getContent();
 
-    expect($contenu)->toContain($attendu);
+    expect($contenu)->toContain($attendu)->not->toContain('" =cmd()"')->not->toContain('" @cmd()"');
 })->with([
-    'tabulation' => ["\t=cmd()", "\"'\t=cmd()\""],
-    'retour chariot' => ["\r=cmd()", "\"' =cmd()\""],
+    'tabulation' => ["\t=cmd()", "\"'=cmd()\""],
+    'retour chariot' => ["\r=cmd()", "\"'=cmd()\""],
+    'saut de ligne' => ["\n=cmd()", "\"'=cmd()\""],
+    'retour chariot et saut de ligne' => ["\r\n@cmd()", "\"'@cmd()\""],
 ]);
 
 it('une création de lot concurrente sur le même mandant répond 409 et non 500, sans lot orphelin', function (): void {

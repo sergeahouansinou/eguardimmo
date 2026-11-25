@@ -7,7 +7,6 @@ const patterns = routePatterns();
 function configuredHrefs(): string[] {
   return [
     ...navigationHrefs(navigation(undefined)),
-    ...navigationHrefs(navigation(undefined, { api: true })),
     ...bottomItems.map((item) => item.href),
     ...accountMenu.groups.flatMap((group) => group.items.map((item) => item.href)),
     accountMenu.signOut.href,

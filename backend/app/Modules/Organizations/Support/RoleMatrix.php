@@ -82,6 +82,8 @@ final class RoleMatrix
             self::domain('campaigns', ['notifications.campaigns.*'], ['notifications.campaigns.schedule', 'notifications.campaigns.send'], 'www-', code: true),
             self::domain('campaigns_send', ['notifications.campaigns.schedule', 'notifications.campaigns.send'], [], '222-', code: true),
             self::domain('documents', ['documents.*'], [], 'wwwr'),
+            self::domain('listings', ['listings.organization.*'], [], 'www-'),
+            self::domain('bookings', ['bookings.organization.*'], [], 'rrr-'),
             self::domain('online_payments', ['payments.online-payments.*'], [], 'rrrr'),
             self::domain('psp_account', ['payments.account.*'], [], '22--'),
         ];

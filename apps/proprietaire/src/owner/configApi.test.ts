@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { isExternalHref } from "@eguardimmo/shell";
+import { pageFiles } from "../../test/pages";
 import { unavailableFamilyOf } from "./capabilities";
 import { buildNavigation, searchPages } from "@/confie-config/config";
-import { apiNavigation, apiSearchPages, withAnnouncementCount } from "./configApi";
+import { apiAccountMenu, apiBottomItems, apiNavigation, apiSearchPages, withAnnouncementCount } from "./configApi";
 import { toRealHref } from "@/confie-config/paths";
 
 const entries = apiNavigation.sections.flatMap((section) => section.entries);
@@ -36,5 +38,30 @@ describe("décomptes de charges dans la navigation du propriétaire", () => {
     const demo = buildNavigation(undefined).sections.flatMap((section) => section.entries);
     expect(demo.map((entry) => toRealHref(entry.href))).not.toContain("/confie/charges");
     expect(searchPages.map((page) => toRealHref(page.href))).not.toContain("/confie/charges");
+  });
+});
+
+describe("liens de la navigation du propriétaire en mode api", () => {
+  const hrefs = [
+    ...entries,
+    ...apiNavigation.footer,
+    ...apiBottomItems,
+    ...apiAccountMenu.groups.flatMap((group) => group.items),
+    ...(apiAccountMenu.footerItems ?? []),
+    ...apiSearchPages,
+  ].map((item) => toRealHref(item.href));
+  const internal = hrefs.filter((link) => !isExternalHref(link) && link !== "/");
+  const pages = new Set(pageFiles().map((page) => page.route));
+
+  it("mène chaque lien interne à une page existante servie par le serveur", () => {
+    expect(internal.length).toBeGreaterThan(20);
+    expect(internal.filter((link) => !pages.has(link))).toEqual([]);
+    expect(internal.filter((link) => unavailableFamilyOf(link) !== null)).toEqual([]);
+  });
+
+  it("ouvre la fiscalité, l’aide, les messages et les informations depuis la navigation", () => {
+    expect(entries.map((entry) => entry.id)).toEqual(expect.arrayContaining(["fiscalite", "messages", "support"]));
+    expect(apiNavigation.footer.map((entry) => entry.id)).toContain("aide");
+    expect(internal).toEqual(expect.arrayContaining(["/confie/fiscalite", "/confie/aide", "/confie/messages", "/confie/informations"]));
   });
 });

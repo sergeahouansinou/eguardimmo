@@ -1,0 +1,18 @@
+{
+  "data": [
+    {
+      "id": "01a1ef81-5200-7000-8000-00000000d001",
+      "kind": "amendment",
+      "shared_at": "2026-11-10T09:30:00+00:00",
+      "file": { "name": "avenant-1.pdf", "mime_type": "application/pdf", "size_bytes": 245760 }
+    },
+    {
+      "id": "01a1ef81-5200-7000-8000-00000000d002",
+      "kind": "attestation",
+      "shared_at": null,
+      "file": null
+    }
+  ],
+  "links": { "first": null, "last": null, "prev": null, "next": null },
+  "meta": { "path": "https://api.eguardimmo.test/api/v1/tenant/leases/01a1ef81-4fb4-70fa-a070-6b296b02b3e9/documents", "per_page": 100, "next_cursor": null, "prev_cursor": null }
+}

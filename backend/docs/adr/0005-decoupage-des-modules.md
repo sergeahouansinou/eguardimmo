@@ -134,3 +134,9 @@ Reporting lit les tables des autres modules en SQL (query builder ou vues), sans
 ## Amendement du 2026-11-21 (ADR 0032)
 
 - Reporting → Maintenance (`OwnerApprovals::pendingCount`, nouvelle PublicApi en lecture seule : devis en attente du mandant) et Rent (`RentLedger`, échéances impayées d'un bail), pour `/owner/home` ; Reporting → Leases (`LeaseSchedule`, `LeaseDirectory`, `LeaseParticipants`), Parties (`PartyDirectory`), Properties (`UnitDirectory`) et Mandates (`MandateDirectory`) pour les lots et le mandat. Mandates ⇢ `MandateEndRequestDecided` ⇢ Notifications. Aucun cycle : Maintenance et Rent n'appellent pas Reporting.
+
+## Amendement du 2026-11-21 (ADR 0041)
+
+- Modules Geography, Listings et Bookings créés. Liens : Listings → Geography (`CityDirectory`, `CityData` : commune d'une annonce), Organizations (`OrganizationDirectory::names` : nom d'agence affiché) et Identity (`ErrorCode`, événement `AccountDeleted`, modèle `User`) ; Bookings → Listings (`ListingDirectory`, `ListingBookingData`, `ListingSummaryData`, enums `CancellationPolicy` et `ListingKind`) et Identity (modèle `User`), lecture seule ; Geography ne dépend d'aucun module. Le lien Listings → Properties de la liste ci-dessus (`BienPublié`) n'est pas codé dans cette tranche.
+- Listings ⇢ `VisitRequested` (sans consommateur tant que Messaging et Notifications ne l'écoutent pas) ; Bookings ⇢ `BookingCreated`, `BookingConfirmed`, `BookingCancelled` (vers Notifications, non écoutés pour l'instant). Payments ⇢ `PaiementConfirmé` ⇢ Bookings reste à créer avec Payments (`ConfirmBooking` attend cet événement).
+

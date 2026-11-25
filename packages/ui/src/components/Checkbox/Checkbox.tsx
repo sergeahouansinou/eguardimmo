@@ -5,9 +5,10 @@ import { cx } from '../../lib/cx';
 export interface CheckboxProps extends Omit<ComponentProps<'input'>, 'type' | 'children'> {
   label: string;
   hideLabel?: boolean;
+  touch?: boolean;
 }
 
-export function Checkbox({ label, hideLabel = false, id, className, ...props }: CheckboxProps) {
+export function Checkbox({ label, hideLabel = false, touch = false, id, className, ...props }: CheckboxProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   return (
@@ -28,7 +29,10 @@ export function Checkbox({ label, hideLabel = false, id, className, ...props }: 
         className={cx(
           hideLabel
             ? 'absolute -inset-1 cursor-pointer overflow-hidden leading-none [font-size:0] peer-disabled:cursor-not-allowed'
-            : '-my-0.5 inline-flex min-h-6 items-center text-body text-fg peer-disabled:cursor-not-allowed',
+            : cx(
+                '-my-0.5 inline-flex items-center text-body text-fg peer-disabled:cursor-not-allowed',
+                touch ? 'min-h-11 cursor-pointer' : 'min-h-6',
+              ),
         )}
       >
         {label}

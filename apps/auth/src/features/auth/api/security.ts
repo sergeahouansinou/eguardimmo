@@ -29,6 +29,7 @@ type SecurityMethods = Pick<
 >;
 
 const PASSWORD_CONFIRMATION_REQUIRED = { status: "confirmation_required", needsCode: false } as const;
+const CODE_CONFIRMATION_REQUIRED = { status: "confirmation_required", needsCode: true } as const;
 
 export function securityMethods(context: AuthContext): SecurityMethods {
   const { client, knowledge, now } = context;
@@ -51,7 +52,10 @@ export function securityMethods(context: AuthContext): SecurityMethods {
     try {
       return { status: "ok", ...(await run()) };
     } catch (error) {
-      return handled<ProtectedResult<T>>(error, (failure) => (failure.status === 423 ? PASSWORD_CONFIRMATION_REQUIRED : null));
+      return handled<ProtectedResult<T>>(error, (failure) => {
+        if (failure.status === 423) return PASSWORD_CONFIRMATION_REQUIRED;
+        return failure.status === 403 && failure.code === "reauthentication_required" ? CODE_CONFIRMATION_REQUIRED : null;
+      });
     }
   };
 

@@ -26,6 +26,7 @@ final class Timeline
         array $metadata = [],
         bool $proprietaire = false,
         bool $locataire = false,
+        ?string $idempotencyKey = null,
     ): InterventionEvent {
         $utilisateur = auth()->id();
 
@@ -36,6 +37,7 @@ final class Timeline
             'actor_user_id' => $acteur === ActorKind::System || ! is_string($utilisateur) ? null : $utilisateur,
             'text' => $texte === null ? null : mb_substr($texte, 0, 500),
             'metadata' => $metadata === [] ? null : $metadata,
+            'idempotency_key' => $idempotencyKey,
             'visible_to_owner' => $proprietaire,
             'visible_to_tenant' => $locataire,
         ]);

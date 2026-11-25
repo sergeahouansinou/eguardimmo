@@ -56,7 +56,6 @@ it('enregistre la demande sans toucher au mandat, journalise et prévient l\'éq
         'requested_at' => $demande->created_at->toIso8601String(),
         'cancelled_at' => null,
         'decided_at' => null,
-        'decision_note' => null,
     ])
         ->and($demande->organization_id)->toBe($this->org->id)->and($demande->mandant_party_id)->toBe($this->mandant->id)
         ->and($demande->requested_by_user_id)->toBe($this->awa->id)

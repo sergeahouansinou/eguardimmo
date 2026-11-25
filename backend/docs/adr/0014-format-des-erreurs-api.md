@@ -118,3 +118,8 @@ Succès :
 ## Amendement du 2026-11-21 (plafond d'organisations)
 
 - Organizations : `organization_limit_reached` (403), refus de `POST /organizations` quand le compte a déjà créé `ORGANIZATIONS_MAX_OWNED_PER_USER` organisations (5 par défaut). Sans `Retry-After` : ce n'est pas une limite de débit.
+
+## Amendement du 2026-11-21 (clé d'idempotence facultative, application mobile)
+
+- Recovery : `recovery_idempotency_key_required` (422), en-tête `Idempotency-Key` présent mais hors du motif `^[A-Za-z0-9._:-]{8,64}$` ; `recovery_idempotency_key_reused` (409), clé déjà employée par le même auteur pour un autre contenu ou un autre dossier.
+- Maintenance : `idempotency_key_required` (422) et `maintenance_idempotency_key_reused` (409) s'appliquent aussi, sans nouveau code, à `POST /org/{organization}/interventions/{intervention}/comments`. Sur ce commentaire et sur `POST /org/{organization}/recovery/cases/{case}/acts`, la clé est facultative : sans en-tête, rien ne change ; avec une clé valide, rejouer la même requête (même auteur, même contenu, même ressource) renvoie 200 avec la ressource déjà créée, sans nouvelle écriture ni nouvel audit.

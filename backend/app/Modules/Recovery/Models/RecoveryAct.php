@@ -21,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $author_user_id
  * @property string|null $reference
  * @property string|null $note
+ * @property string|null $idempotency_key
  * @property array<string, mixed>|null $data
  * @property Carbon $created_at
  */
@@ -33,7 +34,7 @@ final class RecoveryAct extends Model
 
     protected $dateFormat = 'Y-m-d H:i:s.u';
 
-    protected $fillable = ['case_id', 'type', 'performed_on', 'author_user_id', 'reference', 'note', 'data'];
+    protected $fillable = ['case_id', 'type', 'performed_on', 'author_user_id', 'reference', 'note', 'idempotency_key', 'data'];
 
     protected function casts(): array
     {

@@ -18,6 +18,9 @@ const TOUT: NavigationOptions = {
   tax: true,
   analytics: true,
   timezone: true,
+  accounting: true,
+  listings: true,
+  settingsAdmin: true,
 };
 
 const patterns = routePatterns();
@@ -35,8 +38,9 @@ function menuHrefs(): string[] {
 }
 
 function searchHrefs(): string[] {
-  const options = { records: false, banking: true, tenantRequests: { manage: true, payments: true } };
-  return [...buildSearchPages(), ...buildSearchPages(options)].map((page) => page.href);
+  const modules = { accounting: true, listings: true, settingsAdmin: true };
+  const options = { records: false, banking: true, tenantRequests: { manage: true, payments: true }, ...modules };
+  return [...buildSearchPages({ records: true, ...modules }), ...buildSearchPages(options)].map((page) => page.href);
 }
 
 function configuredHrefs(): string[] {

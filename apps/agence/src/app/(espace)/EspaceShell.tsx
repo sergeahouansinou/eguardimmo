@@ -23,6 +23,7 @@ import {
   helpMenu,
   notifications,
 } from "@/espace/config";
+import { useModuleAccess } from "@/features/org/access";
 import { useMessagesCount } from "@/features/messagerie/useMessagesCount";
 import { SupportWidgetSlot } from "@/features/support/SupportWidgetSlot";
 import { useSupportBadges } from "@/features/support/useSupportBadges";
@@ -40,7 +41,11 @@ export function EspaceShell({ children }: { children: ReactNode }) {
     () => (dataSource === "api" ? { manage: requestPermissions.manage, payments: requestPermissions.readPayments } : undefined),
     [requestPermissions.manage, requestPermissions.readPayments],
   );
-  const searchPages = useMemo(() => buildSearchPages({ records: dataSource === "demo", banking, ...(tenantRequests ? { tenantRequests } : {}) }), [banking, tenantRequests]);
+  const access = useModuleAccess();
+  const searchPages = useMemo(
+    () => buildSearchPages({ records: dataSource === "demo", banking, accounting: access.accounting, listings: access.listings, settingsAdmin: access.settings, ...(tenantRequests ? { tenantRequests } : {}) }),
+    [banking, tenantRequests, access.accounting, access.listings, access.settings],
+  );
   const role = session?.organization.role;
   const badges = useSupportBadges();
   const manageAccess = session !== null && canManageAccess(session.organization.role);
@@ -59,9 +64,12 @@ export function EspaceShell({ children }: { children: ReactNode }) {
         analytics: dataSource === "api",
         activity: dataSource === "api" && (role === "owner" || role === "admin"),
         timezone: dataSource === "api" && (role === "owner" || role === "admin"),
+        accounting: access.accounting,
+        listings: access.listings,
+        settingsAdmin: access.settings,
         ...(dataSource === "api" ? { support: { manageAccess, requests: badges.requests, access: badges.access } } : {}),
       }),
-    [unread, manageAccess, role, banking, tenantRequests, badges.requests, badges.access],
+    [unread, manageAccess, role, banking, tenantRequests, badges.requests, badges.access, access.accounting, access.listings, access.settings],
   );
   return (
     <>

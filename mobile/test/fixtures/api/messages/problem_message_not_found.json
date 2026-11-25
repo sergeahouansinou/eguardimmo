@@ -1,0 +1,8 @@
+{
+  "type": "https://api.eguardimmo.test/problems/message_not_found",
+  "title": "Message introuvable",
+  "status": 404,
+  "detail": "Message introuvable.",
+  "code": "message_not_found",
+  "request_id": "01a1ef81-5144-7138-a3ac-9b1463fdc9c1"
+}

@@ -1,0 +1,36 @@
+{
+  "data": [
+    {
+      "id": "0193a5e1-0000-7000-8000-0000000000c1",
+      "reference": "A1",
+      "type": "apartment",
+      "floor": 2,
+      "surface_hundredths": 6500,
+      "property": {
+        "name": "Résidence Les Filaos",
+        "address": { "line1": "14 avenue de la Marina", "line2": null, "postal_code": "98000", "city": "Monaco", "country": "MC" }
+      },
+      "agency": { "id": "0193a5e1-0000-7000-8000-0000000000b1", "name": "Agence du Lac" },
+      "mandant": { "name": "Famille Dossou" },
+      "covered_from": "2026-01-01",
+      "covered_until": null
+    },
+    {
+      "id": "0193a5e1-0000-7000-8000-0000000000c3",
+      "reference": "C3",
+      "type": "parking",
+      "floor": null,
+      "surface_hundredths": null,
+      "property": {
+        "name": "Résidence Les Filaos",
+        "address": { "line1": "14 avenue de la Marina", "line2": null, "postal_code": "98000", "city": "Monaco", "country": "MC" }
+      },
+      "agency": { "id": "0193a5e1-0000-7000-8000-0000000000b1", "name": "Agence du Lac" },
+      "mandant": { "name": "Famille Dossou" },
+      "covered_from": "2026-01-01",
+      "covered_until": "2026-12-31"
+    }
+  ],
+  "links": { "first": null, "last": null, "prev": null, "next": null },
+  "meta": { "path": "https://api.eguardimmo.test/api/v1/owner/properties", "per_page": 100, "next_cursor": null, "prev_cursor": null }
+}

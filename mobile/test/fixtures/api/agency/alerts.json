@@ -1,0 +1,14 @@
+{
+  "data": {
+    "mandates_to_renew": {
+      "count": 1,
+      "next": [{ "id": "01a1ee5a-0bb7-73fa-a273-ea6cbd9ac022", "reference": "MG-2026-0001", "ends_on": "2026-12-20" }]
+    },
+    "certificates_to_renew": 3,
+    "reports_due": {
+      "period": { "start": "2026-10-01", "end": "2026-10-31" },
+      "count": 2,
+      "mandant_ids": ["01a1ee5a-0bb7-73fa-a273-ea6cbd9ac002", "01a1ee5a-0bb7-73fa-a273-ea6cbd9ac003"]
+    }
+  }
+}

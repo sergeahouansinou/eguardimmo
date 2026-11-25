@@ -1,0 +1,8 @@
+{
+  "type": "https://api.eguardimmo.test/problems/support_hours_unavailable",
+  "title": "Horaires indisponibles",
+  "status": 503,
+  "detail": "Les horaires du support sont momentanément indisponibles.",
+  "code": "support_hours_unavailable",
+  "request_id": "01a1ef81-5144-7138-a3ac-9b1463fdc9c1"
+}

@@ -62,7 +62,7 @@ afterEach(() => {
 
 describe("routes de la console sans source API en mode api", () => {
   it("compte les pages gatées et les pages servies", () => {
-    expect(gated.length).toBe(10);
+    expect(gated.length).toBe(7);
     expect(served.length).toBeGreaterThanOrEqual(20);
   });
 

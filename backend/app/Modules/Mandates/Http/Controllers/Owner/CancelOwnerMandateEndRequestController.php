@@ -7,7 +7,7 @@ namespace App\Modules\Mandates\Http\Controllers\Owner;
 use App\Modules\Identity\Models\User;
 use App\Modules\Mandates\Actions\CancelMandateEndRequest;
 use App\Modules\Mandates\Enums\ErrorCode;
-use App\Modules\Mandates\Http\Resources\MandateEndRequestResource;
+use App\Modules\Mandates\Http\Resources\Owner\OwnerMandateEndRequestResource;
 use App\Modules\Mandates\Models\MandateEndRequest;
 use App\Modules\Mandates\PublicApi\MandateDirectory;
 use App\Modules\Mandates\Queries\OwnerMandates;
@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
 
 final class CancelOwnerMandateEndRequestController
 {
-    public function __invoke(string $mandate, Request $request, MandateDirectory $repertoire, OwnerMandates $mandats, CurrentOrganization $contexte, CancelMandateEndRequest $action): MandateEndRequestResource
+    public function __invoke(string $mandate, Request $request, MandateDirectory $repertoire, OwnerMandates $mandats, CurrentOrganization $contexte, CancelMandateEndRequest $action): OwnerMandateEndRequestResource
     {
         /** @var User $user */
         $user = $request->user();
@@ -24,6 +24,6 @@ final class CancelOwnerMandateEndRequestController
         $mandat = $mandats->find($portee, $mandate) ?? throw ErrorCode::OwnerMandateNotFound->problem();
         $repertoire->assertOwnerWritable($portee->visible($mandat->organization_id, $mandat->mandant_party_id) ?? throw ErrorCode::OwnerMandateNotFound->problem());
 
-        return new MandateEndRequestResource($contexte->run($mandat->organization_id, fn (): MandateEndRequest => $action->handle($mandat->id, $user->id)));
+        return new OwnerMandateEndRequestResource($contexte->run($mandat->organization_id, fn (): MandateEndRequest => $action->handle($mandat->id, $user->id)));
     }
 }

@@ -119,7 +119,7 @@ function TicketDetailBody({ ticket }: { ticket: TicketDetailData }) {
                     onClick={() => { apply({ status: 'en_attente' }, 'Ticket mis en attente du client.'); }}
                   >
                     <Icon icon={Clock} />
-                    Mettre en attente
+                    Marquer en attente
                   </Button>
                 ) : null}
                 <Button loading={update.isPending} onClick={() => { apply({ status: 'resolu' }, 'Ticket marqué comme résolu.'); }}>

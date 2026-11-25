@@ -1,0 +1,178 @@
+{
+  "data": {
+    "id": "01a1ef81-509b-72a6-b78e-36d2c9ec12f1",
+    "reference": "INT-2026-0004",
+    "origin": "tenant",
+    "status": "awaiting_approval",
+    "priority": "normal",
+    "reported_urgency": "soon",
+    "nature_term_id": "01a1ef81-4f89-72ac-b62c-60d0090b30f2",
+    "title": "Fuite sous l'évier",
+    "description": "De l'eau coule sous l'évier de la cuisine.",
+    "room": null,
+    "availability": null,
+    "property_id": "01a1ef81-4fa7-73e7-83f2-ee41e69f4bee",
+    "unit_id": "01a1ef81-4fa8-7008-9649-57ef36d615d7",
+    "unit": {
+      "id": "01a1ef81-4fa8-7008-9649-57ef36d615d7",
+      "reference": "LOT-28755",
+      "property_name": "Résidence Roy"
+    },
+    "lease_id": "01a1ef81-4fb4-70fa-a070-6b296b02b3e9",
+    "mandate_id": "01a1ef81-4fb1-7000-8000-0000000000c2",
+    "mandant": {
+      "id": "01a1ef81-4fb0-7000-8000-0000000000c1",
+      "name": "Awa Diallo"
+    },
+    "reporter": {
+      "id": "01a1ef81-4fb3-73be-8cc0-2f2e71a78ae5",
+      "name": "Édouard Gillet"
+    },
+    "supplier": {
+      "id": "01a1ef81-5300-7000-8000-0000000000a1",
+      "name": "Plomberie Sow"
+    },
+    "responsibility": "owner",
+    "reported_on": "2026-11-18",
+    "due_on": "2026-12-05",
+    "estimated_amount": {
+      "amount": 8000000,
+      "currency": "XOF"
+    },
+    "ceiling_amount": {
+      "amount": 15000000,
+      "currency": "XOF"
+    },
+    "approval_basis": null,
+    "emergency_reason": null,
+    "decline_reason": null,
+    "decline_note": null,
+    "completed_on": null,
+    "completion_note": null,
+    "closed_at": null,
+    "follows_intervention_id": null,
+    "custom_fields": null,
+    "lock_version": 5,
+    "created_at": "2026-11-18T14:04:00+00:00",
+    "committed_amount": {
+      "amount": 0,
+      "currency": "XOF"
+    },
+    "events": [
+      {
+        "id": "01a1ef81-5700-7000-8000-000000000101",
+        "kind": "reported",
+        "actor_kind": "tenant",
+        "text": "Fuite sous l'évier",
+        "metadata": null,
+        "visible_to_owner": false,
+        "visible_to_tenant": true,
+        "created_at": "2026-11-18T14:04:00+00:00"
+      },
+      {
+        "id": "01a1ef81-5700-7000-8000-000000000102",
+        "kind": "approval_requested",
+        "actor_kind": "system",
+        "text": "Accord du mandant demandé.",
+        "metadata": null,
+        "visible_to_owner": true,
+        "visible_to_tenant": false,
+        "created_at": "2026-11-20T10:00:00+00:00"
+      }
+    ],
+    "files": [
+      {
+        "id": "01a1ef81-5600-7000-8000-0000000000f1",
+        "intervention_id": "01a1ef81-509b-72a6-b78e-36d2c9ec12f1",
+        "kind": "proof",
+        "uploaded_by_kind": "team",
+        "visible_to_owner": false,
+        "visible_to_tenant": false,
+        "created_at": "2026-11-21T08:30:00+00:00"
+      },
+      {
+        "id": "01a1ef81-5600-7000-8000-0000000000f2",
+        "intervention_id": "01a1ef81-509b-72a6-b78e-36d2c9ec12f1",
+        "kind": "proof",
+        "uploaded_by_kind": "team",
+        "visible_to_owner": false,
+        "visible_to_tenant": false,
+        "created_at": "2026-11-19T08:30:00+00:00"
+      },
+      {
+        "id": "01a1ef81-5600-7000-8000-0000000000f3",
+        "intervention_id": "01a1ef81-509b-72a6-b78e-36d2c9ec12f1",
+        "kind": "photo_before",
+        "uploaded_by_kind": "team",
+        "visible_to_owner": false,
+        "visible_to_tenant": false,
+        "created_at": "2026-11-18T14:10:00+00:00"
+      }
+    ],
+    "visits": [],
+    "quotes": [
+      {
+        "id": "01a1ef81-5400-7000-8000-0000000000d1",
+        "intervention_id": "01a1ef81-509b-72a6-b78e-36d2c9ec12f1",
+        "supplier_party_id": "01a1ef81-5300-7000-8000-0000000000a1",
+        "reference": "DEV-2026-0007",
+        "kind": "initial",
+        "status": "submitted",
+        "issued_on": "2026-11-20",
+        "valid_until": "2026-12-20",
+        "proposed_on": null,
+        "message": "Remplacement du siphon.",
+        "total_net": {
+          "amount": 20000000,
+          "currency": "XOF"
+        },
+        "total_tax": {
+          "amount": 3600000,
+          "currency": "XOF"
+        },
+        "total_gross": {
+          "amount": 23600000,
+          "currency": "XOF"
+        },
+        "lines": [
+          {
+            "position": 1,
+            "label": "Siphon et main-d'œuvre",
+            "quantity_milli": 1000,
+            "unit": "forfait",
+            "unit_price": 20000000,
+            "net_amount": 20000000,
+            "tax_category": "standard",
+            "tax_rate_pcm": 1800
+          }
+        ],
+        "lock_version": 2
+      }
+    ],
+    "approvals": [
+      {
+        "id": "01a1ef81-5500-7000-8000-0000000000e1",
+        "intervention_id": "01a1ef81-509b-72a6-b78e-36d2c9ec12f1",
+        "quote_id": "01a1ef81-5400-7000-8000-0000000000d1",
+        "amount": {
+          "amount": 23600000,
+          "currency": "XOF"
+        },
+        "ceiling_amount": {
+          "amount": 15000000,
+          "currency": "XOF"
+        },
+        "status": "pending",
+        "requested_at": "2026-11-20T10:00:00+00:00",
+        "decide_before": "2026-11-27T10:00:00+00:00",
+        "decided_at": null,
+        "decided_via": null,
+        "comment": null,
+        "proof_file_id": null,
+        "lock_version": 1,
+        "replayed": null
+      }
+    ],
+    "invoices": []
+  }
+}

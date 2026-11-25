@@ -12,6 +12,7 @@ use App\Modules\Leases\Models\Lease;
 use App\Modules\Leases\Models\LeaseParty;
 use App\Modules\Leases\Queries\Leases;
 use App\Modules\Leases\Support\DraftCurrency;
+use App\Modules\Leases\Support\TenantQuota;
 use App\Modules\Parties\PublicApi\PartyDirectory;
 use App\Shared\Audit\RecordAudit;
 use Carbon\CarbonImmutable;
@@ -25,17 +26,23 @@ final readonly class AddLeaseParty
     public function __construct(
         private Leases $baux,
         private PartyDirectory $parties,
+        private TenantQuota $locataires,
         private RecordAudit $audit,
     ) {}
 
     /**
-     * Les lignes du bail se relisent après son verrou, jamais avant : deux ajouts concurrents se sérialisent dessus.
+     * Les lignes du bail se relisent après son verrou, jamais avant : deux ajouts concurrents se sérialisent dessus. Le plafond de locataires
+     * se vérifie avant ce verrou : celui de l'abonnement se prend toujours le premier.
      */
     public function handle(Lease $lease, NewLeasePartyChangeData $donnees): LeaseParty
     {
         $this->verifierForme($donnees);
 
         return DB::transaction(function () use ($lease, $donnees): LeaseParty {
+            if ($donnees->role === LeasePartyRole::Tenant && in_array($lease->status, [LeaseStatus::Draft, LeaseStatus::Signed], true)) {
+                $this->locataires->assertRoom([$donnees->partyId]);
+            }
+
             $bail = $this->baux->locked($lease->id);
 
             $this->verifierEtat($bail, $donnees->lockVersion);

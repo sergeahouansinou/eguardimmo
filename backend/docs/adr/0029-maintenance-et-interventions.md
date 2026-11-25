@@ -271,3 +271,7 @@ Ma recommandation est toujours la première.
 ## Amendement du 2026-11-20 (ADR 0040)
 
 - Liste transversale des devis : `GET /org/{organization}/quotes` (Maintenance, `Queries/Quotes`, pagination par curseur, filtres statuts, intervention et fournisseur), en lecture seule ; index `2026_11_20_100000_add_quote_listing_indexes`.
+
+## Amendement du 2026-11-21 (clé d'idempotence des commentaires)
+
+- `POST /org/{organization}/interventions/{intervention}/comments` accepte un en-tête `Idempotency-Key` facultatif (8 à 64 caractères `A-Za-z0-9._:-`, sinon 422 `idempotency_key_required`). La clé est stockée avec l'événement (`intervention_events.idempotency_key`, unique par organisation et auteur, migration `2026_11_21_100000_add_idempotency_key_to_intervention_events`, qui étend aussi le trigger d'ajout seul à cette colonne). Même clé, même auteur, même intervention et même contenu (texte et visibilités) : 200 avec l'événement déjà écrit, sans second événement ; contenu ou intervention différent : 409 `maintenance_idempotency_key_reused`. Course entre deux requêtes : l'index unique tranche, la violation est relue. Le commentaire du locataire (`/tenant/interventions/{id}/comments`) et les clients sans en-tête ne changent pas.

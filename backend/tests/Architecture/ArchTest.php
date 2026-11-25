@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Modules\Catalog\Models\Term;
+use App\Modules\Geography\Models\City;
+use App\Modules\Geography\Models\Country;
 use App\Modules\Identity\Models\EmailChangeRequest;
 use App\Modules\Identity\Models\Operator;
 use App\Modules\Identity\Models\OperatorRoleAssignment;
@@ -10,6 +12,7 @@ use App\Modules\Identity\Models\PersonalAccessToken;
 use App\Modules\Identity\Models\SocialIdentity;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Models\UserDevice;
+use App\Modules\Listings\Models\ListingFavorite;
 use App\Modules\Messaging\Models\SupportAccessGrant;
 use App\Modules\Messaging\Models\SupportAttachment;
 use App\Modules\Messaging\Models\SupportTicket;
@@ -45,7 +48,8 @@ use Illuminate\Support\ServiceProvider;
 // Modèles qui n'appartiennent à aucune organisation ; toute autre entrée est une décision d'architecture.
 $horsOrganisation = [User::class, Operator::class, OperatorRoleAssignment::class, OperatorApproval::class, Plan::class, PlanVersion::class, PlanPrice::class, PlanEntitlement::class, PrivacyRequest::class, PrivacyRequestEvent::class, ScheduledTaskRun::class, BackupReport::class, SocialIdentity::class, UserDevice::class, PersonalAccessToken::class, Organization::class,
     SupportTicket::class, SupportTicketMessage::class, SupportAttachment::class, SupportAccessGrant::class,
-    EmailChangeRequest::class, PaymentProviderEvent::class, Term::class, Notification::class, NotificationPreference::class, PushToken::class, MailSuppression::class, MailProviderEvent::class];
+    EmailChangeRequest::class, PaymentProviderEvent::class, Term::class, Notification::class, NotificationPreference::class, PushToken::class, MailSuppression::class, MailProviderEvent::class,
+    Country::class, City::class, ListingFavorite::class];
 
 $modules = array_map('basename', glob(__DIR__.'/../../app/Modules/*', GLOB_ONLYDIR) ?: []);
 

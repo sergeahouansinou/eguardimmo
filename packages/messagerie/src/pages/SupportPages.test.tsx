@@ -66,7 +66,7 @@ describe('TicketPage', () => {
 
   it('change le statut : mettre en attente, résoudre puis rouvrir', async () => {
     const { source } = renderMessagerie(<TicketPage ticketId="tk-2094" />, { space: 'console' });
-    await userEvent.click(await screen.findByRole('button', { name: 'Mettre en attente' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Marquer en attente' }));
     expect(await screen.findByText('Ticket mis en attente du client.')).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'Marquer résolu' }));
     expect(await screen.findByText('Ticket marqué comme résolu.')).toBeTruthy();

@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $actor_user_id
  * @property string|null $text
  * @property array<string, mixed>|null $metadata
+ * @property string|null $idempotency_key
  * @property bool $visible_to_owner
  * @property bool $visible_to_tenant
  * @property Carbon $created_at

@@ -1,0 +1,64 @@
+{
+  "data": [
+    {
+      "id": "01a1e955-00c1-7380-8ab5-75dea16e57a6",
+      "lease": {
+        "id": "01a1e955-0036-73a7-8eef-4825b4692bb0",
+        "reference": "BL-2026-99809"
+      },
+      "status": "recorded",
+      "method": "transfer",
+      "amount": {
+        "amount": 35000,
+        "currency": "EUR"
+      },
+      "received_on": "2026-11-16",
+      "cancelled_on": null,
+      "allocations": [
+        {
+          "installment_id": "01a1e955-004b-709d-9353-b6f2e30e1028",
+          "amount": {
+            "amount": 35000,
+            "currency": "EUR"
+          }
+        }
+      ]
+    },
+    {
+      "id": "01a1e955-00b3-7169-a620-419ee09d03e9",
+      "lease": {
+        "id": "01a1e955-0036-73a7-8eef-4825b4692bb0",
+        "reference": "BL-2026-99809"
+      },
+      "status": "recorded",
+      "method": "transfer",
+      "amount": {
+        "amount": 30000,
+        "currency": "EUR"
+      },
+      "received_on": "2026-11-16",
+      "cancelled_on": null,
+      "allocations": [
+        {
+          "installment_id": "01a1e955-004b-709d-9353-b6f2e30e1028",
+          "amount": {
+            "amount": 30000,
+            "currency": "EUR"
+          }
+        }
+      ]
+    }
+  ],
+  "links": {
+    "first": null,
+    "last": null,
+    "prev": null,
+    "next": null
+  },
+  "meta": {
+    "path": "https://api.eguardimmo.test/api/v1/tenant/rent/payments",
+    "per_page": 25,
+    "next_cursor": null,
+    "prev_cursor": null
+  }
+}

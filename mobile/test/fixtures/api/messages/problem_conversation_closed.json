@@ -1,0 +1,8 @@
+{
+  "type": "https://api.eguardimmo.test/problems/conversation_closed",
+  "title": "Conversation fermée",
+  "status": 409,
+  "detail": "Cette conversation est fermée : ouvrez-en une nouvelle ou attendez la réponse de l'agence.",
+  "code": "conversation_closed",
+  "request_id": "01a1ef81-5144-7138-a3ac-9b1463fdc9c1"
+}

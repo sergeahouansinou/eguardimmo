@@ -28,6 +28,7 @@ export interface SelectProps {
   disabled?: boolean;
   id?: string;
   className?: string;
+  triggerClassName?: string;
 }
 
 const fold = (text: string) =>
@@ -48,6 +49,7 @@ export function Select({
   disabled = false,
   id,
   className,
+  triggerClassName,
 }: SelectProps) {
   const generatedId = useId();
   const baseId = id ?? generatedId;
@@ -127,6 +129,7 @@ export function Select({
               'focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-focus',
               'disabled:cursor-not-allowed disabled:border-line disabled:bg-disabled disabled:text-fg-disabled',
               'aria-invalid:border-danger-solid',
+              triggerClassName,
             )}
           >
             <span id={valueId} className={cx('min-w-0 flex-1 truncate', selected ? 'text-fg' : 'text-fg-placeholder')}>

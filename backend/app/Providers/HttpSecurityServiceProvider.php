@@ -52,7 +52,7 @@ final class HttpSecurityServiceProvider extends ServiceProvider
 
             return is_int($identifiant) || is_string($identifiant)
                 ? Limit::perMinute(self::LIMITE_UTILISATEUR_PAR_MINUTE)->by('user:'.$identifiant)
-                : Limit::perMinute(self::LIMITE_ANONYME_PAR_MINUTE)->by('ip:'.$request->ip());
+                : Limit::perMinute(self::LIMITE_ANONYME_PAR_MINUTE)->by('ip:'.self::ipCliente($request));
         });
 
         RateLimiter::for('auth', function (Request $request): array {

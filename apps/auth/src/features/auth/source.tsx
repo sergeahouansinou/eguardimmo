@@ -32,6 +32,13 @@ export interface SocialSignInInput {
   invitationToken?: string;
 }
 
+export interface SocialRedirectInput {
+  provider: SocialProvider;
+  intent: Extract<SocialIntent, "connexion" | "inscription">;
+  profile?: RegisterProfile;
+  returnTo: string | null;
+}
+
 export type SocialResult =
   | { status: "authenticated" }
   | { status: "two_factor_required" }
@@ -118,6 +125,7 @@ export interface AuthSource {
   verifyBackupCode: (code: string) => Promise<TwoFactorResult>;
   socialIdentities: (intent: SocialIntent) => SocialIdentity[];
   socialSignIn: (input: SocialSignInInput) => Promise<SocialResult>;
+  socialRedirectUrl?: (input: SocialRedirectInput) => string | null;
   signOut: () => Promise<void>;
   register: (input: RegisterInput) => Promise<RequestResult>;
   getVerificationStatus: () => Promise<unknown>;

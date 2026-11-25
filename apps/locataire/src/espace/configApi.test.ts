@@ -108,6 +108,13 @@ describe("aide du locataire en mode api", () => {
     for (const forbidden of ["Tilleuls", "01 00 00", "gestion@example.com", "31/03/2027", "Signaler un problème"]) expect(text).not.toContain(forbidden);
   });
 
+  it("ne présente plus de fonction livrée comme à venir et renvoie vers chaque famille ouverte", () => {
+    const text = JSON.stringify(apiHelpCenter);
+    for (const stale of ["Bientôt disponible", "prochainement", "seront ajoutés"]) expect(text).not.toContain(stale);
+    const links = apiHelpCenter.categories.flatMap((category) => category.articles.flatMap((article) => (article.href ? [article.href] : [])));
+    expect(links).toEqual(expect.arrayContaining(["/loyers", "/documents", "/interventions/nouvelle", "/bail/conge"]));
+  });
+
   it("n’invite pas à écrire au gestionnaire", () => {
     expect(apiLocataireProfile.help.writeLabel).toBeNull();
     expect(apiLocataireProfile.help.supportTicket).toBe(true);

@@ -1,0 +1,22 @@
+{
+  "data": [
+    {
+      "id": "01a1ef81-4fa7-73e7-83f2-ee41e69f4bee",
+      "name": "Résidence Roy",
+      "type": "building",
+      "address": { "line1": "12 rue des Lilas", "line2": null, "postal_code": "69003", "city": "Lyon", "country": "FR" },
+      "active_units_count": 6,
+      "archived_at": null
+    },
+    {
+      "id": "01a1ef81-4fa7-73e7-83f2-ee41e69f4bef",
+      "name": "Villa des Pins",
+      "type": "house",
+      "address": { "line1": "3 chemin des Pins", "postal_code": "69110", "city": "Sainte-Foy-lès-Lyon", "country": "FR" },
+      "active_units_count": 1,
+      "archived_at": null
+    }
+  ],
+  "links": { "first": null, "last": null, "prev": null, "next": null },
+  "meta": { "path": "https://api.eguardimmo.test/api/v1/org/01a1ef81-4fa4-73ad-ab23-9b20322e4204/properties", "per_page": 100, "next_cursor": null, "prev_cursor": null }
+}

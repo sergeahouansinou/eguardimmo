@@ -1,0 +1,62 @@
+{
+  "data": [
+    {
+      "id": "01a1e955-004b-709d-9353-b6f2e30e1028",
+      "lease": {
+        "id": "01a1e955-0036-73a7-8eef-4825b4692bb0",
+        "reference": "BL-2026-99809"
+      },
+      "period": {
+        "start": "2026-11-01",
+        "end": "2026-11-30"
+      },
+      "due_date": "2026-11-05",
+      "status": "paid",
+      "is_overdue": false,
+      "amounts": {
+        "rent": {
+          "amount": 65000,
+          "currency": "EUR"
+        },
+        "charges": {
+          "amount": 0,
+          "currency": "EUR"
+        },
+        "vat": {
+          "amount": 0,
+          "currency": "EUR"
+        },
+        "total": {
+          "amount": 65000,
+          "currency": "EUR"
+        }
+      },
+      "outstanding": {
+        "amount": 0,
+        "currency": "EUR"
+      },
+      "issued_on": "2026-11-16",
+      "notice": {
+        "number": "AV-2026-0001",
+        "issued_on": "2026-11-16"
+      },
+      "receipt": {
+        "id": "01a1e955-00c8-71a7-87d5-44f903e62d32",
+        "number": "QT-2026-0001",
+        "issued_on": "2026-11-16"
+      }
+    }
+  ],
+  "links": {
+    "first": null,
+    "last": null,
+    "prev": null,
+    "next": null
+  },
+  "meta": {
+    "path": "https://api.eguardimmo.test/api/v1/tenant/rent/installments",
+    "per_page": 25,
+    "next_cursor": null,
+    "prev_cursor": null
+  }
+}

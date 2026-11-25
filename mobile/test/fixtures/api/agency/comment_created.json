@@ -1,0 +1,12 @@
+{
+  "data": {
+    "id": "01a1ef81-5700-7000-8000-000000000103",
+    "kind": "comment",
+    "actor_kind": "team",
+    "text": "Prestataire prévenu.",
+    "metadata": null,
+    "visible_to_owner": false,
+    "visible_to_tenant": true,
+    "created_at": "2026-11-21T09:00:00+00:00"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "data": {
+    "id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+    "reference": "INT-2026-0001",
+    "state": "reported",
+    "nature": {
+      "key": "plumbing",
+      "label": "Plomberie"
+    },
+    "title": "Fuite sous l'évier",
+    "description": "De l'eau coule sous l'évier de la cuisine.",
+    "room": null,
+    "availability": null,
+    "reported_urgency": "soon",
+    "place": "Résidence Roy - LOT-28755",
+    "reported_on": "2026-11-18",
+    "decline": null,
+    "completed_on": null,
+    "visits": [],
+    "cancellable": true,
+    "events": [
+      {
+        "id": "01a1ef81-4fe2-71d9-bc07-559fc4da1193",
+        "kind": "reported",
+        "author": "tenant",
+        "text": "Demande signalée.",
+        "created_at": "2026-11-18T11:01:00+00:00"
+      }
+    ],
+    "files": []
+  }
+}

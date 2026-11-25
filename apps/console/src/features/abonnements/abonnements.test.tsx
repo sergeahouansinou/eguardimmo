@@ -26,6 +26,13 @@ describe('grille des plans (ADR 0013)', () => {
     for (const ancien of ['Essentiel', 'Pro', 'Agence']) expect(within(table).queryByText(ancien)).toBeNull();
   });
 
+  it('mène les « Tout voir » des essais et des échecs vers la liste des organisations', async () => {
+    renderWithConsole(<AbonnementsScreen />);
+    const liens = await screen.findAllByRole('link', { name: /^Tout voir, \d+$/ });
+    expect(liens).toHaveLength(2);
+    for (const lien of liens) expect(lien.getAttribute('href')).toBe('/organisations');
+  });
+
   it('préremplit le formulaire du plan Silver avec ses prix et ses quotas', async () => {
     renderWithConsole(<PlanFormScreen planId="silver" />);
     await waitFor(() => { expect(screen.getByRole<HTMLInputElement>('textbox', { name: /Prix mensuel HT/ }).value).toBe('4,90'); });

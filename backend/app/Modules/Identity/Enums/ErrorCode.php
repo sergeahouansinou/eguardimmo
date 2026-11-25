@@ -45,6 +45,7 @@ enum ErrorCode: string
     case AccountAlreadySuspended = 'account_already_suspended';
     case AccountNotSuspended = 'account_not_suspended';
     case TwoFactorNotEnabled = 'two_factor_not_enabled';
+    case TwoFactorAlreadyEnabled = 'two_factor_already_enabled';
     case SuspensionReviewForbidden = 'suspension_review_forbidden';
     case LastOperatorAdministrator = 'last_operator_administrator';
 
@@ -61,7 +62,7 @@ enum ErrorCode: string
     {
         return match ($this) {
             self::NoAccount, self::TenantInvitationInvalid, self::OwnerInvitationInvalid, self::AccountNotFound => 404,
-            self::AccountExistsLinkRequired, self::IdentityAlreadyLinked, self::ProviderAlreadyLinked, self::TenantAccessAlreadyGranted, self::AccountAlreadySuspended, self::AccountNotSuspended, self::TwoFactorNotEnabled, self::LastOperatorAdministrator => 409,
+            self::AccountExistsLinkRequired, self::IdentityAlreadyLinked, self::ProviderAlreadyLinked, self::TenantAccessAlreadyGranted, self::AccountAlreadySuspended, self::AccountNotSuspended, self::TwoFactorNotEnabled, self::TwoFactorAlreadyEnabled, self::LastOperatorAdministrator => 409,
             self::EmailRequired, self::InvalidIdToken, self::NoTokenToRevoke, self::TenantInvitationConsentRequired, self::OwnerInvitationCodeInvalid, self::OwnerInvitationConsentRequired, self::EmailChangeCodeInvalid, self::PhoneInvalid, self::OperatorProofRequired, self::OperatorProofInvalid => 422,
             self::InvitationDailyLimitReached, self::EmailChangeAttemptsExceeded => 429,
             self::ProviderUnavailable => 503,
@@ -110,6 +111,7 @@ enum ErrorCode: string
             self::AccountAlreadySuspended => 'Compte déjà suspendu',
             self::AccountNotSuspended => 'Compte non suspendu',
             self::TwoFactorNotEnabled => 'Double authentification non activée',
+            self::TwoFactorAlreadyEnabled => 'Double authentification déjà activée',
             self::SuspensionReviewForbidden => 'Revue de suspension refusée',
             self::LastOperatorAdministrator => 'Dernier administrateur de la console',
         };
@@ -155,6 +157,7 @@ enum ErrorCode: string
             self::AccountAlreadySuspended => 'Ce compte est déjà suspendu.',
             self::AccountNotSuspended => 'Ce compte n\'est pas suspendu.',
             self::TwoFactorNotEnabled => 'Ce compte n\'a pas de double authentification confirmée.',
+            self::TwoFactorAlreadyEnabled => 'La double authentification est déjà confirmée : désactivez-la avant d\'en créer une nouvelle.',
             self::LastOperatorAdministrator => 'Ce changement retirerait le dernier opérateur administrateur : la console n\'aurait plus personne pour attribuer les rôles et valider. Ajoutez d\'abord un autre administrateur, ou confirmez avec --force.',
             self::SuspensionReviewForbidden => 'La revue d\'une suspension revient à un autre opérateur que celui qui l\'a prononcée.',
         };

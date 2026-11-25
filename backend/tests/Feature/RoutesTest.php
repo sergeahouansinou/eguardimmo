@@ -18,6 +18,11 @@ const ROUTES_PUBLIQUES = [
     'api/v1/mail/unsubscribe/{token}',
     'api/v1/webhooks/mail/mailtrap',
     'api/v1/webhooks/payments/{provider}',
+    'api/v1/marketplace/places',
+    'api/v1/marketplace/listings',
+    'api/v1/marketplace/listings/{ref}',
+    'api/v1/marketplace/listings/{ref}/availability',
+    'api/v1/marketplace/listings/{ref}/quote',
 ];
 
 /**
@@ -67,6 +72,11 @@ const LIMITEURS_PUBLICS_DEDIES = [
     'api/v1/mail/unsubscribe/{token}' => 'throttle:mail-unsubscribe',
     'api/v1/webhooks/mail/mailtrap' => 'throttle:mail-webhook',
     'api/v1/webhooks/payments/{provider}' => 'throttle:payments-webhook',
+    'api/v1/marketplace/places' => 'throttle:marketplace-places',
+    'api/v1/marketplace/listings' => 'throttle:marketplace-listings',
+    'api/v1/marketplace/listings/{ref}' => 'throttle:marketplace-listings',
+    'api/v1/marketplace/listings/{ref}/availability' => 'throttle:marketplace-availability',
+    'api/v1/marketplace/listings/{ref}/quote' => 'throttle:marketplace-quote',
 ];
 
 it('limite chaque route publique par throttle:auth ou par son limiteur dédié', function (): void {

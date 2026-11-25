@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Identity\Notifications;
 
+use App\Shared\Mail\MailText;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -27,7 +28,7 @@ final class OperatorGrantedNotification extends Notification implements ShouldQu
     {
         return (new MailMessage)
             ->subject('Rôle opérateur attribué')
-            ->line('Le rôle opérateur de la console eGuardImmo vient d\'être attribué au compte '.$this->granteeEmail.'.')
+            ->line('Le rôle opérateur de la console eGuardImmo vient d\'être attribué au compte '.MailText::markdown($this->granteeEmail).'.')
             ->line('Si cette attribution n\'est pas prévue, signalez-la immédiatement.');
     }
 }

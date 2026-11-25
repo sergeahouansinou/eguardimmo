@@ -1,0 +1,30 @@
+@import "@eguardimmo/ui/styles.css";
+
+@theme {
+  --text-display: 32px;
+  --text-display--line-height: 38px;
+  --text-display--font-weight: 700;
+  --text-hero: 44px;
+  --text-hero--line-height: 50px;
+  --text-hero--font-weight: 700;
+  --text-prose: 16px;
+  --text-prose--line-height: 26px;
+  --text-prose--font-weight: 400;
+  --text-lead: 18px;
+  --text-lead--line-height: 28px;
+  --text-lead--font-weight: 400;
+}
+
+html {
+  scroll-padding-top: 16px;
+}
+
+.on-dark {
+  --eg-focus-ring: var(--eg-accent-default);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

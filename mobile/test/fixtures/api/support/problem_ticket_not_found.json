@@ -1,0 +1,8 @@
+{
+  "type": "https://api.eguardimmo.test/problems/ticket_not_found",
+  "title": "Demande introuvable",
+  "status": 404,
+  "detail": "Demande introuvable.",
+  "code": "ticket_not_found",
+  "request_id": "01a1ef81-5144-7138-a3ac-9b1463fdc9c1"
+}

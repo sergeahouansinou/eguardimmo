@@ -1,0 +1,15 @@
+{
+  "data": [],
+  "links": {
+    "first": null,
+    "last": null,
+    "prev": null,
+    "next": null
+  },
+  "meta": {
+    "path": "https://api.eguardimmo.test/api/v1/tenant/interventions",
+    "per_page": 25,
+    "next_cursor": null,
+    "prev_cursor": null
+  }
+}

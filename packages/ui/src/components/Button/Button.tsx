@@ -1,15 +1,19 @@
+'use client';
+
 import { Slot, Slottable } from '@radix-ui/react-slot';
 import type { ComponentProps, MouseEvent } from 'react';
 import { cx } from '../../lib/cx';
 import { focusRing } from '../../lib/focus';
 import { Spinner } from '../Spinner/Spinner';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'link';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'link' | 'accent';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
     'border-transparent bg-action text-on-action hover:bg-action-hover active:bg-action-pressed disabled:bg-disabled disabled:text-fg-disabled',
+  accent:
+    'border-transparent bg-accent text-on-accent hover:opacity-90 active:opacity-80 disabled:bg-disabled disabled:text-fg-disabled',
   secondary:
     'border-line bg-surface text-fg hover:bg-muted disabled:bg-disabled disabled:text-fg-disabled',
   ghost: 'border-transparent text-fg-muted hover:bg-muted disabled:text-fg-disabled disabled:hover:bg-transparent',

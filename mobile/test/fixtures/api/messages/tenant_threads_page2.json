@@ -1,0 +1,33 @@
+{
+  "data": [
+    {
+      "id": "01a1ef81-0000-7000-8000-000000000003",
+      "subject": "Charges de régularisation",
+      "status": "open",
+      "agency": {
+        "id": "01a1ef80-0000-7000-8000-0000000000a1",
+        "name": "Agence Lagune"
+      },
+      "lease": {
+        "id": "01a1ef80-1111-7000-8000-000000000b01",
+        "reference": "B-2026-014"
+      },
+      "mandate": null,
+      "preview": "Bonjour, je vous confirme le passage demain matin.",
+      "last_message_at": "2026-11-20T09:15:00+00:00",
+      "last_author": "agency",
+      "unread": false,
+      "archived": false,
+      "message_count": 4,
+      "has_attachments": false,
+      "agency_last_read_at": null,
+      "muted": false,
+      "muted_until": null,
+      "can_reply": true
+    }
+  ],
+  "meta": {
+    "has_more": false,
+    "next_cursor": null
+  }
+}

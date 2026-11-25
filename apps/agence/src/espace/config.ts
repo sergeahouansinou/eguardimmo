@@ -2,6 +2,7 @@ import {
   ArrowLeftRight,
   Banknote,
   BadgeCheck,
+  BookOpen,
   Building2,
   CalendarCheck,
   ChartPie,
@@ -24,6 +25,7 @@ import {
   Landmark,
   LifeBuoy,
   Megaphone,
+  Newspaper,
   MessageSquare,
   Percent,
   Receipt,
@@ -85,22 +87,40 @@ export interface NavigationOptions {
   tax?: boolean;
   analytics?: boolean;
   timezone?: boolean;
+  accounting?: boolean;
+  listings?: boolean;
+  settingsAdmin?: boolean;
 }
 
-function settingsEntry(support: SupportNavigation | undefined, timezone: boolean): NavEntry {
+function settingsEntry(options: NavigationOptions): NavEntry {
   const entry: NavEntry = { id: "reglages", label: "Réglages", href: r.reglages, icon: Settings };
-  const manageAccess = support?.manageAccess === true;
-  if (!manageAccess && !timezone) return entry;
+  const manageAccess = options.support?.manageAccess === true;
+  const timezone = options.timezone === true;
+  const admin = options.settingsAdmin === true;
+  if (!manageAccess && !timezone && !admin) return entry;
   return {
     ...entry,
-    ...(support?.access ? { count: support.access } : {}),
+    ...(options.support?.access ? { count: options.support.access } : {}),
     children: [
       { id: "reglages-identite", label: "Identité", href: r.reglages },
       ...(timezone ? [{ id: "reglages-fuseau", label: "Fuseau horaire", href: r.reglagesFuseau }] : []),
+      ...(admin ? [{ id: "reglages-champs", label: "Champs personnalisés", href: r.reglagesChamps }, { id: "reglages-rgpd", label: "Demandes RGPD", href: r.reglagesRgpd }] : []),
       ...(manageAccess ? [{ id: "reglages-acces-support", label: "Accès du support", href: r.reglagesAccesSupport }] : []),
     ],
   };
 }
+
+const accountingEntry: NavEntry = {
+  id: "comptabilite",
+  label: "Comptabilité",
+  href: r.comptabilite,
+  icon: BookOpen,
+  children: [
+    { id: "comptabilite-plan", label: "Plan comptable", href: r.comptabilite },
+    { id: "comptabilite-ecritures", label: "Écritures", href: r.comptabiliteEcritures },
+    { id: "comptabilite-releve", label: "Relevé de bail", href: r.comptabiliteReleve },
+  ],
+};
 
 function bauxEntry(tenantRequests: TenantRequestsNavigation | undefined): NavEntry {
   const entry: NavEntry = { id: "baux", label: "Baux", href: r.baux, icon: FilePenLine };
@@ -157,6 +177,7 @@ export function buildNavigation(counts?: ShellCounts, options: NavigationOptions
           { id: "impayes", label: "Impayés", href: r.impayes, icon: CircleAlert, count: counts?.impayes, activeFor: [r.recouvrement] },
           { id: "reversements", label: "Reversements", href: r.reversements, icon: Wallet, count: counts?.reversements },
           { id: "honoraires", label: "Honoraires", href: r.honoraires, icon: Percent },
+          ...(options.accounting ? [accountingEntry] : []),
           ...(options.ownerFunds
             ? [
                 { id: "fonds", label: "Fonds de tiers", href: r.fonds, icon: Landmark },
@@ -182,6 +203,7 @@ export function buildNavigation(counts?: ShellCounts, options: NavigationOptions
         entries: [
           { id: "messages", label: "Messages", href: r.messages, icon: MessageSquare, count: counts?.messages },
           { id: "campagnes", label: "Campagnes", href: r.campagnes, icon: Megaphone },
+          ...(options.listings ? [{ id: "annonces", label: "Annonces", href: r.annonces, icon: Newspaper }] : []),
           ...(options.planning ? [{ id: "agenda", label: "Agenda", href: r.agenda, icon: CalendarDays }, { id: "taches", label: "Tâches", href: r.taches, icon: ClipboardList }] : []),
           ...(options.contacts ? [{ id: "contacts", label: "Contacts", href: r.contacts, icon: NotebookTabs }] : []),
           { id: "interventions", label: "Interventions", href: r.interventions, icon: Wrench, count: counts?.interventions },
@@ -191,7 +213,7 @@ export function buildNavigation(counts?: ShellCounts, options: NavigationOptions
       },
     ],
     footer: [
-      settingsEntry(options.support, options.timezone === true),
+      settingsEntry(options),
       ...(options.activity ? [{ id: "journal", label: "Journal d’activité", href: r.journal, icon: History }] : []),
       { id: "equipe", label: "Équipe", href: r.equipe, icon: UsersRound },
       ...supportEntries(options.support),
@@ -392,10 +414,37 @@ export const apiOnlyPages: readonly (readonly [href: string, label: string])[] =
   [r.analytiqueOccupation, "Analytique, occupation des lots"],
 ];
 
-export function buildSearchPages(options: { records: boolean; banking?: boolean; tenantRequests?: TenantRequestsNavigation } = { records: true }): PageResult[] {
+export const accountingPages: readonly (readonly [href: string, label: string])[] = [
+  [r.comptabilite, "Comptabilité, plan comptable"],
+  [r.comptabiliteEcritures, "Comptabilité, écritures"],
+  [r.comptabiliteReleve, "Comptabilité, relevé de bail"],
+];
+
+export const listingPages: readonly (readonly [href: string, label: string])[] = [
+  [r.annonces, "Annonces"],
+  [r.annonceNew, "Nouvelle annonce"],
+];
+
+export const settingsAdminPages: readonly (readonly [href: string, label: string])[] = [
+  [r.reglagesChamps, "Réglages, champs personnalisés"],
+  [r.reglagesRgpd, "Réglages, demandes RGPD"],
+];
+
+export interface SearchOptions {
+  records: boolean;
+  banking?: boolean;
+  tenantRequests?: TenantRequestsNavigation;
+  accounting?: boolean;
+  listings?: boolean;
+  settingsAdmin?: boolean;
+}
+
+export function buildSearchPages(options: SearchOptions = { records: true }): PageResult[] {
   const tenantPages = [...(options.tenantRequests?.manage === true ? tenantRequestManagePages : []), ...(options.tenantRequests?.payments === true ? tenantRequestPaymentPages : [])];
   const gated = new Set([r.etatsLieux, ...tenantRequestManagePages.map(([href]) => href), ...tenantRequestPaymentPages.map(([href]) => href)]);
   const pages = new Map<string, string>(options.records ? deliveredPages : [...deliveredPages, ...apiOnlyPages.filter(([href]) => !gated.has(href) || (href === r.etatsLieux && options.tenantRequests?.manage === true)), ...(options.banking === true ? bankingPages : []), ...tenantPages]);
+  const granted = [...(options.accounting === true ? accountingPages : []), ...(options.listings === true ? listingPages : []), ...(options.settingsAdmin === true ? settingsAdminPages : [])];
+  for (const [href, label] of granted) pages.set(href, label);
   for (const [href, label] of plannedScreens) if (!pages.has(href)) pages.set(href, label);
   const labelled = Array.from(pages, ([href, label]) => ({ href, label }));
   if (!options.records) return labelled;

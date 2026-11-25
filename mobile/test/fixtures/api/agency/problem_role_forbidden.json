@@ -1,0 +1,8 @@
+{
+  "type": "https://api.eguardimmo.test/problems/role_forbidden",
+  "title": "Action réservée",
+  "status": 403,
+  "detail": "Votre rôle ne permet pas cette action.",
+  "code": "role_forbidden",
+  "request_id": "01a1ef81-5144-7138-a3ac-9b1463fdc9c1"
+}

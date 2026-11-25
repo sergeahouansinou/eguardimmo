@@ -1,0 +1,83 @@
+{
+  "data": {
+    "agency": { "id": "0193a5e1-0000-7000-8000-0000000000b1", "name": "Agence du Lac" },
+    "mandant": { "name": "Famille Dossou", "role": "holder" },
+    "access": { "in_grace": false, "until": null },
+    "currency": "XOF",
+    "mandate": {
+      "id": "0193a5e1-0000-7000-8000-0000000000d1",
+      "reference": "M-2026-0001",
+      "status": "active",
+      "is_suspended": false,
+      "starts_on": "2026-01-01",
+      "end_date": "2028-12-31",
+      "fee_kind": "percentage",
+      "fee_basis_points": 700,
+      "fee_flat_amount": null,
+      "payout_day": 5
+    },
+    "mandates_count": 1,
+    "month": {
+      "period": "2026-11",
+      "from": "2026-11-01",
+      "to": "2026-11-30",
+      "called": { "amount": 1200000, "currency": "XOF" },
+      "collected": { "amount": 700000, "currency": "XOF" },
+      "arrears": { "amount": { "amount": 500000, "currency": "XOF" }, "count": 1, "max_days_late": 11 }
+    },
+    "payouts": {
+      "pending": { "net": { "amount": 641200, "currency": "XOF" }, "fees": { "amount": 58800, "currency": "XOF" } },
+      "last": { "amount": { "amount": 600000, "currency": "XOF" }, "date": "2026-10-05", "number": "RV-2026-0006" },
+      "next_date": "2026-12-05",
+      "next_notice": "before_payout_day"
+    },
+    "last_report": {
+      "id": "0193a5e1-0000-7000-8000-0000000000e1",
+      "number": "CRG-2026-0010",
+      "status": "published",
+      "period": { "kind": "monthly", "start": "2026-10-01", "end": "2026-10-31" },
+      "published_at": "2026-11-03T09:00:00+00:00",
+      "first_read_at": null,
+      "is_read": false
+    },
+    "counters": { "units_total": 3, "units_occupied": 2, "units_vacant": 1, "quotes_to_decide": 2 },
+    "units": [
+      {
+        "id": "0193a5e1-0000-7000-8000-0000000000c1",
+        "reference": "A1",
+        "property_name": "Résidence Les Filaos",
+        "label": "Résidence Les Filaos - A1",
+        "type": "apartment",
+        "surface_hundredths": 6500,
+        "state": "occupied",
+        "tenant": { "name": "Pauline Martin" },
+        "rent": { "amount": 700000, "currency": "XOF" },
+        "collected": { "amount": 700000, "currency": "XOF" }
+      },
+      {
+        "id": "0193a5e1-0000-7000-8000-0000000000c2",
+        "reference": "B2",
+        "property_name": "Résidence Les Filaos",
+        "label": "Résidence Les Filaos - B2",
+        "type": "studio",
+        "surface_hundredths": 2850,
+        "state": "late",
+        "tenant": { "name": "Jean Koffi" },
+        "rent": { "amount": 500000, "currency": "XOF" },
+        "collected": { "amount": 0, "currency": "XOF" }
+      },
+      {
+        "id": "0193a5e1-0000-7000-8000-0000000000c3",
+        "reference": "C3",
+        "property_name": "Résidence Les Filaos",
+        "label": "Résidence Les Filaos - C3",
+        "type": "parking",
+        "surface_hundredths": null,
+        "state": "vacant",
+        "tenant": null,
+        "rent": null,
+        "collected": { "amount": 0, "currency": "XOF" }
+      }
+    ]
+  }
+}

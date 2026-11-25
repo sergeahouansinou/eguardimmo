@@ -19,6 +19,14 @@ final readonly class MandateEndRequests
     }
 
     /**
+     * Suppose un contexte d'organisation.
+     */
+    public function latestOf(string $mandateId): ?MandateEndRequest
+    {
+        return MandateEndRequest::query()->where('mandate_id', $mandateId)->orderByDesc('created_at')->orderByDesc('id')->first();
+    }
+
+    /**
      * Suppose un contexte d'organisation et une transaction ouverte.
      */
     public function lockedPendingOf(string $mandateId): ?MandateEndRequest

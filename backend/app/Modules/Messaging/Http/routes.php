@@ -73,7 +73,7 @@ Route::middleware(['auth:sanctum', 'no-operator-token', 'verified', 'messaging.p
     Route::get('/tickets/{ticket}/messages', ListMyTicketMessagesController::class)->whereUuid('ticket')->middleware('throttle:120,1,support-poll')->name('messaging.support.tickets.messages.index');
     Route::post('/tickets', OpenTicketController::class)->middleware(['throttle:5,60,support-tickets-open', 'throttle:20,1440,support-tickets-open-day'])->name('messaging.support.tickets.store');
     Route::patch('/tickets/{ticket}', UpdateMyTicketController::class)->whereUuid('ticket')->middleware('throttle:60,1,support-state')->name('messaging.support.tickets.update');
-    Route::post('/tickets/{ticket}/messages', ReplyMyTicketController::class)->whereUuid('ticket')->middleware('throttle:30,1,support-reply')->name('messaging.support.tickets.reply');
+    Route::post('/tickets/{ticket}/messages', ReplyMyTicketController::class)->whereUuid('ticket')->middleware(['throttle:30,1,support-reply', 'throttle:200,1440,support-reply-day'])->name('messaging.support.tickets.reply');
 });
 
 Route::middleware(['auth:sanctum', 'space:operator', 'messaging.private'])->prefix('console/support')->group(function (): void {

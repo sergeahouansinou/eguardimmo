@@ -8,7 +8,7 @@ use App\Modules\Identity\Models\User;
 use App\Modules\Mandates\Actions\RequestMandateEnd;
 use App\Modules\Mandates\Enums\ErrorCode;
 use App\Modules\Mandates\Http\Requests\StoreMandateEndRequestRequest;
-use App\Modules\Mandates\Http\Resources\MandateEndRequestResource;
+use App\Modules\Mandates\Http\Resources\Owner\OwnerMandateEndRequestResource;
 use App\Modules\Mandates\Models\MandateEndRequest;
 use App\Modules\Mandates\PublicApi\MandateDirectory;
 use App\Modules\Mandates\Queries\OwnerMandates;
@@ -28,6 +28,6 @@ final class StoreOwnerMandateEndRequestController
 
         $demande = $contexte->run($mandat->organization_id, fn (): MandateEndRequest => $action->handle($mandat->id, $visible, $user->id, $request->reason()));
 
-        return (new MandateEndRequestResource($demande))->response()->setStatusCode($demande->wasRecentlyCreated ? 201 : 200);
+        return (new OwnerMandateEndRequestResource($demande))->response()->setStatusCode($demande->wasRecentlyCreated ? 201 : 200);
     }
 }

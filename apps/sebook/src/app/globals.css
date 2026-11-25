@@ -1,0 +1,423 @@
+@import "tailwindcss";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-hanken), system-ui, sans-serif;
+  color: #231f1c;
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Hide scrollbars on horizontal scroll rows (category bar, listing carousels) */
+.cat-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.cat-scroll::-webkit-scrollbar {
+  display: none;
+  height: 0;
+}
+
+/* Listing carousel card - 7 visible per row on desktop (6 × 16px gaps = 96px) */
+.r-card {
+  flex: 0 0 calc((100% - 96px) / 7);
+  width: calc((100% - 96px) / 7);
+}
+
+/* Search-results grid - 7 columns on desktop */
+.r-search-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+/* Experiences grid - 6 columns on desktop */
+.r-exp-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+/* Mobile search trigger - hidden on desktop, shown ≤760px */
+.r-search-mobilewrap {
+  display: none;
+}
+
+/* Footer grids - destinations (5) and link columns (3) on desktop */
+.r-foot-dest {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.r-foot-cols {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* ============================================================
+   RESPONSIVE - adapts every section from wide desktop to phone
+   ============================================================ */
+
+/* Wide → large laptop */
+@media (max-width: 1380px) {
+  .r-card {
+    flex-basis: calc((100% - 80px) / 6);
+    width: calc((100% - 80px) / 6);
+  }
+  .r-search-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+/* Laptop / large tablet */
+@media (max-width: 1180px) {
+  .r-card {
+    flex-basis: calc((100% - 64px) / 5);
+    width: calc((100% - 64px) / 5);
+  }
+  .r-search-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .r-foot-dest {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+  .r-exp-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    row-gap: 28px;
+  }
+  .r-exp-grid > div {
+    border-left: none !important;
+    padding: 0 12px !important;
+  }
+  .r-cta-side {
+    display: none !important;
+  }
+}
+
+/* Tablet */
+@media (max-width: 980px) {
+  .r-card {
+    flex-basis: calc((100% - 48px) / 4);
+    width: calc((100% - 48px) / 4);
+  }
+  .r-search-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .r-header-inner {
+    padding: 18px 24px 8px !important;
+  }
+  .r-listings {
+    padding: 24px 24px 56px !important;
+  }
+  .r-foot-pad {
+    padding: 44px 28px 12px !important;
+  }
+  .r-foot-bottom {
+    padding: 20px 28px !important;
+  }
+  .r-foot-cols {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .r-cta-phone {
+    transform: scale(0.92) !important;
+    transform-origin: bottom center;
+  }
+}
+
+/* Small tablet / large phone */
+@media (max-width: 760px) {
+  .r-card {
+    flex-basis: calc((100% - 32px) / 3);
+    width: calc((100% - 32px) / 3);
+  }
+  .r-search-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .r-nav-tabs {
+    display: none !important;
+  }
+  .r-foot-dest {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .r-exp-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  /* App CTA : empilement 1 colonne, centré */
+  .r-cta-grid {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center;
+  }
+  .r-cta-text {
+    text-align: center !important;
+    padding-bottom: 0 !important;
+  }
+  .r-cta-btns {
+    justify-content: center !important;
+  }
+  .r-tax-toggle {
+    display: none !important;
+  }
+  .r-searchwrap {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  .r-searchwrap-desktop {
+    display: none !important;
+  }
+  .r-search-mobilewrap {
+    display: block !important;
+  }
+  .r-catbar-inner {
+    padding: 0 16px !important;
+  }
+  /* Search pill stacks vertically */
+  .r-searchbar {
+    flex-direction: column !important;
+    border-radius: 24px !important;
+    max-width: 460px !important;
+  }
+  .r-seg {
+    flex: none !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+    padding: 12px 20px !important;
+  }
+  .r-seg-divider {
+    display: none !important;
+  }
+  .r-seg-row {
+    border-bottom: 1px solid #e8e3dc;
+  }
+  .r-dd {
+    width: calc(100vw - 28px) !important;
+    max-width: 420px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+  }
+}
+
+/* Phone */
+@media (max-width: 560px) {
+  .r-card {
+    flex-basis: calc((100% - 16px) / 2);
+    width: calc((100% - 16px) / 2);
+  }
+  .r-search-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .r-become-host {
+    display: none !important;
+  }
+  .r-header-inner {
+    padding: 14px 16px 6px !important;
+    gap: 12px !important;
+  }
+  .r-listings {
+    padding: 20px 16px 48px !important;
+  }
+  .r-foot-pad {
+    padding: 36px 18px 12px !important;
+  }
+  .r-foot-bottom {
+    padding: 18px 18px !important;
+  }
+  .r-foot-cols {
+    grid-template-columns: 1fr !important;
+  }
+  .r-cta-phone {
+    transform: scale(0.8) !important;
+    transform-origin: bottom center;
+  }
+}
+
+/* ============================================================
+   DESTINATIONS - /destinations (results grid + sticky map)
+   ============================================================ */
+/* Map hidden below the tablet breakpoint → results take the full width and a
+   floating toggle opens the map full-screen instead. */
+@media (max-width: 980px) {
+  .r-dest-map {
+    display: none !important;
+  }
+  .r-dest-results {
+    padding: 20px 20px 80px !important;
+  }
+  .r-dest-mobtoggle {
+    display: flex !important;
+  }
+}
+
+/* Reusable hover helpers mirroring the prototype's style-hover behaviour */
+.r-hover-soft:hover {
+  background: #f4f1ed !important;
+}
+.r-hover-dark:hover {
+  color: #231f1c !important;
+}
+.r-hover-border:hover {
+  border-color: #231f1c !important;
+}
+.r-hover-shadow:hover {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14) !important;
+}
+.r-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(35, 35, 75, 0.28) !important;
+}
+.r-hover-scale:hover {
+  transform: scale(1.09);
+}
+.r-hover-underline:hover {
+  color: #231f1c !important;
+  text-decoration: underline !important;
+}
+.r-hover-fade:hover {
+  opacity: 0.7;
+}
+.r-search-btn:hover {
+  background: #79b81c !important;
+}
+.r-show-more:hover {
+  background: #0b2531 !important;
+}
+.r-reserve:hover {
+  background: #79b81c !important;
+}
+
+/* ── FAQ <details> des pages info (InfoPage) ── */
+.r-faq summary::-webkit-details-marker {
+  display: none;
+}
+.r-faq summary:hover {
+  color: #79b81c;
+}
+.r-faq .r-faq-plus {
+  color: #6e6a66;
+  transition: transform 0.22s ease;
+}
+.r-faq[open] .r-faq-plus {
+  transform: rotate(45deg);
+  color: #231f1c;
+}
+
+/* ============================================================
+   LISTING DETAIL (annonce) - /listings/[id]
+   ============================================================ */
+
+/* Laptop / large tablet - narrow the sticky booking column */
+@media (max-width: 1180px) {
+  .r-annonce-cols {
+    gap: 40px !important;
+  }
+  .r-annonce-booking {
+    flex-basis: 340px !important;
+  }
+}
+
+/* Tablet - stack the two columns; booking card no longer sticky */
+@media (max-width: 980px) {
+  .r-annonce-main {
+    padding: 24px 24px 0 !important;
+  }
+  .r-annonce-cols {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  .r-annonce-sticky {
+    position: static !important;
+    width: 100% !important;
+    max-width: 480px;
+  }
+  .r-annonce-booking {
+    flex-basis: auto !important;
+    width: 100%;
+  }
+  .r-annonce-cats {
+    grid-template-columns: repeat(3, 1fr) !important;
+    row-gap: 28px;
+  }
+  .r-annonce-3col {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Large phone */
+@media (max-width: 760px) {
+  .r-annonce-gallery {
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: auto !important;
+    height: auto !important;
+  }
+  .r-annonce-gallery > div {
+    aspect-ratio: 4 / 3;
+    grid-row: auto !important;
+    grid-column: auto !important;
+  }
+  .r-annonce-gallery > div:first-child {
+    grid-column: 1 / -1 !important;
+    aspect-ratio: 16 / 10;
+  }
+  .r-annonce-reviews,
+  .r-annonce-host {
+    grid-template-columns: 1fr !important;
+  }
+  .r-annonce-reviews {
+    display: grid;
+  }
+}
+
+/* Phone */
+@media (max-width: 560px) {
+  .r-annonce-main {
+    padding: 18px 16px 0 !important;
+  }
+  .r-annonce-amenities,
+  .r-annonce-cats,
+  .r-annonce-3col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ============================================================
+   RESERVATION (request to book) - /listings/[id]/reserve
+   ============================================================ */
+@media (max-width: 980px) {
+  .r-resa-cols {
+    flex-direction: column !important;
+    gap: 28px !important;
+  }
+  .r-resa-summary {
+    position: static !important;
+    width: 100% !important;
+    flex-basis: auto !important;
+    max-width: 620px;
+  }
+}
+
+/* Squelettes de chargement (loading.tsx) : pulsation douce, coupée si l'utilisateur
+   demande moins d'animations. */
+@keyframes r-skel-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+.r-skel {
+  background: #eee9e2;
+  animation: r-skel-pulse 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .r-skel {
+    animation: none;
+  }
+}

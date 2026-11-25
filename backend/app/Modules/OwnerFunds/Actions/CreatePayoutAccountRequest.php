@@ -71,9 +71,9 @@ final readonly class CreatePayoutAccountRequest
 
             $nouveau = $this->comptes->stage($donnees->mandantPartyId, $donnees->iban, $donnees->bic, $donnees->holderName, CarbonImmutable::today())
                 ?? throw ErrorCode::Unchanged->problem();
-            $piece = $this->stocker($donnees->proof, $donnees->mandantPartyId);
             $demande = new PayoutAccountRequest;
             $demande->id = $demande->newUniqueId();
+            $piece = $this->stocker($donnees->proof, $demande->id);
             $demande->fill([
                 'mandant_party_id' => $donnees->mandantPartyId,
                 'access_id' => $donnees->accessId,
@@ -94,7 +94,7 @@ final readonly class CreatePayoutAccountRequest
         return $demande->refresh();
     }
 
-    private function stocker(UploadedFile $fichier, string $mandantId): string
+    private function stocker(UploadedFile $fichier, string $demandeId): string
     {
         $chemin = $fichier->getRealPath();
 
@@ -106,7 +106,7 @@ final readonly class CreatePayoutAccountRequest
             FileSource::path($chemin),
             Str::limit(basename($fichier->getClientOriginalName()), 120, ''),
             FileCategory::Supporting,
-            new DocumentSubject('party', $mandantId),
+            DocumentSubject::payoutAccountRequest($demandeId),
             CarbonImmutable::today()->addYears(max(1, (int) config('owner_funds.payout_proof_retention_years'))),
         )->id;
     }

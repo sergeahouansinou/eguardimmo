@@ -15,6 +15,7 @@ use App\Modules\Leases\Support\DraftLeaseChecks;
 use App\Modules\Leases\Support\DraftLeaseResolver;
 use App\Modules\Leases\Support\DraftLeaseSettings;
 use App\Modules\Leases\Support\DraftLeaseStructure;
+use App\Modules\Leases\Support\TenantQuota;
 use Illuminate\Support\Facades\DB;
 
 final readonly class UpdateLease
@@ -25,11 +26,16 @@ final readonly class UpdateLease
         private DraftLeaseStructure $structure,
         private DraftLeaseChecks $controles,
         private CustomFieldValidator $champs,
+        private TenantQuota $locataires,
     ) {}
 
     public function handle(Lease $bail, LeaseChangesData $changements): Lease
     {
         return DB::transaction(function () use ($bail, $changements): Lease {
+            if ($changements->parties !== null && $bail->status === LeaseStatus::Draft) {
+                $this->locataires->assertRoomFor($changements->parties, $bail->id);
+            }
+
             $courant = $this->baux->locked($bail->id);
 
             if ($courant->lock_version !== $changements->lockVersion) {

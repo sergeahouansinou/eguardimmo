@@ -1,0 +1,8 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    { "name": "eGuardImmo (dev)", "request": "launch", "type": "dart", "args": ["--dart-define-from-file=env/dev.json"] },
+    { "name": "eGuardImmo (staging)", "request": "launch", "type": "dart", "args": ["--dart-define-from-file=env/staging.json"] },
+    { "name": "eGuardImmo (prod, release)", "request": "launch", "type": "dart", "flutterMode": "release", "args": ["--dart-define-from-file=env/prod.json"] }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "data": [
+    {
+      "id": "01a1ef81-0000-7000-8000-000000000001",
+      "kind": "tenant",
+      "subject": "Fuite sous l'évier",
+      "status": "open",
+      "closed_at": null,
+      "party": {
+        "id": "01a1ef80-2222-7000-8000-0000000000c1",
+        "name": "Awa Kpossou"
+      },
+      "lease": {
+        "id": "01a1ef80-1111-7000-8000-000000000b01",
+        "reference": "B-2026-014"
+      },
+      "mandate": null,
+      "assignee": null,
+      "preview": "Bonjour, il y a une fuite sous l'évier.",
+      "last_message_at": "2026-11-20T08:00:00+00:00",
+      "last_author_side": "tenant",
+      "last_author_name": "Awa Kpossou",
+      "unread": true,
+      "archived": false,
+      "awaiting_reply": true,
+      "message_count": 2,
+      "has_attachments": false,
+      "counterpart_last_read_at": null,
+      "muted_until": null,
+      "muted_reason": null
+    }
+  ],
+  "meta": {
+    "has_more": false,
+    "next_cursor": null
+  }
+}

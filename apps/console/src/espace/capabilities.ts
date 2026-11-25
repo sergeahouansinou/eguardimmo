@@ -30,9 +30,9 @@ export const familyHasApiSource: Record<GatedFamily, boolean> = {
   accueil: true,
   organisations: true,
   "organisations-creation": false,
-  "organisations-modules": false,
+  "organisations-modules": true,
   comptes: true,
-  modules: false,
+  modules: true,
   abonnements: true,
   "abonnements-creation": false,
   audit: true,
@@ -79,8 +79,6 @@ export const familyLabel: Record<GatedFamily, string> = {
 /** Précision affichée sous « Bientôt disponible » quand la décision écarte durablement la fonction (ADR 0037). */
 export const familyNote: Partial<Record<GatedFamily, string>> = {
   "organisations-creation": "La création d’une organisation se fait en libre-service ; la console ne l’écrit pas au nom d’un client.",
-  "organisations-modules": "Les droits d’une organisation se lisent dans sa fiche ; un geste commercial passe par une dérogation validée par un second opérateur.",
-  modules: "Les droits se consultent par plan dans Abonnements, et par organisation dans sa fiche.",
   "abonnements-creation": "Un plan évolue par versions : ouvrez un brouillon depuis le plan concerné.",
   "sante-incidents": "Les incidents et la page de statut sont tenus hors de l’application, qui ne peut pas annoncer sa propre panne.",
   "sauvegardes-restauration": "Une restauration ne se demande jamais depuis l’application : elle suit la procédure d’hébergement.",

@@ -13,6 +13,11 @@ describe('Checkbox', () => {
     expect(onChange).toHaveBeenCalledTimes(2);
   });
 
+  it('le mode touch donne au libellé une cible de 44 px', () => {
+    render(<Checkbox label="Wi-Fi" touch />);
+    expect(screen.getByText('Wi-Fi').className).toContain('min-h-11');
+  });
+
   it('garde un nom accessible quand le libellé est masqué', async () => {
     const { container } = render(<Checkbox label="Sélectionner la ligne" hideLabel defaultChecked />);
     expect(screen.getByRole<HTMLInputElement>('checkbox', { name: 'Sélectionner la ligne' }).checked).toBe(true);

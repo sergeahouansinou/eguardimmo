@@ -55,17 +55,22 @@ function Content({ organisation }: { organisation: Organisation }) {
         }
         subtitle={`Client depuis le ${formatDate(organisation.createdAt)}`}
         actions={
-          canRequest && pending === undefined ? (
-            suspended ? (
-              <Button variant="secondary" onClick={() => { setDialog('reactivate'); }}>
-                Demander la réactivation
-              </Button>
-            ) : (
-              <Button variant="danger" onClick={() => { setDialog('suspend'); }}>
-                Demander la suspension
-              </Button>
-            )
-          ) : null
+          <>
+            <Button variant="secondary" asChild>
+              <Link href={`/organisations/${encodeURIComponent(organisation.id)}/modules`}>Modules et droits</Link>
+            </Button>
+            {canRequest && pending === undefined ? (
+              suspended ? (
+                <Button variant="secondary" onClick={() => { setDialog('reactivate'); }}>
+                  Demander la réactivation
+                </Button>
+              ) : (
+                <Button variant="danger" onClick={() => { setDialog('suspend'); }}>
+                  Demander la suspension
+                </Button>
+              )
+            ) : null}
+          </>
         }
       />
       {pending ? (

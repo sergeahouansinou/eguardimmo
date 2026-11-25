@@ -97,6 +97,13 @@ export const agenceRoutes = {
   analytique: "/analytique",
   analytiqueRevenus: "/analytique/revenus-depenses",
   analytiqueOccupation: "/analytique/occupation",
+  comptabilite: "/finances/comptabilite",
+  comptabiliteEcritures: "/finances/comptabilite/ecritures",
+  comptabiliteReleve: "/finances/comptabilite/releve",
+  annonces: "/annonces",
+  annonceNew: "/annonces/nouvelle",
+  reglagesChamps: "/reglages/champs",
+  reglagesRgpd: "/reglages/demandes-rgpd",
 } as const;
 
 export function mandantHref(id: string): string {

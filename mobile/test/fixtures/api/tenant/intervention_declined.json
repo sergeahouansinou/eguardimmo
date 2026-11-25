@@ -1,0 +1,42 @@
+{
+  "data": {
+    "id": "01a1ef81-508b-7159-bcb5-3ec8b29c4721",
+    "reference": "INT-2026-0003",
+    "state": "declined",
+    "nature": {
+      "key": "heating",
+      "label": "Chauffage"
+    },
+    "title": "Bruit au plafond",
+    "description": "De l'eau coule sous l'évier de la cuisine.",
+    "room": null,
+    "availability": null,
+    "reported_urgency": "soon",
+    "place": "Résidence Roy - LOT-28755",
+    "reported_on": "2026-11-18",
+    "decline": {
+      "reason": "not_an_issue",
+      "note": "Aucun désordre constaté."
+    },
+    "completed_on": null,
+    "visits": [],
+    "cancellable": false,
+    "events": [
+      {
+        "id": "01a1ef81-508b-7159-bcb5-3ec8b32f95d8",
+        "kind": "reported",
+        "author": "tenant",
+        "text": "Demande signalée.",
+        "created_at": "2026-11-18T13:03:00+00:00"
+      },
+      {
+        "id": "01a1ef81-5090-7164-b498-89156a3d15b4",
+        "kind": "declined",
+        "author": "team",
+        "text": "Aucun désordre constaté.",
+        "created_at": "2026-11-18T13:03:00+00:00"
+      }
+    ],
+    "files": []
+  }
+}

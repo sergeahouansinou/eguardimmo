@@ -12,11 +12,11 @@ use Illuminate\Http\JsonResponse;
 final class ShowMandateEndRequestController
 {
     /**
-     * `data` vaut null quand aucune demande ne vit : la lecture d'un état n'est pas une erreur.
+     * Dernière demande du mandat, quel que soit son statut ; `data` vaut null quand il n'y en a jamais eu : la lecture d'un état n'est pas une erreur.
      */
     public function __invoke(string $mandate, Mandates $mandats, MandateEndRequests $demandes): JsonResponse
     {
-        $demande = $demandes->pendingOf($mandats->get($mandate)->id);
+        $demande = $demandes->latestOf($mandats->get($mandate)->id);
 
         return new JsonResponse(['data' => $demande === null ? null : (new MandateEndRequestResource($demande))->resolve()]);
     }

@@ -40,13 +40,22 @@ final readonly class Entitlements
      * `$nombreActuel` et `$ajout` s'expriment dans l'unité de la fonction (`Feature::unit()` : l'octet pour le stockage, dont la limite se compte en Mo).
      *
      * @param  int|Closure(): int  $nombreActuel  une fermeture est évaluée après le verrou de l'abonnement : deux créations concurrentes ne passent pas ensemble la limite
+     * @param  int|Closure(): int  $ajout  une fermeture est évaluée après le verrou, avant `$nombreActuel` ; un ajout nul ou négatif n'est jamais refusé
      */
-    public function assertWithin(string $organizationId, Feature $fonction, int|Closure $nombreActuel, int $ajout = 1): void
+    public function assertWithin(string $organizationId, Feature $fonction, int|Closure $nombreActuel, int|Closure $ajout = 1): void
     {
-        $droit = $this->droits->of($organizationId, $nombreActuel instanceof Closure)[$fonction->value] ?? null;
+        $droit = $this->droits->of($organizationId, $nombreActuel instanceof Closure || $ajout instanceof Closure)[$fonction->value] ?? null;
 
         if ($droit === null) {
             return;
+        }
+
+        if ($ajout instanceof Closure) {
+            $ajout = $ajout();
+
+            if ($ajout <= 0) {
+                return;
+            }
         }
 
         if (! $droit->enabled) {

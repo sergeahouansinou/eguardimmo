@@ -1,0 +1,9 @@
+{
+  "type": "https://api.eguardimmo.test/problems/too_many_requests",
+  "title": "Trop de tentatives",
+  "status": 429,
+  "detail": "Trop de tentatives. Réessayez plus tard.",
+  "code": "too_many_requests",
+  "retry_after": 1800,
+  "request_id": "01a1ef81-5144-7138-a3ac-9b1463fdc9c1"
+}

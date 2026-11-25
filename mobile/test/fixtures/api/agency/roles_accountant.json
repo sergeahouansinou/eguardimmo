@@ -1,0 +1,597 @@
+{
+    "data": {
+        "current_role": "accountant",
+        "domains": [
+            {
+                "key": "team",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "read",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "activity_log",
+                "levels": {
+                    "owner": "read",
+                    "admin": "read",
+                    "manager": "read",
+                    "accountant": "none"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "activity_detail",
+                "levels": {
+                    "owner": "read",
+                    "admin": "read",
+                    "manager": "none",
+                    "accountant": "none"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "activity_export",
+                "levels": {
+                    "owner": "write_two_factor",
+                    "admin": "write_two_factor",
+                    "manager": "none",
+                    "accountant": "none"
+                },
+                "two_factor": true
+            },
+            {
+                "key": "reference_data",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "read",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "mandates",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "mandate_documents",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "none"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "mandate_defaults",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "read",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "parties",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "parties_followup",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "none"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "parties_sensitive",
+                "levels": {
+                    "owner": "write_two_factor",
+                    "admin": "write_two_factor",
+                    "manager": "write_two_factor",
+                    "accountant": "none"
+                },
+                "two_factor": true
+            },
+            {
+                "key": "parties_anonymize",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "none",
+                    "accountant": "none"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "properties",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "planning",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "planning_task_progress",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "write"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "leases",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "leases_followup",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "none"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "inspections",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "none"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "rent_collection",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "prepare"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "rent_operations",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "none"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "rent_refunds",
+                "levels": {
+                    "owner": "write_two_factor",
+                    "admin": "write_two_factor",
+                    "manager": "none",
+                    "accountant": "write_two_factor"
+                },
+                "two_factor": true
+            },
+            {
+                "key": "recovery",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "invoices",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "write"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "credit_notes",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "none",
+                    "accountant": "write"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "owner_funds",
+                "levels": {
+                    "owner": "prepare",
+                    "admin": "prepare",
+                    "manager": "prepare",
+                    "accountant": "prepare"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "owner_funds_sensitive",
+                "levels": {
+                    "owner": "write_two_factor",
+                    "admin": "write_two_factor",
+                    "manager": "none",
+                    "accountant": "write_two_factor"
+                },
+                "two_factor": true
+            },
+            {
+                "key": "charges",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "write"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "charges_third_party",
+                "levels": {
+                    "owner": "write_two_factor",
+                    "admin": "write_two_factor",
+                    "manager": "none",
+                    "accountant": "write_two_factor"
+                },
+                "two_factor": true
+            },
+            {
+                "key": "charges_issue",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "none"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "investments",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "none",
+                    "accountant": "write"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "investments_read",
+                "levels": {
+                    "owner": "read",
+                    "admin": "read",
+                    "manager": "read",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "tax_read",
+                "levels": {
+                    "owner": "read",
+                    "admin": "read",
+                    "manager": "read",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "tax_prepare",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "none",
+                    "accountant": "write"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "tax_publish",
+                "levels": {
+                    "owner": "write_two_factor",
+                    "admin": "write_two_factor",
+                    "manager": "write_two_factor",
+                    "accountant": "none"
+                },
+                "two_factor": true
+            },
+            {
+                "key": "tax_export",
+                "levels": {
+                    "owner": "write_two_factor",
+                    "admin": "write_two_factor",
+                    "manager": "none",
+                    "accountant": "write_two_factor"
+                },
+                "two_factor": true
+            },
+            {
+                "key": "banking",
+                "levels": {
+                    "owner": "write_two_factor",
+                    "admin": "write_two_factor",
+                    "manager": "none",
+                    "accountant": "write_two_factor"
+                },
+                "two_factor": true
+            },
+            {
+                "key": "banking_accounts",
+                "levels": {
+                    "owner": "write_two_factor",
+                    "admin": "write_two_factor",
+                    "manager": "none",
+                    "accountant": "read"
+                },
+                "two_factor": true
+            },
+            {
+                "key": "accounting_ledger",
+                "levels": {
+                    "owner": "read",
+                    "admin": "read",
+                    "manager": "none",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "accounting_periods",
+                "levels": {
+                    "owner": "read",
+                    "admin": "read",
+                    "manager": "read",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "maintenance",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "maintenance_invoices",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "write"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "maintenance_allocations",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "none",
+                    "accountant": "write"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "maintenance_payments",
+                "levels": {
+                    "owner": "write_two_factor",
+                    "admin": "write_two_factor",
+                    "manager": "none",
+                    "accountant": "write_two_factor"
+                },
+                "two_factor": true
+            },
+            {
+                "key": "reporting",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "write"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "reporting_publish",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "none"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "reporting_export",
+                "levels": {
+                    "owner": "write_two_factor",
+                    "admin": "write_two_factor",
+                    "manager": "none",
+                    "accountant": "write_two_factor"
+                },
+                "two_factor": true
+            },
+            {
+                "key": "reporting_assumptions",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "none",
+                    "accountant": "write"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "reporting_finance_export",
+                "levels": {
+                    "owner": "read",
+                    "admin": "read",
+                    "manager": "none",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "messaging_external",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "none"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "messaging_moderation",
+                "levels": {
+                    "owner": "write_two_factor",
+                    "admin": "write_two_factor",
+                    "manager": "none",
+                    "accountant": "none"
+                },
+                "two_factor": true
+            },
+            {
+                "key": "support_access",
+                "levels": {
+                    "owner": "write_two_factor",
+                    "admin": "write_two_factor",
+                    "manager": "none",
+                    "accountant": "none"
+                },
+                "two_factor": true
+            },
+            {
+                "key": "privacy_requests",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "none",
+                    "accountant": "none"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "campaigns",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "none"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "campaigns_send",
+                "levels": {
+                    "owner": "write_two_factor",
+                    "admin": "write_two_factor",
+                    "manager": "write_two_factor",
+                    "accountant": "none"
+                },
+                "two_factor": true
+            },
+            {
+                "key": "documents",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "listings",
+                "levels": {
+                    "owner": "write",
+                    "admin": "write",
+                    "manager": "write",
+                    "accountant": "none"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "bookings",
+                "levels": {
+                    "owner": "read",
+                    "admin": "read",
+                    "manager": "read",
+                    "accountant": "none"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "online_payments",
+                "levels": {
+                    "owner": "read",
+                    "admin": "read",
+                    "manager": "read",
+                    "accountant": "read"
+                },
+                "two_factor": false
+            },
+            {
+                "key": "psp_account",
+                "levels": {
+                    "owner": "write_two_factor",
+                    "admin": "write_two_factor",
+                    "manager": "none",
+                    "accountant": "none"
+                },
+                "two_factor": true
+            }
+        ]
+    }
+}

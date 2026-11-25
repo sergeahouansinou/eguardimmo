@@ -138,6 +138,18 @@ describe("source API : double authentification", () => {
   });
 });
 
+describe("source API : preuve 2FA exigée pour gérer le second facteur", () => {
+  it("traduit 403 reauthentication_required en demande de code pour la désactivation et la régénération", async () => {
+    expect(await setup([reauthRequired()]).source.disableTwoFactor()).toEqual({ status: "confirmation_required", needsCode: true });
+    expect(await setup([reauthRequired()]).source.regenerateBackupCodes()).toEqual({ status: "confirmation_required", needsCode: true });
+  });
+
+  it("propage un 403 d’un autre motif et le 409 two_factor_already_enabled", async () => {
+    await expect(setup([problem(403, "forbidden")]).source.disableTwoFactor()).rejects.toMatchObject({ status: 403 });
+    await expect(setup([problem(409, "two_factor_already_enabled")]).source.disableTwoFactor()).rejects.toMatchObject({ status: 409 });
+  });
+});
+
 describe("source API : suppression du compte", () => {
   it("supprime le compte quand la session est confirmée récemment", async () => {
     const { source, call } = setup([noContent()]);

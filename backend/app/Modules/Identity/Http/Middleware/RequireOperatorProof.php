@@ -43,7 +43,7 @@ final readonly class RequireOperatorProof
             throw ErrorCode::OperatorProofRequired->problem();
         }
 
-        if (! $this->verification->handle($user, $code, $secours)) {
+        if (! $this->verification->handle($user, $code, $secours, enSession: true)) {
             throw ErrorCode::OperatorProofInvalid->problem();
         }
 

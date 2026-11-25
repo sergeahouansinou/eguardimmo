@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { navigation } from './config';
+import { navigation, searchPagesFor } from './config';
 import type { OperatorRole } from '@/platform/roles';
 
-const ids = (roles: readonly OperatorRole[] | undefined, api = true) => {
-  const nav = navigation(undefined, { roles, api });
+const ids = (roles: readonly OperatorRole[] | undefined) => {
+  const nav = navigation(undefined, { roles });
   return [...nav.sections.flatMap((section) => section.entries), ...nav.footer].map((entry) => entry.id);
 };
 
@@ -20,18 +20,32 @@ describe('navigation filtrée par rôle', () => {
   });
 
   it('retire les sections vides et n’affiche rien tant que les rôles chargent', () => {
-    expect(navigation(undefined, { roles: [], api: true }).sections).toEqual([]);
-    expect(navigation(undefined, { roles: ['billing'], api: true }).sections.map((section) => section.id)).toEqual(['exploitation', 'gouvernance']);
+    expect(navigation(undefined, { roles: [] }).sections).toEqual([]);
+    expect(navigation(undefined, { roles: ['billing'] }).sections.map((section) => section.id)).toEqual(['exploitation', 'gouvernance']);
   });
 
-  it('masque Modules en mode api seulement, et montre tout sans rôle connu', () => {
-    expect(ids(['admin'], true)).not.toContain('modules');
-    expect(ids(undefined, false)).toContain('modules');
-    expect(ids(undefined, true)).toContain('approbations');
+  it('réserve Modules aux rôles qui lisent les plans, et montre tout sans rôle connu', () => {
+    expect(ids(['admin'])).toContain('modules');
+    expect(ids(['billing'])).toContain('modules');
+    expect(ids(['support'])).not.toContain('modules');
+    expect(ids(['compliance'])).not.toContain('modules');
+    expect(ids(undefined)).toContain('modules');
+    expect(ids(undefined)).toContain('approbations');
+  });
+
+  it('ne propose en mode api que des pages de recherche servies par un écran réel', () => {
+    const hrefs = searchPagesFor(true).map((page) => page.href);
+
+    expect(hrefs).toContain('/modules');
+    expect(hrefs).toContain('/organisations');
+    for (const gated of ['/organisations/nouvelle', '/abonnements/plans/nouveau', '/sauvegardes/restauration', '/notifications', '/parametres/notifications', '/equipe/inviter']) {
+      expect(hrefs).not.toContain(gated);
+    }
+    expect(searchPagesFor(false).map((page) => page.href)).toContain('/organisations/nouvelle');
   });
 
   it('porte le compteur d’approbations en attente', () => {
-    const entry = navigation({ approbations: 3 }, { roles: ['admin'], api: true }).sections.flatMap((section) => section.entries).find((candidate) => candidate.id === 'approbations');
+    const entry = navigation({ approbations: 3 }, { roles: ['admin'] }).sections.flatMap((section) => section.entries).find((candidate) => candidate.id === 'approbations');
     expect(entry).toMatchObject({ href: '/approbations', count: 3 });
   });
 });

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Messaging\Support;
 
+use App\Modules\Documents\PublicApi\AttachmentInspector;
 use App\Modules\Documents\PublicApi\ImageScrubber;
 use Closure;
 use finfo;
@@ -48,6 +49,14 @@ final class AttachmentStore
     {
         if (! $valeur instanceof UploadedFile || self::typeReel($valeur) === null) {
             $echec('Seuls les PDF et les images JPEG, PNG ou WebP sont acceptés.');
+
+            return;
+        }
+
+        $probleme = app(AttachmentInspector::class)->problem((string) $valeur->getRealPath());
+
+        if ($probleme !== null) {
+            $echec($probleme->detail());
         }
     }
 
@@ -84,14 +93,7 @@ final class AttachmentStore
 
     public static function displayName(UploadedFile $fichier): string
     {
-        return Str::limit(self::nomLisible($fichier->getClientOriginalName()), 250, '');
-    }
-
-    private static function nomLisible(string $nom): string
-    {
-        $propre = trim((string) preg_replace('/[\x00-\x1F\x7F\/\\\\]/u', '', mb_scrub($nom, 'UTF-8')));
-
-        return $propre === '' ? 'piece-jointe' : $propre;
+        return app(AttachmentInspector::class)->displayName($fichier->getClientOriginalName(), self::typeReel($fichier) ?? '');
     }
 
     public static function response(string $chemin, string $nom, string $type): StreamedResponse

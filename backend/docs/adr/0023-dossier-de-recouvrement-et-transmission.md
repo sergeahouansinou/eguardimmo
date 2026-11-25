@@ -58,3 +58,7 @@ Le premier modèle ouvrait un dossier par échéance impayée (`recovery_cases.o
 - `recovery_case_items.reference` porte le numéro de la facture. Une facture n'a pas de période : `period_start` et `period_end` y reçoivent sa date d'émission.
 - L'envoi ajoute la facture émise (PDF d'Invoicing) au ZIP, pièce `invoice`, et le décompte la liste ligne à ligne (`recovery-2`). Les mises en demeure restent des actes du carnet (`formal_notice`), sans pièce générée.
 - API : `GET unpaid` renvoie `type`, `item_id`, `installment_id`, `invoice_id`, `reference`, `period` (null pour une facture), `issued_on` (null pour une échéance) et `status` (null pour une facture) ; les lignes d'un dossier portent les mêmes champs.
+
+## Amendement du 2026-11-21 (clé d'idempotence)
+
+- `POST org/{organization}/recovery/cases/{case}/acts` accepte un en-tête `Idempotency-Key` facultatif (8 à 64 caractères `A-Za-z0-9._:-`, sinon 422 `recovery_idempotency_key_required`). La clé est stockée avec l'acte (`recovery_acts.idempotency_key`, unique par organisation et auteur, migration `2026_11_21_100000_add_idempotency_key_to_recovery_acts`). Même clé, même auteur, même dossier et même contenu : 200 avec l'acte déjà écrit, ni second acte ni second audit ; contenu ou dossier différent : 409 `recovery_idempotency_key_reused`. Une course entre deux requêtes identiques est tranchée par l'index unique, la violation est relue et suit la même règle. Les clients sans en-tête ne changent pas.

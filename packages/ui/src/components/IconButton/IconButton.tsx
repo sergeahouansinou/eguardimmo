@@ -6,7 +6,7 @@ import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 export type IconButtonVariant = 'ghost' | 'secondary' | 'danger';
-export type IconButtonSize = 'xs' | 'sm';
+export type IconButtonSize = 'xs' | 'sm' | 'lg';
 
 const variantClasses: Record<IconButtonVariant, string> = {
   ghost: 'border-transparent text-fg-muted hover:bg-muted',
@@ -17,6 +17,7 @@ const variantClasses: Record<IconButtonVariant, string> = {
 const sizeClasses: Record<IconButtonSize, string> = {
   xs: 'size-6',
   sm: 'size-7',
+  lg: 'size-11',
 };
 
 export interface IconButtonProps

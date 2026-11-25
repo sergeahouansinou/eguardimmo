@@ -25,13 +25,13 @@ final class FileNames
     public static function aligned(string $nom, array $extensions): string
     {
         $propre = self::display($nom);
-        $extension = mb_strtolower(pathinfo($propre, PATHINFO_EXTENSION));
+        $originale = pathinfo($propre, PATHINFO_EXTENSION);
 
-        if (in_array($extension, $extensions, true)) {
+        if (in_array(mb_strtolower($originale), $extensions, true)) {
             return $propre;
         }
 
-        $racine = $extension === '' || str_ends_with($propre, '.') ? rtrim($propre, '.') : substr($propre, 0, -(strlen($extension) + 1));
+        $racine = $originale === '' || str_ends_with($propre, '.') ? rtrim($propre, '.') : substr($propre, 0, -(strlen($originale) + 1));
 
         return Str::limit($racine === '' ? 'document' : $racine, 250 - strlen($extensions[0]) - 1, '').'.'.$extensions[0];
     }

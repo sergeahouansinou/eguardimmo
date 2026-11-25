@@ -48,3 +48,4 @@ Schedule::command('subscriptions:verify')->dailyAt('03:58')->withoutOverlapping(
 Schedule::command('privacy:flag-due')->dailyAt('07:00')->withoutOverlapping();
 Schedule::command('privacy:purge-exports')->dailyAt('03:15')->withoutOverlapping();
 Schedule::command('planning:send-reminders')->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('bookings:sweep')->everyMinute()->withoutOverlapping();

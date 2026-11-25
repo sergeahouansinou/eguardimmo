@@ -1,0 +1,22 @@
+{
+  "data": [
+    {
+      "access_id": "0193a5e1-0000-7000-8000-0000000000a1",
+      "role": "holder",
+      "agency": { "id": "0193a5e1-0000-7000-8000-0000000000b1", "name": "Agence du Lac" },
+      "mandant": { "name": "Famille Dossou" },
+      "access_until": null,
+      "in_grace": false,
+      "read_only": false
+    },
+    {
+      "access_id": "0193a5e1-0000-7000-8000-0000000000a2",
+      "role": "representative",
+      "agency": { "id": "0193a5e1-0000-7000-8000-0000000000b2", "name": "Cabinet Horizon" },
+      "mandant": { "name": "SCI Les Palmiers" },
+      "access_until": "2026-12-31",
+      "in_grace": true,
+      "read_only": true
+    }
+  ]
+}

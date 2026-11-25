@@ -88,3 +88,5 @@ export { ToastProvider, useToast } from './components/Toast/Toast';
 export type { ToastOptions, ToastProviderProps } from './components/Toast/Toast';
 export { DateRangeField } from './components/DateRangeField/DateRangeField';
 export type { DateRangeFieldProps } from './components/DateRangeField/DateRangeField';
+export { Combobox } from './components/Combobox/Combobox';
+export type { ComboboxOption, ComboboxProps } from './components/Combobox/Combobox';

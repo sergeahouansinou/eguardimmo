@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Charges\Support;
 
+use App\Shared\Csv\CsvField;
+
 final class Csv
 {
     /**
@@ -13,21 +15,6 @@ final class Csv
      */
     public static function render(array $lignes): string
     {
-        return "\u{FEFF}".implode("\r\n", array_map(fn (array $l): string => implode(';', array_map(self::champ(...), $l)), $lignes))."\r\n";
-    }
-
-    private static function champ(string|int $valeur): string
-    {
-        $texte = (string) $valeur;
-
-        if (is_int($valeur)) {
-            return $texte;
-        }
-
-        if ($texte !== '' && str_contains("=+-@\t\r", $texte[0])) {
-            $texte = "'".$texte;
-        }
-
-        return '"'.str_replace('"', '""', str_replace(["\r", "\n"], ' ', $texte)).'"';
+        return "\u{FEFF}".implode("\r\n", array_map(fn (array $l): string => implode(';', array_map(CsvField::render(...), $l)), $lignes))."\r\n";
     }
 }

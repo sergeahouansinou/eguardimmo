@@ -132,12 +132,12 @@ describe("coquille de la console en mode api", () => {
 
   it("remplace une famille sans source par « Bientôt disponible » sans exécuter l'écran de démonstration", async () => {
     const calls = stubApi();
-    state.pathname = "/modules";
+    state.pathname = "/organisations/nouvelle";
 
     renderEspace();
 
     expect(await screen.findByText("Bientôt disponible")).toBeTruthy();
-    expect(screen.getByRole("heading", { level: 1, name: "Modules" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Création d’organisation" })).toBeTruthy();
     expect(screen.queryByText("Contenu réel")).toBeNull();
     for (const text of FORBIDDEN) expect(document.body.textContent).not.toContain(text);
     expect(calls.every((call) => ["/api/v1/console/me", "/api/v1/console/support/stats"].includes(call.path))).toBe(true);

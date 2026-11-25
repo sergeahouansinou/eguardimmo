@@ -32,14 +32,37 @@ export const apiHelpCenter: HelpCenterData = {
       ],
     },
     {
-      id: "bientot",
-      title: "Bientôt disponible",
+      id: "logement",
+      title: "Loyers, documents et logement",
       articles: [
         {
           id: "quittances",
           question: "Où trouver mes quittances et mes paiements ?",
           answer:
-            "Les quittances, les avis d’échéance, les paiements, les interventions et les documents seront ajoutés prochainement à votre espace.",
+            "Les avis d’échéance et le paiement en ligne sont dans « Mes loyers », les règlements dans « Mes paiements » et les quittances dans « Mes quittances ». Les décomptes de charges se trouvent dans « Régularisation des charges ».",
+          href: "/loyers",
+          hrefLabel: "Ouvrir mes loyers",
+        },
+        {
+          id: "documents",
+          question: "Où trouver les documents de mon bail ?",
+          answer: "Les pièces de vos baux, vos quittances, vos états des lieux et vos attestations d’assurance sont réunis dans « Documents », avec un téléchargement pour chacun.",
+          href: "/documents",
+          hrefLabel: "Ouvrir mes documents",
+        },
+        {
+          id: "intervention",
+          question: "Comment déclarer un souci dans mon logement ?",
+          answer: "Dans « Interventions », décrivez le souci et ajoutez des photos : vous suivez ensuite les visites et échangez avec l’équipe sur la même page.",
+          href: "/interventions/nouvelle",
+          hrefLabel: "Déclarer une intervention",
+        },
+        {
+          id: "conge",
+          question: "Comment donner congé ?",
+          answer: "Choisissez le motif et la date de départ souhaitée : la durée du préavis s’affiche selon le motif. Votre agence accuse réception de la demande.",
+          href: "/bail/conge",
+          hrefLabel: "Donner congé",
         },
       ],
     },

@@ -27,6 +27,8 @@ enum ErrorCode: string
     case LinkUnavailable = 'recovery_link_unavailable';
     case BundleUnavailable = 'recovery_bundle_unavailable';
     case BundleConflict = 'recovery_bundle_conflict';
+    case IdempotencyKeyRequired = 'recovery_idempotency_key_required';
+    case IdempotencyKeyReused = 'recovery_idempotency_key_reused';
 
     private const RETRY_AFTER_SECONDES = 30;
 
@@ -41,9 +43,9 @@ enum ErrorCode: string
     {
         return match ($this) {
             self::CaseNotFound, self::ItemNotFound, self::BundleNotFound, self::TransmissionNotFound, self::LinkNotFound => 404,
-            self::ReceivableInvalid, self::DebtorInvalid, self::RecipientInvalid => 422,
+            self::ReceivableInvalid, self::DebtorInvalid, self::RecipientInvalid, self::IdempotencyKeyRequired => 422,
             self::PdfUnavailable, self::LinkUnavailable, self::BundleUnavailable => 503,
-            self::ReceivableTaken, self::CaseExists, self::CaseNotActive, self::CaseEmpty, self::NothingDue, self::StatusTransitionInvalid, self::TransmissionNotActive, self::BundleConflict => 409,
+            self::ReceivableTaken, self::CaseExists, self::CaseNotActive, self::CaseEmpty, self::NothingDue, self::StatusTransitionInvalid, self::TransmissionNotActive, self::BundleConflict, self::IdempotencyKeyReused => 409,
         };
     }
 
@@ -69,6 +71,8 @@ enum ErrorCode: string
             self::LinkUnavailable => 'Lien de transmission indisponible',
             self::BundleUnavailable => 'Pièces indisponibles',
             self::BundleConflict => 'Génération concurrente',
+            self::IdempotencyKeyRequired => 'Clé d\'idempotence invalide',
+            self::IdempotencyKeyReused => 'Clé d\'idempotence déjà utilisée',
         };
     }
 
@@ -94,6 +98,8 @@ enum ErrorCode: string
             self::LinkUnavailable => 'L\'adresse https des liens de transmission n\'est pas configurée.',
             self::BundleUnavailable => 'Le contenu de cet envoi n\'est plus disponible.',
             self::BundleConflict => 'Une autre génération d\'envoi a eu lieu en même temps : réessayez.',
+            self::IdempotencyKeyRequired => 'L\'en-tête Idempotency-Key doit comporter 8 à 64 caractères : lettres, chiffres, . _ : -.',
+            self::IdempotencyKeyReused => 'Cette clé d\'idempotence a déjà servi à une autre diligence : utilisez une nouvelle clé.',
         };
     }
 }

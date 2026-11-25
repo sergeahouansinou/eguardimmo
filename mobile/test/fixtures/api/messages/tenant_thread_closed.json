@@ -1,0 +1,46 @@
+{
+  "data": {
+    "id": "01a1ef81-0000-7000-8000-000000000002",
+    "subject": "Quittance de septembre",
+    "status": "closed",
+    "agency": {
+      "id": "01a1ef80-0000-7000-8000-0000000000a1",
+      "name": "Agence Lagune"
+    },
+    "lease": {
+      "id": "01a1ef80-1111-7000-8000-000000000b01",
+      "reference": "B-2026-009"
+    },
+    "mandate": null,
+    "preview": "Bonjour, je vous confirme le passage demain matin.",
+    "last_message_at": "2026-11-20T09:15:00+00:00",
+    "last_author": "me",
+    "unread": false,
+    "archived": false,
+    "message_count": 1,
+    "has_attachments": false,
+    "agency_last_read_at": null,
+    "muted": false,
+    "muted_until": null,
+    "can_reply": false,
+    "messages": [
+      {
+        "id": "01a1ef82-0000-7000-8000-000000000003",
+        "client_id": "3f1c2a52-6d0e-4a58-9b3c-0a8f5e2c7d11",
+        "author": {
+          "side": "me",
+          "name": "Awa Kpossou"
+        },
+        "mine": true,
+        "body": "Merci de m'envoyer la quittance.",
+        "sent_at": "2026-11-18T08:00:00+00:00",
+        "redacted": false,
+        "attachments": []
+      }
+    ],
+    "messages_meta": {
+      "has_more": false,
+      "next_cursor": null
+    }
+  }
+}

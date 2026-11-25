@@ -1,0 +1,39 @@
+{
+  "data": {
+    "id": "01a1ef81-507e-7374-ba32-35b066a08ab8",
+    "reference": "INT-2026-0002",
+    "state": "cancelled",
+    "nature": {
+      "key": "plumbing",
+      "label": "Plomberie"
+    },
+    "title": "Porte qui grince",
+    "description": "De l'eau coule sous l'évier de la cuisine.",
+    "room": null,
+    "availability": null,
+    "reported_urgency": "soon",
+    "place": "Résidence Roy - LOT-28755",
+    "reported_on": "2026-11-18",
+    "decline": null,
+    "completed_on": null,
+    "visits": [],
+    "cancellable": false,
+    "events": [
+      {
+        "id": "01a1ef81-507e-7374-ba32-35b0678a6fa8",
+        "kind": "reported",
+        "author": "tenant",
+        "text": "Demande signalée.",
+        "created_at": "2026-11-18T12:02:00+00:00"
+      },
+      {
+        "id": "01a1ef81-5084-7267-b14e-6d38ff1833f9",
+        "kind": "cancelled",
+        "author": "tenant",
+        "text": "Demande annulée.",
+        "created_at": "2026-11-18T12:02:00+00:00"
+      }
+    ],
+    "files": []
+  }
+}

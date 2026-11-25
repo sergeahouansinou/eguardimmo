@@ -1,0 +1,9 @@
+{
+  "ENV": "dev",
+  "API_BASE_URL": "http://10.0.2.2:8000/api/v1",
+  "TERMS_URL": "https://example.com/conditions",
+  "PRIVACY_URL": "https://example.com/confidentialite",
+  "SUPPORT_EMAIL": "support@example.com",
+  "APP_VERSION": "1.0.0",
+  "API_PINS": "[À RENSEIGNER] pin SPKI courant,[À RENSEIGNER] pin SPKI de secours"
+}

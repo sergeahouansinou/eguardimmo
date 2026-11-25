@@ -18,7 +18,7 @@ final class ReauthenticateWithTwoFactorController
         /** @var User $user */
         $user = $request->user();
 
-        if (! $verification->handle($user, $request->code(), $request->recoveryCode())) {
+        if (! $verification->handle($user, $request->code(), $request->recoveryCode(), enSession: true)) {
             throw ValidationException::withMessages(['code' => ['Code invalide.']]);
         }
 

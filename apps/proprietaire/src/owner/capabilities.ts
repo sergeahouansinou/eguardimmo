@@ -101,6 +101,7 @@ const REAL_EXACT_ROUTES: readonly RegExp[] = [
   /^\/confie\/agence$/,
   /^\/confie\/agence\/mandat$/,
   /^\/confie\/agence\/mandat\/fin$/,
+  /^\/confie\/aide$/,
   /^\/confie\/messages$/,
   /^\/confie\/messages\/[^/]+$/,
   /^\/confie\/annonces$/,

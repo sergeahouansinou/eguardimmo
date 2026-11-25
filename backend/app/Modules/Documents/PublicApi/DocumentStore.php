@@ -52,7 +52,7 @@ final readonly class DocumentStore
     }
 
     /**
-     * Lecture générique : refuse (404) une pièce de messagerie, un relevé bancaire et un fichier de l'espace locataire, qui ont leur route dédiée.
+     * Lecture générique : refuse (404) une pièce de messagerie, un relevé bancaire, une pièce de compte de reversement et un fichier de l'espace locataire, qui ont leur route dédiée.
      * À utiliser pour tout fichier désigné par un identifiant que l'appelant n'a pas lui-même créé.
      */
     public function streamGeneric(string $id): StreamedResponse

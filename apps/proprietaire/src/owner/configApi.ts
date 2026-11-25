@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Bell, Building, Calculator, CircleUser, FileChartColumn, FileText, Folder, House, Landmark, LifeBuoy, Link2, Megaphone, MessageSquare, Receipt, ScrollText, ShieldCheck, Wallet, Wrench } from "lucide-react";
+import { ArrowLeftRight, Bell, Building, Calculator, CircleQuestionMark, CircleUser, FileChartColumn, FileText, Folder, House, Landmark, LifeBuoy, Link2, Megaphone, MessageSquare, Receipt, Scale, ScrollText, ShieldCheck, Wallet, Wrench } from "lucide-react";
 import { authUrl } from "@eguardimmo/shell";
 import type { AccountMenuConfig, BottomItem, NotificationsConfig, PageResult, ShellNavigation } from "@eguardimmo/shell";
 import { toShellHref } from "@/confie-config/paths";
@@ -22,6 +22,7 @@ export const apiNavigation: ShellNavigation = {
         { id: "charges", label: "Décomptes de charges", href: href(confieRoutes.charges), icon: Calculator },
         { id: "compte-de-paiement", label: "Compte de paiement", href: href(confieRoutes.compteDePaiement), icon: Landmark },
         { id: "comptes-rendus", label: "Comptes rendus", href: href(confieRoutes.comptesRendus), icon: FileChartColumn },
+        { id: "fiscalite", label: "Fiscalité", href: href(confieRoutes.fiscalite), icon: Scale },
         { id: "documents", label: "Documents", href: href(confieRoutes.documents), icon: Folder },
         { id: "factures", label: "Factures d’honoraires", href: href(confieRoutes.factures), icon: Receipt },
       ],
@@ -37,7 +38,10 @@ export const apiNavigation: ShellNavigation = {
       ],
     },
   ],
-  footer: [{ id: "gestion-directe", label: "Mes biens en gestion directe", href: href(confieRoutes.gestionDirecte), icon: ArrowLeftRight }],
+  footer: [
+    { id: "aide", label: "Aide", href: href(confieRoutes.aide), icon: CircleQuestionMark },
+    { id: "gestion-directe", label: "Mes biens en gestion directe", href: href(confieRoutes.gestionDirecte), icon: ArrowLeftRight },
+  ],
 };
 
 export function withMessageCount(navigation: ShellNavigation, unread: number | undefined): ShellNavigation {
@@ -89,6 +93,7 @@ export const apiAccountMenu: AccountMenuConfig = {
       id: "compte",
       label: "Mon compte",
       items: [
+        { id: "informations", label: "Mes informations", href: href(confieRoutes.informations), icon: CircleUser },
         { id: "acces", label: "Mes accès", href: href(confieRoutes.agence), icon: Link2 },
         { id: "notifications", label: "Préférences de notification", href: href(confieRoutes.notifications), icon: Bell },
         { id: "securite", label: "Connexion et sécurité", href: authUrl("/compte/securite"), icon: ShieldCheck },
@@ -100,7 +105,7 @@ export const apiAccountMenu: AccountMenuConfig = {
       items: [{ id: "gestion-directe", label: "Mes biens en gestion directe", href: href(confieRoutes.gestionDirecte), icon: CircleUser }],
     },
   ],
-  footerItems: [],
+  footerItems: [{ id: "aide", label: "Centre d’aide", href: href(confieRoutes.aide), icon: CircleQuestionMark }],
 };
 
 export const apiNotifications: NotificationsConfig = {
@@ -119,10 +124,15 @@ export const apiSearchPages: PageResult[] = [
   { href: href(confieRoutes.charges), label: "Décomptes de charges, régularisation des charges" },
   { href: href(confieRoutes.compteDePaiement), label: "Compte de paiement, changer d’IBAN" },
   { href: href(confieRoutes.comptesRendus), label: "Comptes rendus" },
+  { href: href(confieRoutes.fiscalite), label: "Fiscalité, relevés de revenus fonciers" },
   { href: href(confieRoutes.documents), label: "Documents" },
   { href: href(confieRoutes.factures), label: "Factures d’honoraires" },
   { href: href(confieRoutes.interventions), label: "Interventions" },
   { href: href(confieRoutes.annonces), label: "Annonces de mon agence" },
   { href: href(confieRoutes.support), label: "Support, mes demandes" },
+  { href: href(confieRoutes.aide), label: "Aide, questions fréquentes" },
+  { href: href(confieRoutes.messages), label: "Messages" },
+  { href: href(confieRoutes.informations), label: "Mes informations" },
+  { href: href(confieRoutes.notifications), label: "Préférences de notification" },
   { href: href(confieRoutes.gestionDirecte), label: "Mes biens en gestion directe" },
 ];

@@ -7,6 +7,7 @@ namespace App\Modules\OwnerFunds\Support;
 use App\Modules\OwnerFunds\Enums\PayoutItemStatus;
 use App\Modules\OwnerFunds\Models\PayoutBatch;
 use App\Modules\Parties\PublicApi\PartyDirectory;
+use App\Shared\Csv\CsvField;
 
 /**
  * Export des virements à exécuter : jamais l'IBAN complet, seulement ses quatre derniers caractères.
@@ -31,7 +32,7 @@ final readonly class PayoutCsv
                 (string) $lot->number,
                 $noms[$e->mandant_party_id] ?? '',
                 'Reversement '.$lot->number,
-                $e->net_amount->getAmount(),
+                (int) $e->net_amount->getAmount(),
                 $lot->currency,
                 (string) $e->bank_last4,
                 $e->status->value,
@@ -42,21 +43,10 @@ final readonly class PayoutCsv
     }
 
     /**
-     * @param  list<string>  $champs
+     * @param  list<string|int>  $champs
      */
     private static function ligne(array $champs): string
     {
-        return implode(';', array_map(self::champ(...), $champs));
-    }
-
-    private static function champ(string $valeur): string
-    {
-        if ($valeur !== '' && str_contains("=+-@\t\r", $valeur[0])) {
-            $valeur = "'".$valeur;
-        }
-
-        $valeur = str_replace(["\r", "\n"], ' ', $valeur);
-
-        return '"'.str_replace('"', '""', $valeur).'"';
+        return implode(';', array_map(CsvField::render(...), $champs));
     }
 }

@@ -79,6 +79,11 @@ final class StoredFile extends Model
         return $this->subject_type === DocumentSubject::TENANT_SPACE;
     }
 
+    public function isPayoutProofFile(): bool
+    {
+        return $this->subject_type === DocumentSubject::PAYOUT_ACCOUNT_REQUEST;
+    }
+
     /**
      * Seuls les justificatifs sans conservation légale se retirent avant leur échéance : sans objet, ou pièce de messagerie.
      */

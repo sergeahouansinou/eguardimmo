@@ -1,5 +1,5 @@
 import { ApiError } from "@eguardimmo/api";
-import type { Session } from "../schemas";
+import type { RegisterProfile, Session } from "../schemas";
 import type { AuthSource, SignInResult, TwoFactorResult } from "../source";
 import { toProfiles } from "./profiles";
 import { loginResponseSchema, meResponseSchema } from "./responses";
@@ -23,7 +23,10 @@ type SessionMethods = Pick<
   | "selectProfile"
   | "socialIdentities"
   | "socialSignIn"
+  | "socialRedirectUrl"
 >;
+
+const BACKEND_PROFILES: Record<RegisterProfile, string> = { bailleur: "individual_landlord", agence: "agency", voyageur: "traveler" };
 
 export function sessionMethods(context: AuthContext): SessionMethods {
   const { client, knowledge } = context;
@@ -79,5 +82,13 @@ export function sessionMethods(context: AuthContext): SessionMethods {
     selectProfile: () => Promise.resolve(),
     socialIdentities: () => [],
     socialSignIn: unavailable(),
+    socialRedirectUrl: ({ provider, intent, profile, returnTo }) => {
+      if (intent === "inscription" && profile === undefined) return null;
+      return client.url(`/auth/social/${provider}/redirect`, {
+        intent: intent === "inscription" ? "register" : "login",
+        profile: intent === "inscription" && profile !== undefined ? BACKEND_PROFILES[profile] : undefined,
+        return_to: returnTo,
+      });
+    },
   };
 }

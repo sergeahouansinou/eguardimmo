@@ -24,6 +24,7 @@ import type {
   ShellNavigation,
 } from '@eguardimmo/shell';
 
+import { unavailableFamilyOf } from '@/espace/capabilities';
 import { canAccess } from '@/platform/roles';
 import type { OperatorRole, Section } from '@/platform/roles';
 
@@ -32,12 +33,12 @@ export const RAIL_STORAGE_KEY = 'eg-nav-console';
 
 export interface NavigationOptions {
   roles?: readonly OperatorRole[];
-  api?: boolean;
 }
 
 const ENTRY_SECTION: Record<string, Section> = {
   'vue-ensemble': 'accueil',
   organisations: 'organisations',
+  modules: 'abonnements',
   comptes: 'comptes',
   abonnements: 'abonnements',
   audit: 'audit',
@@ -50,10 +51,7 @@ const ENTRY_SECTION: Record<string, Section> = {
   equipe: 'equipe',
 };
 
-const NOT_IN_API = new Set(['modules']);
-
-function visible(entryId: string, { roles, api = false }: NavigationOptions): boolean {
-  if (api && NOT_IN_API.has(entryId)) return false;
+function visible(entryId: string, { roles }: NavigationOptions): boolean {
   const section = ENTRY_SECTION[entryId];
   if (roles === undefined || section === undefined) return true;
   return canAccess(roles, section);
@@ -156,3 +154,7 @@ export const searchPages: PageResult[] = [
   { href: '/equipe/inviter', label: 'Inviter un opérateur' },
   { href: '/aide', label: 'Centre d’aide' },
 ];
+
+export function searchPagesFor(api: boolean): PageResult[] {
+  return api ? searchPages.filter((page) => unavailableFamilyOf(page.href) === null) : searchPages;
+}

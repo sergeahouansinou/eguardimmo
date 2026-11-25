@@ -11,6 +11,8 @@ describe("table des familles sans source API de l'agence", () => {
     ["/reglages/finances/extra", "reglages"],
     ["/reglages/inconnu", "reglages"],
     ["/reglages/acces-support/extra", "reglages"],
+    ["/reglages/champs/extra", "reglages"],
+    ["/reglages/demandes-rgpd/extra", "reglages"],
     ["/support/12/extra", "autre"],
     ["/support/nouvelle/extra", "autre"],
     ["/compte/abonnement", "compte"],
@@ -63,6 +65,20 @@ describe("table des familles sans source API de l'agence", () => {
     "/reglages/",
     "/reglages?x=1",
     "/reglages/acces-support",
+    "/reglages/champs",
+    "/reglages/champs/",
+    "/reglages/demandes-rgpd",
+    "/annonces",
+    "/annonces?x=1",
+    "/annonces/nouvelle",
+    "/annonces/0193a5e1-0000-7000-8000-0000000008a1",
+    "/annonces/0193a5e1-0000-7000-8000-0000000008a1/modifier",
+    "/finances/comptabilite",
+    "/finances/comptabilite/ecritures",
+    "/finances/comptabilite/ecritures?bail=12",
+    "/finances/comptabilite/ecritures/12",
+    "/finances/comptabilite/releve",
+    "/finances/comptabilite/releve?bail=12",
     "/support",
     "/support/",
     "/support/nouvelle",
@@ -183,10 +199,10 @@ describe("table des familles sans source API de l'agence", () => {
   it("ne laisse aucune famille propre à l'agence servir ses données de démonstration", () => {
     const served = pageFiles().filter((page) => unavailableFamilyOf(page.route) === null).map((page) => page.route);
 
-    for (const route of served.filter((candidate) => candidate !== "/")) expect(route).toMatch(/^\/(comptes-rendus|biens|locataires|baux|interventions|mandants|mandats|equipe|messages|campagnes|aide|notifications|support|agenda|taches|contacts|journal|compte(?=$)|compte\/securite|compte\/notifications|reglages(?=$|\/acces-support$|\/finances$|\/fuseau-horaire$)|finances\/impayes(?=$|\/x$)|finances\/encaissements(?=$|\/nouveau$)|finances\/banque|finances\/paiements-en-ligne|finances\/loyers|finances\/factures|finances\/reversements|finances\/honoraires|finances\/fonds|finances\/cloture|finances\/fiscalite|analytique(?=$|\/revenus-depenses$|\/occupation$)|finances\/depenses|finances\/charges|finances\/recouvrement|conformite|documents(?=$|\/ajout$)|devis$)(\/|$)/);
+    for (const route of served.filter((candidate) => candidate !== "/")) expect(route).toMatch(/^\/(comptes-rendus|biens|locataires|baux|interventions|mandants|mandats|equipe|messages|campagnes|annonces|aide|notifications|support|agenda|taches|contacts|journal|compte(?=$)|compte\/securite|compte\/notifications|reglages(?=$|\/acces-support$|\/finances$|\/fuseau-horaire$|\/champs$|\/demandes-rgpd$)|finances\/impayes(?=$|\/x$)|finances\/comptabilite|finances\/encaissements(?=$|\/nouveau$)|finances\/banque|finances\/paiements-en-ligne|finances\/loyers|finances\/factures|finances\/reversements|finances\/honoraires|finances\/fonds|finances\/cloture|finances\/fiscalite|analytique(?=$|\/revenus-depenses$|\/occupation$)|finances\/depenses|finances\/charges|finances\/recouvrement|conformite|documents(?=$|\/ajout$)|devis$)(\/|$)/);
     expect(served.filter((route) => route.startsWith("/finances/impayes")).sort()).toEqual(["/finances/impayes", "/finances/impayes/x"]);
     expect(served.filter((route) => route.startsWith("/finances/encaissements")).sort()).toEqual(["/finances/encaissements", "/finances/encaissements/nouveau"]);
-    expect(served.filter((route) => route.startsWith("/reglages")).sort()).toEqual(["/reglages", "/reglages/acces-support", "/reglages/finances", "/reglages/fuseau-horaire"]);
+    expect(served.filter((route) => route.startsWith("/reglages")).sort()).toEqual(["/reglages", "/reglages/acces-support", "/reglages/champs", "/reglages/demandes-rgpd", "/reglages/finances", "/reglages/fuseau-horaire"]);
     expect(served.filter((route) => route.startsWith("/support")).sort()).toEqual(["/support", "/support/nouvelle", "/support/x"]);
     expect(served).toEqual(expect.arrayContaining(["/equipe/roles", "/finances/honoraires/bareme", "/devis", "/documents/ajout"]));
   });

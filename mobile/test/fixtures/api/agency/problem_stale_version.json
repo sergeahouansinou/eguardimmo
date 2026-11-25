@@ -1,0 +1,8 @@
+{
+  "type": "https://api.eguardimmo.test/problems/intervention_stale_version",
+  "title": "Intervention modifiée entre-temps",
+  "status": 409,
+  "detail": "Intervention modifiée entre-temps.",
+  "code": "intervention_stale_version",
+  "request_id": "01a1ef81-5144-7138-a3ac-9b1463fdc9c1"
+}

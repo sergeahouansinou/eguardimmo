@@ -1,0 +1,154 @@
+{
+  "data": {
+    "id": "01a1ef81-4fe1-7045-b621-ec6cf711d928",
+    "reference": "INT-2026-0001",
+    "state": "done",
+    "nature": {
+      "key": "plumbing",
+      "label": "Plomberie"
+    },
+    "title": "Fuite sous l'évier",
+    "description": "De l'eau coule sous l'évier de la cuisine.",
+    "room": null,
+    "availability": null,
+    "reported_urgency": "soon",
+    "place": "Résidence Roy - LOT-28755",
+    "reported_on": "2026-11-18",
+    "decline": null,
+    "completed_on": "2026-11-20",
+    "visits": [
+      {
+        "id": "01a1ef81-505d-7074-b8dd-4878e552a0c0",
+        "scheduled_on": "2026-11-19",
+        "slot": "afternoon",
+        "presence_required": true,
+        "status": "done",
+        "requested_on": null,
+        "requested_slot": null,
+        "contact_name": null,
+        "contact_phone": null
+      }
+    ],
+    "cancellable": false,
+    "events": [
+      {
+        "id": "01a1ef81-4fe2-71d9-bc07-559fc4da1193",
+        "kind": "reported",
+        "author": "tenant",
+        "text": "Demande signalée.",
+        "created_at": "2026-11-18T11:01:00+00:00"
+      },
+      {
+        "id": "01a1ef81-5002-709b-a12e-e0d1615408e8",
+        "kind": "file_added",
+        "author": "tenant",
+        "text": "Une photo a été ajoutée.",
+        "created_at": "2026-11-18T11:01:00+00:00"
+      },
+      {
+        "id": "01a1ef81-5006-7184-8da2-16868ccc3242",
+        "kind": "comment",
+        "author": "tenant",
+        "text": "Merci de passer vite.",
+        "created_at": "2026-11-18T11:01:00+00:00"
+      },
+      {
+        "id": "01a1ef81-5012-73d7-ad53-298c64c66a84",
+        "kind": "comment",
+        "author": "team",
+        "text": "Un plombier passera cette semaine.",
+        "created_at": "2026-11-18T11:01:00+00:00"
+      },
+      {
+        "id": "01a1ef81-5016-73f1-ad9a-cf712cc9b782",
+        "kind": "file_added",
+        "author": "team",
+        "text": "Une photo a été ajoutée.",
+        "created_at": "2026-11-18T11:01:00+00:00"
+      },
+      {
+        "id": "01a1ef81-5025-711b-87ca-8c467f6b5fe3",
+        "kind": "updated",
+        "author": "team",
+        "text": "Votre demande a été prise en charge.",
+        "created_at": "2026-11-18T11:01:00+00:00"
+      },
+      {
+        "id": "01a1ef81-505d-7074-b8dd-4878e5c55353",
+        "kind": "visit_proposed",
+        "author": "team",
+        "text": "Rendez-vous proposé.",
+        "created_at": "2026-11-18T11:01:00+00:00"
+      },
+      {
+        "id": "01a1ef81-5065-70b3-bfe4-28515f9dfb8c",
+        "kind": "visit_reschedule_requested",
+        "author": "tenant",
+        "text": "Un autre créneau a été demandé.",
+        "created_at": "2026-11-18T11:01:00+00:00"
+      },
+      {
+        "id": "01a1ef81-5070-73ae-91e6-6dc5eccd3623",
+        "kind": "visit_proposed",
+        "author": "team",
+        "text": "Rendez-vous modifié.",
+        "created_at": "2026-11-18T11:01:00+00:00"
+      },
+      {
+        "id": "01a1ef81-5075-7250-a431-979384350b36",
+        "kind": "visit_confirmed",
+        "author": "tenant",
+        "text": "Rendez-vous confirmé.",
+        "created_at": "2026-11-18T11:01:00+00:00"
+      },
+      {
+        "id": "01a1ef81-50a0-72b5-9e68-7d156b3f08d4",
+        "kind": "started",
+        "author": "team",
+        "text": "Intervention en cours.",
+        "created_at": "2026-11-21T14:04:00+00:00"
+      },
+      {
+        "id": "01a1ef81-50a7-7325-9559-877383bc217a",
+        "kind": "completed",
+        "author": "team",
+        "text": "Intervention terminée.",
+        "created_at": "2026-11-21T14:04:00+00:00"
+      },
+      {
+        "id": "01a1ef81-50d2-70c7-b5bb-fab1dad38df3",
+        "kind": "comment",
+        "author": "team",
+        "text": "Intervention terminée.",
+        "created_at": "2026-11-21T14:04:00+00:00"
+      },
+      {
+        "id": "01a1ef81-50d5-723f-b02e-386489ea4771",
+        "kind": "file_added",
+        "author": "team",
+        "text": "Une photo a été ajoutée.",
+        "created_at": "2026-11-21T14:04:00+00:00"
+      }
+    ],
+    "files": [
+      {
+        "id": "01a1ef81-5001-71af-be78-b8828b6906eb",
+        "kind": "photo_before",
+        "uploaded_by": "tenant",
+        "created_at": "2026-11-18T11:01:00+00:00"
+      },
+      {
+        "id": "01a1ef81-5016-73f1-ad9a-cf712bed7b3a",
+        "kind": "photo_before",
+        "uploaded_by": "team",
+        "created_at": "2026-11-18T11:01:00+00:00"
+      },
+      {
+        "id": "01a1ef81-50d5-723f-b02e-38648950e644",
+        "kind": "photo_after",
+        "uploaded_by": "team",
+        "created_at": "2026-11-21T14:04:00+00:00"
+      }
+    ]
+  }
+}

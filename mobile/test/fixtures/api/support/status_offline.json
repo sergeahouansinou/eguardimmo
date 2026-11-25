@@ -1,0 +1,21 @@
+{
+  "data": {
+    "online": false,
+    "hours_label": "Lun–ven 9 h – 18 h (Europe/Paris)",
+    "response_label": "Réponse sous 1 jour ouvré",
+    "timezone": "Europe/Paris",
+    "hours": [
+      {
+        "days": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "from": "09:00",
+        "to": "18:00"
+      }
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+# Copiez ce fichier en android/key.properties (ignoré par git) et renseignez
+# votre keystore. Jamais de mot de passe ni de keystore dans le dépôt.
+# storeFile : chemin relatif au dossier android/ ou absolu.
+storeFile=[À RENSEIGNER] chemin du keystore (.jks)
+storePassword=[À RENSEIGNER]
+keyAlias=[À RENSEIGNER]
+keyPassword=[À RENSEIGNER]

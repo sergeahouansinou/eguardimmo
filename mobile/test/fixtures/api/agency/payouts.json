@@ -1,0 +1,14 @@
+{
+  "data": {
+    "currency": "EUR",
+    "payable_total": { "amount": 130000, "currency": "EUR" },
+    "in_transit_total": { "amount": 64120, "currency": "EUR" },
+    "mandants_with_payable": 2,
+    "top_mandants": [
+      { "party_id": "01a1ee5a-0bb7-73fa-a273-ea6cbd9ac002", "name": "Awa Diallo", "payable": { "amount": 80000, "currency": "EUR" } },
+      { "party_id": "01a1ee5a-0bb7-73fa-a273-ea6cbd9ac003", "name": null, "payable": { "amount": 50000, "currency": "EUR" } }
+    ],
+    "active_holds": 1,
+    "pending_items": 2
+  }
+}

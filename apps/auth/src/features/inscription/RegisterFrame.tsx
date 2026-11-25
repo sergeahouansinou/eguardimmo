@@ -67,6 +67,7 @@ export function RegisterFrame({
   description,
   problem,
   busy,
+  profile,
   onSocial,
   footer,
   children,
@@ -75,6 +76,7 @@ export function RegisterFrame({
   description: string;
   problem: ReactNode;
   busy: boolean;
+  profile: RegisterProfile;
   onSocial: (provider: SocialProvider, identityId: string) => void;
   footer: ReactNode;
   children: ReactNode;
@@ -88,7 +90,7 @@ export function RegisterFrame({
         </FormAlert>
       ) : null}
       {children}
-      <SocialButtons verb="S’inscrire avec" intent="inscription" busy={busy} onPick={onSocial} />
+      <SocialButtons verb="S’inscrire avec" intent="inscription" profile={profile} busy={busy} onPick={onSocial} />
       {footer}
     </AuthCard>
   );

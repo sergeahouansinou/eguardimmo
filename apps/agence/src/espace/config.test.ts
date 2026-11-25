@@ -220,7 +220,8 @@ function staticRoutes(dir: string, prefix = ""): string[] {
 }
 
 describe("recherche des pages livrées", () => {
-  const hrefs = new Set(buildSearchPages().map((page) => page.href));
+  const modules = { accounting: true, listings: true, settingsAdmin: true };
+  const hrefs = new Set(buildSearchPages({ records: true, ...modules }).map((page) => page.href));
 
   const apiOnly = new Set(apiOnlyPages.map(([href]) => href));
   const routes = ["/", ...staticRoutes(join(process.cwd(), "src/app/(espace)"))];
@@ -233,10 +234,21 @@ describe("recherche des pages livrées", () => {
   });
 
   it("propose en mode api chaque page statique, sans aucune fiche de démonstration", () => {
-    const pages = buildSearchPages({ records: false, banking: true, tenantRequests: { manage: true, payments: true } });
+    const pages = buildSearchPages({ records: false, banking: true, tenantRequests: { manage: true, payments: true }, ...modules });
     const apiHrefs = new Set(pages.map((page) => page.href));
     for (const route of routes) expect(apiHrefs.has(route), route).toBe(true);
     expect(pages.some((page) => /^(Mandant|Lot|Locataire), /.test(page.label))).toBe(false);
+  });
+
+  it("ne propose les pages comptables, d’annonces et de réglages avancés qu’avec l’accès correspondant", () => {
+    const sans = new Set(buildSearchPages({ records: true }).map((page) => page.href));
+    for (const href of ["/finances/comptabilite", "/annonces", "/annonces/nouvelle", "/reglages/champs", "/reglages/demandes-rgpd"]) expect(sans.has(href), href).toBe(false);
+    const comptable = new Set(buildSearchPages({ records: true, accounting: true }).map((page) => page.href));
+    expect(comptable.has("/finances/comptabilite/ecritures")).toBe(true);
+    expect(comptable.has("/annonces")).toBe(false);
+    const gestionnaire = new Set(buildSearchPages({ records: true, listings: true }).map((page) => page.href));
+    expect(gestionnaire.has("/annonces")).toBe(true);
+    expect(gestionnaire.has("/reglages/champs")).toBe(false);
   });
 
   it("propose les pages citées par les menus", () => {
@@ -327,5 +339,32 @@ describe("navigation de l'agenda, des contacts et du journal", () => {
   it("propose ces pages à la recherche en mode api seulement", () => {
     expect(buildSearchPages({ records: false }).map((page) => page.href)).toEqual(expect.arrayContaining(["/agenda", "/taches", "/contacts", "/journal", "/reglages/fuseau-horaire"]));
     expect(buildSearchPages().map((page) => page.href)).not.toContain("/agenda");
+  });
+});
+
+describe("navigation de la comptabilité, des annonces et des réglages avancés", () => {
+  const entries = (options: Parameters<typeof buildNavigation>[1]) => {
+    const navigation = buildNavigation(undefined, options);
+    return [...navigation.sections.flatMap((section) => section.entries), ...navigation.footer];
+  };
+
+  it("n'expose rien sans l'accès correspondant", () => {
+    const ids = entries({ rent: true }).map((entry) => entry.id);
+    expect(ids).not.toEqual(expect.arrayContaining(["comptabilite"]));
+    expect(ids).not.toContain("annonces");
+    expect(entries({ rent: true }).find((entry) => entry.id === "reglages")?.children).toBeUndefined();
+  });
+
+  it("place la comptabilité après les honoraires, avec ses trois écrans", () => {
+    const finances = buildNavigation(undefined, { rent: true, accounting: true }).sections.find((section) => section.id === "finances")?.entries ?? [];
+    const ids = finances.map((entry) => entry.id);
+    expect(ids.indexOf("comptabilite")).toBe(ids.indexOf("honoraires") + 1);
+    expect(finances.find((entry) => entry.id === "comptabilite")?.children?.map((child) => child.href)).toEqual(["/finances/comptabilite", "/finances/comptabilite/ecritures", "/finances/comptabilite/releve"]);
+  });
+
+  it("expose les annonces au suivi et les réglages avancés sous Réglages", () => {
+    expect(entries({ rent: true, listings: true }).find((entry) => entry.id === "annonces")?.href).toBe("/annonces");
+    const settings = entries({ rent: true, settingsAdmin: true }).find((entry) => entry.id === "reglages");
+    expect(settings?.children?.map((child) => child.href)).toEqual(["/reglages", "/reglages/champs", "/reglages/demandes-rgpd"]);
   });
 });

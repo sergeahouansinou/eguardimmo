@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Mandates\Http\Resources\Owner;
 
-use App\Modules\Mandates\Http\Resources\MandateEndRequestResource;
 use App\Modules\Mandates\Http\Support\ApiShapes;
 use App\Modules\Mandates\Models\MandateTerm;
 use App\Modules\Mandates\Models\MandateUnit;
@@ -45,7 +44,7 @@ final class OwnerMandateResource extends JsonResource
             'currency' => $mandat->currency,
             'signed_on' => $mandat->signed_on?->toDateString(),
             'notice_given_on' => $mandat->notice_given_on?->toDateString(),
-            'end_request' => $this->resource->endRequest === null ? null : (new MandateEndRequestResource($this->resource->endRequest))->resolve(),
+            'end_request' => $this->resource->endRequest === null ? null : (new OwnerMandateEndRequestResource($this->resource->endRequest))->resolve(),
             'terms' => $terme === null ? null : self::terms($terme),
             'units' => array_map(fn (MandateUnit $ligne): array => [
                 'id' => $ligne->unit_id,

@@ -1,0 +1,24 @@
+{
+  "data": {
+    "id": "01a1ef81-5500-7000-8000-0000000000e1",
+    "intervention_id": "01a1ef81-509b-72a6-b78e-36d2c9ec12f1",
+    "quote_id": "01a1ef81-5400-7000-8000-0000000000d1",
+    "amount": {
+      "amount": 23600000,
+      "currency": "XOF"
+    },
+    "ceiling_amount": {
+      "amount": 15000000,
+      "currency": "XOF"
+    },
+    "status": "accepted",
+    "requested_at": "2026-11-20T10:00:00+00:00",
+    "decide_before": "2026-11-27T10:00:00+00:00",
+    "decided_at": "2026-11-21T09:05:00+00:00",
+    "decided_via": "agency_recorded",
+    "comment": "Accord par courrier.",
+    "proof_file_id": "01a1ef81-5600-7000-8000-0000000000f1",
+    "lock_version": 2,
+    "replayed": false
+  }
+}

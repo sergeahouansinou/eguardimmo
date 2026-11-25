@@ -59,9 +59,10 @@ final class HandleProviderCallbackController
         }
 
         if ($user->hasConfirmedTwoFactor()) {
+            $request->session()->regenerate();
             $request->session()->put(['login.id' => $user->id, 'login.remember' => false]);
 
-            return new RedirectResponse(Hub::url('/deux-facteurs').'?'.http_build_query(['return_to' => $etat->returnTo]), 303);
+            return new RedirectResponse(Hub::url('/connexion/verification').'?'.http_build_query(['return_to' => $etat->returnTo]), 303);
         }
 
         Auth::guard('web')->login($user);

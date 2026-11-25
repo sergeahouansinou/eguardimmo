@@ -26,6 +26,11 @@ describe('IconButton', () => {
     expect(await screen.findByRole('tooltip', {}, { timeout: 2000 })).toBeTruthy();
   });
 
+  it('la taille lg offre une cible de 44 px', () => {
+    render(<IconButton label="Ajouter aux favoris" icon={Trash2} size="lg" />);
+    expect(screen.getByRole('button').className).toContain('size-11');
+  });
+
   it('déclenche onClick', async () => {
     const onClick = vi.fn();
     render(<IconButton label="Supprimer" icon={Trash2} onClick={onClick} />);

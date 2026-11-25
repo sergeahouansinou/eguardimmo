@@ -15,7 +15,7 @@ import {
   helpMenu,
   navigation,
   notifications,
-  searchPages,
+  searchPagesFor,
 } from "@/espace/config";
 import { dataSource } from "@/lib/env";
 import { useNavigationInputs, useNoNavigationInputs } from "@/espace/useOperator";
@@ -35,7 +35,7 @@ export function EspaceShell({ children }: { children: ReactNode }) {
         ...(openTickets === undefined ? {} : { support: openTickets }),
         ...(pendingApprovals === undefined ? {} : { approbations: pendingApprovals }),
       };
-      return navigation(merged, { roles, api: dataSource === "api" });
+      return navigation(merged, { roles });
     },
     [openTickets, pendingApprovals, roles],
   );
@@ -52,7 +52,7 @@ export function EspaceShell({ children }: { children: ReactNode }) {
       accountMenu={accountMenu}
       helpMenu={helpMenu}
       notifications={notifications}
-      searchPages={searchPages}
+      searchPages={searchPagesFor(dataSource === "api")}
     >
       <ApiRouteGate>{children}</ApiRouteGate>
     </SpaceShell>

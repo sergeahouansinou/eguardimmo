@@ -1,0 +1,18 @@
+{
+  "data": {
+    "id": "01a1ef82-0000-7000-8000-000000000002",
+    "client_id": "3f1c2a52-6d0e-4a58-9b3c-0a8f5e2c7d11",
+    "author": {
+      "id": "01a1ef80-3333-7000-8000-000000000d01",
+      "name": "Marc Dossou",
+      "side": "staff"
+    },
+    "mine": true,
+    "body": "Nous passons demain.",
+    "sent_at": "2026-11-20T09:30:00+00:00",
+    "redacted": false,
+    "redacted_at": null,
+    "redaction_reason": null,
+    "attachments": []
+  }
+}

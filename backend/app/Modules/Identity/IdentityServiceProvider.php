@@ -25,6 +25,7 @@ use App\Modules\Identity\Http\Middleware\EnsureWebSession;
 use App\Modules\Identity\Http\Middleware\RefuseOperatorToken;
 use App\Modules\Identity\Http\Middleware\RequireOperatorProof;
 use App\Modules\Identity\Http\Middleware\RequireOperatorRole;
+use App\Modules\Identity\Http\Middleware\RequireTwoFactorProofForFactorManagement;
 use App\Modules\Identity\Models\Operator;
 use App\Modules\Identity\Models\OperatorRoleAssignment;
 use App\Modules\Identity\Models\OwnerInvitation;
@@ -63,6 +64,16 @@ final class IdentityServiceProvider extends ServiceProvider
         'verification.send',
         'two-factor.confirm',
         'user-password.update',
+    ];
+
+    private const ROUTES_GESTION_DEUXIEME_FACTEUR = [
+        'two-factor.enable',
+        'two-factor.confirm',
+        'two-factor.disable',
+        'two-factor.qr-code',
+        'two-factor.secret-key',
+        'two-factor.recovery-codes',
+        'two-factor.regenerate-recovery-codes',
     ];
 
     private const RENVOIS_PAR_ADRESSE_PAR_MINUTE = 1;
@@ -136,6 +147,10 @@ final class IdentityServiceProvider extends ServiceProvider
             foreach ($routeur->getRoutes()->getRoutes() as $route) {
                 if (in_array($route->getName(), self::ROUTES_FORTIFY_LIMITEES, true) && ! in_array('throttle:auth', $route->middleware(), true)) {
                     $route->middleware('throttle:auth');
+                }
+
+                if (in_array($route->getName(), self::ROUTES_GESTION_DEUXIEME_FACTEUR, true)) {
+                    $route->middleware(RequireTwoFactorProofForFactorManagement::class);
                 }
 
                 if ($route->getName() === 'two-factor.login.store') {

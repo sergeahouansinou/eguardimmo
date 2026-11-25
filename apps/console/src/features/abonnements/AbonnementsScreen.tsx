@@ -135,7 +135,11 @@ function Content({ data }: { data: SubscriptionsOverview }) {
           <Section
             id="essais"
             title="Essais en cours"
-            aside={<span className="text-caption text-fg-subtle">{`Tout voir, ${String(data.trialCount)}`}</span>}
+            aside={
+              <Link href="/organisations" className="text-caption font-medium text-action-on-subtle underline underline-offset-3">
+                {`Tout voir, ${formatInteger(data.trialCount)}`}
+              </Link>
+            }
           >
             {data.trials.length === 0 ? (
               <EmptyLine>Aucun essai en cours.</EmptyLine>
@@ -161,7 +165,11 @@ function Content({ data }: { data: SubscriptionsOverview }) {
           <Section
             id="echecs"
             title="Paiements en échec"
-            aside={<span className="text-caption text-fg-subtle">{`Tout voir, ${String(data.failedCount)}`}</span>}
+            aside={
+              <Link href="/organisations" className="text-caption font-medium text-action-on-subtle underline underline-offset-3">
+                {`Tout voir, ${formatInteger(data.failedCount)}`}
+              </Link>
+            }
           >
             {data.failures.length === 0 ? (
               <EmptyLine>Aucun paiement en échec.</EmptyLine>

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Organizations\Support;
 
+use App\Shared\Csv\CsvField;
+
 final class ActivityCsv
 {
     /**
@@ -14,19 +16,6 @@ final class ActivityCsv
      */
     public static function line(array $cellules): string
     {
-        return implode(';', array_map(self::cell(...), $cellules))."\r\n";
-    }
-
-    private static function cell(?string $valeur): string
-    {
-        $texte = (string) $valeur;
-
-        if ($texte !== '' && str_contains("=+-@\t\r", $texte[0])) {
-            $texte = "'".$texte;
-        }
-
-        $texte = str_replace(["\r", "\n"], ' ', $texte);
-
-        return '"'.str_replace('"', '""', $texte).'"';
+        return implode(';', array_map(CsvField::render(...), $cellules))."\r\n";
     }
 }

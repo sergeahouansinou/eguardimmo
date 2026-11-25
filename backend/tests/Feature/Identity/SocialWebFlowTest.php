@@ -147,10 +147,26 @@ it('redirige vers le défi 2FA sans ouvrir de session si le compte a la 2FA', fu
 
     rappelGoogle($this, $state, $binder)
         ->assertStatus(303)
-        ->assertRedirect('https://auth.eguardimmo.test/deux-facteurs?'.http_build_query(['return_to' => 'https://agence.eguardimmo.test/tableau']))
+        ->assertRedirect('https://auth.eguardimmo.test/connexion/verification?'.http_build_query(['return_to' => 'https://agence.eguardimmo.test/tableau']))
         ->assertSessionHas('login.id', $user->id);
 
     $this->assertGuest('web');
+});
+
+it('ouvre la session après un défi 2FA réussi à la suite du retour Google, et la refuse avec un mauvais code', function (): void {
+    $user = User::factory()->create();
+    $secret = activerDeuxFacteurs($user);
+    $user->socialIdentities()->create(['provider' => SocialProvider::Google, 'subject' => 'g-123']);
+    Socialite::fake('google', utilisateurGoogle());
+    [$state, $binder] = etatOAuth();
+
+    rappelGoogle($this, $state, $binder)->assertStatus(303)->assertSessionHas('login.id', $user->id);
+
+    $this->postJson('/auth/two-factor-challenge', ['code' => '000000'])->assertUnprocessable();
+    $this->assertGuest('web');
+
+    $this->postJson('/auth/two-factor-challenge', ['code' => codeTotp($secret)])->assertNoContent();
+    $this->assertAuthenticatedAs($user, 'web');
 });
 
 it('renvoie vers le hub avec le code d\'erreur si aucun compte n\'existe', function (): void {

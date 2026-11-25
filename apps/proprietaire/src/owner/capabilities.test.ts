@@ -11,7 +11,7 @@ describe("table des familles sans source API de l'espace propriétaire", () => {
     ["/confie/agence/inconnu", "mandat"],
     ["/confie/messages/12/extra", "messages"],
     ["/confie/messages/nouveau/extra", "messages"],
-    ["/confie/aide", "aide"],
+    ["/confie/aide/extra", "aide"],
     ["/confie/releve/extra", "autre"],
     ["/confie/annonces/12/extra", "autre"],
     ["/confie/support/12/extra", "autre"],
@@ -20,7 +20,7 @@ describe("table des familles sans source API de l'espace propriétaire", () => {
     expect(unavailableFamilyOf(path)).toBe(family);
   });
 
-  it.each(["/confie", "/confie/", "/confie?x=1", "/confie/agence", "/confie/agence/", "/confie/agence?x=1", "/confie/agence/mandat", "/confie/agence/mandat/", "/confie/agence/mandat/fin", "/confie/compte-de-paiement", "/confie/notifications", "/confie/notifications/toutes", "/confie/biens", "/confie/biens/0193a5e1", "/confie/biens?agency=1", "/confie/baux", "/confie/baux/0193a5e1", "/confie/loyers", "/confie/loyers/2026-10", "/confie/releve", "/confie/releve/", "/confie/releve?agency=1", "/confie/charges", "/confie/charges/0193a5e1", "/confie/charges?agency=1", "/confie/comptes-rendus", "/confie/comptes-rendus/0193a5e1", "/confie/documents", "/confie/factures", "/confie/factures/0193a5e1", "/confie/interventions", "/confie/interventions/0193a5e1", "/confie/messages", "/confie/messages/", "/confie/messages/nouveau", "/confie/messages/0193a5e1", "/confie/annonces", "/confie/annonces/", "/confie/annonces/0193a5e1", "/confie/support", "/confie/support/", "/confie/support/nouvelle", "/confie/support/0193a5e1", "/confie/informations", "/confie/informations/modifier", "/confie/securite", "/confie/interventions/0193a5e1/devis", "/confie/interventions/0193a5e1/devis/", "/confie/comptes-rendus/0193a5e1/apercu", "/confie/fiscalite", "/confie/fiscalite/", "/confie/fiscalite?agency=1", "/confie/fiscalite/0193a5e1"])("%s reste servi (écran réel)", (path) => {
+  it.each(["/confie", "/confie/", "/confie?x=1", "/confie/agence", "/confie/agence/", "/confie/agence?x=1", "/confie/agence/mandat", "/confie/agence/mandat/", "/confie/agence/mandat/fin", "/confie/compte-de-paiement", "/confie/notifications", "/confie/notifications/toutes", "/confie/biens", "/confie/biens/0193a5e1", "/confie/biens?agency=1", "/confie/baux", "/confie/baux/0193a5e1", "/confie/loyers", "/confie/loyers/2026-10", "/confie/releve", "/confie/releve/", "/confie/releve?agency=1", "/confie/charges", "/confie/charges/0193a5e1", "/confie/charges?agency=1", "/confie/comptes-rendus", "/confie/comptes-rendus/0193a5e1", "/confie/documents", "/confie/factures", "/confie/factures/0193a5e1", "/confie/interventions", "/confie/interventions/0193a5e1", "/confie/messages", "/confie/messages/", "/confie/messages/nouveau", "/confie/messages/0193a5e1", "/confie/annonces", "/confie/annonces/", "/confie/annonces/0193a5e1", "/confie/support", "/confie/support/", "/confie/support/nouvelle", "/confie/support/0193a5e1", "/confie/aide", "/confie/aide/", "/confie/informations", "/confie/informations/modifier", "/confie/securite", "/confie/interventions/0193a5e1/devis", "/confie/interventions/0193a5e1/devis/", "/confie/comptes-rendus/0193a5e1/apercu", "/confie/fiscalite", "/confie/fiscalite/", "/confie/fiscalite?agency=1", "/confie/fiscalite/0193a5e1"])("%s reste servi (écran réel)", (path) => {
     expect(unavailableFamilyOf(path)).toBeNull();
   });
 

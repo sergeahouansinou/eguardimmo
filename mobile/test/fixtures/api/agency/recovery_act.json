@@ -1,0 +1,13 @@
+{
+  "data": {
+    "id": "01a1ef81-5810-7000-8000-0000000000b1",
+    "case_id": "01a1ef81-5800-7000-8000-0000000000a1",
+    "type": "reminder",
+    "performed_on": "2026-11-21",
+    "author_user_id": "0193d2a0-0000-7000-8000-000000000001",
+    "reference": null,
+    "note": "Premier rappel par SMS.",
+    "details": null,
+    "created_at": "2026-11-21T09:00:00+00:00"
+  }
+}

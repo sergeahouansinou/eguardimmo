@@ -5,9 +5,6 @@ import { GATED_FAMILIES, classifyRoute, familyHasApiSource, familyLabel, familyN
 describe("table des familles sans source API de la console", () => {
   it.each([
     ["/organisations/nouvelle", "organisations-creation"],
-    ["/organisations/12/modules", "organisations-modules"],
-    ["/modules", "modules"],
-    ["/modules/12", "modules"],
     ["/abonnements/plans/nouveau", "abonnements-creation"],
     ["/sante/incidents", "sante-incidents"],
     ["/sante/incidents/12", "sante-incidents"],
@@ -24,8 +21,11 @@ describe("table des familles sans source API de la console", () => {
     "/organisations",
     "/organisations?q=port",
     "/organisations/12",
+    "/organisations/12/modules",
     "/comptes",
     "/comptes/12",
+    "/modules",
+    "/modules/12",
     "/abonnements",
     "/abonnements/plans/gold",
     "/audit",
@@ -81,11 +81,8 @@ describe("table des familles sans source API de la console", () => {
     const gated = pageFiles().filter((page) => unavailableFamilyOf(page.route) !== null).map((page) => page.route);
 
     expect(gated.sort()).toEqual([
-      "/modules",
-      "/modules/x",
       "/notifications",
       "/organisations/nouvelle",
-      "/organisations/x/modules",
       "/parametres/notifications",
       "/abonnements/plans/nouveau",
       "/equipe/inviter",

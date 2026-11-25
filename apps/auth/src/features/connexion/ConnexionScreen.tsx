@@ -20,6 +20,7 @@ import { formatDuration } from "@/lib/format";
 import { ROUTES } from "@/lib/routes";
 import { useCountdown } from "@/lib/useCountdown";
 import { useSocialOutcome } from "./SocialOutcome";
+import { useSocialReturn } from "./useSocialReturn";
 
 type Failure = "credentials" | "locked" | "technical" | null;
 
@@ -31,6 +32,7 @@ export function ConnexionScreen() {
   const signIn = useSignIn();
   const socialSignIn = useSocialSignIn();
   const onSocial = useSocialOutcome(context);
+  const socialReturnFailed = useSocialReturn(context);
   const [failure, setFailure] = useState<Failure>(null);
   const [lockSeconds, setLockSeconds] = useState(0);
   const remaining = useCountdown(lockSeconds);
@@ -97,7 +99,7 @@ export function ConnexionScreen() {
           Réessayez dans {formatDuration(remaining)}, ou réinitialisez votre mot de passe.
         </FormAlert>
       ) : null}
-      {failure === "technical" ? (
+      {failure === "technical" || socialReturnFailed ? (
         <FormAlert tone="danger" title="Connexion impossible pour le moment." focusOnMount>
           Une erreur est survenue. Réessayez dans un instant.
         </FormAlert>

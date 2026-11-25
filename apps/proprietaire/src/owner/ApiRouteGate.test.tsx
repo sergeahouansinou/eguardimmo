@@ -73,7 +73,7 @@ describe("routes de l'espace propriétaire sans source API en mode api", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it.each(["/confie", "/confie/agence", "/confie/agence/mandat", "/confie/agence/mandat/fin", "/confie/compte-de-paiement", "/confie/notifications", "/confie/notifications/toutes"])("%s : laisse passer l'écran réel", (route) => {
+  it.each(["/confie", "/confie/aide", "/confie/agence", "/confie/agence/mandat", "/confie/agence/mandat/fin", "/confie/compte-de-paiement", "/confie/notifications", "/confie/notifications/toutes"])("%s : laisse passer l'écran réel", (route) => {
     state.pathname = route;
 
     render(

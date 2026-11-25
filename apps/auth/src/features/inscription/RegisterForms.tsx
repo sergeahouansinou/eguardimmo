@@ -63,6 +63,7 @@ function PersonRegister({
       description={description}
       problem={problem}
       busy={busy}
+      profile={profile}
       onSocial={social}
       footer={footer === "profil" ? <ChangeProfileLink /> : <AltLine>Vous reviendrez sur SeBook une fois le compte créé.</AltLine>}
     >
@@ -129,6 +130,7 @@ export function AgenceRegister() {
       description="Essai gratuit d’un mois, sans carte bancaire ni validation préalable."
       problem={problem}
       busy={busy}
+      profile="agence"
       onSocial={social}
       footer={<ChangeProfileLink />}
     >

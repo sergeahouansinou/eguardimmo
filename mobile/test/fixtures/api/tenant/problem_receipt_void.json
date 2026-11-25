@@ -1,0 +1,8 @@
+{
+  "type": "https://api.eguardimmo.test/problems/rent_receipt_void",
+  "title": "Quittance annulée",
+  "status": 409,
+  "detail": "Cette quittance a été annulée : son PDF n'est plus délivré.",
+  "code": "rent_receipt_void",
+  "request_id": "01a1e955-00ec-7275-937a-73f711ed78f7"
+}

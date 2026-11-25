@@ -48,7 +48,7 @@ describe('Support de la console', () => {
     expect(await screen.findByRole('heading', { level: 1, name: /E-mails de relance non reçus/ })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Support' }).getAttribute('href')).toBe('/support');
     await expectNoA11yViolations(container);
-    await userEvent.click(screen.getByRole('button', { name: 'Mettre en attente' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Marquer en attente' }));
     expect(await screen.findByText('Ticket mis en attente du client.')).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'Marquer résolu' }));
     expect(await screen.findByText('Ticket marqué comme résolu.')).toBeTruthy();

@@ -1,0 +1,62 @@
+{
+  "data": {
+    "id": "01a1e955-004b-709d-9353-b6f2e30e1028",
+    "lease": {
+      "id": "01a1e955-0036-73a7-8eef-4825b4692bb0",
+      "reference": "BL-2026-99809"
+    },
+    "period": {
+      "start": "2026-11-01",
+      "end": "2026-11-30"
+    },
+    "due_date": "2026-11-05",
+    "status": "partially_paid",
+    "is_overdue": true,
+    "amounts": {
+      "rent": {
+        "amount": 65000,
+        "currency": "EUR"
+      },
+      "charges": {
+        "amount": 0,
+        "currency": "EUR"
+      },
+      "vat": {
+        "amount": 0,
+        "currency": "EUR"
+      },
+      "total": {
+        "amount": 65000,
+        "currency": "EUR"
+      }
+    },
+    "outstanding": {
+      "amount": 35000,
+      "currency": "EUR"
+    },
+    "issued_on": "2026-11-16",
+    "notice": {
+      "number": "AV-2026-0001",
+      "issued_on": "2026-11-16"
+    },
+    "receipt": null,
+    "lines": [
+      {
+        "label": "Loyer de novembre 2026",
+        "from": "2026-11-01",
+        "to": "2026-11-30",
+        "days": 30,
+        "month_days": 30,
+        "amount": {
+          "amount": 65000,
+          "currency": "EUR"
+        },
+        "vat_bp": 0,
+        "vat_amount": {
+          "amount": 0,
+          "currency": "EUR"
+        }
+      }
+    ]
+  }
+}

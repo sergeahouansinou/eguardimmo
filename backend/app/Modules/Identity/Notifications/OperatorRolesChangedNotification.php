@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Identity\Notifications;
 
+use App\Shared\Mail\MailText;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -27,7 +28,7 @@ final class OperatorRolesChangedNotification extends Notification implements Sho
     {
         return (new MailMessage)
             ->subject('Rôles opérateur modifiés')
-            ->line('Les rôles de l\'opérateur '.$this->granteeEmail.' dans la console eGuardImmo viennent d\'être modifiés.')
+            ->line('Les rôles de l\'opérateur '.MailText::markdown($this->granteeEmail).' dans la console eGuardImmo viennent d\'être modifiés.')
             ->line('Si ce changement n\'est pas prévu, signalez-le immédiatement.');
     }
 }

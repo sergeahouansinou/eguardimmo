@@ -1,0 +1,44 @@
+{
+  "data": [
+    {
+      "id": "0193a5e1-0000-7000-8000-0000000000f2",
+      "number": "RV-2026-0007",
+      "status": "pending",
+      "date": "2026-12-05",
+      "amount": { "amount": 641200, "currency": "XOF" },
+      "bank_last4": "1234",
+      "agency": { "id": "0193a5e1-0000-7000-8000-0000000000b1", "name": "Agence du Lac" },
+      "mandant": { "name": "Famille Dossou" }
+    },
+    {
+      "id": "0193a5e1-0000-7000-8000-0000000000f1",
+      "number": "RV-2026-0006",
+      "status": "paid",
+      "date": "2026-10-05",
+      "amount": { "amount": 600000, "currency": "XOF" },
+      "bank_last4": "1234",
+      "agency": { "id": "0193a5e1-0000-7000-8000-0000000000b1", "name": "Agence du Lac" },
+      "mandant": { "name": "Famille Dossou" }
+    },
+    {
+      "id": "0193a5e1-0000-7000-8000-0000000000f0",
+      "number": "RV-2026-0005",
+      "status": "returned",
+      "date": "2026-09-05",
+      "amount": { "amount": 580000, "currency": "XOF" },
+      "bank_last4": null,
+      "agency": { "id": "0193a5e1-0000-7000-8000-0000000000b1", "name": "Agence du Lac" },
+      "mandant": { "name": "Famille Dossou" }
+    }
+  ],
+  "links": { "first": null, "last": null, "prev": null, "next": null },
+  "meta": { "path": "https://api.eguardimmo.test/api/v1/owner/payouts", "per_page": 100, "next_cursor": null, "prev_cursor": null },
+  "upcoming": [
+    {
+      "agency": { "id": "0193a5e1-0000-7000-8000-0000000000b1", "name": "Agence du Lac" },
+      "mandant": { "name": "Famille Dossou" },
+      "date": "2026-12-05",
+      "notice": { "code": "before_payout_day", "message": "Le jour de reversement de votre mandat n'est pas encore arrivé." }
+    }
+  ]
+}

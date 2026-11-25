@@ -34,6 +34,13 @@ describe('Button', () => {
     expect(className).toContain('h-10');
   });
 
+  it('la variante accent utilise le rôle accent', () => {
+    render(<Button variant="accent">Rechercher</Button>);
+    const className = screen.getByRole('button').className;
+    expect(className).toContain('bg-accent');
+    expect(className).toContain('text-on-accent');
+  });
+
   it('en chargement : aria-busy, spinner et clic bloqué', async () => {
     const onClick = vi.fn();
     render(

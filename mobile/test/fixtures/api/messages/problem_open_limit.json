@@ -1,0 +1,8 @@
+{
+  "type": "https://api.eguardimmo.test/problems/conversation_open_limit",
+  "title": "Trop de conversations ouvertes",
+  "status": 409,
+  "detail": "Le nombre de conversations ouvertes est atteint : attendez qu'une d'elles soit fermée.",
+  "code": "conversation_open_limit",
+  "request_id": "01a1ef81-5144-7138-a3ac-9b1463fdc9c1"
+}

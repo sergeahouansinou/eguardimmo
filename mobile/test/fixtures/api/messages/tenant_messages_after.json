@@ -1,0 +1,24 @@
+{
+  "data": [
+    {
+      "id": "01a1ef82-0000-7000-8000-000000000004",
+      "client_id": null,
+      "author": {
+        "side": "agency",
+        "name": "Marc Dossou"
+      },
+      "mine": false,
+      "body": "Le plombier passera à 9 h.",
+      "sent_at": "2026-11-20T09:20:00+00:00",
+      "redacted": false,
+      "attachments": []
+    }
+  ],
+  "meta": {
+    "has_more": false,
+    "next_cursor": null,
+    "status": "open",
+    "agency_last_read_at": "2026-11-20T09:18:00+00:00",
+    "can_reply": true
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "type": "https://api.eguardimmo.test/problems/validation_failed",
+  "title": "Données invalides",
+  "status": 422,
+  "detail": "Certaines informations sont invalides.",
+  "code": "validation_failed",
+  "request_id": "01a1ef81-5144-7138-a3ac-9b1463fdc9c1",
+  "errors": {
+    "subject": [
+      "Le sujet est obligatoire."
+    ]
+  }
+}

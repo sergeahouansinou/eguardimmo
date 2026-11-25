@@ -1,0 +1,49 @@
+{
+  "data": [
+    {
+      "id": "01a1ef81-4fb4-70fa-a070-6b296b02b3e9",
+      "reference": "BL-2026-76772",
+      "jurisdiction": "FR",
+      "regime_key": "fr.habitation_vide",
+      "status": "signed",
+      "phase": "running",
+      "starts_on": "2026-01-01",
+      "end_date": "2028-12-31",
+      "duration_months": 36,
+      "tacit_renewal": true,
+      "periodicity": "monthly",
+      "currency": "EUR",
+      "main_unit": {
+        "id": "01a1ef81-4fa8-7008-9649-57ef36d615d7",
+        "reference": "LOT-28755",
+        "property": { "id": "01a1ef81-4fa7-73e7-83f2-ee41e69f4bee", "name": "Résidence Roy" }
+      },
+      "tenants": [
+        { "id": "01a1ef81-4fb3-73be-8cc0-2f2e71a78ae5", "display_name": "Édouard Gillet", "kind": "person", "is_anonymized": false },
+        { "id": "01a1ef81-4fb3-73be-8cc0-2f2e71a78ae6", "display_name": "Léa Gillet", "kind": "person", "is_anonymized": false }
+      ],
+      "lock_version": 3,
+      "archived_at": null
+    },
+    {
+      "id": "01a1ef81-4fb4-70fa-a070-6b296b02b3ea",
+      "reference": "BL-2026-76773",
+      "jurisdiction": "FR",
+      "regime_key": "fr.habitation_vide",
+      "status": "signed",
+      "phase": "running",
+      "starts_on": "2025-09-01",
+      "end_date": null,
+      "duration_months": null,
+      "tacit_renewal": false,
+      "periodicity": "monthly",
+      "currency": "EUR",
+      "main_unit": null,
+      "tenants": [],
+      "lock_version": 1,
+      "archived_at": null
+    }
+  ],
+  "links": { "first": null, "last": null, "prev": null, "next": null },
+  "meta": { "path": "https://api.eguardimmo.test/api/v1/org/01a1ef81-4fa4-73ad-ab23-9b20322e4204/leases", "per_page": 100, "next_cursor": null, "prev_cursor": null }
+}

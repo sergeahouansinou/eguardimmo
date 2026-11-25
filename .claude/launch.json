@@ -1,10 +1,67 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "agence", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@eguardimmo/agence", "dev"], "port": 3010 },
-    { "name": "proprietaire", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@eguardimmo/proprietaire", "dev"], "port": 3020 },
-    { "name": "locataire", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@eguardimmo/locataire", "dev"], "port": 3030 },
-    { "name": "auth", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@eguardimmo/auth", "dev"], "port": 3040 },
-    { "name": "console", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@eguardimmo/console", "dev"], "port": 3050 }
+    {
+      "name": "agence",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@eguardimmo/agence",
+        "dev"
+      ],
+      "port": 3010
+    },
+    {
+      "name": "proprietaire",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@eguardimmo/proprietaire",
+        "dev"
+      ],
+      "port": 3020
+    },
+    {
+      "name": "locataire",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@eguardimmo/locataire",
+        "dev"
+      ],
+      "port": 3030
+    },
+    {
+      "name": "auth",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@eguardimmo/auth",
+        "dev"
+      ],
+      "port": 3040
+    },
+    {
+      "name": "console",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@eguardimmo/console",
+        "dev"
+      ],
+      "port": 3050
+    },
+    {
+      "name": "e2e-backend",
+      "runtimeExecutable": "/private/tmp/claude-501/-Users-sergeahs-myprojects-new-eguardimmo/a08c9d10-3c65-44a8-956d-6035f42a4686/scratchpad/e2e-backend.sh",
+      "runtimeArgs": [],
+      "port": 8000
+    },
+    {
+      "name": "e2e-mailpit",
+      "runtimeExecutable": "/private/tmp/claude-501/-Users-sergeahs-myprojects-new-eguardimmo/a08c9d10-3c65-44a8-956d-6035f42a4686/scratchpad/e2e-mailpit.sh",
+      "runtimeArgs": [],
+      "port": 8026
+    }
   ]
 }

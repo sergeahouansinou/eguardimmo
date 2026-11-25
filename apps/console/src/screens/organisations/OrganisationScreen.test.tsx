@@ -46,6 +46,7 @@ describe('fiche organisation (mode API)', () => {
     expect(screen.getByText('Active')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Awa Diallo' }).getAttribute('href')).toBe(`/comptes/${IDS.user}`);
     expect(screen.getByText('Non exigée')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Modules et droits' }).getAttribute('href')).toBe(`/organisations/${IDS.org}/modules`);
 
     const rights = await screen.findByRole('table', { name: 'Droits de l’organisation' });
     expect(within(rights).getByRole('row', { name: /Lots.*Quota.*50.*Plan/ })).toBeTruthy();

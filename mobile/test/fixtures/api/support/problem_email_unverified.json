@@ -1,0 +1,8 @@
+{
+  "type": "https://api.eguardimmo.test/problems/email_unverified",
+  "title": "Adresse e-mail non vérifiée",
+  "status": 403,
+  "detail": "Confirmez votre adresse e-mail pour accéder à cet espace.",
+  "code": "email_unverified",
+  "request_id": "01a1ef81-5144-7138-a3ac-9b1463fdc9c1"
+}

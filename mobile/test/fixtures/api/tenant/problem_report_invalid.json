@@ -1,0 +1,22 @@
+{
+  "type": "https://api.eguardimmo.test/problems/validation_failed",
+  "title": "Données invalides",
+  "status": 422,
+  "detail": "Certaines informations sont invalides.",
+  "code": "validation_failed",
+  "errors": {
+    "lease_id": [
+      "Le champ lease id doit être un identifiant valide."
+    ],
+    "nature_term_id": [
+      "Le champ nature term id est obligatoire."
+    ],
+    "title": [
+      "Le champ title doit contenir au moins 3 caractères."
+    ],
+    "description": [
+      "Le champ description est obligatoire."
+    ]
+  },
+  "request_id": "01a1ef81-4ff5-7251-ab86-4b3fb450da9a"
+}

@@ -1,0 +1,11 @@
+{
+  "data": {
+    "month": "2026-11",
+    "currency": "EUR",
+    "rent_called": { "amount": 70000, "currency": "EUR" },
+    "rent_collected": { "amount": 68000, "currency": "EUR" },
+    "collection_rate_basis_points": 9714,
+    "fees_net": { "amount": 4900, "currency": "EUR" },
+    "period_closed": true
+  }
+}

@@ -27,6 +27,30 @@ it('bloque un client anonyme au-delà de la limite par IP sur une route publique
         ->assertHeader('Retry-After');
 });
 
+it('compte les anonymes de la console par IP relayée : le serveur de la console ne partage pas un seul seau', function (): void {
+    config(['identity.console_relay_key' => 'cle-de-relais-de-test-0123456789-abcdef']);
+    Route::middleware('api')->get('/api/v1/sonde-publique', fn (): array => ['ok' => true]);
+    $relais = fn (string $ip): array => ['X-Console-Relay-Key' => 'cle-de-relais-de-test-0123456789-abcdef', 'X-Console-Client-Ip' => $ip];
+
+    for ($i = 0; $i < HttpSecurityServiceProvider::LIMITE_ANONYME_PAR_MINUTE; $i++) {
+        $this->getJson('/api/v1/sonde-publique', $relais('203.0.113.7'))->assertOk();
+    }
+
+    $this->getJson('/api/v1/sonde-publique', $relais('203.0.113.7'))->assertTooManyRequests();
+    $this->getJson('/api/v1/sonde-publique', $relais('198.51.100.4'))->assertOk();
+});
+
+it('ignore l\'IP annoncée sans la bonne clé de relais pour le seau anonyme', function (): void {
+    config(['identity.console_relay_key' => 'cle-de-relais-de-test-0123456789-abcdef']);
+    Route::middleware('api')->get('/api/v1/sonde-publique', fn (): array => ['ok' => true]);
+
+    for ($i = 0; $i < HttpSecurityServiceProvider::LIMITE_ANONYME_PAR_MINUTE; $i++) {
+        $this->getJson('/api/v1/sonde-publique', ['X-Console-Client-Ip' => '198.51.100.'.($i % 250 + 1)])->assertOk();
+    }
+
+    $this->getJson('/api/v1/sonde-publique', ['X-Console-Client-Ip' => '198.51.100.250'])->assertTooManyRequests();
+});
+
 it('applique la limite large par utilisateur à un porteur de jeton', function (): void {
     $user = User::factory()->create();
     $jeton = $user->createToken('mobile')->plainTextToken;

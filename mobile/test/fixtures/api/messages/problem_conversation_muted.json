@@ -1,0 +1,8 @@
+{
+  "type": "https://api.eguardimmo.test/problems/conversation_muted",
+  "title": "Conversation restreinte",
+  "status": 403,
+  "detail": "L'agence a restreint l'envoi de messages sur cette conversation : vous pouvez encore la lire.",
+  "code": "conversation_muted",
+  "request_id": "01a1ef81-5144-7138-a3ac-9b1463fdc9c1"
+}
