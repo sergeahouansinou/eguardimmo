@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 use App\Modules\Identity\Models\User;
 use App\Providers\HttpSecurityServiceProvider;
+use App\Shared\Audit\AuditLog;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 afterEach(function (): void {
     TrustProxies::flushState();
@@ -148,4 +153,94 @@ it('traite une clé de relais de moins de 32 caractères comme une clé absente'
     $requete = Request::create('/', server: ['REMOTE_ADDR' => '10.0.0.1', 'HTTP_X_CONSOLE_CLIENT_IP' => '203.0.113.7', 'HTTP_X_CONSOLE_RELAY_KEY' => 'cle-courte']);
 
     expect(HttpSecurityServiceProvider::ipCliente($requete))->toBe('10.0.0.1');
+});
+
+it('partage un seul seau anonyme entre les adresses d\'un même préfixe IPv6 /64', function (): void {
+    Route::middleware('api')->get('/api/v1/sonde-publique', fn (): array => ['ok' => true]);
+    $depuis = fn (string $ip) => $this->withServerVariables(['REMOTE_ADDR' => $ip])->getJson('/api/v1/sonde-publique');
+
+    for ($i = 1; $i <= HttpSecurityServiceProvider::LIMITE_ANONYME_PAR_MINUTE; $i++) {
+        $depuis('2001:db8:1:2::'.dechex($i))->assertOk();
+    }
+
+    $depuis('2001:db8:1:2:ffff:ffff:ffff:fffe')->assertTooManyRequests()->assertHeader('Retry-After');
+    $depuis('2001:0DB8:0001:0002:0000:0000:0000:0001')->assertTooManyRequests();
+    $depuis('2001:db8:1:3::1')->assertOk();
+});
+
+it('garde un seau par adresse IPv4, y compris écrite en IPv6 mappée', function (): void {
+    Route::middleware('api')->get('/api/v1/sonde-publique', fn (): array => ['ok' => true]);
+    $depuis = fn (string $ip) => $this->withServerVariables(['REMOTE_ADDR' => $ip])->getJson('/api/v1/sonde-publique');
+
+    for ($i = 0; $i < HttpSecurityServiceProvider::LIMITE_ANONYME_PAR_MINUTE; $i++) {
+        $depuis('203.0.113.1')->assertOk();
+    }
+
+    $depuis('::ffff:203.0.113.1')->assertTooManyRequests();
+    $depuis('203.0.113.2')->assertOk();
+    $depuis('::ffff:198.51.100.7')->assertOk();
+});
+
+it('applique le préfixe /64 à l\'IP relayée par la console', function (): void {
+    $cle = Str::random(48);
+    config(['identity.console_relay_key' => $cle]);
+    Route::middleware('api')->get('/api/v1/sonde-publique', fn (): array => ['ok' => true]);
+    $relais = fn (string $ip) => $this->getJson('/api/v1/sonde-publique', ['X-Console-Relay-Key' => $cle, 'X-Console-Client-Ip' => $ip]);
+
+    for ($i = 1; $i <= HttpSecurityServiceProvider::LIMITE_ANONYME_PAR_MINUTE; $i++) {
+        $relais('2001:db8:1:2::'.dechex($i))->assertOk();
+    }
+
+    $relais('2001:db8:1:2:abcd::1')->assertTooManyRequests();
+    $relais('2001:db8:1:3::1')->assertOk();
+});
+
+it('bloque un lien public à son propre limiteur pour tout un préfixe /64', function (): void {
+    $depuis = fn (string $ip) => $this->withServerVariables(['REMOTE_ADDR' => $ip])->getJson('/api/v1/recovery/downloads/'.str_repeat('a', 48));
+
+    for ($i = 1; $i <= 5; $i++) {
+        $depuis('2001:db8:1:2::'.$i)->assertNotFound();
+    }
+
+    $depuis('2001:db8:1:2::99')->assertTooManyRequests();
+    $depuis('2001:db8:1:3::1')->assertNotFound();
+});
+
+it('compte chaque limiteur anonyme par préfixe /64', function (string $limiteur): void {
+    $cles = fn (string $ip): array => array_map(
+        fn (Limit $limite): string => (string) $limite->key,
+        Arr::wrap(RateLimiter::limiter($limiteur)(Request::create('/', server: ['REMOTE_ADDR' => $ip]))),
+    );
+
+    expect($cles('2001:db8:1:2::1'))->toBe($cles('2001:db8:1:2:aaaa:bbbb:cccc:dddd'))
+        ->and($cles('2001:db8:1:2::1'))->not->toBe($cles('2001:db8:1:3::1'))
+        ->and($cles('203.0.113.1'))->not->toBe($cles('203.0.113.2'));
+})->with([
+    'api', 'auth', 'reauth', 'two-factor', 'verification-resend',
+    'console-read', 'console-account-search', 'console-write', 'console-approvals', 'console-health',
+    'console-marketing-write', 'console-marketing-estimate', 'console-marketing-send', 'console-marketing-test',
+    'marketplace-places', 'marketplace-listings', 'marketplace-availability', 'marketplace-quote',
+    'marketplace-bookings-create', 'marketplace-favorites', 'marketplace-visit-requests',
+    'owner-invitation', 'recovery-download', 'recovery-generation',
+    'mail-unsubscribe', 'mail-webhook', 'org-campaigns-test', 'payments-webhook',
+    'banking-import', 'banking-apercu', 'investments-import',
+]);
+
+it('ne laisse aucun limiteur compter sur l\'adresse brute', function (): void {
+    $fautifs = collect(File::allFiles(app_path()))
+        ->filter(fn (SplFileInfo $fichier): bool => str_ends_with($fichier->getFilename(), 'ServiceProvider.php'))
+        ->filter(fn (SplFileInfo $fichier): bool => str_contains((string) file_get_contents($fichier->getPathname()), '->ip()'))
+        ->map(fn (SplFileInfo $fichier): string => $fichier->getFilename())
+        ->values()
+        ->all();
+
+    expect($fautifs)->toBe([]);
+});
+
+it('conserve l\'adresse IPv6 complète dans le journal d\'audit', function (): void {
+    $this->withServerVariables(['REMOTE_ADDR' => '2001:db8:1:2:3:4:5:6'])
+        ->postJson('/api/v1/auth/token', ['email' => 'inconnu@exemple.fr', 'password' => 'faux', 'device_name' => 'iPhone'])
+        ->assertUnprocessable();
+
+    expect(AuditLog::query()->whereNotNull('route')->pluck('ip')->unique()->values()->all())->toBe(['2001:db8:1:2:3:4:5:6']);
 });

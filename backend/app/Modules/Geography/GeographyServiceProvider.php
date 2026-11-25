@@ -6,6 +6,7 @@ namespace App\Modules\Geography;
 
 use App\Modules\Geography\Models\City;
 use App\Modules\Geography\Models\Country;
+use App\Shared\Http\RateLimitIp;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -22,6 +23,6 @@ final class GeographyServiceProvider extends ServiceProvider
         ]);
 
         // Clé = IP vue par Laravel (proxies de confiance seulement), jamais un en-tête du client.
-        RateLimiter::for('marketplace-places', fn (Request $request): Limit => Limit::perMinute(30)->by('marketplace-places:'.$request->ip()));
+        RateLimiter::for('marketplace-places', fn (Request $request): Limit => Limit::perMinute(30)->by('marketplace-places:'.RateLimitIp::of($request)));
     }
 }

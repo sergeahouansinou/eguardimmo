@@ -22,6 +22,7 @@ use App\Modules\Parties\PublicApi\OwnerLinks;
 use App\Modules\Parties\PublicApi\PartyLinks;
 use App\Modules\Parties\Queries\PlatformAudiences;
 use App\Shared\Audience\AudienceRegistry;
+use App\Shared\Http\RateLimitIp;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -81,8 +82,8 @@ final class PartiesServiceProvider extends ServiceProvider
             $compte = $request->user()?->getAuthIdentifier();
 
             return [
-                Limit::perMinute(30)->by('owner-invitation-ip:'.$request->ip()),
-                Limit::perMinute(10)->by('owner-invitation-compte:'.(is_string($compte) ? $compte : 'ip:'.$request->ip())),
+                Limit::perMinute(30)->by('owner-invitation-ip:'.RateLimitIp::of($request)),
+                Limit::perMinute(10)->by('owner-invitation-compte:'.(is_string($compte) ? $compte : 'ip:'.RateLimitIp::of($request))),
                 Limit::perHour(20)->by('owner-invitation-jeton:'.hash('sha256', $jeton)),
             ];
         });

@@ -12,6 +12,8 @@ Statut : accepté (2026-11-13)
 ### Limitation de débit
 - Limiteur `api`, appliqué à tout le groupe : 300 req/min par utilisateur authentifié, 60 req/min par IP anonyme. Le plafond est volontairement large : il coupe l'abus sans gêner l'usage normal.
 - Limiteur `auth`, à appliquer explicitement aux routes de connexion, OTP, mot de passe oublié et inscription : 5/min par couple compte+IP et 20/min par IP.
+- Toute clé « par IP » passe par `App\Shared\Http\RateLimitIp` : une adresse IPv6 compte pour son préfixe /64 (une seule ligne d'abonné en dispose), une adresse IPv4, même écrite en `::ffff:`, reste entière. Le journal d'audit et les preuves gardent l'adresse complète.
+- Relais SeBook (`App\Shared\Http\SebookRelay`) : le serveur de SeBook lit les annonces pour tous ses visiteurs. Sous la clé `SEBOOK_RELAY_KEY` (en-têtes `X-Sebook-Relay-Key` et `X-Sebook-Client-Ip`), la liste et le détail des annonces se comptent par visiteur (60/min) ; sans IP, le serveur de SeBook a son propre seau (120/min, plan du site). La clé n'a d'effet sur aucune autre route ni sur le journal d'audit. Une clé présentée mais refusée est journalisée, une fois par minute et sans sa valeur. SeBook garde ces lectures dans un cache mémoire borné, dont la clé ignore le visiteur, et ne parcourt le catalogue qu'une fois à la fois pour le plan du site. Il croit la dernière valeur de `X-Forwarded-For` : il ne doit être joignable que par le proxy, qui l'écrase.
 - Laravel exécute `auth:sanctum` avant `throttle` : une route protégée rejette un anonyme en 401 avant de le compter. La limite anonyme ne s'applique donc qu'aux routes publiques.
 
 ### Proxies

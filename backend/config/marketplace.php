@@ -13,6 +13,9 @@ return [
     // Fuseau qui date « aujourd'hui » pour les arrivées et les annulations : celui des logements, pas celui du serveur.
     'timezone' => env('MARKETPLACE_TIMEZONE', 'Europe/Paris'),
 
+    // Clé partagée avec le serveur de SeBook, seul autorisé à annoncer l'IP de ses visiteurs sur les lectures d'annonces.
+    'sebook_relay_key' => env('SEBOOK_RELAY_KEY'),
+
     // Organisation qui reçoit les annonces de MarketplaceDemoSeeder (développement uniquement).
     'demo_organization_id' => env('MARKETPLACE_DEMO_ORGANIZATION'),
 ];

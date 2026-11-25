@@ -2,6 +2,7 @@ import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ErrorMessage, NotFoundMessage } from "@/components/roost/SystemMessage";
 import { INFO_PATHS, absoluteUrl, buildHomeJsonLd, buildInfoPageJsonLd } from "@/lib/seo";
+import { clearPublicReads } from "@/marketplace/cached";
 import { REF, REF_2, SUMMARY, SUMMARY_LONG } from "@/marketplace/responses.fixtures";
 import { serializeJsonLd } from "@/marketplace/jsonld";
 import { renderApp, stubApi } from "../../test/api";
@@ -29,6 +30,7 @@ function stubCatalogue(status = 200) {
 }
 
 afterEach(() => {
+  clearPublicReads();
   vi.unstubAllGlobals();
 });
 

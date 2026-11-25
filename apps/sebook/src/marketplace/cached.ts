@@ -1,4 +1,4 @@
-import { cacheLife } from "next/cache";
+import { createBoundedCache } from "./boundedCache";
 import { listingResponseSchema, listingsPageSchema } from "./schemas";
 import type { ListingDetail, ListingSummary } from "./schemas";
 import { getPublic } from "./upstream";
@@ -16,28 +16,36 @@ export class UpstreamUnavailableError extends Error {
   }
 }
 
-const PUBLIC_READ_LIFE = { stale: 60, revalidate: 300, expire: 3600 } as const;
+const LIMITS = { ttlMs: 300_000, maxEntries: 250 } as const;
 
-// Une fonction « use cache » qui lève n'est jamais mémorisée : un 429, un 5xx ou une réponse hors
-// contrat ne doivent donc jamais sortir en valeur de retour. Les arguments sont publics (référence,
-// filtres), jamais de cookie ni de donnée liée à un utilisateur.
-export async function readListingsPage(query: string): Promise<CachedRead<ListingsResult>> {
-  "use cache";
-  cacheLife(PUBLIC_READ_LIFE);
-  const fetched = await getPublic("/listings", new URLSearchParams(query));
-  if (fetched.status !== "ok") throw new UpstreamUnavailableError("liste");
-  const parsed = listingsPageSchema.safeParse(fetched.json);
-  if (!parsed.success) throw new UpstreamUnavailableError("liste hors contrat");
-  return { status: "found", value: { items: parsed.data.data, nextCursor: parsed.data.meta.next_cursor } };
+const pages = createBoundedCache<CachedRead<ListingsResult>>(LIMITS);
+const details = createBoundedCache<CachedRead<ListingDetail>>(LIMITS);
+
+export function clearPublicReads(): void {
+  pages.clear();
+  details.clear();
 }
 
-export async function readListingDetail(ref: string): Promise<CachedRead<ListingDetail>> {
-  "use cache";
-  cacheLife(PUBLIC_READ_LIFE);
-  const fetched = await getPublic(`/listings/${ref}`);
-  if (fetched.status === "absent") return { status: "absent" };
-  if (fetched.status !== "ok") throw new UpstreamUnavailableError("annonce");
-  const parsed = listingResponseSchema.safeParse(fetched.json);
-  if (!parsed.success) throw new UpstreamUnavailableError("annonce hors contrat");
-  return { status: "found", value: parsed.data.data };
+// Un chargement qui lève n'est jamais mémorisé : un 429, un 5xx ou une réponse hors contrat ne doivent
+// donc jamais sortir en valeur de retour. La clé est publique (référence, filtres) et ignore le visiteur,
+// dont l'adresse ne sert qu'à lui imputer la lecture quand l'entrée manque.
+export function readListingsPage(query: string, visitor: string | null): Promise<CachedRead<ListingsResult>> {
+  return pages.read(query, async () => {
+    const fetched = await getPublic("/listings", new URLSearchParams(query), visitor);
+    if (fetched.status !== "ok") throw new UpstreamUnavailableError("liste");
+    const parsed = listingsPageSchema.safeParse(fetched.json);
+    if (!parsed.success) throw new UpstreamUnavailableError("liste hors contrat");
+    return { status: "found", value: { items: parsed.data.data, nextCursor: parsed.data.meta.next_cursor } };
+  });
+}
+
+export function readListingDetail(ref: string, visitor: string | null): Promise<CachedRead<ListingDetail>> {
+  return details.read(ref, async () => {
+    const fetched = await getPublic(`/listings/${ref}`, undefined, visitor);
+    if (fetched.status === "absent") return { status: "absent" };
+    if (fetched.status !== "ok") throw new UpstreamUnavailableError("annonce");
+    const parsed = listingResponseSchema.safeParse(fetched.json);
+    if (!parsed.success) throw new UpstreamUnavailableError("annonce hors contrat");
+    return { status: "found", value: parsed.data.data };
+  });
 }
