@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
@@ -45,7 +45,12 @@ class _ListingScreenState() extends State<ListingScreen> {
         leading: AppIconButton(
           icon: Icons.arrow_back_rounded,
           tooltip: 'Retour',
-          onPressed: () => context.canPop() ? context.pop() : context.go('/'),
+          onPressed: () => Navigator.canPop(context)
+              ? Navigator.pop(context)
+              : Navigator.pushReplacementNamed<Object?, Object?>(
+                  context,
+                  RouteName.explore,
+                ),
         ),
         actions: [
           if (listing != null)

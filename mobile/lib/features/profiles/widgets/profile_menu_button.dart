@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/routes/app_routes.dart';
+import '../../../core/routes/router_manager.dart';
 import '../../../core/state/load_state.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_radius.dart';
@@ -36,6 +36,13 @@ class const ProfileMenuButton({super.key}) extends StatelessWidget {
     );
   }
 
+  String _homeOf(ProfileKind kind) => switch (kind) {
+    ProfileKind.traveler => RouteName.explore,
+    ProfileKind.tenant => RouteName.tenantHome,
+    ProfileKind.owner => RouteName.ownerHome,
+    ProfileKind.agency => RouteName.agencyHome,
+  };
+
   ButtonStyle _style(AppPalette p) => TextButton.styleFrom(
     foregroundColor: p.navText,
     backgroundColor: p.navText.withValues(alpha: .14),
@@ -48,7 +55,7 @@ class const ProfileMenuButton({super.key}) extends StatelessWidget {
 
   Future<void> _openMenu(BuildContext context) {
     final viewModel = context.read<ProfilesViewModel>();
-    final router = GoRouter.of(context);
+    final navigator = Navigator.of(context);
     return showAppSheet<void>(
       context,
       builder: (sheetContext) => ChangeNotifierProvider.value(
@@ -57,11 +64,7 @@ class const ProfileMenuButton({super.key}) extends StatelessWidget {
           onSelected: (profile) {
             viewModel.select(profile);
             Navigator.of(sheetContext).pop();
-            router.go(
-              profile.kind == ProfileKind.traveler
-                  ? AppRoutes.explore
-                  : AppRoutes.profile(profile.kind.slug),
-            );
+            RouterManager.go(navigator, _homeOf(profile.kind));
           },
         ),
       ),

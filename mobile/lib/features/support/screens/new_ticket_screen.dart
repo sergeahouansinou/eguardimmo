@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/routes/app_routes.dart';
+import '../../../core/routes/route_args.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/validators.dart';
@@ -36,7 +36,7 @@ class _NewTicketScreenState() extends State<NewTicketScreen> {
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final viewModel = context.read<OpenTicketViewModel>();
-    final router = GoRouter.of(context);
+    final navigator = Navigator.of(context);
     await viewModel.submit(
       category: _category,
       subject: _subject.text,
@@ -44,7 +44,12 @@ class _NewTicketScreenState() extends State<NewTicketScreen> {
     );
     final createdId = viewModel.createdId;
     if (createdId != null && mounted) {
-      unawaited(router.pushReplacement(AppRoutes.supportTicket(createdId)));
+      unawaited(
+        navigator.pushReplacementNamed<Object?, Object?>(
+          RouteName.supportTicket,
+          arguments: ResourceArgs(createdId),
+        ),
+      );
     }
   }
 

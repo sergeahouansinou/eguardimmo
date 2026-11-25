@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/config/app_config.dart';
@@ -119,7 +118,8 @@ class _AccountBodyState() extends State<_AccountBody> {
           label: 'Mes demandes d’assistance',
           style: AppButtonStyle.outline,
           expanded: true,
-          onPressed: () => context.push(AppRoutes.support),
+          onPressed: () =>
+              Navigator.pushNamed<Object?>(context, RouteName.support),
         ),
         const SizedBox(height: AppSpacing.sm),
         AppButton(

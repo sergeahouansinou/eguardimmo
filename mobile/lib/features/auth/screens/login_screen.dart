@@ -1,5 +1,6 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/routes/app_routes.dart';
@@ -44,10 +45,15 @@ class _LoginScreenState() extends State<LoginScreen> {
   }
 
   void _leave(bool signedIn) {
-    if (context.canPop()) {
-      context.pop(signedIn);
+    if (Navigator.canPop(context)) {
+      Navigator.pop<Object?>(context, signedIn);
     } else {
-      context.go(AppRoutes.explore);
+      unawaited(
+        Navigator.pushReplacementNamed<Object?, Object?>(
+          context,
+          RouteName.explore,
+        ),
+      );
     }
   }
 

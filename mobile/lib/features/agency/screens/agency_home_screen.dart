@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
@@ -11,7 +11,6 @@ import '../../../core/widgets/key_value_row.dart';
 import '../../../core/widgets/nav_tile.dart';
 import '../../../core/widgets/status_pill.dart';
 import '../../profiles/widgets/profile_home_scaffold.dart';
-import '../agency_paths.dart';
 import '../models/agency_dashboard.dart';
 import '../viewmodels/agency_viewmodels.dart';
 
@@ -54,19 +53,24 @@ class const AgencyHomeScreen({super.key}) extends StatelessWidget {
           icon: Icons.warning_amber_rounded,
           title: 'Impayés',
           subtitle: 'Échéances et factures en retard',
-          onTap: () => context.push(AgencyPaths.unpaid),
+          onTap: () =>
+              Navigator.pushNamed<Object?>(context, RouteName.agencyUnpaid),
         ),
         NavTile(
           icon: Icons.build_circle_outlined,
           title: 'Interventions',
           subtitle: 'À qualifier, devis à approuver, en cours',
-          onTap: () => context.push(AgencyPaths.interventions),
+          onTap: () => Navigator.pushNamed<Object?>(
+            context,
+            RouteName.agencyInterventions,
+          ),
         ),
         NavTile(
           icon: Icons.apartment_rounded,
           title: 'Portefeuille',
           subtitle: 'Biens et baux',
-          onTap: () => context.push(AgencyPaths.portfolio),
+          onTap: () =>
+              Navigator.pushNamed<Object?>(context, RouteName.agencyPortfolio),
         ),
         const ComingSoonCard(items: comingSoon),
       ],

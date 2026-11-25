@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/routes/app_routes.dart';
+import '../../../core/routes/route_args.dart';
 import '../../../core/state/list_page.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/active_polling.dart';
@@ -130,7 +130,10 @@ class const _Controls({
             child: AppButton(
               label: 'Nouveau message',
               expanded: true,
-              onPressed: () => context.push(AppRoutes.newConversation),
+              onPressed: () => Navigator.pushNamed<Object?>(
+                context,
+                RouteName.newConversation,
+              ),
             ),
           ),
         if (!scope.canWrite)
@@ -211,7 +214,11 @@ class const _List({
             fallbackName: viewModel.scope?.isStaff ?? false
                 ? 'Contact'
                 : 'Agence',
-            onOpen: () => context.push(AppRoutes.conversation(thread.id)),
+            onOpen: () => Navigator.pushNamed<Object?>(
+              context,
+              RouteName.conversation,
+              arguments: ResourceArgs(thread.id),
+            ),
           );
         }
         return _Footer(viewModel: viewModel, page: page);

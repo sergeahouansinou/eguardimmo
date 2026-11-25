@@ -1,10 +1,10 @@
 import 'package:flutter/widgets.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
+import '../../core/routes/app_routes.dart';
+import '../../core/routes/route_pages.dart';
 import '../profiles/widgets/profile_route_gate.dart';
-import 'agency_paths.dart';
 import 'screens/agency_home_screen.dart';
 import 'screens/intervention_detail_screen.dart';
 import 'screens/interventions_screen.dart';
@@ -35,102 +35,79 @@ Widget _page({
   ),
 );
 
-List<RouteBase> agencyRoutes() => [
-  GoRoute(
-    path: AgencyPaths.home,
-    builder: (_, _) => _page(
-      providers: (service, organization) => [
-        ChangeNotifierProvider(
-          create: (_) => AgencyKpisViewModel(service, organization)..load(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => AgencyPayoutsViewModel(service, organization)..load(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => AgencyAlertsViewModel(service, organization)..load(),
-        ),
-      ],
-      child: const AgencyHomeScreen(),
-    ),
-    routes: [
-      GoRoute(
-        path: 'impayes',
-        builder: (_, _) => _page(
-          providers: (service, organization) => [
-            ChangeNotifierProvider(
-              create: (_) => UnpaidViewModel(service, organization)..load(),
-            ),
-            ChangeNotifierProvider(
-              create: (c) => AgencyAccessViewModel(
-                c.read<AgencyAccessService>(),
-                organization,
-              )..load(),
-            ),
-          ],
-          child: const UnpaidScreen(),
-        ),
+Widget? agencyPage(String? name, Object? arguments) => switch (name) {
+  RouteName.agencyHome => _page(
+    providers: (service, organization) => [
+      ChangeNotifierProvider(
+        create: (_) => AgencyKpisViewModel(service, organization)..load(),
       ),
-      GoRoute(
-        path: 'interventions',
-        builder: (_, _) => _page(
-          providers: (service, organization) => [
-            ChangeNotifierProvider(
-              create: (_) =>
-                  AgencyInterventionsViewModel(service, organization)..load(),
-            ),
-          ],
-          child: const AgencyInterventionsScreen(),
-        ),
-        routes: [
-          GoRoute(
-            path: ':id',
-            builder: (_, state) {
-              final id = state.pathParameters['id']!;
-              return _page(
-                providers: (service, organization) => [
-                  ChangeNotifierProvider(
-                    key: ValueKey(id),
-                    create: (c) => AgencyInterventionViewModel(
-                      c.read<AgencyMaintenanceService>(),
-                      organization,
-                      id,
-                    )..load(),
-                  ),
-                  ChangeNotifierProvider(
-                    create: (c) => AgencyAccessViewModel(
-                      c.read<AgencyAccessService>(),
-                      organization,
-                    )..load(),
-                  ),
-                  ChangeNotifierProvider(
-                    create: (c) => AgencySuppliersViewModel(
-                      c.read<AgencyMaintenanceService>(),
-                      organization,
-                    ),
-                  ),
-                ],
-                child: const InterventionDetailScreen(),
-              );
-            },
-          ),
-        ],
+      ChangeNotifierProvider(
+        create: (_) => AgencyPayoutsViewModel(service, organization)..load(),
       ),
-      GoRoute(
-        path: 'portefeuille',
-        builder: (_, _) => _page(
-          providers: (service, organization) => [
-            ChangeNotifierProvider(
-              create: (_) =>
-                  AgencyPropertiesViewModel(service, organization)..load(),
-            ),
-            ChangeNotifierProvider(
-              create: (_) =>
-                  AgencyLeasesViewModel(service, organization)..load(),
-            ),
-          ],
-          child: const PortfolioScreen(),
-        ),
+      ChangeNotifierProvider(
+        create: (_) => AgencyAlertsViewModel(service, organization)..load(),
       ),
     ],
+    child: const AgencyHomeScreen(),
   ),
-];
+  RouteName.agencyUnpaid => _page(
+    providers: (service, organization) => [
+      ChangeNotifierProvider(
+        create: (_) => UnpaidViewModel(service, organization)..load(),
+      ),
+      ChangeNotifierProvider(
+        create: (c) =>
+            AgencyAccessViewModel(c.read<AgencyAccessService>(), organization)
+              ..load(),
+      ),
+    ],
+    child: const UnpaidScreen(),
+  ),
+  RouteName.agencyInterventions => _page(
+    providers: (service, organization) => [
+      ChangeNotifierProvider(
+        create: (_) =>
+            AgencyInterventionsViewModel(service, organization)..load(),
+      ),
+    ],
+    child: const AgencyInterventionsScreen(),
+  ),
+  RouteName.agencyIntervention => resourcePage(arguments, _intervention),
+  RouteName.agencyPortfolio => _page(
+    providers: (service, organization) => [
+      ChangeNotifierProvider(
+        create: (_) => AgencyPropertiesViewModel(service, organization)..load(),
+      ),
+      ChangeNotifierProvider(
+        create: (_) => AgencyLeasesViewModel(service, organization)..load(),
+      ),
+    ],
+    child: const PortfolioScreen(),
+  ),
+  _ => null,
+};
+
+Widget _intervention(String id) => _page(
+  providers: (service, organization) => [
+    ChangeNotifierProvider(
+      key: ValueKey(id),
+      create: (c) => AgencyInterventionViewModel(
+        c.read<AgencyMaintenanceService>(),
+        organization,
+        id,
+      )..load(),
+    ),
+    ChangeNotifierProvider(
+      create: (c) =>
+          AgencyAccessViewModel(c.read<AgencyAccessService>(), organization)
+            ..load(),
+    ),
+    ChangeNotifierProvider(
+      create: (c) => AgencySuppliersViewModel(
+        c.read<AgencyMaintenanceService>(),
+        organization,
+      ),
+    ),
+  ],
+  child: const InterventionDetailScreen(),
+);

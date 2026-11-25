@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/widgets/async_list_view.dart';
 import '../../../core/widgets/sub_page_scaffold.dart';
 import '../models/owner_document.dart';
-import '../owner_paths.dart';
 import '../viewmodels/owner_lists_viewmodels.dart';
 import '../widgets/access_notices.dart';
 import '../widgets/owner_cards.dart';
@@ -15,7 +15,7 @@ class const OwnerDocumentsScreen({super.key}) extends StatelessWidget {
     final viewModel = context.watch<OwnerDocumentsViewModel>();
     return SubPageScaffold(
       title: 'Documents',
-      fallbackRoute: OwnerPaths.home,
+      fallbackRoute: RouteName.ownerHome,
       bottom: const AccessLine(),
       body: AsyncListView<OwnerDocument>(
         state: viewModel.state,

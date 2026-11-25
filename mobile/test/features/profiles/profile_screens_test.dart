@@ -1,4 +1,6 @@
+import 'package:eguardimmo/core/routes/app_location.dart';
 import 'package:eguardimmo/core/routes/app_routes.dart';
+import 'package:eguardimmo/core/routes/route_args.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/fakes.dart';
@@ -50,7 +52,7 @@ void main() {
       await tester.tap(find.text('Locataire'));
       await tester.pumpAndSettle();
 
-      expect(app.router.state.uri.path, AppRoutes.profile('locataire'));
+      expect(app.router.current, const AppLocation(RouteName.tenantHome));
       expect(find.text('Mon loyer'), findsOneWidget);
       expect(find.text('Loyer de novembre 2026'), findsOneWidget);
       expect(find.textContaining('Profil : Locataire'), findsOneWidget);
@@ -59,7 +61,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Voyageur'));
       await tester.pumpAndSettle();
-      expect(app.router.state.uri.path, AppRoutes.explore);
+      expect(app.router.current, const AppLocation(RouteName.explore));
     },
   );
 
@@ -90,7 +92,7 @@ void main() {
   testWidgets('onglet Messages : voyageur, seul le support est proposé', (
     tester,
   ) async {
-    await pumpApp(tester, handler: _market, location: AppRoutes.messages);
+    await pumpApp(tester, handler: _market, location: RouteName.messages);
     expect(find.text('Support eGuardImmo'), findsOneWidget);
     expect(find.text('Aucune conversation'), findsOneWidget);
     expect(find.text('Bientôt disponible'), findsNothing);
@@ -107,7 +109,11 @@ void main() {
         '/connexion/../x',
       ]) {
         final app = await pumpApp(tester, handler: _market, location: location);
-        expect(app.router.state.uri.path, AppRoutes.explore, reason: location);
+        expect(
+          app.router.current,
+          const AppLocation(RouteName.explore),
+          reason: location,
+        );
       }
     });
 
@@ -119,7 +125,10 @@ void main() {
             ? {'data': Fixtures.listingDetail()}
             : _market(call),
       );
-      expect(app.router.state.uri.path, '/annonces/k3m7q9x2v8nb');
+      expect(
+        app.router.current,
+        const AppLocation(RouteName.listing, ListingArgs('k3m7q9x2v8nb')),
+      );
       expect(find.text('Studio lumineux, Presqu’île'), findsOneWidget);
     });
   });

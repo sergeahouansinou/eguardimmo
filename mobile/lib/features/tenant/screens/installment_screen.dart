@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
@@ -10,7 +11,6 @@ import '../../../core/widgets/key_value_row.dart';
 import '../../../core/widgets/status_pill.dart';
 import '../../../core/widgets/sub_page_scaffold.dart';
 import '../models/installment.dart';
-import '../tenant_paths.dart';
 import '../viewmodels/installment_detail_viewmodel.dart';
 import '../widgets/rent_cards.dart';
 
@@ -20,7 +20,7 @@ class const InstallmentScreen({super.key}) extends StatelessWidget {
     final viewModel = context.watch<InstallmentDetailViewModel>();
     return SubPageScaffold(
       title: 'Échéance',
-      fallbackRoute: TenantPaths.rent,
+      fallbackRoute: RouteName.tenantRent,
       body: RefreshIndicator(
         onRefresh: viewModel.load,
         child: AsyncBody<Installment>(

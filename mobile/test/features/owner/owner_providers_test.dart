@@ -1,7 +1,7 @@
+import 'package:eguardimmo/core/config/provider_manager.dart';
 import 'package:eguardimmo/core/services/api_client.dart';
-import 'package:eguardimmo/features/auth/services/auth_service.dart';
+import 'package:eguardimmo/core/services/token_storage.dart';
 import 'package:eguardimmo/features/auth/viewmodels/session_viewmodel.dart';
-import 'package:eguardimmo/features/owner/owner_providers.dart';
 import 'package:eguardimmo/features/owner/viewmodels/owner_access_viewmodel.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,28 +21,26 @@ void main() {
       var userId = 'u1';
       final storage = MemoryTokenStorage(Fixtures.token);
       final api = FakeApiClient((call) => _me(userId), storage: storage);
-      final session = SessionViewModel(
-        AuthService(api, storage, deviceName: 'test'),
-      );
-      addTearDown(session.dispose);
-      await session.bootstrap();
 
       late OwnerAccessViewModel current;
+      late SessionViewModel session;
       await tester.pumpWidget(
         MultiProvider(
           providers: [
+            Provider<TokenStorage>.value(value: storage),
             Provider<ApiClient>.value(value: api),
-            ChangeNotifierProvider<SessionViewModel>.value(value: session),
-            ...ownerProviders(),
+            ...dependentServices,
           ],
           child: Builder(
             builder: (context) {
+              session = context.read<SessionViewModel>();
               current = context.watch<OwnerAccessViewModel>();
               return const SizedBox();
             },
           ),
         ),
       );
+      await tester.pumpAndSettle();
       final first = current;
       expect(first.userId, 'u1');
 

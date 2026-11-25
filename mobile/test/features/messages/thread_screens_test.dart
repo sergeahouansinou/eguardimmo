@@ -19,7 +19,7 @@ void main() {
         tester,
         profile: TestProfile.tenant,
         handler: handler,
-        location: AppRoutes.conversation(threadId),
+        location: '/messages/conversations/$threadId',
       );
     }
 
@@ -52,7 +52,7 @@ void main() {
         handler: (call) => call.method == 'DOWNLOAD'
             ? Uint8List.fromList(pixel)
             : tenantApi(call),
-        location: AppRoutes.conversation(threadId),
+        location: '/messages/conversations/$threadId',
       );
       await tester.tap(find.textContaining('photo-fuite.jpg'));
       await tester.pumpAndSettle();
@@ -71,7 +71,7 @@ void main() {
         tester,
         profile: TestProfile.tenant,
         handler: tenantApi,
-        location: AppRoutes.conversation(threadId),
+        location: '/messages/conversations/$threadId',
       );
       await tester.enterText(_field(), 'Merci, à demain.');
       await tester.pump();
@@ -98,7 +98,7 @@ void main() {
           }
           return tenantApi(call);
         },
-        location: AppRoutes.conversation(threadId),
+        location: '/messages/conversations/$threadId',
       );
       await tester.enterText(_field(), 'Merci, à demain.');
       await tester.pump();
@@ -180,7 +180,7 @@ void main() {
               ? apiFixture('messages/tenant_messages_after_empty')
               : null;
         },
-        location: AppRoutes.conversation(threadId),
+        location: '/messages/conversations/$threadId',
       );
       expect(find.textContaining('lecture seule'), findsOneWidget);
       expect(_field(), findsNothing);
@@ -203,7 +203,7 @@ void main() {
               ? apiFixture('messages/staff_thread')
               : null;
         },
-        location: AppRoutes.conversation(threadId),
+        location: '/messages/conversations/$threadId',
       );
       expect(find.textContaining('ni un congé'), findsNothing);
       await tester.enterText(_field(), 'Nous passons demain.');
@@ -268,7 +268,7 @@ void main() {
           }
           return tenantApi(call);
         },
-        location: AppRoutes.newConversation,
+        location: RouteName.newConversation,
       );
       expect(find.textContaining('B-2026-014'), findsWidgets);
       final fields = find.byType(TextField);
@@ -296,7 +296,7 @@ void main() {
           }
           return tenantApi(call);
         },
-        location: AppRoutes.newConversation,
+        location: RouteName.newConversation,
       );
       final fields = find.byType(TextField);
       await tester.enterText(fields.at(0), 'Fuite');
@@ -314,7 +314,7 @@ void main() {
         tester,
         profile: TestProfile.owner,
         handler: (_) => null,
-        location: AppRoutes.newConversation,
+        location: RouteName.newConversation,
       );
       expect(find.text('Conversation indisponible'), findsOneWidget);
     });

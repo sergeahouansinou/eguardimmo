@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
@@ -14,7 +15,6 @@ import '../../../core/widgets/key_value_row.dart';
 import '../../../core/widgets/status_pill.dart';
 import '../../../core/widgets/sub_page_scaffold.dart';
 import '../models/tenant_intervention.dart';
-import '../tenant_paths.dart';
 import '../viewmodels/requests_viewmodel.dart';
 import '../widgets/request_card.dart';
 
@@ -62,7 +62,7 @@ class _RequestDetailScreenState() extends State<RequestDetailScreen> {
     final viewModel = context.watch<RequestDetailViewModel>();
     return SubPageScaffold(
       title: 'Demande',
-      fallbackRoute: TenantPaths.requests,
+      fallbackRoute: RouteName.tenantRequests,
       body: RefreshIndicator(
         onRefresh: viewModel.load,
         child: AsyncBody<TenantIntervention>(

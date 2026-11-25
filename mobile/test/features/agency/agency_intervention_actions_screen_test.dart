@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:eguardimmo/features/agency/agency_paths.dart';
+import 'package:eguardimmo/core/routes/app_routes.dart';
+import 'package:eguardimmo/core/routes/route_args.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -73,7 +74,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Agence Rhône Immo'));
       await tester.pumpAndSettle();
-      app.router.go(AgencyPaths.intervention(interventionId));
+      app.router.go(
+        RouteName.agencyIntervention,
+        arguments: const ResourceArgs(interventionId),
+      );
       await tester.pumpAndSettle();
 
       await tapText(tester, 'Annuler l’intervention');

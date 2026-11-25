@@ -1,5 +1,6 @@
+import 'package:eguardimmo/core/routes/app_routes.dart';
+import 'package:eguardimmo/core/routes/route_args.dart';
 import 'package:eguardimmo/core/widgets/app_sheet.dart';
-import 'package:eguardimmo/features/agency/agency_paths.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -28,7 +29,14 @@ Future<(Harness, ActionsApi)> openIntervention(
   await tester.pumpAndSettle();
   await tester.tap(find.text('Agence Rhône Immo'));
   await tester.pumpAndSettle();
-  app.router.go(path.isEmpty ? AgencyPaths.intervention(interventionId) : path);
+  if (path.isEmpty) {
+    app.router.go(
+      RouteName.agencyIntervention,
+      arguments: const ResourceArgs(interventionId),
+    );
+  } else {
+    app.router.go(path);
+  }
   await tester.pumpAndSettle();
   return (app, api);
 }

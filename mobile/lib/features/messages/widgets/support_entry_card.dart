@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_palette.dart';
@@ -25,7 +24,7 @@ class const SupportEntryCard({super.key}) extends StatelessWidget {
         ),
         child: InkWell(
           customBorder: RoundedRectangleBorder(borderRadius: AppRadius.card),
-          onTap: () => context.push(AppRoutes.support),
+          onTap: () => Navigator.pushNamed<Object?>(context, RouteName.support),
           child: ConstrainedBox(
             constraints: const BoxConstraints(
               minHeight: AppSpacing.minTapTarget,

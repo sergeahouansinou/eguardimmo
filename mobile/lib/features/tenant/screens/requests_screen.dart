@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
+import '../../../core/routes/route_args.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/sub_page_scaffold.dart';
 import '../models/tenant_intervention.dart';
-import '../tenant_paths.dart';
 import '../viewmodels/requests_viewmodel.dart';
 import '../widgets/request_card.dart';
 
@@ -17,7 +17,7 @@ class const RequestsScreen({super.key}) extends StatelessWidget {
     final viewModel = context.watch<RequestsViewModel>();
     return SubPageScaffold(
       title: 'Demandes d’intervention',
-      fallbackRoute: TenantPaths.home,
+      fallbackRoute: RouteName.tenantHome,
       body: Column(
         children: [
           Padding(
@@ -26,7 +26,10 @@ class const RequestsScreen({super.key}) extends StatelessWidget {
               label: 'Signaler un problème',
               expanded: true,
               onPressed: () async {
-                await context.push<void>(TenantPaths.newRequest);
+                await Navigator.pushNamed<Object?>(
+                  context,
+                  RouteName.tenantNewRequest,
+                );
                 if (context.mounted) await viewModel.load();
               },
             ),
@@ -53,8 +56,10 @@ class const RequestsScreen({super.key}) extends StatelessWidget {
                   itemBuilder: (context, index) => RequestCard(
                     request: items[index],
                     onTap: () async {
-                      await context.push<void>(
-                        TenantPaths.request(items[index].id),
+                      await Navigator.pushNamed<Object?>(
+                        context,
+                        RouteName.tenantRequest,
+                        arguments: ResourceArgs(items[index].id),
                       );
                       if (context.mounted) await viewModel.load();
                     },

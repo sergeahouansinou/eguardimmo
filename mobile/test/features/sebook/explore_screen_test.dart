@@ -1,5 +1,6 @@
 import 'dart:ui' show Size;
 
+import 'package:eguardimmo/core/routes/app_location.dart';
 import 'package:eguardimmo/core/routes/app_routes.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -83,7 +84,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(app.router.state.uri.path, AppRoutes.login);
+    expect(app.router.current, const AppLocation(RouteName.login));
     expect(
       app.api.calls.where((c) => c.path == '/marketplace/favorites'),
       isEmpty,

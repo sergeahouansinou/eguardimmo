@@ -49,6 +49,7 @@ void main() {
       '/annonces/k3m7q9x2v8nb/extra',
       '/annonces/../etc/passwd',
       '/annonces/Ab3dE6gH9jK<',
+      '/annonces/%FF',
       '/profil/voyageur',
       '/profil/console',
       '/profil/locataire/admin',

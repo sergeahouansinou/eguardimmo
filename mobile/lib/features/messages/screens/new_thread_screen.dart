@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/routes/app_routes.dart';
+import '../../../core/routes/route_args.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/validators.dart';
@@ -60,7 +60,7 @@ class _FormState() extends State<_Form> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    final router = GoRouter.of(context);
+    final navigator = Navigator.of(context);
     await widget.viewModel.submit(
       option: _option,
       subject: _subject.text,
@@ -68,7 +68,12 @@ class _FormState() extends State<_Form> {
     );
     final createdId = widget.viewModel.createdId;
     if (createdId != null && mounted) {
-      unawaited(router.pushReplacement(AppRoutes.conversation(createdId)));
+      unawaited(
+        navigator.pushReplacementNamed<Object?, Object?>(
+          RouteName.conversation,
+          arguments: ResourceArgs(createdId),
+        ),
+      );
     }
   }
 

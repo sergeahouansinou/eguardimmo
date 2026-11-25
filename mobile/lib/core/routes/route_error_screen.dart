@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../widgets/state_message.dart';
 import 'app_routes.dart';
@@ -15,8 +14,14 @@ class _RouteErrorScreenState() extends State<RouteErrorScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.go(AppRoutes.explore);
+      if (mounted) _goHome();
     });
+  }
+
+  void _goHome() {
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(RouteName.explore, (_) => false)
+        .ignore();
   }
 
   @override
@@ -26,7 +31,7 @@ class _RouteErrorScreenState() extends State<RouteErrorScreen> {
         child: StateMessage(
           message: 'Cette page n’existe pas.',
           actionLabel: 'Retour à l’accueil',
-          onAction: () => context.go(AppRoutes.explore),
+          onAction: _goHome,
         ),
       ),
     );

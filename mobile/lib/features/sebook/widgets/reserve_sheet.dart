@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/routes/app_routes.dart';
+import '../../../core/routes/router_manager.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
@@ -27,7 +27,7 @@ Future<void> showReserveSheet(
 }) {
   final market = context.read<MarketplaceService>();
   final bookings = context.read<BookingsService>();
-  final router = GoRouter.of(context);
+  final navigator = Navigator.of(context);
   final stays = context.read<BookingsViewModel>();
   return showAppSheet<void>(
     context,
@@ -40,7 +40,7 @@ Future<void> showReserveSheet(
       child: ReserveSheet(
         onSeeStays: () {
           unawaited(stays.load());
-          router.go(AppRoutes.stays);
+          RouterManager.go(navigator, RouteName.stays);
         },
       ),
     ),

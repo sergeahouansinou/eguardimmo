@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
+import '../../../core/routes/route_args.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_button.dart';
@@ -12,7 +15,6 @@ import '../../../core/widgets/inline_message.dart';
 import '../../../core/widgets/sub_page_scaffold.dart';
 import '../models/report_option.dart';
 import '../models/tenant_intervention.dart';
-import '../tenant_paths.dart';
 import '../viewmodels/new_request_viewmodel.dart';
 
 class const NewRequestScreen({super.key}) extends StatefulWidget {
@@ -45,7 +47,13 @@ class _NewRequestScreenState() extends State<NewRequestScreen> {
       availability: _availability.text,
     );
     if (created == null || !mounted) return;
-    context.pushReplacement(TenantPaths.request(created.id));
+    unawaited(
+      Navigator.pushReplacementNamed<Object?, Object?>(
+        context,
+        RouteName.tenantRequest,
+        arguments: ResourceArgs(created.id),
+      ),
+    );
   }
 
   @override
@@ -53,7 +61,7 @@ class _NewRequestScreenState() extends State<NewRequestScreen> {
     final viewModel = context.watch<NewRequestViewModel>();
     return SubPageScaffold(
       title: 'Signaler un problème',
-      fallbackRoute: TenantPaths.requests,
+      fallbackRoute: RouteName.tenantRequests,
       body: AsyncBody<List<ReportOption>>(
         state: viewModel.state,
         onRetry: viewModel.load,

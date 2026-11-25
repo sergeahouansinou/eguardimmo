@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
@@ -8,7 +9,6 @@ import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/info_card.dart';
 import '../../../core/widgets/sub_page_scaffold.dart';
 import '../models/lease_document.dart';
-import '../tenant_paths.dart';
 import '../viewmodels/tenant_leases_viewmodels.dart';
 
 class const DocumentsScreen({super.key}) extends StatelessWidget {
@@ -18,7 +18,7 @@ class const DocumentsScreen({super.key}) extends StatelessWidget {
     final theme = Theme.of(context);
     return SubPageScaffold(
       title: 'Documents',
-      fallbackRoute: TenantPaths.home,
+      fallbackRoute: RouteName.tenantHome,
       body: RefreshIndicator(
         onRefresh: viewModel.load,
         child: AsyncBody<List<LeaseDocuments>>(

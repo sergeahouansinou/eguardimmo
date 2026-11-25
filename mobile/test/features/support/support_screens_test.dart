@@ -45,7 +45,7 @@ void main() {
         tester,
         profile: TestProfile.tenant,
         handler: _supportApi,
-        location: AppRoutes.support,
+        location: RouteName.support,
       );
       expect(find.text('Support en ligne'), findsOneWidget);
       expect(find.text('Lun–ven 9 h – 18 h (Europe/Paris)'), findsOneWidget);
@@ -69,7 +69,7 @@ void main() {
         handler: (call) => call.path == '/support/status'
             ? apiFixture('support/status_offline')
             : _supportApi(call),
-        location: AppRoutes.support,
+        location: RouteName.support,
       );
       expect(find.text('Support hors ligne'), findsOneWidget);
       expect(find.text('Support en ligne'), findsNothing);
@@ -86,7 +86,7 @@ void main() {
           }
           return _supportApi(call);
         },
-        location: AppRoutes.support,
+        location: RouteName.support,
       );
       expect(
         find.textContaining('Horaires du support indisponibles'),
@@ -107,7 +107,7 @@ void main() {
         handler: (call) => call.path == '/support/tickets'
             ? apiFixture('support/tickets_empty')
             : _supportApi(call),
-        location: AppRoutes.support,
+        location: RouteName.support,
       );
       expect(find.textContaining('Vous n’avez aucune demande'), findsOneWidget);
     });
@@ -119,7 +119,7 @@ void main() {
         handler: (call) => call.path == '/support/tickets'
             ? apiProblem('support/problem_email_unverified', status: 403)
             : _supportApi(call),
-        location: AppRoutes.support,
+        location: RouteName.support,
       );
       expect(
         find.text('Confirmez votre adresse e-mail pour accéder à cet espace.'),
@@ -134,7 +134,7 @@ void main() {
         handler: (call) => call.path == '/support/tickets'
             ? apiProblem('support/problem_rate_limited', status: 429)
             : _supportApi(call),
-        location: AppRoutes.support,
+        location: RouteName.support,
       );
       expect(
         find.text('Trop de requêtes envoyées. Réessayez dans 30 min.'),
@@ -147,7 +147,7 @@ void main() {
         tester,
         profile: TestProfile.traveler,
         handler: _supportApi,
-        location: AppRoutes.support,
+        location: RouteName.support,
       );
       expect(find.text('Support en ligne'), findsOneWidget);
     });
@@ -170,7 +170,7 @@ void main() {
         tester,
         profile: TestProfile.tenant,
         handler: _supportApi,
-        location: AppRoutes.support,
+        location: RouteName.support,
         size: const Size(320, 640),
         textScale: 1.6,
       );
@@ -193,7 +193,7 @@ void main() {
         tester,
         profile: TestProfile.tenant,
         handler: _supportApi,
-        location: AppRoutes.newSupportTicket,
+        location: RouteName.newSupportTicket,
       );
       expect(
         find.text('Vous pouvez ouvrir 5 demandes par heure et 20 par jour.'),
@@ -220,7 +220,7 @@ void main() {
         tester,
         profile: TestProfile.tenant,
         handler: _supportApi,
-        location: AppRoutes.newSupportTicket,
+        location: RouteName.newSupportTicket,
       );
       await tester.ensureVisible(find.text('Envoyer la demande'));
       await tester.tap(find.text('Envoyer la demande'));
@@ -237,7 +237,7 @@ void main() {
         handler: (call) => call.method == 'POST'
             ? apiProblem('support/problem_rate_limited', status: 429)
             : _supportApi(call),
-        location: AppRoutes.newSupportTicket,
+        location: RouteName.newSupportTicket,
       );
       await fill(tester);
       await tester.ensureVisible(find.text('Envoyer la demande'));
@@ -269,7 +269,7 @@ void main() {
       profiles.select(
         profiles.profiles.firstWhere((p) => p.kind == ProfileKind.tenant),
       );
-      harness.router.go(AppRoutes.newSupportTicket);
+      harness.router.go(RouteName.newSupportTicket);
       await tester.pumpAndSettle();
       await fill(tester);
       expect(find.text('Mon bail'), findsOneWidget);
@@ -293,7 +293,7 @@ void main() {
         tester,
         profile: TestProfile.agency,
         handler: _supportApi,
-        location: AppRoutes.newSupportTicket,
+        location: RouteName.newSupportTicket,
       );
       await fill(tester);
       await tester.ensureVisible(find.text('Envoyer la demande'));
@@ -312,7 +312,7 @@ void main() {
           tester,
           profile: TestProfile.tenant,
           handler: handler,
-          location: AppRoutes.supportTicket(_ticketId),
+          location: '/messages/support/$_ticketId',
         );
 
     testWidgets('messages, auteur anonymisé et statut', (tester) async {

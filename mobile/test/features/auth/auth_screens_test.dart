@@ -1,3 +1,4 @@
+import 'package:eguardimmo/core/routes/app_location.dart';
 import 'package:eguardimmo/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,7 +34,7 @@ void main() {
       );
       await tester.tap(find.text('Se connecter'));
       await tester.pumpAndSettle();
-      expect(app.router.state.uri.path, AppRoutes.login);
+      expect(app.router.current, const AppLocation(RouteName.login));
 
       await _fill(tester, 0, 'jeanne@exemple.fr');
       await _fill(tester, 1, 'motdepasse-solide');
@@ -53,7 +54,7 @@ void main() {
       expect((login.body! as Map)['device_name'], isNotEmpty);
       expect(login.authenticated, isFalse);
       expect(app.tokens.token, Fixtures.token);
-      expect(app.router.state.uri.path, AppRoutes.explore);
+      expect(app.router.current, const AppLocation(RouteName.explore));
       expect(find.textContaining('Profil :'), findsOneWidget);
     });
 
@@ -62,7 +63,7 @@ void main() {
         tester,
         signedIn: false,
         handler: _market,
-        location: AppRoutes.login,
+        location: RouteName.login,
       );
       await tester.tap(find.text('Se connecter').last);
       await tester.pumpAndSettle();
@@ -73,7 +74,7 @@ void main() {
       final app = await pumpApp(
         tester,
         signedIn: false,
-        location: AppRoutes.login,
+        location: RouteName.login,
         handler: (call) {
           if (call.path == '/auth/token') return Fixtures.loginChallenge();
           if (call.path == '/auth/token/two-factor') {
@@ -111,7 +112,7 @@ void main() {
       final app = await pumpApp(
         tester,
         signedIn: false,
-        location: AppRoutes.login,
+        location: RouteName.login,
         handler: (call) => call.path == '/auth/token'
             ? problem(
                 422,
@@ -136,7 +137,7 @@ void main() {
       await pumpApp(
         tester,
         signedIn: false,
-        location: AppRoutes.login,
+        location: RouteName.login,
         handler: _market,
         size: const Size(320, 640),
         textScale: 2,
@@ -149,7 +150,7 @@ void main() {
     testWidgets('affiche l’utilisateur et l’état de vérification', (
       tester,
     ) async {
-      await pumpApp(tester, handler: _market, location: AppRoutes.account);
+      await pumpApp(tester, handler: _market, location: RouteName.account);
       expect(find.text('Jeanne Martin'), findsOneWidget);
       expect(find.text('jeanne@exemple.fr'), findsOneWidget);
       expect(find.text('E-mail vérifié'), findsOneWidget);
@@ -158,7 +159,7 @@ void main() {
     testWidgets('e-mail non vérifié : avertissement', (tester) async {
       await pumpApp(
         tester,
-        location: AppRoutes.account,
+        location: RouteName.account,
         handler: (call) =>
             call.path == '/me' ? Fixtures.me(verifiedAt: null) : _market(call),
       );
@@ -175,7 +176,7 @@ void main() {
       final app = await pumpApp(
         tester,
         handler: _market,
-        location: AppRoutes.account,
+        location: RouteName.account,
       );
       await tester.ensureVisible(find.text('Se déconnecter'));
       await tester.tap(find.text('Se déconnecter'));
@@ -196,7 +197,7 @@ void main() {
       (tester) async {
         final app = await pumpApp(
           tester,
-          location: AppRoutes.account,
+          location: RouteName.account,
           handler: (call) =>
               call.method == 'DELETE' ? networkFailure() : _market(call),
         );
@@ -219,7 +220,7 @@ void main() {
       (tester) async {
         final app = await pumpApp(
           tester,
-          location: AppRoutes.stays,
+          location: RouteName.stays,
           handler: (call) => call.path == '/marketplace/bookings'
               ? problem(401, 'unauthenticated', 'Non authentifié.')
               : _market(call),

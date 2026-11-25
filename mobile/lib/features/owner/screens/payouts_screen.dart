@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/async_body.dart';
 import '../../../core/widgets/sub_page_scaffold.dart';
 import '../models/owner_payout.dart';
-import '../owner_paths.dart';
 import '../viewmodels/owner_lists_viewmodels.dart';
 import '../widgets/access_notices.dart';
 import '../widgets/owner_cards.dart';
@@ -16,7 +16,7 @@ class const OwnerPayoutsScreen({super.key}) extends StatelessWidget {
     final viewModel = context.watch<OwnerPayoutsViewModel>();
     return SubPageScaffold(
       title: 'Reversements',
-      fallbackRoute: OwnerPaths.home,
+      fallbackRoute: RouteName.ownerHome,
       bottom: const AccessLine(),
       body: RefreshIndicator(
         onRefresh: viewModel.load,

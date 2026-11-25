@@ -1,4 +1,5 @@
-import 'package:eguardimmo/features/owner/owner_paths.dart';
+import 'package:eguardimmo/core/routes/app_location.dart';
+import 'package:eguardimmo/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -10,7 +11,7 @@ import '../../helpers/owner_api.dart';
 
 Future<Harness> _open(
   WidgetTester tester, {
-  String location = OwnerPaths.home,
+  String location = RouteName.ownerHome,
   FakeHandler handler = ownerApi,
   Size size = const Size(390, 3200),
   double textScale = 1,
@@ -171,7 +172,7 @@ void main() {
   testWidgets('reversements : statuts et prochain reversement', (tester) async {
     final app = await _open(tester);
     await _tapText(tester, 'Virements reçus et prochain reversement');
-    expect(app.router.state.uri.path, OwnerPaths.payouts);
+    expect(app.router.current, const AppLocation(RouteName.ownerPayouts));
     expect(find.text('Prochain reversement'), findsOneWidget);
     expect(find.text('Programmé'), findsOneWidget);
     expect(find.text('Versé'), findsOneWidget);
@@ -183,7 +184,7 @@ void main() {
   testWidgets('reversements : aucun reversement, état vide', (tester) async {
     await _open(
       tester,
-      location: OwnerPaths.payouts,
+      location: RouteName.ownerPayouts,
       handler: (call) => call.path == '/owner/payouts'
           ? {
               'data': <Object?>[],
@@ -198,7 +199,7 @@ void main() {
   testWidgets('relevé : mois courant, lignes, navigation de mois', (
     tester,
   ) async {
-    final app = await _open(tester, location: OwnerPaths.statement);
+    final app = await _open(tester, location: RouteName.ownerStatement);
     expect(find.text('Loyer novembre 2026'), findsOneWidget);
     expect(find.text('Honoraires de gestion'), findsOneWidget);
     expect(find.text('Solde de clôture'), findsOneWidget);
@@ -221,7 +222,7 @@ void main() {
     (empty['data']! as Map<String, Object?>)['lines'] = <Object?>[];
     await _open(
       tester,
-      location: OwnerPaths.statement,
+      location: RouteName.ownerStatement,
       handler: (call) =>
           call.path == '/owner/statement' ? empty : ownerApi(call),
     );
@@ -233,7 +234,7 @@ void main() {
     var fail = true;
     await _open(
       tester,
-      location: OwnerPaths.statement,
+      location: RouteName.ownerStatement,
       handler: (call) => call.path == '/owner/statement' && fail
           ? problem(422, 'statement_range_too_long', 'Période trop longue.')
           : ownerApi(call),
@@ -246,7 +247,7 @@ void main() {
   });
 
   testWidgets('biens : lots sous mandat', (tester) async {
-    await _open(tester, location: OwnerPaths.properties);
+    await _open(tester, location: RouteName.ownerProperties);
     expect(find.text('Résidence Les Filaos · A1'), findsOneWidget);
     expect(find.textContaining('14 avenue de la Marina'), findsWidgets);
     expect(find.textContaining('Sous mandat du'), findsOneWidget);
@@ -255,7 +256,7 @@ void main() {
   testWidgets('documents : libellés et pas de téléchargement factice', (
     tester,
   ) async {
-    await _open(tester, location: OwnerPaths.documents);
+    await _open(tester, location: RouteName.ownerDocuments);
     expect(find.text('Mandat signé'), findsOneWidget);
     expect(find.textContaining('mandat-gestion-2026.pdf'), findsOneWidget);
     expect(find.textContaining('déposé par Agence du Lac'), findsOneWidget);
@@ -269,7 +270,7 @@ void main() {
     final app = await pumpApp(
       tester,
       handler: ownerApi,
-      location: OwnerPaths.home,
+      location: RouteName.ownerHome,
       signedIn: false,
     );
     expect(find.text('Connexion requise'), findsOneWidget);

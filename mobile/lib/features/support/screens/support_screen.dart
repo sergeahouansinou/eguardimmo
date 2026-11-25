@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/routes/app_routes.dart';
+import '../../../core/routes/route_args.dart';
 import '../../../core/state/list_page.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -79,7 +79,8 @@ class const _Tickets({
         AppButton(
           label: 'Nouvelle demande',
           expanded: true,
-          onPressed: () => context.push(AppRoutes.newSupportTicket),
+          onPressed: () =>
+              Navigator.pushNamed<Object?>(context, RouteName.newSupportTicket),
         ),
         if (viewModel.pollNotice != null) ...[
           const SizedBox(height: AppSpacing.md),
@@ -107,7 +108,11 @@ class const _Tickets({
             TicketTile(
               ticket: ticket,
               now: now,
-              onOpen: () => context.push(AppRoutes.supportTicket(ticket.id)),
+              onOpen: () => Navigator.pushNamed<Object?>(
+                context,
+                RouteName.supportTicket,
+                arguments: ResourceArgs(ticket.id),
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
           ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_icon_button.dart';
@@ -9,7 +10,6 @@ import '../../../core/widgets/info_card.dart';
 import '../../../core/widgets/key_value_row.dart';
 import '../../../core/widgets/sub_page_scaffold.dart';
 import '../models/owner_statement.dart';
-import '../owner_paths.dart';
 import '../viewmodels/owner_statement_viewmodel.dart';
 import '../widgets/access_notices.dart';
 import '../widgets/owner_cards.dart';
@@ -20,7 +20,7 @@ class const OwnerStatementScreen({super.key}) extends StatelessWidget {
     final viewModel = context.watch<OwnerStatementViewModel>();
     return SubPageScaffold(
       title: 'Relevé de compte',
-      fallbackRoute: OwnerPaths.home,
+      fallbackRoute: RouteName.ownerHome,
       bottom: Column(
         children: [
           const AccessLine(),

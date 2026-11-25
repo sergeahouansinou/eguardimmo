@@ -2,7 +2,7 @@
 
 Application Flutter multi-profils (voyageur, locataire, propriétaire, agence). Tranche livrée : fondation, authentification par jeton Sanctum, sélecteur de profils, côté voyageur SeBook, espaces locataire, propriétaire et agence (voir « Écrans par profil »).
 
-Architecture : par feature (`models`, `services`, `viewmodels`, `screens`, `widgets`), Provider + `ChangeNotifier`, go_router, Dio. Décisions : ADR 0003, 0004, 0010, 0012, 0041.
+Architecture : par feature (`models`, `services`, `viewmodels`, `screens`, `widgets`), Provider + `ChangeNotifier`, routes nommées (`onGenerateRoute`), Dio. Décisions : ADR 0003, 0004, 0010, 0012, 0041.
 
 ## Configuration
 
@@ -39,6 +39,15 @@ openssl s_client -connect api.exemple.fr:443 -servername api.exemple.fr </dev/nu
 Pour la clé de secours (non encore déployée), appliquez la même chaîne `openssl pkey -pubin … | openssl dgst … | openssl enc -base64` à sa clé publique, par exemple `openssl req -in secours.csr -pubkey -noout | …`.
 
 Fonctionnement et limites : le transport n'accepte que le certificat dont la clé publique correspond à une empreinte, pour l'hôte de `API_BASE_URL`, dans sa période de validité ; les autorités du système ne comptent pas. Seul le certificat feuille est comparé : renouvelez le certificat en **conservant la même clé** (par exemple `certbot --reuse-key`) ou publiez la nouvelle empreinte en secours avant la rotation, sinon les applications déjà installées ne joindront plus l'API. `env/example.json` ne porte que des valeurs de remplacement « [À RENSEIGNER] », volontairement invalides.
+
+## Routage
+
+- `core/routes/app_routes.dart` : `RouteName`, les noms de routes. Les arguments sont typés (`route_args.dart` : `ResourceArgs`, `ListingArgs`) et vérifiés avant d'ouvrir l'écran.
+- `core/routes/router_manager.dart` : `RouterManager` assemble les pages des features (`<x>_routes.dart`), porte la hiérarchie des écrans et branche `MaterialApp` (`onGenerateRoute`, `onGenerateInitialRoutes`).
+- Empiler un écran : `Navigator.pushNamed<Object?>(context, RouteName.x, arguments: …)`. Ne jamais préciser un autre type de résultat : les routes sont des `Route<Object?>`.
+- Repartir d'une destination (changer d'onglet ou de profil) : `RouterManager.go(navigator, RouteName.x)`. Une destination déjà ouverte est réaffichée sans être reconstruite.
+- Lien reçu application ouverte : `IncomingLinks` (autour de l'application) le passe à `DeepLinkGuard`, puis à `go` ; un lien refusé mène à l'accueil.
+- Nouvel écran : constante dans `RouteName`, page dans la feature, parent dans `RouterManager` s'il en a un, et chemin dans `DeepLinkGuard` s'il peut être ouvert par un lien.
 
 ## Sécurité
 

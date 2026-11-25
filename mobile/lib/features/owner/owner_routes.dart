@@ -1,10 +1,9 @@
 import 'package:flutter/widgets.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/routes/app_routes.dart';
 import '../profiles/widgets/profile_route_gate.dart';
 import 'models/owner_access.dart';
-import 'owner_paths.dart';
 import 'screens/owner_documents_screen.dart';
 import 'screens/owner_home_screen.dart';
 import 'screens/payouts_screen.dart';
@@ -29,47 +28,31 @@ Widget _page<T extends ChangeNotifier>({
   ),
 );
 
-List<RouteBase> ownerRoutes() => [
-  GoRoute(
-    path: OwnerPaths.home,
-    builder: (_, _) => _page(
-      create: (service, access) =>
-          OwnerHomeViewModel(service, access.agencyId)..load(),
-      child: const OwnerHomeScreen(),
-    ),
-    routes: [
-      GoRoute(
-        path: 'reversements',
-        builder: (_, _) => _page(
-          create: (service, access) =>
-              OwnerPayoutsViewModel(service, access.agencyId)..load(),
-          child: const OwnerPayoutsScreen(),
-        ),
-      ),
-      GoRoute(
-        path: 'releve',
-        builder: (_, _) => _page(
-          create: (service, access) =>
-              OwnerStatementViewModel(service, access.agencyId)..load(),
-          child: const OwnerStatementScreen(),
-        ),
-      ),
-      GoRoute(
-        path: 'biens',
-        builder: (_, _) => _page(
-          create: (service, access) =>
-              OwnerPropertiesViewModel(service, access.agencyId)..load(),
-          child: const OwnerPropertiesScreen(),
-        ),
-      ),
-      GoRoute(
-        path: 'documents',
-        builder: (_, _) => _page(
-          create: (service, access) =>
-              OwnerDocumentsViewModel(service, access.agencyId)..load(),
-          child: const OwnerDocumentsScreen(),
-        ),
-      ),
-    ],
+Widget? ownerPage(String? name) => switch (name) {
+  RouteName.ownerHome => _page(
+    create: (service, access) =>
+        OwnerHomeViewModel(service, access.agencyId)..load(),
+    child: const OwnerHomeScreen(),
   ),
-];
+  RouteName.ownerPayouts => _page(
+    create: (service, access) =>
+        OwnerPayoutsViewModel(service, access.agencyId)..load(),
+    child: const OwnerPayoutsScreen(),
+  ),
+  RouteName.ownerStatement => _page(
+    create: (service, access) =>
+        OwnerStatementViewModel(service, access.agencyId)..load(),
+    child: const OwnerStatementScreen(),
+  ),
+  RouteName.ownerProperties => _page(
+    create: (service, access) =>
+        OwnerPropertiesViewModel(service, access.agencyId)..load(),
+    child: const OwnerPropertiesScreen(),
+  ),
+  RouteName.ownerDocuments => _page(
+    create: (service, access) =>
+        OwnerDocumentsViewModel(service, access.agencyId)..load(),
+    child: const OwnerDocumentsScreen(),
+  ),
+  _ => null,
+};

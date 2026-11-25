@@ -1,31 +1,19 @@
+import 'package:eguardimmo/core/routes/app_location.dart';
 import 'package:eguardimmo/core/routes/app_routes.dart';
-import 'package:eguardimmo/core/routes/route_error_screen.dart';
-import 'package:eguardimmo/core/theme/app_theme.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
+
+import '../helpers/fixtures.dart';
+import '../helpers/harness.dart';
 
 void main() {
   testWidgets('route introuvable : retour à l’accueil', (tester) async {
-    final router = GoRouter(
-      initialLocation: '/route-sans-ecran',
-      errorBuilder: (_, _) => const RouteErrorScreen(),
-      routes: [
-        GoRoute(
-          path: AppRoutes.explore,
-          builder: (_, _) => const Scaffold(body: Text('Accueil')),
-        ),
-      ],
+    final app = await pumpApp(
+      tester,
+      handler: (call) =>
+          call.path.startsWith('/marketplace/') ? Fixtures.page([]) : null,
     );
-    addTearDown(router.dispose);
-    await tester.pumpWidget(
-      MaterialApp.router(theme: AppTheme.light(), routerConfig: router),
-    );
+    app.router.navigator!.pushNamed('/route-sans-ecran').ignore();
     await tester.pumpAndSettle();
-    expect(find.text('Accueil'), findsOneWidget);
-    expect(
-      router.routerDelegate.currentConfiguration.uri.path,
-      AppRoutes.explore,
-    );
+    expect(app.router.stack, [const AppLocation(RouteName.explore)]);
   });
 }

@@ -1,4 +1,5 @@
-import 'package:eguardimmo/features/agency/agency_paths.dart';
+import 'package:eguardimmo/core/routes/app_location.dart';
+import 'package:eguardimmo/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -9,7 +10,7 @@ import '../../helpers/harness.dart';
 
 Future<Harness> _open(
   WidgetTester tester, {
-  String path = AgencyPaths.home,
+  String path = RouteName.agencyHome,
   FakeHandler handler = agencyApi,
   Size size = const Size(390, 3200),
   double textScale = 1,
@@ -29,7 +30,7 @@ Future<Harness> _open(
     await tester.tap(find.text('Agence Rhône Immo'));
     await tester.pumpAndSettle();
   }
-  if (path != AgencyPaths.home) {
+  if (path != RouteName.agencyHome) {
     app.router.go(path);
     await tester.pumpAndSettle();
   }
@@ -48,7 +49,7 @@ void main() {
     tester,
   ) async {
     final app = await _open(tester);
-    expect(app.router.state.uri.path, AgencyPaths.home);
+    expect(app.router.current, const AppLocation(RouteName.agencyHome));
     expect(find.text('Novembre 2026'), findsOneWidget);
     expect(find.text('Période clôturée'), findsOneWidget);
     expect(find.text('97,1 %'), findsOneWidget);
@@ -138,7 +139,7 @@ void main() {
   ) async {
     final app = await _open(
       tester,
-      path: AgencyPaths.unpaid,
+      path: RouteName.agencyUnpaid,
       selectAgency: false,
     );
     expect(find.text('Choisissez votre agence'), findsOneWidget);
@@ -146,7 +147,7 @@ void main() {
   });
 
   testWidgets('impayés : triés par retard, total et dossier', (tester) async {
-    await _open(tester, path: AgencyPaths.unpaid);
+    await _open(tester, path: RouteName.agencyUnpaid);
     expect(find.text('72 jours de retard'), findsOneWidget);
     expect(find.text('11 jours de retard'), findsOneWidget);
     expect(find.text('Célina Barre'), findsWidgets);
@@ -160,7 +161,7 @@ void main() {
   testWidgets('impayés : aucun impayé, état vide', (tester) async {
     await _open(
       tester,
-      path: AgencyPaths.unpaid,
+      path: RouteName.agencyUnpaid,
       handler: (call) => call.path.endsWith('/recovery/unpaid')
           ? {
               'data': <Object?>[],
@@ -177,7 +178,7 @@ void main() {
   testWidgets('impayés : 403 affiché avec reprise', (tester) async {
     await _open(
       tester,
-      path: AgencyPaths.unpaid,
+      path: RouteName.agencyUnpaid,
       handler: (call) => call.path.endsWith('/recovery/unpaid')
           ? problem(403, 'forbidden', 'Recouvrement non inclus dans l’offre.')
           : agencyApi(call),
@@ -189,7 +190,7 @@ void main() {
   testWidgets('interventions : liste, filtres envoyés au serveur', (
     tester,
   ) async {
-    final app = await _open(tester, path: AgencyPaths.interventions);
+    final app = await _open(tester, path: RouteName.agencyInterventions);
     expect(find.text('Signalée'), findsOneWidget);
     expect(find.text('Facturée'), findsOneWidget);
     expect(find.text('Ramonage du Port SARL'), findsNothing);
@@ -208,7 +209,7 @@ void main() {
   ) async {
     await _open(
       tester,
-      path: AgencyPaths.interventions,
+      path: RouteName.agencyInterventions,
       handler: (call) =>
           call.path.endsWith('/interventions') &&
               call.query?['status'] == 'in_progress'
@@ -228,7 +229,7 @@ void main() {
   testWidgets('portefeuille : biens puis baux filtrés par phase', (
     tester,
   ) async {
-    final app = await _open(tester, path: AgencyPaths.portfolio);
+    final app = await _open(tester, path: RouteName.agencyPortfolio);
     expect(find.text('Résidence Roy'), findsOneWidget);
     expect(find.text('Villa des Pins'), findsOneWidget);
     expect(find.textContaining('6 lots actifs'), findsOneWidget);
@@ -250,11 +251,14 @@ void main() {
   ) async {
     final app = await _open(tester);
     await _tapText(tester, 'Échéances et factures en retard');
-    expect(app.router.state.uri.path, AgencyPaths.unpaid);
+    expect(app.router.current, const AppLocation(RouteName.agencyUnpaid));
     app.router.pop();
     await tester.pumpAndSettle();
     await _tapText(tester, 'À qualifier, devis à approuver, en cours');
-    expect(app.router.state.uri.path, AgencyPaths.interventions);
+    expect(
+      app.router.current,
+      const AppLocation(RouteName.agencyInterventions),
+    );
   });
 
   testWidgets('déconnecté : invitation à se connecter, aucune requête', (
@@ -263,7 +267,7 @@ void main() {
     final app = await pumpApp(
       tester,
       handler: agencyApi,
-      location: AgencyPaths.home,
+      location: RouteName.agencyHome,
       signedIn: false,
     );
     expect(find.text('Connexion requise'), findsOneWidget);

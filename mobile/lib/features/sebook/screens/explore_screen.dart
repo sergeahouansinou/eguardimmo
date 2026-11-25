@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/routes/app_routes.dart';
+import '../../../core/routes/route_args.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_choice_chip.dart';
@@ -186,7 +186,11 @@ class const _ListingsSliver({
             final listing = page.items[index];
             return ListingCard(
               listing: listing,
-              onTap: () => context.push(AppRoutes.listing(listing.ref)),
+              onTap: () => Navigator.pushNamed<Object?>(
+                context,
+                RouteName.listing,
+                arguments: ListingArgs(listing.ref),
+              ),
             );
           }
           return Column(

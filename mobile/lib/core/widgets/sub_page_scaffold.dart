@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../theme/app_palette.dart';
 import '../theme/app_spacing.dart';
@@ -34,9 +33,12 @@ class const SubPageScaffold({
                       icon: Icons.arrow_back_rounded,
                       tooltip: 'Retour',
                       onNavigation: true,
-                      onPressed: () => context.canPop()
-                          ? context.pop()
-                          : context.go(fallbackRoute),
+                      onPressed: () => Navigator.canPop(context)
+                          ? Navigator.pop(context)
+                          : Navigator.pushReplacementNamed<Object?, Object?>(
+                              context,
+                              fallbackRoute,
+                            ),
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(

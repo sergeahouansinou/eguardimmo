@@ -1,5 +1,7 @@
+import 'package:eguardimmo/core/routes/app_location.dart';
+import 'package:eguardimmo/core/routes/app_routes.dart';
+import 'package:eguardimmo/core/routes/route_args.dart';
 import 'package:eguardimmo/core/utils/formatters.dart';
-import 'package:eguardimmo/features/tenant/tenant_paths.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -12,7 +14,7 @@ final _owed = Formatters.money(65000, currency: 'EUR');
 
 Future<Harness> _open(
   WidgetTester tester, {
-  String location = TenantPaths.home,
+  String location = RouteName.tenantHome,
   FakeHandler handler = tenantApi,
   Size size = const Size(390, 1800),
 }) => pumpApp(tester, handler: handler, location: location, size: size);
@@ -53,7 +55,7 @@ void main() {
     await pumpApp(
       tester,
       handler: tenantApi,
-      location: TenantPaths.home,
+      location: RouteName.tenantHome,
       size: const Size(320, 640),
       textScale: 1.6,
     );
@@ -103,7 +105,7 @@ void main() {
   ) async {
     final app = await _open(tester);
     await _tapText(tester, 'Loyers');
-    expect(app.router.state.uri.path, TenantPaths.rent);
+    expect(app.router.current, const AppLocation(RouteName.tenantRent));
     expect(find.text('Émise'), findsWidgets);
     expect(find.textContaining('Reste dû'), findsWidgets);
 
@@ -118,7 +120,13 @@ void main() {
     await _tapText(tester, 'Échéances');
     await tester.tap(find.text('Loyer de novembre 2026').first);
     await tester.pumpAndSettle();
-    expect(app.router.state.uri.path, TenantPaths.installment(installmentId));
+    expect(
+      app.router.current,
+      const AppLocation(
+        RouteName.tenantInstallment,
+        ResourceArgs(installmentId),
+      ),
+    );
     expect(find.text('AV-2026-0001 · 16 nov. 2026'), findsOneWidget);
     expect(find.text('Non émise'), findsOneWidget);
     expect(find.text('Loyer de novembre 2026'), findsWidgets);
@@ -127,7 +135,7 @@ void main() {
   testWidgets('documents partagés : liste sans téléchargement factice', (
     tester,
   ) async {
-    await _open(tester, location: TenantPaths.documents);
+    await _open(tester, location: RouteName.tenantDocuments);
     expect(find.text('Bail BL-2026-76772'), findsOneWidget);
     expect(find.text('Avenant'), findsOneWidget);
     expect(find.textContaining('avenant-1.pdf'), findsOneWidget);
@@ -137,7 +145,7 @@ void main() {
 
   group('Demandes', () {
     testWidgets('liste et détail', (tester) async {
-      await _open(tester, location: TenantPaths.requests);
+      await _open(tester, location: RouteName.tenantRequests);
       expect(find.text('Prise électrique HS'), findsOneWidget);
       expect(find.text('Classée sans suite'), findsOneWidget);
 
@@ -149,7 +157,10 @@ void main() {
     testWidgets('détail : message envoyé, historique remplacé par le serveur', (
       tester,
     ) async {
-      final app = await _open(tester, location: TenantPaths.request(requestId));
+      final app = await _open(
+        tester,
+        location: '/profil/locataire/demandes/$requestId',
+      );
       expect(find.text('Merci de passer vite.'), findsOneWidget);
       expect(find.text('Un plombier passera cette semaine.'), findsOneWidget);
 
@@ -166,7 +177,10 @@ void main() {
     testWidgets('annulation confirmée : état du serveur affiché', (
       tester,
     ) async {
-      final app = await _open(tester, location: TenantPaths.request(requestId));
+      final app = await _open(
+        tester,
+        location: '/profil/locataire/demandes/$requestId',
+      );
       await _tapText(tester, 'Annuler la demande');
       expect(find.text('Annuler cette demande ?'), findsOneWidget);
       await tester.tap(find.text('Annuler la demande').last);
@@ -180,7 +194,7 @@ void main() {
     });
 
     testWidgets('signalement : formulaire, envoi puis détail', (tester) async {
-      final app = await _open(tester, location: TenantPaths.newRequest);
+      final app = await _open(tester, location: RouteName.tenantNewRequest);
       await _tapText(tester, 'Plomberie');
       await _tapText(tester, 'À traiter rapidement');
       await tester.enterText(
@@ -198,7 +212,10 @@ void main() {
       expect(post.body, containsPair('lease_id', tenantLeaseId));
       expect(post.body, containsPair('reported_urgency', 'soon'));
       expect(post.headers, contains('Idempotency-Key'));
-      expect(app.router.state.uri.path, TenantPaths.request(requestId));
+      expect(
+        app.router.current,
+        const AppLocation(RouteName.tenantRequest, ResourceArgs(requestId)),
+      );
       expect(find.text('Demande'), findsOneWidget);
     });
 
@@ -207,7 +224,7 @@ void main() {
     ) async {
       await _open(
         tester,
-        location: TenantPaths.newRequest,
+        location: RouteName.tenantNewRequest,
         handler: (call) => call.method == 'POST'
             ? apiProblem('tenant/problem_too_many_open', status: 422)
             : tenantApi(call),

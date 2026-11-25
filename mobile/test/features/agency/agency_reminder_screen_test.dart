@@ -1,4 +1,4 @@
-import 'package:eguardimmo/features/agency/agency_paths.dart';
+import 'package:eguardimmo/core/routes/app_routes.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/agency_actions_api.dart';
@@ -23,7 +23,7 @@ void main() {
       final (app, _) = await openIntervention(
         tester,
         server: server,
-        path: AgencyPaths.unpaid,
+        path: RouteName.agencyUnpaid,
       );
       expect(find.text('Relancer'), findsOneWidget);
       expect(
@@ -54,7 +54,7 @@ void main() {
       final (app, _) = await openIntervention(
         tester,
         server: server,
-        path: AgencyPaths.unpaid,
+        path: RouteName.agencyUnpaid,
       );
       await tapText(tester, 'Relancer');
       await tapText(tester, 'Continuer');
@@ -69,7 +69,11 @@ void main() {
       server.script['POST /recovery/cases/$caseId/acts'] = [
         problem(422, 'validation_failed', 'La date ne peut pas être future.'),
       ];
-      await openIntervention(tester, server: server, path: AgencyPaths.unpaid);
+      await openIntervention(
+        tester,
+        server: server,
+        path: RouteName.agencyUnpaid,
+      );
       await tapText(tester, 'Relancer');
       await tapText(tester, 'Continuer');
       await tapText(tester, 'Confirmer la relance');
@@ -80,7 +84,7 @@ void main() {
     testWidgets('sans dossier de recouvrement : pas de bouton, raison dite', (
       tester,
     ) async {
-      await openIntervention(tester, path: AgencyPaths.unpaid);
+      await openIntervention(tester, path: RouteName.agencyUnpaid);
       expect(find.text('Relancer'), findsNothing);
       expect(
         find.textContaining('Aucun dossier de recouvrement'),
@@ -92,7 +96,11 @@ void main() {
       final server = ActionsApi()
         ..unpaid = unpaidWithCase()
         ..roles = 'agency/roles_accountant';
-      await openIntervention(tester, server: server, path: AgencyPaths.unpaid);
+      await openIntervention(
+        tester,
+        server: server,
+        path: RouteName.agencyUnpaid,
+      );
       expect(find.text('Relancer'), findsNothing);
       expect(find.textContaining('Lecture seule'), findsWidgets);
     });

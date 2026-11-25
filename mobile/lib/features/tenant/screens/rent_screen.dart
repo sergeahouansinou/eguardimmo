@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
+import '../../../core/routes/route_args.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_choice_chip.dart';
 import '../../../core/widgets/async_list_view.dart';
@@ -9,7 +10,6 @@ import '../../../core/widgets/sub_page_scaffold.dart';
 import '../models/installment.dart';
 import '../models/rent_payment.dart';
 import '../models/rent_receipt.dart';
-import '../tenant_paths.dart';
 import '../viewmodels/installments_viewmodel.dart';
 import '../viewmodels/rent_history_viewmodels.dart';
 import '../widgets/rent_cards.dart';
@@ -27,7 +27,7 @@ class _RentScreenState() extends State<RentScreen> {
   Widget build(BuildContext context) {
     return SubPageScaffold(
       title: 'Loyers',
-      fallbackRoute: TenantPaths.home,
+      fallbackRoute: RouteName.tenantHome,
       body: Column(
         children: [
           Padding(
@@ -69,7 +69,11 @@ class const _Installments() extends StatelessWidget {
       emptyMessage: 'Aucune échéance appelée pour le moment.',
       itemBuilder: (context, installment) => InstallmentCard(
         installment: installment,
-        onTap: () => context.push(TenantPaths.installment(installment.id)),
+        onTap: () => Navigator.pushNamed<Object?>(
+          context,
+          RouteName.tenantInstallment,
+          arguments: ResourceArgs(installment.id),
+        ),
       ),
     );
   }

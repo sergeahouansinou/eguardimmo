@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
@@ -14,7 +14,6 @@ import '../../profiles/widgets/profile_home_scaffold.dart';
 import '../models/installment.dart';
 import '../models/tenant_intervention.dart';
 import '../models/tenant_lease.dart';
-import '../tenant_paths.dart';
 import '../viewmodels/installments_viewmodel.dart';
 import '../viewmodels/requests_viewmodel.dart';
 import '../viewmodels/tenant_leases_viewmodels.dart';
@@ -73,19 +72,22 @@ class const TenantHomeScreen({super.key}) extends StatelessWidget {
           icon: Icons.receipt_long_rounded,
           title: 'Loyers',
           subtitle: 'Échéances, paiements et quittances',
-          onTap: () => context.push(TenantPaths.rent),
+          onTap: () =>
+              Navigator.pushNamed<Object?>(context, RouteName.tenantRent),
         ),
         NavTile(
           icon: Icons.build_circle_outlined,
           title: 'Demandes d’intervention',
           subtitle: 'Signaler un problème et suivre les demandes',
-          onTap: () => context.push(TenantPaths.requests),
+          onTap: () =>
+              Navigator.pushNamed<Object?>(context, RouteName.tenantRequests),
         ),
         NavTile(
           icon: Icons.folder_open_rounded,
           title: 'Documents',
           subtitle: 'Pièces partagées par votre agence',
-          onTap: () => context.push(TenantPaths.documents),
+          onTap: () =>
+              Navigator.pushNamed<Object?>(context, RouteName.tenantDocuments),
         ),
         const ComingSoonCard(items: comingSoon),
       ],

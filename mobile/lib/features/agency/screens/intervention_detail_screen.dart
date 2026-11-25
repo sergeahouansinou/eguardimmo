@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/state/load_state.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/async_body.dart';
@@ -9,7 +10,6 @@ import '../../../core/widgets/refresh_failure_banner.dart';
 import '../../../core/widgets/status_pill.dart';
 import '../../../core/widgets/sub_page_scaffold.dart';
 import '../../../core/widgets/write_reporting.dart';
-import '../agency_paths.dart';
 import '../models/agency_access.dart';
 import '../models/intervention_detail.dart';
 import '../viewmodels/agency_access_viewmodels.dart';
@@ -39,7 +39,7 @@ class _InterventionDetailScreenState()
     );
     return SubPageScaffold(
       title: 'Intervention',
-      fallbackRoute: AgencyPaths.interventions,
+      fallbackRoute: RouteName.agencyInterventions,
       body: RefreshIndicator(
         onRefresh: () => Future.wait([viewModel.load(), access.load()]),
         child: AsyncBody<InterventionDetail>(

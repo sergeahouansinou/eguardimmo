@@ -1,22 +1,34 @@
-abstract final class AppRoutes() {
+abstract final class RouteName() {
   static const explore = '/explorer';
   static const stays = '/sejours';
   static const messages = '/messages';
   static const account = '/compte';
   static const login = '/connexion';
+  static const listing = '/annonces/detail';
 
-  static const listingPattern = '/annonces/:ref';
-  static const profilePattern = '/profil/:kind';
+  static const tenantHome = '/profil/locataire';
+  static const tenantRent = '$tenantHome/loyers';
+  static const tenantInstallment = '$tenantRent/detail';
+  static const tenantRequests = '$tenantHome/demandes';
+  static const tenantNewRequest = '$tenantRequests/nouvelle';
+  static const tenantRequest = '$tenantRequests/detail';
+  static const tenantDocuments = '$tenantHome/documents';
 
-  static const conversationPattern = '/messages/conversations/:id';
-  static const newConversation = '/messages/conversations/nouvelle';
-  static const support = '/messages/support';
-  static const newSupportTicket = '/messages/support/nouvelle';
-  static const supportTicketPattern = '/messages/support/:id';
+  static const ownerHome = '/profil/proprietaire';
+  static const ownerPayouts = '$ownerHome/reversements';
+  static const ownerStatement = '$ownerHome/releve';
+  static const ownerProperties = '$ownerHome/biens';
+  static const ownerDocuments = '$ownerHome/documents';
 
-  static String conversation(String id) => '/messages/conversations/$id';
-  static String supportTicket(String id) => '/messages/support/$id';
+  static const agencyHome = '/profil/agence';
+  static const agencyUnpaid = '$agencyHome/impayes';
+  static const agencyInterventions = '$agencyHome/interventions';
+  static const agencyIntervention = '$agencyInterventions/detail';
+  static const agencyPortfolio = '$agencyHome/portefeuille';
 
-  static String listing(String ref) => '/annonces/$ref';
-  static String profile(String kind) => '/profil/$kind';
+  static const newConversation = '$messages/conversations/nouvelle';
+  static const conversation = '$messages/conversations/detail';
+  static const support = '$messages/support';
+  static const newSupportTicket = '$support/nouvelle';
+  static const supportTicket = '$support/detail';
 }

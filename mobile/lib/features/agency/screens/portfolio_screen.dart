@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_choice_chip.dart';
 import '../../../core/widgets/async_list_view.dart';
 import '../../../core/widgets/sub_page_scaffold.dart';
-import '../agency_paths.dart';
 import '../models/portfolio.dart';
 import '../viewmodels/agency_viewmodels.dart';
 import '../widgets/agency_cards.dart';
@@ -23,7 +23,7 @@ class _PortfolioScreenState() extends State<PortfolioScreen> {
     final leases = context.watch<AgencyLeasesViewModel>();
     return SubPageScaffold(
       title: 'Portefeuille',
-      fallbackRoute: AgencyPaths.home,
+      fallbackRoute: RouteName.agencyHome,
       bottom: Padding(
         padding: const EdgeInsets.all(AppSpacing.screenGutter),
         child: Align(

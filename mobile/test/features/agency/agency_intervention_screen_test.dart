@@ -1,4 +1,6 @@
-import 'package:eguardimmo/features/agency/agency_paths.dart';
+import 'package:eguardimmo/core/routes/app_location.dart';
+import 'package:eguardimmo/core/routes/app_routes.dart';
+import 'package:eguardimmo/core/routes/route_args.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -14,12 +16,15 @@ void main() {
     ) async {
       final (app, _) = await openIntervention(
         tester,
-        path: AgencyPaths.interventions,
+        path: RouteName.agencyInterventions,
       );
       await tapText(tester, 'Prise électrique HS');
       expect(
-        app.router.state.uri.path,
-        AgencyPaths.intervention(interventionId),
+        app.router.current,
+        const AppLocation(
+          RouteName.agencyIntervention,
+          ResourceArgs(interventionId),
+        ),
       );
       expect(find.text('INT-2026-0004'), findsOneWidget);
       expect(find.text('Qualifier'), findsOneWidget);

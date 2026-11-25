@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
@@ -13,7 +13,6 @@ import '../../../core/widgets/nav_tile.dart';
 import '../../../core/widgets/status_pill.dart';
 import '../../profiles/widgets/profile_home_scaffold.dart';
 import '../models/owner_home.dart';
-import '../owner_paths.dart';
 import '../viewmodels/owner_access_viewmodel.dart';
 import '../viewmodels/owner_home_viewmodel.dart';
 import '../widgets/access_notices.dart';
@@ -73,25 +72,29 @@ class const OwnerHomeScreen({super.key}) extends StatelessWidget {
           icon: Icons.account_balance_wallet_outlined,
           title: 'Reversements',
           subtitle: 'Virements reçus et prochain reversement',
-          onTap: () => context.push(OwnerPaths.payouts),
+          onTap: () =>
+              Navigator.pushNamed<Object?>(context, RouteName.ownerPayouts),
         ),
         NavTile(
           icon: Icons.receipt_long_rounded,
           title: 'Relevé de compte',
           subtitle: 'Opérations mois par mois',
-          onTap: () => context.push(OwnerPaths.statement),
+          onTap: () =>
+              Navigator.pushNamed<Object?>(context, RouteName.ownerStatement),
         ),
         NavTile(
           icon: Icons.apartment_rounded,
           title: 'Biens',
           subtitle: 'Lots sous mandat',
-          onTap: () => context.push(OwnerPaths.properties),
+          onTap: () =>
+              Navigator.pushNamed<Object?>(context, RouteName.ownerProperties),
         ),
         NavTile(
           icon: Icons.folder_open_rounded,
           title: 'Documents',
           subtitle: 'Mandat, avenants et pièces partagées',
-          onTap: () => context.push(OwnerPaths.documents),
+          onTap: () =>
+              Navigator.pushNamed<Object?>(context, RouteName.ownerDocuments),
         ),
         const ComingSoonCard(items: comingSoon),
       ],

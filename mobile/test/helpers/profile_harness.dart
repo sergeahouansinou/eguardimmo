@@ -36,7 +36,7 @@ Future<Harness> pumpAsProfile(
   WidgetTester tester, {
   required TestProfile profile,
   required FakeHandler handler,
-  String location = AppRoutes.messages,
+  String location = RouteName.messages,
   Size size = const Size(390, 844),
   double textScale = 1,
 }) async {
@@ -44,7 +44,7 @@ Future<Harness> pumpAsProfile(
   final harness = await pumpApp(
     tester,
     handler: handler,
-    location: AppRoutes.explore,
+    location: RouteName.explore,
     size: size,
     textScale: textScale,
     profiles: [?entry],
