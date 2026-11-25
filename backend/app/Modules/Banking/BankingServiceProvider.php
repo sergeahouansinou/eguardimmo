@@ -16,6 +16,7 @@ use App\Modules\Banking\Models\BankStatement;
 use App\Modules\Banking\Models\BankStatementLine;
 use App\Modules\Banking\Models\BankSuggestion;
 use App\Modules\Banking\Models\OrganizationBankAccount;
+use App\Shared\Http\RateLimitIp;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -51,6 +52,6 @@ final class BankingServiceProvider extends ServiceProvider
 
     private function cle(string $limiteur, Request $requete): string
     {
-        return $limiteur.':'.(string) $requete->route('organization').':'.(string) ($requete->user()?->getAuthIdentifier() ?? $requete->ip());
+        return $limiteur.':'.(string) $requete->route('organization').':'.(string) ($requete->user()?->getAuthIdentifier() ?? RateLimitIp::of($requete));
     }
 }

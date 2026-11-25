@@ -12,6 +12,7 @@ use App\Modules\Payments\Http\Middleware\PrivateResponse;
 use App\Modules\Payments\Models\OnlinePayment;
 use App\Modules\Payments\Models\PaymentAccount;
 use App\Modules\Payments\Support\PaymentsBoot;
+use App\Shared\Http\RateLimitIp;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -36,7 +37,7 @@ final class PaymentsServiceProvider extends ServiceProvider
         }
 
         $this->app->make(Router::class)->aliasMiddleware('payments.private', PrivateResponse::class);
-        RateLimiter::for('payments-webhook', fn (Request $request): Limit => Limit::perMinute(600)->by('payments-webhook:'.$request->ip()));
+        RateLimiter::for('payments-webhook', fn (Request $request): Limit => Limit::perMinute(600)->by('payments-webhook:'.RateLimitIp::of($request)));
 
         Relation::enforceMorphMap([
             'online_payment' => OnlinePayment::class,

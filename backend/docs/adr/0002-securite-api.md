@@ -12,6 +12,7 @@ Statut : accepté (2026-11-13)
 ### Limitation de débit
 - Limiteur `api`, appliqué à tout le groupe : 300 req/min par utilisateur authentifié, 60 req/min par IP anonyme. Le plafond est volontairement large : il coupe l'abus sans gêner l'usage normal.
 - Limiteur `auth`, à appliquer explicitement aux routes de connexion, OTP, mot de passe oublié et inscription : 5/min par couple compte+IP et 20/min par IP.
+- Toute clé « par IP » passe par `App\Shared\Http\RateLimitIp` : une adresse IPv6 compte pour son préfixe /64 (une seule ligne d'abonné en dispose), une adresse IPv4, même écrite en `::ffff:`, reste entière. Le journal d'audit et les preuves gardent l'adresse complète.
 - Laravel exécute `auth:sanctum` avant `throttle` : une route protégée rejette un anonyme en 401 avant de le compter. La limite anonyme ne s'applique donc qu'aux routes publiques.
 
 ### Proxies

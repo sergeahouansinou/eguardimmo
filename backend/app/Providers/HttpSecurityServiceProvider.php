@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Shared\Http\ConsoleRelay;
+use App\Shared\Http\RateLimitIp;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
@@ -69,7 +70,7 @@ final class HttpSecurityServiceProvider extends ServiceProvider
             $identifiant = $request->user()?->getAuthIdentifier();
 
             return Limit::perMinute(self::LIMITE_REAUTHENTIFICATION_PAR_MINUTE)
-                ->by(is_string($identifiant) ? 'reauth:'.$identifiant : 'reauth-ip:'.$request->ip());
+                ->by(is_string($identifiant) ? 'reauth:'.$identifiant : 'reauth-ip:'.RateLimitIp::of($request));
         });
 
         // Le défi 2FA web n'envoie pas d'e-mail : la clé est le compte en attente, pas l'IP partagée derrière un NAT.
@@ -77,8 +78,8 @@ final class HttpSecurityServiceProvider extends ServiceProvider
             $enAttente = $request->hasSession() ? $request->session()->get('login.id') : null;
 
             return [
-                Limit::perMinute(self::LIMITE_DEUX_FACTEURS_PAR_MINUTE)->by('two-factor:'.(is_scalar($enAttente) ? (string) $enAttente : 'ip:'.$request->ip())),
-                Limit::perMinute(self::LIMITE_AUTH_PAR_IP_PAR_MINUTE)->by('two-factor-ip:'.$request->ip()),
+                Limit::perMinute(self::LIMITE_DEUX_FACTEURS_PAR_MINUTE)->by('two-factor:'.(is_scalar($enAttente) ? (string) $enAttente : 'ip:'.RateLimitIp::of($request))),
+                Limit::perMinute(self::LIMITE_AUTH_PAR_IP_PAR_MINUTE)->by('two-factor-ip:'.RateLimitIp::of($request)),
             ];
         });
     }
@@ -88,6 +89,6 @@ final class HttpSecurityServiceProvider extends ServiceProvider
     {
         $relayee = ConsoleRelay::ipRelayee($request);
 
-        return $relayee !== null ? 'console:'.$relayee : (string) $request->ip();
+        return $relayee !== null ? 'console:'.RateLimitIp::cle($relayee) : RateLimitIp::of($request);
     }
 }

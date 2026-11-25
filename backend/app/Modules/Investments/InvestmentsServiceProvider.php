@@ -13,6 +13,7 @@ use App\Modules\Investments\Models\LoanSchedule;
 use App\Modules\Investments\Models\LoanScheduleLine;
 use App\Modules\Investments\Models\LoanUsage;
 use App\Modules\Investments\Models\PropertyAcquisition;
+use App\Shared\Http\RateLimitIp;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -27,7 +28,7 @@ final class InvestmentsServiceProvider extends ServiceProvider
         $routeur->aliasMiddleware('investments.private', PrivateResponse::class);
         $routeur->aliasMiddleware('investments.landlord', RequireLandlordOrganization::class);
 
-        RateLimiter::for('investments-import', fn (Request $requete): Limit => Limit::perHour(30)->by('investments-import:'.(string) $requete->route('organization').':'.(string) ($requete->user()?->getAuthIdentifier() ?? $requete->ip())));
+        RateLimiter::for('investments-import', fn (Request $requete): Limit => Limit::perHour(30)->by('investments-import:'.(string) $requete->route('organization').':'.(string) ($requete->user()?->getAuthIdentifier() ?? RateLimitIp::of($requete))));
 
         Relation::enforceMorphMap([
             'property_acquisition' => PropertyAcquisition::class,

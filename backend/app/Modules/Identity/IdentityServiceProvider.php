@@ -40,6 +40,7 @@ use App\Modules\Identity\Queries\ReminderTargets;
 use App\Modules\Identity\Support\AccountApprovalHandlers;
 use App\Shared\Approval\ApprovalHandlers;
 use App\Shared\Audience\AudienceRegistry;
+use App\Shared\Http\RateLimitIp;
 use App\Shared\Reminders\ReminderRegistry;
 use App\Shared\Reminders\ReminderWindow;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -187,7 +188,7 @@ final class IdentityServiceProvider extends ServiceProvider
         // Limite par adresse, quelle que soit l'IP : la clé est hachée, l'adresse n'apparaît ni en cache ni en journal.
         RateLimiter::for('verification-resend', function (Request $request): array {
             $email = Str::lower(trim((string) $request->string('email')));
-            $cle = $email === '' ? 'ip:'.$request->ip() : 'email:'.hash('sha256', $email);
+            $cle = $email === '' ? 'ip:'.RateLimitIp::of($request) : 'email:'.hash('sha256', $email);
 
             return [
                 Limit::perMinute(self::RENVOIS_PAR_ADRESSE_PAR_MINUTE)->by('verification-resend:'.$cle),
@@ -201,7 +202,7 @@ final class IdentityServiceProvider extends ServiceProvider
      */
     private function configurerLimitesConsole(): void
     {
-        $cle = fn (string $nom, Request $requete): string => $nom.':'.(string) ($requete->user()?->getAuthIdentifier() ?? $requete->ip());
+        $cle = fn (string $nom, Request $requete): string => $nom.':'.(string) ($requete->user()?->getAuthIdentifier() ?? RateLimitIp::of($requete));
 
         RateLimiter::for('console-read', fn (Request $requete): Limit => Limit::perMinute(60)->by($cle('console-read', $requete)));
         RateLimiter::for('console-account-search', fn (Request $requete): Limit => Limit::perMinute(30)->by($cle('console-account-search', $requete)));

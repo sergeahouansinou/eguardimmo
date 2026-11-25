@@ -21,6 +21,7 @@ use App\Modules\Notifications\Models\PlatformCampaignDelivery;
 use App\Modules\Notifications\Models\PlatformCampaignImage;
 use App\Modules\Notifications\Models\ReminderRule;
 use App\Modules\Notifications\Push\FakeDriver;
+use App\Shared\Http\RateLimitIp;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -43,13 +44,13 @@ final class NotificationsServiceProvider extends ServiceProvider
 
         RateLimiter::for('mail-unsubscribe', fn (Request $request): array => [
             Limit::perMinute(30)->by('mail-unsubscribe:token:'.hash('sha256', (string) $request->route('token'))),
-            Limit::perMinute(600)->by('mail-unsubscribe:ip:'.$request->ip()),
+            Limit::perMinute(600)->by('mail-unsubscribe:ip:'.RateLimitIp::of($request)),
         ]);
         RateLimiter::for('org-campaigns-test', fn (Request $request): Limit => Limit::perHour(max(1, (int) config('notifications.campaigns.hourly_tests')))
-            ->by('org-campaigns-test:'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
-        RateLimiter::for('mail-webhook', fn (Request $request): Limit => Limit::perMinute(600)->by('mail-webhook:'.$request->ip()));
+            ->by('org-campaigns-test:'.($request->user()?->getAuthIdentifier() ?? RateLimitIp::of($request))));
+        RateLimiter::for('mail-webhook', fn (Request $request): Limit => Limit::perMinute(600)->by('mail-webhook:'.RateLimitIp::of($request)));
 
-        $operateur = fn (string $nom, Request $request): string => $nom.':'.($request->user()?->getAuthIdentifier() ?? $request->ip());
+        $operateur = fn (string $nom, Request $request): string => $nom.':'.($request->user()?->getAuthIdentifier() ?? RateLimitIp::of($request));
         RateLimiter::for('console-marketing-write', fn (Request $request): Limit => Limit::perMinute(30)->by($operateur('console-marketing-write', $request)));
         RateLimiter::for('console-marketing-estimate', fn (Request $request): Limit => Limit::perMinute(15)->by($operateur('console-marketing-estimate', $request)));
         RateLimiter::for('console-marketing-send', fn (Request $request): Limit => Limit::perHour(10)->by($operateur('console-marketing-send', $request)));
