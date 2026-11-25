@@ -26,3 +26,5 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 *.p8
+/eguard_db
+/eguard_db-*
