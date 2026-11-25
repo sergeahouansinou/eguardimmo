@@ -5,14 +5,14 @@ import { useState } from 'react';
 import { Button, Card, CardHeader, CardTitle, Icon, Switch } from '@eguardimmo/ui';
 import { FailureNotice, Loading } from '../../account/parts';
 import { useRequiredNotificationsApi } from './context';
-import type { NotificationAudience, NotificationChannel, PreferenceChange, PreferenceType } from './model';
+import type { NotificationChannel, NotificationSpace, PreferenceChange, PreferenceType } from './model';
 import { useNotificationPreferences, useSaveNotificationPreferences } from './queries';
 
 export interface NotificationPreferencesPanelProps {
-  audience: NotificationAudience;
+  audience: NotificationSpace;
 }
 
-const FORM_LABELS: Readonly<Record<NotificationAudience, string>> = {
+const FORM_LABELS: Readonly<Record<NotificationSpace, string>> = {
   staff: 'Préférences de notification',
   tenant: 'Préférences de notification du locataire',
   owner: 'Préférences de notification du propriétaire',
@@ -45,7 +45,7 @@ function changesOf(types: PreferenceType[], draft: ReadonlyMap<string, boolean>)
   return changes;
 }
 
-function PreferencesForm({ types, audience }: { types: PreferenceType[]; audience: NotificationAudience }) {
+function PreferencesForm({ types, audience }: { types: PreferenceType[]; audience: NotificationSpace }) {
   const api = useRequiredNotificationsApi();
   const save = useSaveNotificationPreferences(api);
   const [draft, setDraft] = useState<ReadonlyMap<string, boolean>>(new Map());
@@ -153,7 +153,7 @@ export function NotificationPreferencesPanel({ audience }: NotificationPreferenc
       <Loading label="Chargement des préférences" rows={4} />
     );
   }
-  const types = query.data.filter((type) => type.audience === audience);
+  const types = query.data.filter((type) => type.audience === audience || type.audience === 'account');
   if (types.length === 0) {
     return <p className="text-body text-fg-muted">Aucune notification ne vous concerne pour l’instant.</p>;
   }

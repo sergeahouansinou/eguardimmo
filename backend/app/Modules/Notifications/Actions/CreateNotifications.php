@@ -58,7 +58,7 @@ final readonly class CreateNotifications
     private function create(NotificationInput $entree): array
     {
         $bail = $entree->leaseId === null ? null : $this->baux->find($entree->leaseId);
-        $complete = $bail === null ? $entree : new NotificationInput($entree->type, $entree->organizationId, $entree->dedupKey, [...$entree->params, 'reference' => $bail->reference], $entree->leaseId, $entree->subjectId, $entree->partyId, $entree->assigneeId, $entree->readMarkers, $entree->recipientId);
+        $complete = $bail === null ? $entree : new NotificationInput($entree->type, $entree->organizationId, $entree->dedupKey, [...$entree->params, 'reference' => $bail->reference], $entree->leaseId, $entree->subjectId, $entree->partyId, $entree->assigneeId, $entree->readMarkers, $entree->recipientId, $entree->channels);
 
         $comptes = $this->destinataires->for($complete, $bail);
         $canaux = $this->preferences->channelsFor($comptes, $complete->type);
@@ -68,6 +68,10 @@ final readonly class CreateNotifications
 
         foreach ($comptes as $compte) {
             $retenus = $canaux[$compte] ?? [];
+
+            if ($complete->channels !== null) {
+                $retenus = array_values(array_filter($retenus, fn (NotificationChannel $canal): bool => in_array($canal, $complete->channels, true)));
+            }
 
             if ($retenus === []) {
                 continue;

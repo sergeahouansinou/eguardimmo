@@ -27,6 +27,8 @@ export const readAllSchema = z.object({ data: z.object({ updated: z.number().int
 
 export const CHANNELS = ['in_app', 'email', 'push'] as const;
 
+export const AUDIENCES = ['staff', 'tenant', 'owner', 'account'] as const;
+
 export const preferencesSchema = z.object({
   data: z.object({
     types: z.array(
@@ -34,7 +36,7 @@ export const preferencesSchema = z.object({
         type: z.string().min(1),
         label: z.string().min(1),
         group: z.string().min(1),
-        audience: z.enum(['staff', 'tenant', 'owner']),
+        audience: z.enum(AUDIENCES),
         channels: z.array(
           z.object({
             channel: z.enum(CHANNELS),

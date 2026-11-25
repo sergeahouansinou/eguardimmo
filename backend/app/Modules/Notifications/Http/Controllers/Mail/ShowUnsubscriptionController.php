@@ -19,7 +19,7 @@ final class ShowUnsubscriptionController
         try {
             return UnsubscribePage::render('confirm', $apercu->handle($token));
         } catch (ApiProblem) {
-            return UnsubscribePage::render('invalid', '', 404);
+            return UnsubscribePage::render('invalid', statut: 404);
         }
     }
 }

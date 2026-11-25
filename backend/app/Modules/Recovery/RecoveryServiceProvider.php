@@ -10,6 +10,9 @@ use App\Modules\Recovery\Models\RecoveryCase;
 use App\Modules\Recovery\Models\RecoveryCaseItem;
 use App\Modules\Recovery\Models\RecoveryTransmission;
 use App\Modules\Recovery\Models\RecoveryTransmissionDownload;
+use App\Modules\Recovery\Queries\ReminderTargets;
+use App\Shared\Reminders\ReminderRegistry;
+use App\Shared\Reminders\ReminderWindow;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -32,6 +35,11 @@ final class RecoveryServiceProvider extends ServiceProvider
 
         $this->loadViewsFrom(__DIR__.'/Views', 'recovery');
         $this->configurerLimites();
+
+        $this->app->make(ReminderRegistry::class)->register(
+            'recovery_stalled',
+            fn (ReminderWindow $fenetre): iterable => $this->app->make(ReminderTargets::class)->stalledCases($fenetre),
+        );
     }
 
     private function configurerLimites(): void

@@ -20,6 +20,8 @@ use App\Modules\Parties\Models\PartyIdentifier;
 use App\Modules\Parties\Models\PartyImport;
 use App\Modules\Parties\PublicApi\OwnerLinks;
 use App\Modules\Parties\PublicApi\PartyLinks;
+use App\Modules\Parties\Queries\PlatformAudiences;
+use App\Shared\Audience\AudienceRegistry;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -56,6 +58,10 @@ final class PartiesServiceProvider extends ServiceProvider
 
         $this->app->make(Router::class)->aliasMiddleware('parties.private-invitation', PrivateInvitationResponse::class);
         $this->app->make(Router::class)->aliasMiddleware('parties.private', PrivateResponse::class);
+
+        $groupes = $this->app->make(AudienceRegistry::class);
+        $groupes->register('tenants', fn (): iterable => $this->app->make(PlatformAudiences::class)->tenants());
+        $groupes->register('owners', fn (): iterable => $this->app->make(PlatformAudiences::class)->owners());
 
         if ($this->app->runningInConsole()) {
             $this->commands([PurgeContactUpdatesCommand::class]);

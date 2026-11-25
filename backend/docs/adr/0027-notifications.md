@@ -126,3 +126,7 @@ Notifications → Identity (`User`, exception d'authentification), Organizations
 ## Amendement du 2026-11-21 (ADR 0039)
 
 - Type ajouté : `owner.tax_statement_published` (audience `owner`, clé de déduplication `tax_statement:{id}`, destinataire : le mandant), gabarit sans montant, lien `/fiscalite`, push générique ; émis par l'événement `TaxStatementPublished`.
+
+## Amendement du 2026-11-25 (ADR 0042)
+
+- Catalogue étendu (`account.marketing`, `account.service_message`, rappels `account.reminder_*`, `reminders.*`, `tenant.reminder_rent_due|unpaid`), relance de courtoisie du locataire désactivée par défaut, et réglage de plateforme coupant un canal non verrouillé pour tous ; seule exception à « adresse vérifiée » : `account.reminder_email_unverified`.

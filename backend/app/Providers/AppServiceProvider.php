@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Shared\Approval\ApprovalHandlers;
+use App\Shared\Audience\AudienceRegistry;
+use App\Shared\Reminders\ReminderRegistry;
 use App\Shared\Tenancy\CurrentOrganization;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -20,6 +22,8 @@ final class AppServiceProvider extends ServiceProvider
     {
         $this->app->scoped(CurrentOrganization::class);
         $this->app->singleton(ApprovalHandlers::class);
+        $this->app->singleton(AudienceRegistry::class);
+        $this->app->singleton(ReminderRegistry::class);
     }
 
     public function boot(): void

@@ -7,6 +7,7 @@ namespace App\Modules\Notifications\Actions;
 use App\Modules\Identity\Models\User;
 use App\Modules\Mandates\PublicApi\MandateDirectory;
 use App\Modules\Notifications\Enums\NotificationAudience;
+use App\Modules\Notifications\Enums\NotificationType;
 use App\Modules\Notifications\Mail\NotificationMail;
 use App\Modules\Notifications\Models\Notification;
 use App\Modules\Notifications\Support\AppLinks;
@@ -21,8 +22,9 @@ final readonly class DeliverNotificationEmail
     ) {}
 
     /**
-     * Idempotent : `emailed_at` n'est posé qu'après l'envoi, un message déjà parti ne repart pas. Seule une adresse vérifiée reçoit, et un
-     * mandant dont l'accès est révoqué ou la fenêtre échue (ADR 0032) ne reçoit plus rien, même d'une notification créée avant.
+     * Idempotent : `emailed_at` n'est posé qu'après l'envoi, un message déjà parti ne repart pas. Seule une adresse vérifiée reçoit (sauf le
+     * rappel de confirmation d'adresse, ADR 0042), et un mandant dont l'accès est révoqué ou la fenêtre échue (ADR 0032) ne reçoit plus rien,
+     * même d'une notification créée avant.
      */
     public function handle(string $notificationId): void
     {
@@ -34,7 +36,8 @@ final readonly class DeliverNotificationEmail
 
         $compte = User::query()->find($notification->user_id);
 
-        if ($compte === null || $compte->email_verified_at === null) {
+        if ($compte === null || ($compte->email_verified_at === null
+            && ($notification->type !== NotificationType::AccountReminderEmailUnverified || $compte->suspended_at !== null))) {
             return;
         }
 

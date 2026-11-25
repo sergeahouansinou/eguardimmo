@@ -8,6 +8,9 @@ use App\Modules\Listings\Http\Middleware\EnsureTraveler;
 use App\Modules\Listings\Models\Listing;
 use App\Modules\Listings\Models\ListingFavorite;
 use App\Modules\Listings\Models\ListingLead;
+use App\Modules\Listings\Queries\ReminderTargets;
+use App\Shared\Reminders\ReminderRegistry;
+use App\Shared\Reminders\ReminderWindow;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -26,6 +29,11 @@ final class ListingsServiceProvider extends ServiceProvider
             'listing_favorite' => ListingFavorite::class,
             'listing_lead' => ListingLead::class,
         ]);
+
+        $rappels = $this->app->make(ReminderRegistry::class);
+        $rappels->register('listing_missing', fn (ReminderWindow $fenetre): iterable => $this->app->make(ReminderTargets::class)->organizationsWithoutListing($fenetre));
+        $rappels->register('listing_draft', fn (ReminderWindow $fenetre): iterable => $this->app->make(ReminderTargets::class)->drafts($fenetre));
+        $rappels->register('lead_unanswered', fn (ReminderWindow $fenetre): iterable => $this->app->make(ReminderTargets::class)->unansweredLeads($fenetre));
 
         // Clé = IP vue par Laravel (proxies de confiance seulement), jamais un en-tête du client.
         RateLimiter::for('marketplace-listings', fn (Request $request): Limit => Limit::perMinute(60)->by('marketplace-listings:'.$request->ip()));

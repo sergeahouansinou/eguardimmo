@@ -1,7 +1,8 @@
 import axe from 'axe-core';
 
-export async function expectNoA11yViolations(container: Element): Promise<void> {
+export async function expectNoA11yViolations(container: Element, options: { iframes?: boolean } = {}): Promise<void> {
   const results = await axe.run(container, {
+    ...options,
     rules: { 'color-contrast': { enabled: false } },
   });
   if (results.violations.length === 0) return;

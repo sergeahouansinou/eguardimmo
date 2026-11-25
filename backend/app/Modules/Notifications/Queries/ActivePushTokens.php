@@ -23,6 +23,21 @@ final class ActivePushTokens
     }
 
     /**
+     * @param  list<string>  $userIds
+     * @return array<string, true> comptes qui ont au moins un appareil utilisable
+     */
+    public function usersWithDevice(array $userIds): array
+    {
+        $trouves = [];
+
+        foreach ($this->usable()->whereIn('user_id', $userIds)->distinct()->pluck('user_id') as $userId) {
+            $trouves[(string) $userId] = true;
+        }
+
+        return $trouves;
+    }
+
+    /**
      * Jetons non révoqués dont la session mobile a disparu ou expiré.
      *
      * @return Builder<PushToken>

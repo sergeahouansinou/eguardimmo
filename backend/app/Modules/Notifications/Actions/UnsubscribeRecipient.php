@@ -21,11 +21,12 @@ final readonly class UnsubscribeRecipient
         private CurrentOrganization $organisation,
         private AddSuppression $suppression,
         private RecordAudit $audit,
+        private UnsubscribePlatformRecipient $plateforme,
     ) {}
 
     /**
-     * Idempotent : l'adresse entre dans la liste d'opposition de l'organisation de la diffusion ; la rejouer ne change rien. Un jeton
-     * falsifié, échu ou dont la ligne a disparu répond comme un jeton inconnu.
+     * Idempotent : l'adresse entre dans la liste d'opposition de l'organisation de la diffusion ; la rejouer ne change rien. Un envoi de la
+     * plateforme coupe à la place la préférence du compte. Un jeton falsifié, échu ou dont la ligne a disparu répond comme un jeton inconnu.
      */
     public function handle(string $jeton): void
     {
@@ -35,9 +36,17 @@ final readonly class UnsubscribeRecipient
             throw ErrorCode::UnsubscribeTokenInvalid->problem();
         }
 
-        $this->organisation->run($ligne['organization_id'], function () use ($ligne): void {
-            DB::transaction(function () use ($ligne): void {
-                $this->suppression->handle($ligne['organization_id'], (string) $ligne['email_hash'], SuppressionReason::Unsubscribed);
+        $organisationId = $ligne['organization_id'];
+
+        if ($organisationId === null) {
+            $this->plateforme->handle($ligne['id']);
+
+            return;
+        }
+
+        $this->organisation->run($organisationId, function () use ($ligne, $organisationId): void {
+            DB::transaction(function () use ($ligne, $organisationId): void {
+                $this->suppression->handle($organisationId, (string) $ligne['email_hash'], SuppressionReason::Unsubscribed);
                 $envoi = CampaignDelivery::query()->whereKey($ligne['id'])->lockForUpdate()->first();
 
                 if ($envoi !== null && $envoi->unsubscribed_at === null) {

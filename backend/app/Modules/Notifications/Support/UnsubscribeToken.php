@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Notifications\Support;
 
 use App\Modules\Notifications\Models\CampaignDelivery;
+use App\Modules\Notifications\Models\PlatformCampaignDelivery;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -15,7 +16,7 @@ use RuntimeException;
  */
 final class UnsubscribeToken
 {
-    public function issue(CampaignDelivery $envoi): string
+    public function issue(CampaignDelivery|PlatformCampaignDelivery $envoi): string
     {
         $this->assertKey();
         $charge = $this->encode($envoi->id.'.'.CarbonImmutable::now()->addDays((int) config('notifications.campaigns.unsubscribe_ttl_days'))->getTimestamp());
@@ -47,7 +48,7 @@ final class UnsubscribeToken
         return $contenu[0];
     }
 
-    public function url(CampaignDelivery $envoi): string
+    public function url(CampaignDelivery|PlatformCampaignDelivery $envoi): string
     {
         return url('/api/v1/mail/unsubscribe/'.$this->issue($envoi));
     }

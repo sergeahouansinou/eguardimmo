@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Notifications\Data;
 
+use App\Modules\Notifications\Enums\NotificationChannel;
 use App\Modules\Notifications\Enums\NotificationType;
 
 final readonly class NotificationInput
@@ -18,6 +19,7 @@ final readonly class NotificationInput
      * @param  string|null  $recipientId  compte seul destinataire, tant qu'il peut encore lire l'objet : un avis qui ne concerne qu'une personne
      * @param  array<string, string>  $readMarkers  dernière lecture par compte : la clé de dédoublonnage devient `{clé}:{marqueur}`, `never` sans lecture,
      *                                              donc une seule notification par sujet tant que le destinataire ne l'a pas lu
+     * @param  list<NotificationChannel>|null  $channels  restreint les canaux retenus par les préférences (rappels : ceux de la règle)
      */
     public function __construct(
         public NotificationType $type,
@@ -30,5 +32,6 @@ final readonly class NotificationInput
         public ?string $assigneeId = null,
         public ?array $readMarkers = null,
         public ?string $recipientId = null,
+        public ?array $channels = null,
     ) {}
 }

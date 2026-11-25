@@ -4,7 +4,7 @@ import type { OperatorRole } from './roles';
 
 describe('matrice des rôles d’opérateur', () => {
   it.each([
-    ['admin', ['accueil', 'organisations', 'comptes', 'abonnements', 'audit', 'rgpd', 'support', 'approbations', 'sante', 'sauvegardes', 'parametres', 'equipe']],
+    ['admin', ['accueil', 'organisations', 'comptes', 'abonnements', 'marketing', 'rappels', 'audit', 'rgpd', 'support', 'approbations', 'sante', 'sauvegardes', 'parametres', 'equipe']],
     ['support', ['accueil', 'organisations', 'comptes', 'audit', 'support', 'approbations', 'sante', 'sauvegardes', 'parametres']],
     ['compliance', ['accueil', 'organisations', 'comptes', 'audit', 'rgpd', 'approbations']],
     ['billing', ['accueil', 'organisations', 'abonnements', 'approbations']],

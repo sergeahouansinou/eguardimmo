@@ -1,9 +1,10 @@
 import type { ApiClient } from '@eguardimmo/api';
 import type { Tone } from '../../data/schemas';
-import type { CHANNELS } from './schemas';
+import type { AUDIENCES, CHANNELS } from './schemas';
 
 export type NotificationChannel = (typeof CHANNELS)[number];
-export type NotificationAudience = 'staff' | 'tenant' | 'owner';
+export type NotificationAudience = (typeof AUDIENCES)[number];
+export type NotificationSpace = Exclude<NotificationAudience, 'account'>;
 
 export interface ApiNotification {
   id: string;

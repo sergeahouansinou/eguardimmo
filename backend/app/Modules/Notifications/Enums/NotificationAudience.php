@@ -10,4 +10,14 @@ enum NotificationAudience: string
     case Tenant = 'tenant';
     case Owner = 'owner';
     case Account = 'account';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::Staff => 'Équipe',
+            self::Tenant => 'Locataire',
+            self::Owner => 'Propriétaire mandant',
+            self::Account => 'Compte',
+        };
+    }
 }

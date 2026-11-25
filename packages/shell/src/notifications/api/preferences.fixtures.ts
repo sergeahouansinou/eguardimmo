@@ -126,6 +126,24 @@ export const preferencesOwner = {
 
 export const preferencesStaffAndOwner = { data: { types: [...preferencesStaff.data.types, ...preferencesOwner.data.types] } };
 
+const accountChannels = (enabled: boolean) => [
+  { channel: 'in_app', label: 'Application', enabled, locked: false },
+  { channel: 'email', label: 'E-mail', enabled, locked: false },
+  { channel: 'push', label: 'Mobile', enabled, locked: false },
+];
+
+export const preferencesAccountTypes = [
+  { type: 'account.support_replied', label: 'Réponse du support', group: 'Support', audience: 'account', channels: accountChannels(true) },
+  { type: 'account.marketing', label: 'Actualités et offres', group: 'Communications', audience: 'account', channels: accountChannels(false) },
+];
+
+const withAccount = (matrix: { data: { types: unknown[] } }) => ({ data: { types: [...matrix.data.types, ...preferencesAccountTypes] } });
+
+export const preferencesStaffAndAccount = withAccount(preferencesStaff);
+export const preferencesTenantAndAccount = withAccount(preferencesTenant);
+export const preferencesOwnerAndAccount = withAccount(preferencesOwner);
+export const preferencesAccountOnly = { data: { types: preferencesAccountTypes } };
+
 export const preferencesStaffSaved = {
   data: {
     types: [

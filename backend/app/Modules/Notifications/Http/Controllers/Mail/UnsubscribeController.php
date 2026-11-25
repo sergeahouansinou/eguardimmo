@@ -23,7 +23,7 @@ final class UnsubscribeController
         try {
             $action->handle($token);
         } catch (ApiProblem $probleme) {
-            return $navigateur ? UnsubscribePage::render('invalid', '', 404) : throw $probleme;
+            return $navigateur ? UnsubscribePage::render('invalid', statut: 404) : throw $probleme;
         }
 
         return $navigateur ? UnsubscribePage::render('done', $apercu->handle($token)) : new Response(null, 204);

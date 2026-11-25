@@ -1,7 +1,17 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { expectNoA11yViolations } from '../../../test/axe';
-import { preferencesOwner, preferencesStaff, preferencesStaffAndOwner, preferencesStaffSaved, preferencesTenant } from './preferences.fixtures';
+import {
+  preferencesAccountOnly,
+  preferencesOwner,
+  preferencesOwnerAndAccount,
+  preferencesStaff,
+  preferencesStaffAndAccount,
+  preferencesStaffAndOwner,
+  preferencesStaffSaved,
+  preferencesTenant,
+  preferencesTenantAndAccount,
+} from './preferences.fixtures';
 import { NotificationPreferencesPage } from './PreferencesPage';
 import { NotificationPreferencesPanel } from './PreferencesPanel';
 import { ORGANIZATION_ID, mandatoryChannelProblem, unauthenticatedProblem, validationProblem } from './responses.fixtures';
@@ -131,6 +141,33 @@ describe('préférences de notification en mode API', () => {
     expect(await screen.findByRole('region', { name: 'Finances' })).toBeTruthy();
     expect(screen.queryByRole('region', { name: 'Comptes rendus' })).toBeNull();
     expect(screen.queryByRole('switch', { name: /Accord demandé/ })).toBeNull();
+  });
+
+  it.each([
+    ['staff', preferencesStaffAndAccount, 'Loyer en retard, E-mail'],
+    ['tenant', preferencesTenantAndAccount, 'Quittance émise, E-mail'],
+    ['owner', preferencesOwnerAndAccount, 'Accord demandé, E-mail'],
+  ] as const)('affiche les types du compte avec ceux de l’espace %s', async (audience, matrix, own) => {
+    stubApi({ [GET]: { body: matrix } });
+    renderWithApi(<NotificationPreferencesPanel audience={audience} />, null);
+
+    expect(await screen.findByRole('switch', { name: own })).toBeTruthy();
+    expect(switchOf('Réponse du support, E-mail').getAttribute('aria-checked')).toBe('true');
+    expect(switchOf('Actualités et offres, E-mail').getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('permet d’adhérer aux actualités quand le compte n’a que des types de compte', async () => {
+    const api = stubApi({ [GET]: { body: preferencesAccountOnly }, [PUT]: { body: preferencesAccountOnly } });
+
+    const { user } = renderStaff();
+
+    await user.click(await screen.findByRole('switch', { name: 'Actualités et offres, E-mail' }));
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    expect(await screen.findByText('Préférences enregistrées.')).toBeTruthy();
+    expect(api.callsTo('PUT', '/api/v1/notifications/preferences')[0]?.body).toEqual({
+      preferences: [{ type: 'account.marketing', channel: 'email', enabled: true }],
+    });
   });
 
   it('affiche un message honnête quand aucun type ne concerne l’audience', async () => {

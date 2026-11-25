@@ -44,6 +44,26 @@ describe('navigation filtrée par rôle', () => {
     expect(searchPagesFor(false).map((page) => page.href)).toContain('/organisations/nouvelle');
   });
 
+  it('réserve la section Communication à l’administrateur', () => {
+    const section = navigation(undefined, { roles: ['admin'] }).sections.find((candidate) => candidate.id === 'communication');
+
+    expect(section?.label).toBe('Communication');
+    expect(section?.entries.map((entry) => [entry.label, entry.href])).toEqual([
+      ['Marketing', '/marketing'],
+      ['Notifications et rappels', '/rappels'],
+    ]);
+    for (const role of ['support', 'compliance', 'billing', 'engineering'] as const) {
+      expect(ids([role])).not.toContain('marketing');
+      expect(ids([role])).not.toContain('rappels');
+    }
+  });
+
+  it('propose les pages de communication dans la recherche', () => {
+    for (const api of [true, false]) {
+      expect(searchPagesFor(api).map((page) => page.href)).toEqual(expect.arrayContaining(['/marketing', '/marketing/nouvelle', '/rappels', ...(api ? [] : ['/notifications'])]));
+    }
+  });
+
   it('porte le compteur d’approbations en attente', () => {
     const entry = navigation({ approbations: 3 }, { roles: ['admin'] }).sections.flatMap((section) => section.entries).find((candidate) => candidate.id === 'approbations');
     expect(entry).toMatchObject({ href: '/approbations', count: 3 });

@@ -5,8 +5,12 @@ import { operatorsApi } from './accounts/operators';
 import type { OperatorsApi } from './accounts/operators';
 import { approvalsApi } from './approvals/approvals';
 import type { ApprovalsApi } from './approvals/approvals';
+import { marketingApi } from './marketing/marketing';
+import type { MarketingApi } from './marketing/marketing';
 import { fetchOperator } from './me/me';
 import type { OperatorMe } from './me/me';
+import { notificationSettingsApi } from './notificationSettings/notificationSettings';
+import type { NotificationSettingsApi } from './notificationSettings/notificationSettings';
 import { fetchBackups, fetchHealth, fetchSettings } from './operations/operations';
 import type { BackupsPage, BackupsQuery, Health, PlatformSettings } from './operations/operations';
 import { organisationsApi } from './organisations/organisations';
@@ -33,6 +37,8 @@ export interface PlatformApi {
   plans: PlansApi;
   subscriptions: SubscriptionsApi;
   privacy: PrivacyApi;
+  marketing: MarketingApi;
+  notificationSettings: NotificationSettingsApi;
   health: () => Promise<Health>;
   backups: (query?: BackupsQuery) => Promise<BackupsPage>;
   settings: () => Promise<PlatformSettings>;
@@ -50,6 +56,8 @@ export function createPlatformApi(client: ApiClient): PlatformApi {
     plans: plansApi(client),
     subscriptions: subscriptionsApi(client),
     privacy: privacyApi(client),
+    marketing: marketingApi(client),
+    notificationSettings: notificationSettingsApi(client),
     health: () => fetchHealth(client),
     backups: (query) => fetchBackups(client, query),
     settings: () => fetchSettings(client),

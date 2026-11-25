@@ -79,6 +79,15 @@ final class Templates
             NotificationType::PartiesContactUpdateRequested => '/locataires',
             NotificationType::PlanningTaskAssigned, NotificationType::PlanningTaskDue => $entree->subjectId === null ? '/taches' : "/taches/{$entree->subjectId}",
             NotificationType::PlanningEventReminder => '/agenda',
+            NotificationType::AccountMarketing, NotificationType::AccountServiceMessage => '/notifications',
+            NotificationType::AccountReminderInactive, NotificationType::AccountReminderEmailUnverified, NotificationType::AccountReminderSpace,
+            NotificationType::AccountReminderAgency, NotificationType::AccountReminderLandlord => '/',
+            NotificationType::RemindersPropertyMissing => '/biens',
+            NotificationType::RemindersListingMissing, NotificationType::RemindersListingDraft, NotificationType::RemindersLeadUnanswered => '/annonces',
+            NotificationType::RemindersInvitationPending => '/locataires',
+            NotificationType::RemindersRecoveryStalled => '/finances/recouvrement',
+            NotificationType::RemindersTrialEnding => '/reglages',
+            NotificationType::TenantReminderRentDue, NotificationType::TenantReminderRentUnpaid => '/loyers',
         };
     }
 
@@ -165,6 +174,21 @@ final class Templates
             NotificationType::PlanningTaskAssigned => ['Tâche confiée', 'Une tâche vous a été confiée : retrouvez-la dans vos tâches.'],
             NotificationType::PlanningTaskDue => ['Tâche à échéance', 'Une de vos tâches arrive à échéance le {date}.'],
             NotificationType::PlanningEventReminder => ['Rappel d\'agenda', 'Un événement de votre agenda a lieu le {date}.'],
+            NotificationType::AccountMarketing, NotificationType::AccountServiceMessage => ['Information eGuardImmo', 'Vous avez une information d\'eGuardImmo.'],
+            NotificationType::AccountReminderInactive => ['Votre compte eGuardImmo vous attend', 'Vous ne vous êtes pas connecté depuis un moment : reconnectez-vous pour reprendre où vous en étiez.'],
+            NotificationType::AccountReminderEmailUnverified => ['Confirmez votre adresse e-mail', 'Votre inscription n\'est pas terminée : connectez-vous pour demander un nouveau message de confirmation.'],
+            NotificationType::AccountReminderSpace => ['Créez votre espace', 'Votre compte est prêt : choisissez votre profil et créez votre espace.'],
+            NotificationType::AccountReminderAgency => ['Créez votre agence', 'Vous vous êtes inscrit comme agence : créez votre agence pour commencer.'],
+            NotificationType::AccountReminderLandlord => ['Créez votre espace bailleur', 'Vous vous êtes inscrit comme bailleur : créez votre espace pour commencer.'],
+            NotificationType::RemindersPropertyMissing => ['Ajoutez votre premier bien', 'Aucun bien n\'est encore enregistré dans votre organisation.'],
+            NotificationType::RemindersListingMissing => ['Créez votre première annonce', 'Aucune annonce n\'est encore créée dans votre organisation.'],
+            NotificationType::RemindersListingDraft => ['Annonce en brouillon', 'Une annonce est enregistrée mais pas encore publiée : terminez-la.'],
+            NotificationType::RemindersLeadUnanswered => ['Demande sans réponse', 'Une demande reçue sur une annonce attend toujours votre réponse.'],
+            NotificationType::RemindersInvitationPending => ['Invitation en attente', 'Une invitation de locataire n\'a pas encore été acceptée.'],
+            NotificationType::RemindersRecoveryStalled => ['Dossier de recouvrement sans suite', 'Un dossier de recouvrement ouvert n\'a pas d\'acte récent.'],
+            NotificationType::TenantReminderRentDue => ['Échéance à venir', 'Une échéance de votre bail {reference} arrive le {date}.'],
+            NotificationType::TenantReminderRentUnpaid => ['Rappel de loyer', 'Sauf erreur de notre part, l\'échéance du {date} de votre bail {reference} n\'est pas soldée. Ce message n\'est pas une mise en demeure.'],
+            NotificationType::RemindersTrialEnding => ['Votre essai se termine bientôt', 'La période d\'essai de votre organisation se termine le {date}.'],
         };
     }
 }

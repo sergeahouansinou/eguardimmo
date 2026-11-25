@@ -20,8 +20,13 @@ use App\Modules\Messaging\Models\SupportTicketMessage;
 use App\Modules\Notifications\Models\MailProviderEvent;
 use App\Modules\Notifications\Models\MailSuppression;
 use App\Modules\Notifications\Models\Notification;
+use App\Modules\Notifications\Models\NotificationPlatformSetting;
 use App\Modules\Notifications\Models\NotificationPreference;
+use App\Modules\Notifications\Models\PlatformCampaign;
+use App\Modules\Notifications\Models\PlatformCampaignDelivery;
+use App\Modules\Notifications\Models\PlatformCampaignImage;
 use App\Modules\Notifications\Models\PushToken;
+use App\Modules\Notifications\Models\ReminderRule;
 use App\Modules\Operations\Models\BackupReport;
 use App\Modules\Operations\Models\OperatorApproval;
 use App\Modules\Operations\Models\ScheduledTaskRun;
@@ -49,7 +54,8 @@ use Illuminate\Support\ServiceProvider;
 $horsOrganisation = [User::class, Operator::class, OperatorRoleAssignment::class, OperatorApproval::class, Plan::class, PlanVersion::class, PlanPrice::class, PlanEntitlement::class, PrivacyRequest::class, PrivacyRequestEvent::class, ScheduledTaskRun::class, BackupReport::class, SocialIdentity::class, UserDevice::class, PersonalAccessToken::class, Organization::class,
     SupportTicket::class, SupportTicketMessage::class, SupportAttachment::class, SupportAccessGrant::class,
     EmailChangeRequest::class, PaymentProviderEvent::class, Term::class, Notification::class, NotificationPreference::class, PushToken::class, MailSuppression::class, MailProviderEvent::class,
-    Country::class, City::class, ListingFavorite::class];
+    Country::class, City::class, ListingFavorite::class,
+    PlatformCampaign::class, PlatformCampaignImage::class, PlatformCampaignDelivery::class, ReminderRule::class, NotificationPlatformSetting::class];
 
 $modules = array_map('basename', glob(__DIR__.'/../../app/Modules/*', GLOB_ONLYDIR) ?: []);
 

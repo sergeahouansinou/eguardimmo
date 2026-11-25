@@ -41,6 +41,12 @@ return [
             'mailtrap' => env('MAIL_WEBHOOK_SECRET_MAILTRAP'),
         ],
     ],
+    'marketing' => [
+        'max_recipients' => (int) env('MARKETING_MAX_RECIPIENTS', 20000),
+    ],
+    'reminders' => [
+        'max_per_run' => (int) env('REMINDERS_MAX_PER_RUN', 2000),
+    ],
     'rate_limits' => [
         'read_per_minute' => (int) env('NOTIFICATIONS_READ_PER_MINUTE', 120),
         'write_per_minute' => (int) env('NOTIFICATIONS_WRITE_PER_MINUTE', 60),

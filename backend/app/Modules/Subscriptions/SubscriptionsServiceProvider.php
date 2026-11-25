@@ -14,8 +14,11 @@ use App\Modules\Subscriptions\Models\PlanEntitlement;
 use App\Modules\Subscriptions\Models\PlanPrice;
 use App\Modules\Subscriptions\Models\PlanVersion;
 use App\Modules\Subscriptions\Models\Subscription;
+use App\Modules\Subscriptions\Queries\ReminderTargets;
 use App\Modules\Subscriptions\Support\SubscriptionApprovalHandlers;
 use App\Shared\Approval\ApprovalHandlers;
+use App\Shared\Reminders\ReminderRegistry;
+use App\Shared\Reminders\ReminderWindow;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
@@ -38,6 +41,10 @@ final class SubscriptionsServiceProvider extends ServiceProvider
         $routeur->aliasMiddleware('entitled', RequireEntitlement::class);
 
         $this->app->make(SubscriptionApprovalHandlers::class)->register($this->app->make(ApprovalHandlers::class));
+        $this->app->make(ReminderRegistry::class)->register(
+            'trial_ending',
+            fn (ReminderWindow $fenetre): iterable => $this->app->make(ReminderTargets::class)->endingTrials($fenetre),
+        );
 
         if ($this->app->runningInConsole()) {
             $this->commands([SeedPlansCommand::class, EndTrialsCommand::class, VerifySubscriptionsCommand::class]);

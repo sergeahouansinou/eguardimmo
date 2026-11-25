@@ -35,8 +35,13 @@ use App\Modules\Identity\Models\TenantInvitation;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Models\UserDevice;
 use App\Modules\Identity\PublicApi\ProfileRegistry;
+use App\Modules\Identity\Queries\PlatformAudiences;
+use App\Modules\Identity\Queries\ReminderTargets;
 use App\Modules\Identity\Support\AccountApprovalHandlers;
 use App\Shared\Approval\ApprovalHandlers;
+use App\Shared\Audience\AudienceRegistry;
+use App\Shared\Reminders\ReminderRegistry;
+use App\Shared\Reminders\ReminderWindow;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
@@ -52,6 +57,7 @@ use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Fortify;
 use Laravel\Sanctum\Sanctum;
+use LogicException;
 use SocialiteProviders\Apple\AppleExtendSocialite;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 
@@ -104,12 +110,28 @@ final class IdentityServiceProvider extends ServiceProvider
         $this->configurerLimitesConsole();
         $this->enregistrerProfils();
         $this->app->make(AccountApprovalHandlers::class)->register($this->app->make(ApprovalHandlers::class));
+        $this->enregistrerDestinatairesPlateforme();
 
         Event::listen(SocialiteWasCalled::class, [AppleExtendSocialite::class, 'handle']);
 
         if ($this->app->runningInConsole()) {
             $this->commands([GrantOperatorCommand::class, RevokeOperatorCommand::class, SetOperatorRolesCommand::class, RevokeDeferredAppleTokensCommand::class, ExpireOwnerInvitationsCommand::class, PurgeEmailChangesCommand::class]);
         }
+    }
+
+    private function enregistrerDestinatairesPlateforme(): void
+    {
+        $groupes = $this->app->make(AudienceRegistry::class);
+        $groupes->register('all_accounts', fn (): iterable => $this->app->make(PlatformAudiences::class)->all());
+        $groupes->register('travelers', fn (): iterable => $this->app->make(PlatformAudiences::class)->travelers());
+        $groupes->register('inactive_accounts', fn (?int $jours): iterable => $this->app->make(PlatformAudiences::class)
+            ->inactive($jours ?? throw new LogicException('Nombre de jours d\'inactivité manquant.')));
+
+        $rappels = $this->app->make(ReminderRegistry::class);
+        $rappels->register('account_inactive', fn (ReminderWindow $fenetre): iterable => $this->app->make(ReminderTargets::class)->inactiveAccounts($fenetre));
+        $rappels->register('email_unverified', fn (ReminderWindow $fenetre): iterable => $this->app->make(ReminderTargets::class)->unverifiedEmails($fenetre));
+        $rappels->register('space_not_created', fn (ReminderWindow $fenetre): iterable => $this->app->make(ReminderTargets::class)->accountsWithoutSpace($fenetre));
+        $rappels->register('invitation_pending', fn (ReminderWindow $fenetre): iterable => $this->app->make(ReminderTargets::class)->pendingInvitations($fenetre));
     }
 
     private function configurerFortify(): void

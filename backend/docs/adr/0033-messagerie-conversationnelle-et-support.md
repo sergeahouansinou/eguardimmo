@@ -384,3 +384,7 @@ Décisions modifiées ou ajoutées :
 ## Amendement du 2026-11-21 (ADR 0037)
 
 - Le périmètre `settings` d'un accès de support ne contient ni plan ni modules (données de plateforme, lues par la console Subscriptions). La console liste les accès par organisation : `GET /console/organizations/{organization}/support-accesses` (motif masqué à `billing` et `engineering`).
+
+## Amendement du 2026-11-25 (ADR 0042)
+
+- La plateforme émet ses propres campagnes (e-mail et push), sans organisation, avec désinscription par préférence de compte et liste d'opposition de plateforme ; les diffusions des organisations sont inchangées.

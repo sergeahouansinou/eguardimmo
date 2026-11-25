@@ -2,6 +2,19 @@
 
 declare(strict_types=1);
 
+use App\Modules\Notifications\Http\Controllers\Console\CreatePlatformCampaignController;
+use App\Modules\Notifications\Http\Controllers\Console\EstimatePlatformCampaignController;
+use App\Modules\Notifications\Http\Controllers\Console\ListNotificationTypesController;
+use App\Modules\Notifications\Http\Controllers\Console\ListPlatformCampaignsController;
+use App\Modules\Notifications\Http\Controllers\Console\ListRemindersController;
+use App\Modules\Notifications\Http\Controllers\Console\SaveNotificationTypesController;
+use App\Modules\Notifications\Http\Controllers\Console\SaveReminderController;
+use App\Modules\Notifications\Http\Controllers\Console\SendPlatformCampaignController;
+use App\Modules\Notifications\Http\Controllers\Console\ShowMarketingOptionsController;
+use App\Modules\Notifications\Http\Controllers\Console\ShowPlatformCampaignController;
+use App\Modules\Notifications\Http\Controllers\Console\ShowPlatformCampaignImageController;
+use App\Modules\Notifications\Http\Controllers\Console\TestPlatformCampaignController;
+use App\Modules\Notifications\Http\Controllers\Console\UpdatePlatformCampaignController;
 use App\Modules\Notifications\Http\Controllers\ListNotificationsController;
 use App\Modules\Notifications\Http\Controllers\Mail\MailWebhookController;
 use App\Modules\Notifications\Http\Controllers\Mail\ShowUnsubscriptionController;
@@ -71,6 +84,26 @@ Route::middleware(['auth:sanctum', 'space:organization', 'organization', 'entitl
     Route::post('/test', SendCampaignTestController::class)->middleware('throttle:org-campaigns-test')->name('notifications.campaigns.test');
     Route::post('/{campaign}/send', SendCampaignController::class)->whereUuid('campaign')->middleware(['throttle:10,60,org-campaigns-send', 'two-factor', 'reauthenticated:two-factor'])->name('notifications.campaigns.send');
     Route::post('/{campaign}/schedule', ScheduleCampaignController::class)->whereUuid('campaign')->middleware(['throttle:10,60,org-campaigns-send', 'two-factor', 'reauthenticated:two-factor'])->name('notifications.campaigns.schedule');
+});
+
+Route::middleware(['auth:sanctum', 'space:operator', 'operator:admin', 'campaigns.private'])->prefix('console')->group(function (): void {
+    Route::middleware('throttle:console-read')->group(function (): void {
+        Route::get('/marketing/options', ShowMarketingOptionsController::class)->name('notifications.console.marketing.options');
+        Route::get('/marketing/campaigns', ListPlatformCampaignsController::class)->name('notifications.console.marketing.campaigns.index');
+        Route::get('/marketing/campaigns/{campaign}', ShowPlatformCampaignController::class)->whereUuid('campaign')->name('notifications.console.marketing.campaigns.show');
+        Route::get('/marketing/campaigns/{campaign}/images/{image}', ShowPlatformCampaignImageController::class)->whereUuid(['campaign', 'image'])->name('notifications.console.marketing.campaigns.images.show');
+        Route::get('/notifications/types', ListNotificationTypesController::class)->name('notifications.console.types.index');
+        Route::get('/notifications/reminders', ListRemindersController::class)->name('notifications.console.reminders.index');
+    });
+    Route::get('/marketing/campaigns/{campaign}/estimate', EstimatePlatformCampaignController::class)->whereUuid('campaign')->middleware('throttle:console-marketing-estimate')->name('notifications.console.marketing.campaigns.estimate');
+    Route::middleware(['throttle:console-marketing-write', 'operator-proof'])->group(function (): void {
+        Route::post('/marketing/campaigns', CreatePlatformCampaignController::class)->name('notifications.console.marketing.campaigns.store');
+        Route::post('/marketing/campaigns/{campaign}', UpdatePlatformCampaignController::class)->whereUuid('campaign')->name('notifications.console.marketing.campaigns.update');
+        Route::put('/notifications/types', SaveNotificationTypesController::class)->name('notifications.console.types.update');
+        Route::put('/notifications/reminders/{code}', SaveReminderController::class)->name('notifications.console.reminders.update');
+    });
+    Route::post('/marketing/campaigns/{campaign}/test', TestPlatformCampaignController::class)->whereUuid('campaign')->middleware(['throttle:console-marketing-test', 'operator-proof'])->name('notifications.console.marketing.campaigns.test');
+    Route::post('/marketing/campaigns/{campaign}/send', SendPlatformCampaignController::class)->whereUuid('campaign')->middleware(['throttle:console-marketing-send', 'operator-proof'])->name('notifications.console.marketing.campaigns.send');
 });
 
 Route::middleware(['auth:sanctum', 'no-operator-token', 'space:tenant', 'verified', 'campaigns.private'])->prefix('tenant/announcements')->group(function (): void {

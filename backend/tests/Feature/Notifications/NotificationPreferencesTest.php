@@ -45,20 +45,23 @@ it('ne propose que les types qui concernent le compte, avec les défauts du cata
     N::comme($this, $this->equipe['accountant']);
     $comptable = $this->getJson(N::URL.'/preferences')->assertOk()->json();
 
-    expect(array_column($comptable['data']['types'], 'type'))->toBe(['rent.overdue', 'rent.payment_recorded', 'rent.payment_cancelled', 'recovery.bundle_sent', 'ownerfunds.payout_executed', 'ownerfunds.payout_returned', 'ownerfunds.payout_failed', 'ownerfunds.trust_gap', 'ownerfunds.account_change_requested', 'ownerfunds.account_change_contested', 'account.support_replied', 'planning.task_assigned', 'planning.task_due', 'planning.event_reminder', 'account.privacy_completed', 'account.export_ready', 'account.privacy_received'])
+    $compte = ['account.marketing', 'account.service_message', 'account.reminder_inactive', 'account.reminder_email_unverified', 'account.reminder_space', 'account.reminder_agency', 'account.reminder_landlord'];
+
+    expect(array_column($comptable['data']['types'], 'type'))->toBe(['rent.overdue', 'rent.payment_recorded', 'rent.payment_cancelled', 'recovery.bundle_sent', 'ownerfunds.payout_executed', 'ownerfunds.payout_returned', 'ownerfunds.payout_failed', 'ownerfunds.trust_gap', 'ownerfunds.account_change_requested', 'ownerfunds.account_change_contested', 'account.support_replied', 'planning.task_assigned', 'planning.task_due', 'planning.event_reminder', 'account.privacy_completed', 'account.export_ready', 'account.privacy_received', ...$compte, 'reminders.recovery_stalled'])
         ->and(canal($comptable, 'rent.overdue', 'push'))->toMatchArray(['enabled' => true, 'locked' => false])
         ->and(canal($comptable, 'rent.payment_recorded', 'email'))->toMatchArray(['enabled' => false, 'locked' => false])
         ->and(canal($comptable, 'rent.payment_recorded', 'push'))->toMatchArray(['enabled' => false])
         ->and(canal($comptable, 'rent.payment_cancelled', 'in_app'))->toMatchArray(['enabled' => true, 'locked' => true]);
 
     N::comme($this, $this->equipe['owner']);
-    expect(array_column($this->getJson(N::URL.'/preferences')->json('data.types'), 'type'))->toHaveCount(40);
+    expect(array_column($this->getJson(N::URL.'/preferences')->json('data.types'), 'type'))->toHaveCount(54)
+        ->toContain('reminders.property_missing', 'reminders.listing_missing', 'reminders.listing_draft', 'reminders.lead_unanswered', 'reminders.invitation_pending', 'reminders.recovery_stalled', 'reminders.trial_ending');
 
     N::comme($this, $this->locataire);
-    expect(array_column($this->getJson(N::URL.'/preferences')->json('data.types'), 'type'))->toBe(['tenant.notice_issued', 'tenant.receipt_issued', 'tenant.payment_recorded', 'tenant.payment_cancelled', 'tenant.lease_signed', 'tenant.request_qualified', 'tenant.visit_scheduled', 'tenant.request_declined', 'tenant.work_completed', 'tenant.message_received', 'tenant.message_redacted', 'account.support_replied', 'tenant.announcement', 'tenant.charge_statement_issued', 'tenant.notice_acknowledged', 'tenant.notice_closed', 'tenant.insurance_accepted', 'tenant.insurance_rejected', 'tenant.insurance_expiring', 'tenant.insurance_expired', 'tenant.insurance_reminder', 'tenant.document_shared', 'tenant.inspection_published', 'tenant.inspection_remark_answered', 'tenant.online_payment_failed', 'account.privacy_completed', 'account.export_ready', 'account.privacy_received']);
+    expect(array_column($this->getJson(N::URL.'/preferences')->json('data.types'), 'type'))->toBe(['tenant.notice_issued', 'tenant.receipt_issued', 'tenant.payment_recorded', 'tenant.payment_cancelled', 'tenant.lease_signed', 'tenant.request_qualified', 'tenant.visit_scheduled', 'tenant.request_declined', 'tenant.work_completed', 'tenant.message_received', 'tenant.message_redacted', 'account.support_replied', 'tenant.announcement', 'tenant.charge_statement_issued', 'tenant.notice_acknowledged', 'tenant.notice_closed', 'tenant.insurance_accepted', 'tenant.insurance_rejected', 'tenant.insurance_expiring', 'tenant.insurance_expired', 'tenant.insurance_reminder', 'tenant.document_shared', 'tenant.inspection_published', 'tenant.inspection_remark_answered', 'tenant.online_payment_failed', 'account.privacy_completed', 'account.export_ready', 'account.privacy_received', ...$compte, 'tenant.reminder_rent_due', 'tenant.reminder_rent_unpaid']);
 
     N::comme($this, User::factory()->create());
-    $this->getJson(N::URL.'/preferences')->assertOk()->assertJsonCount(4, 'data.types');
+    $this->getJson(N::URL.'/preferences')->assertOk()->assertJsonCount(11, 'data.types');
 });
 
 it('enregistre une préférence par type et par canal, sans toucher aux autres comptes', function (): void {

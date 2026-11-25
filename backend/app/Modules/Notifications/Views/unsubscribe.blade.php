@@ -10,13 +10,21 @@
 <body>
 @if ($etat === 'confirm')
 <h1>Ne plus recevoir ces messages</h1>
+@if ($plateforme)
+<p>Vous ne recevrez plus ce type d'e-mails de {{ $organisation }}. Les messages liés à votre compte et à vos espaces ne sont pas concernés ; vos préférences de notification restent modifiables dans votre compte.</p>
+@else
 <p>Vous ne recevrez plus les diffusions d'information de {{ $organisation }}. Les messages liés à votre bail ou à votre mandat dans votre espace ne sont pas concernés.</p>
+@endif
 <form method="post" action="">
 <button type="submit">Me désinscrire</button>
 </form>
 @elseif ($etat === 'done')
 <h1>Désinscription enregistrée</h1>
+@if ($plateforme)
+<p>Vous ne recevrez plus ce type d'e-mails de {{ $organisation }}.</p>
+@else
 <p>Vous ne recevrez plus les diffusions d'information de {{ $organisation }}.</p>
+@endif
 @else
 <h1>Lien invalide</h1>
 <p>Ce lien de désinscription est invalide ou expiré.</p>

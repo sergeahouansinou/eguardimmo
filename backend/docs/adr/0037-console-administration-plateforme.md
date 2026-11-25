@@ -271,3 +271,7 @@ Ma recommandation est toujours la première.
 - **ADR 0027** : types `organizations.suspended|reactivated` (`owner`, `admin`, centre et e-mail non désactivables), `privacy.request_forwarded` (`owner`, `admin`, non désactivable), `account.privacy_completed|export_ready` (audience `account`).
 - **ADR 0033** : périmètre `settings` sans « plan, modules » (données de plateforme) ; la phrase « ce qui existe aujourd'hui dans la console (liste des organisations, abonnements) » ne correspond à aucune route serveur ; route console des accès par organisation.
 - **Reprise des quotas (2026-11-21)** : `Entitlements::assertWithin` est appelé par `CreateUnit`, `RestoreUnit`, `CreateLease`, `RestoreLease`, `RecordInspection` et `InviteMember` ; corps `plan_quota_reached` enrichi de `feature`, `limit`, `current` (ADR 0013, 0014). L'alias `entitled:` n'est posé sur aucune route : les plans actuels activent toutes les fonctions et seuls les quotas varient. Locataires, stockage et signatures ne sont pas câblés (raisons à l'ADR 0013).
+
+## Amendement du 2026-11-25 (ADR 0042)
+
+- La console gagne les familles « marketing » et « notifications » (rôle `admin`, preuve 2FA sur chaque écriture) ; les réglages de notification et les règles de rappel sont modifiables en ligne.

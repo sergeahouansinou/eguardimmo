@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Modules\Notifications\Actions;
 
 use App\Modules\Notifications\Enums\DeliveryStatus;
+use App\Modules\Notifications\Enums\PlatformDeliveryStatus;
 use App\Modules\Notifications\Enums\SuppressionReason;
 use App\Modules\Notifications\Models\CampaignDelivery;
 use App\Modules\Notifications\Models\MailProviderEvent;
+use App\Modules\Notifications\Models\PlatformCampaignDelivery;
 use App\Modules\Notifications\Queries\DeliveryLookup;
 use App\Shared\Audit\RecordAudit;
 use App\Shared\Tenancy\CurrentOrganization;
@@ -17,8 +19,9 @@ use Illuminate\Support\Str;
 
 /**
  * Applique les événements d'un fournisseur d'e-mail (corps non fiable, signature déjà vérifiée par l'appelant) : rebond définitif et plainte
- * entrent dans la liste d'opposition de la plateforme, la désinscription du fournisseur dans celle de l'organisation. Idempotent sur
- * l'identifiant d'événement ; les ouvertures et clics ne sont ni lus ni conservés (aucun suivi, ADR 0033).
+ * entrent dans la liste d'opposition de la plateforme, la désinscription du fournisseur dans celle de l'organisation (ou, pour un envoi de
+ * la plateforme, dans les préférences du compte, ADR 0042). Idempotent sur l'identifiant d'événement ; les ouvertures et clics ne sont ni
+ * lus ni conservés (aucun suivi, ADR 0033).
  */
 final readonly class RecordMailEvents
 {
@@ -32,6 +35,7 @@ final readonly class RecordMailEvents
         private CurrentOrganization $organisation,
         private FinalizeCampaign $cloture,
         private RecordAudit $audit,
+        private UnsubscribePlatformRecipient $desinscription,
     ) {}
 
     /**
@@ -120,7 +124,7 @@ final readonly class RecordMailEvents
     }
 
     /**
-     * @param  array{id: string, organization_id: string, campaign_id: string, email_hash: string|null}|null  $ligne
+     * @param  array{id: string, organization_id: string|null, campaign_id: string, email_hash: string|null}|null  $ligne
      */
     private function effects(string $type, ?string $empreinte, ?array $ligne): void
     {
@@ -134,12 +138,16 @@ final readonly class RecordMailEvents
         } elseif ($type === 'spam') {
             $this->suppression->handle(null, $empreinte, SuppressionReason::Complaint);
         } elseif ($type === 'unsubscribe' && $ligne !== null) {
-            $this->suppression->handle($ligne['organization_id'], $empreinte, SuppressionReason::Unsubscribed);
+            if ($ligne['organization_id'] === null) {
+                $this->desinscription->handle($ligne['id']);
+            } else {
+                $this->suppression->handle($ligne['organization_id'], $empreinte, SuppressionReason::Unsubscribed);
+            }
         }
     }
 
     /**
-     * @param  array{id: string, organization_id: string, campaign_id: string, email_hash: string|null}|null  $ligne
+     * @param  array{id: string, organization_id: string|null, campaign_id: string, email_hash: string|null}|null  $ligne
      */
     private function markBounced(?array $ligne): void
     {
@@ -147,8 +155,17 @@ final readonly class RecordMailEvents
             return;
         }
 
-        $this->organisation->run($ligne['organization_id'], function () use ($ligne): void {
-            $maintenant = now()->format('Y-m-d H:i:s.u');
+        $maintenant = now()->format('Y-m-d H:i:s.u');
+
+        if ($ligne['organization_id'] === null) {
+            PlatformCampaignDelivery::query()->whereKey($ligne['id'])
+                ->whereIn('status', [PlatformDeliveryStatus::Sent->value, PlatformDeliveryStatus::Sending->value, PlatformDeliveryStatus::Unknown->value])
+                ->update(['status' => PlatformDeliveryStatus::Bounced->value, 'bounced_at' => $maintenant, 'updated_at' => $maintenant]);
+
+            return;
+        }
+
+        $this->organisation->run($ligne['organization_id'], function () use ($ligne, $maintenant): void {
             CampaignDelivery::query()->whereKey($ligne['id'])
                 ->whereIn('status', [DeliveryStatus::Sent->value, DeliveryStatus::Sending->value, DeliveryStatus::Unknown->value])
                 ->update(['status' => DeliveryStatus::Bounced->value, 'bounced_at' => $maintenant, 'updated_at' => $maintenant]);

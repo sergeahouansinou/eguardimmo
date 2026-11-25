@@ -28,6 +28,14 @@ enum ErrorCode: string
     case MailWebhookPayloadInvalid = 'mail_webhook_payload_invalid';
     case CampaignAttachmentNotReady = 'campaign_attachment_not_ready';
     case CampaignSenderNotAllowed = 'campaign_sender_not_allowed';
+    case PlatformCampaignNotFound = 'platform_campaign_not_found';
+    case PlatformCampaignNotEditable = 'platform_campaign_not_editable';
+    case PlatformCampaignStale = 'platform_campaign_stale';
+    case PlatformCampaignNoRecipient = 'platform_campaign_no_recipient';
+    case PlatformCampaignNoDevice = 'platform_campaign_no_device';
+    case PlatformCampaignTooLarge = 'platform_campaign_too_large';
+    case PushSendingDisabled = 'push_sending_disabled';
+    case ReminderNotFound = 'reminder_not_found';
 
     public function problem(): ApiProblem
     {
@@ -46,12 +54,14 @@ enum ErrorCode: string
     {
         return match ($this) {
             self::NotificationNotFound, self::PushTokenNotFound, self::CampaignNotFound, self::CampaignAttachmentNotFound,
-            self::UnsubscribeTokenInvalid, self::AnnouncementNotFound => 404,
-            self::ChannelMandatory, self::CampaignAudienceEmpty, self::CampaignAudienceUnavailable, self::CampaignScheduleInvalid, self::MailWebhookPayloadInvalid => 422,
+            self::UnsubscribeTokenInvalid, self::AnnouncementNotFound, self::PlatformCampaignNotFound, self::ReminderNotFound => 404,
+            self::ChannelMandatory, self::CampaignAudienceEmpty, self::CampaignAudienceUnavailable, self::CampaignScheduleInvalid, self::MailWebhookPayloadInvalid,
+            self::PlatformCampaignTooLarge => 422,
             self::MobileSessionRequired, self::CampaignSenderNotAllowed => 403,
-            self::CampaignNotEditable, self::CampaignVersionConflict, self::CampaignAttachmentLimit, self::CampaignAttachmentNotReady => 409,
+            self::CampaignNotEditable, self::CampaignVersionConflict, self::CampaignAttachmentLimit, self::CampaignAttachmentNotReady,
+            self::PlatformCampaignNotEditable, self::PlatformCampaignStale, self::PlatformCampaignNoRecipient, self::PlatformCampaignNoDevice => 409,
             self::CampaignQuotaReached => 429,
-            self::CampaignSendingDisabled => 503,
+            self::CampaignSendingDisabled, self::PushSendingDisabled => 503,
             self::MailWebhookUnauthorized => 401,
         };
     }
@@ -79,6 +89,14 @@ enum ErrorCode: string
             self::MailWebhookPayloadInvalid => 'Requête illisible',
             self::CampaignAttachmentNotReady => 'Pièce en cours de vérification',
             self::CampaignSenderNotAllowed => 'Expéditeur non autorisé',
+            self::PlatformCampaignNotFound => 'Campagne introuvable',
+            self::PlatformCampaignNotEditable => 'Campagne non modifiable',
+            self::PlatformCampaignStale => 'Campagne modifiée entre-temps',
+            self::PlatformCampaignNoRecipient => 'Aucun destinataire',
+            self::PlatformCampaignNoDevice => 'Aucun appareil joignable',
+            self::PlatformCampaignTooLarge => 'Trop de destinataires',
+            self::PushSendingDisabled => 'Notifications mobiles désactivées',
+            self::ReminderNotFound => 'Rappel introuvable',
         };
     }
 
@@ -105,6 +123,14 @@ enum ErrorCode: string
             self::MailWebhookPayloadInvalid => 'Le corps de la requête n\'est pas une liste d\'événements.',
             self::CampaignSenderNotAllowed => 'L\'auteur de l\'envoi n\'est plus membre actif avec un rôle autorisé et la double authentification : la diffusion reste en l\'état.',
             self::CampaignAttachmentNotReady => 'Une pièce n\'a pas encore passé la vérification antivirus, ou n\'a pas pu être vérifiée : l\'envoi reste bloqué.',
+            self::PlatformCampaignNotFound => 'Cette campagne ou cette image n\'existe pas.',
+            self::PlatformCampaignNotEditable => 'Seul un brouillon se modifie ou s\'envoie.',
+            self::PlatformCampaignStale => 'La campagne a changé depuis votre dernière lecture : rechargez-la.',
+            self::PlatformCampaignNoRecipient => 'Aucun compte ne peut recevoir cette campagne : vérifiez le groupe, les accords et les adresses.',
+            self::PlatformCampaignNoDevice => 'Aucun appareil mobile ne peut recevoir cette notification.',
+            self::PlatformCampaignTooLarge => 'Le nombre de destinataires dépasse le plafond d\'une campagne : choisissez un groupe plus restreint.',
+            self::PushSendingDisabled => 'Les notifications mobiles ne sont pas activées sur la plateforme : la campagne reste enregistrée.',
+            self::ReminderNotFound => 'Ce rappel n\'existe pas.',
         };
     }
 }

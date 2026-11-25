@@ -18,9 +18,11 @@ final readonly class PreviewUnsubscription
     ) {}
 
     /**
-     * Ne change rien (un aperçu de lien par une messagerie ne désinscrit personne) : indique seulement l'organisation concernée.
+     * Ne change rien (un aperçu de lien par une messagerie ne désinscrit personne) : indique seulement l'expéditeur concerné.
+     *
+     * @return array{sender: string, platform: bool}
      */
-    public function handle(string $jeton): string
+    public function handle(string $jeton): array
     {
         $id = $this->jetons->deliveryId($jeton);
         $ligne = $id === null ? null : $this->envois->byId($id);
@@ -29,6 +31,12 @@ final readonly class PreviewUnsubscription
             throw ErrorCode::UnsubscribeTokenInvalid->problem();
         }
 
-        return $this->organisations->names([$ligne['organization_id']])[$ligne['organization_id']] ?? 'Votre agence';
+        $organisationId = $ligne['organization_id'];
+
+        if ($organisationId === null) {
+            return ['sender' => 'eGuardImmo', 'platform' => true];
+        }
+
+        return ['sender' => $this->organisations->names([$organisationId])[$organisationId] ?? 'Votre agence', 'platform' => false];
     }
 }

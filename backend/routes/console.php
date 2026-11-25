@@ -39,6 +39,8 @@ Schedule::command('messaging:expire-support-access')->hourly()->withoutOverlappi
 Schedule::command('notifications:dispatch-campaigns')->everyMinute()->withoutOverlapping();
 Schedule::command('notifications:resume-campaigns')->everyTenMinutes()->withoutOverlapping();
 Schedule::command('notifications:purge-campaigns')->dailyAt('03:05')->withoutOverlapping();
+Schedule::command('notifications:send-reminders')->dailyAt('09:00')->withoutOverlapping();
+Schedule::command('notifications:resume-platform-campaigns')->everyTenMinutes()->withoutOverlapping();
 Schedule::command('banking:suggest')->dailyAt('03:42')->withoutOverlapping();
 Schedule::command('banking:verify')->dailyAt('03:48')->withoutOverlapping();
 Schedule::command('payments:reconcile')->dailyAt('04:20')->withoutOverlapping();

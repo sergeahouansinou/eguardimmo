@@ -88,6 +88,22 @@ enum NotificationType: string
     case AccountPrivacyCompleted = 'account.privacy_completed';
     case AccountExportReady = 'account.export_ready';
     case AccountPrivacyReceived = 'account.privacy_received';
+    case AccountMarketing = 'account.marketing';
+    case AccountServiceMessage = 'account.service_message';
+    case AccountReminderInactive = 'account.reminder_inactive';
+    case AccountReminderEmailUnverified = 'account.reminder_email_unverified';
+    case AccountReminderSpace = 'account.reminder_space';
+    case AccountReminderAgency = 'account.reminder_agency';
+    case AccountReminderLandlord = 'account.reminder_landlord';
+    case RemindersPropertyMissing = 'reminders.property_missing';
+    case RemindersListingMissing = 'reminders.listing_missing';
+    case RemindersListingDraft = 'reminders.listing_draft';
+    case RemindersLeadUnanswered = 'reminders.lead_unanswered';
+    case RemindersInvitationPending = 'reminders.invitation_pending';
+    case RemindersRecoveryStalled = 'reminders.recovery_stalled';
+    case TenantReminderRentDue = 'tenant.reminder_rent_due';
+    case TenantReminderRentUnpaid = 'tenant.reminder_rent_unpaid';
+    case RemindersTrialEnding = 'reminders.trial_ending';
 
     /**
      * Alerte de sécurité qui part aussi vers l'adresse principale de la fiche du mandant, au cas où le compte serait détourné.
@@ -126,8 +142,24 @@ enum NotificationType: string
             self::LeasesNoticeRequested, self::LeasesNoticeUnacknowledged, self::LeasesInsuranceSubmitted, self::InspectionsRemarkReceived,
             self::PartiesContactUpdateRequested => [MemberRole::Owner, MemberRole::Admin, MemberRole::Manager],
             self::PlanningTaskAssigned, self::PlanningTaskDue, self::PlanningEventReminder => [MemberRole::Owner, MemberRole::Admin, MemberRole::Manager, MemberRole::Accountant],
+            self::RemindersPropertyMissing, self::RemindersListingMissing, self::RemindersListingDraft, self::RemindersLeadUnanswered,
+            self::RemindersInvitationPending => [MemberRole::Owner, MemberRole::Admin, MemberRole::Manager],
+            self::RemindersRecoveryStalled => [MemberRole::Owner, MemberRole::Admin, MemberRole::Manager, MemberRole::Accountant],
+            self::RemindersTrialEnding => [MemberRole::Owner, MemberRole::Admin],
             default => [],
         };
+    }
+
+    /**
+     * Types que la console peut couper pour tous les comptes : un rappel se règle par sa règle, une campagne par son envoi.
+     *
+     * @return list<NotificationType>
+     */
+    public static function configurable(): array
+    {
+        $exclus = [self::AccountMarketing, self::AccountServiceMessage, ...array_map(fn (ReminderCode $code): self => $code->type(), ReminderCode::cases())];
+
+        return array_values(array_filter(self::cases(), fn (self $type): bool => ! in_array($type, $exclus, true)));
     }
 
     /**
@@ -181,6 +213,12 @@ enum NotificationType: string
             self::LeasesInsuranceSubmitted, self::PartiesContactUpdateRequested, self::PlanningTaskAssigned => [NotificationChannel::InApp],
             self::PlanningTaskDue, self::PlanningEventReminder => [NotificationChannel::InApp, NotificationChannel::Email],
             self::TenantInsuranceExpiring, self::TenantInsuranceExpired, self::TenantInsuranceReminder => $tous,
+            self::AccountMarketing => [],
+            self::AccountReminderEmailUnverified => [NotificationChannel::Email],
+            self::AccountServiceMessage, self::AccountReminderInactive, self::AccountReminderSpace, self::AccountReminderAgency,
+            self::AccountReminderLandlord, self::RemindersPropertyMissing, self::RemindersListingMissing, self::RemindersListingDraft,
+            self::RemindersLeadUnanswered, self::RemindersInvitationPending, self::RemindersRecoveryStalled, self::TenantReminderRentDue,
+            self::TenantReminderRentUnpaid, self::RemindersTrialEnding => $tous,
         };
     }
 
@@ -236,6 +274,11 @@ enum NotificationType: string
             self::PlanningTaskAssigned, self::PlanningTaskDue, self::PlanningEventReminder => 'Agenda',
             self::OrganizationSuspended, self::OrganizationReactivated => 'Organisation',
             self::PrivacyRequestForwarded, self::AccountPrivacyCompleted, self::AccountExportReady, self::AccountPrivacyReceived => 'Données personnelles',
+            self::AccountMarketing, self::AccountServiceMessage => 'Informations eGuardImmo',
+            self::AccountReminderInactive, self::AccountReminderEmailUnverified, self::AccountReminderSpace, self::AccountReminderAgency,
+            self::AccountReminderLandlord, self::RemindersPropertyMissing, self::RemindersListingMissing, self::RemindersListingDraft,
+            self::RemindersLeadUnanswered, self::RemindersInvitationPending, self::RemindersRecoveryStalled, self::TenantReminderRentDue,
+            self::TenantReminderRentUnpaid, self::RemindersTrialEnding => 'Rappels',
         };
     }
 
@@ -263,6 +306,10 @@ enum NotificationType: string
             self::LeasesNoticeRequested, self::TenantNoticeClosed, self::LeasesInsuranceSubmitted, self::TenantDocumentShared, self::OwnerDocumentShared, self::TenantInspectionPublished,
             self::InspectionsRemarkReceived, self::TenantInspectionRemarkAnswered, self::PartiesContactUpdateRequested, self::PlanningTaskAssigned, self::PlanningEventReminder => 'info',
             self::PlanningTaskDue => 'warning',
+            self::AccountMarketing, self::AccountServiceMessage, self::AccountReminderInactive, self::AccountReminderEmailUnverified,
+            self::AccountReminderSpace, self::AccountReminderAgency, self::AccountReminderLandlord, self::RemindersPropertyMissing,
+            self::RemindersListingMissing, self::RemindersListingDraft, self::RemindersInvitationPending, self::TenantReminderRentDue => 'info',
+            self::TenantReminderRentUnpaid, self::RemindersRecoveryStalled, self::RemindersTrialEnding, self::RemindersLeadUnanswered => 'warning',
         };
     }
 
@@ -342,6 +389,22 @@ enum NotificationType: string
             self::PlanningTaskAssigned => 'Tâche confiée',
             self::PlanningTaskDue => 'Tâche à échéance',
             self::PlanningEventReminder => 'Rappel d\'agenda',
+            self::AccountMarketing => 'Nouveautés et offres eGuardImmo',
+            self::AccountServiceMessage => 'Informations de service eGuardImmo',
+            self::AccountReminderInactive => 'Rappel de connexion',
+            self::AccountReminderEmailUnverified => 'Adresse e-mail à confirmer',
+            self::AccountReminderSpace => 'Espace à créer',
+            self::AccountReminderAgency => 'Agence à créer',
+            self::AccountReminderLandlord => 'Espace bailleur à créer',
+            self::RemindersPropertyMissing => 'Premier bien à enregistrer',
+            self::RemindersListingMissing => 'Première annonce à créer',
+            self::RemindersListingDraft => 'Annonce à publier',
+            self::RemindersLeadUnanswered => 'Demande reçue sans réponse',
+            self::RemindersInvitationPending => 'Invitation de locataire en attente',
+            self::RemindersRecoveryStalled => 'Dossier de recouvrement à suivre',
+            self::TenantReminderRentDue => 'Échéance de loyer à venir',
+            self::TenantReminderRentUnpaid => 'Rappel de loyer',
+            self::RemindersTrialEnding => 'Fin d\'essai proche',
         };
     }
 
@@ -415,6 +478,19 @@ enum NotificationType: string
             self::PlanningTaskAssigned => 'Une tâche vous a été confiée.',
             self::PlanningTaskDue => 'Une tâche arrive à échéance.',
             self::PlanningEventReminder => 'Un rendez-vous approche.',
+            self::AccountMarketing, self::AccountServiceMessage => 'Vous avez une information d\'eGuardImmo.',
+            self::AccountReminderInactive => 'Votre compte vous attend.',
+            self::AccountReminderEmailUnverified => 'Confirmez votre adresse e-mail.',
+            self::AccountReminderSpace, self::AccountReminderAgency, self::AccountReminderLandlord => 'Votre espace reste à créer.',
+            self::RemindersPropertyMissing => 'Ajoutez votre premier bien.',
+            self::RemindersListingMissing => 'Publiez votre première annonce.',
+            self::RemindersListingDraft => 'Une annonce attend sa publication.',
+            self::RemindersLeadUnanswered => 'Une demande attend votre réponse.',
+            self::RemindersInvitationPending => 'Une invitation n\'a pas encore été acceptée.',
+            self::RemindersRecoveryStalled => 'Un dossier de recouvrement attend une suite.',
+            self::TenantReminderRentDue => 'Une échéance approche.',
+            self::TenantReminderRentUnpaid => 'Un rappel concerne votre loyer.',
+            self::RemindersTrialEnding => 'Votre période d\'essai se termine bientôt.',
         };
     }
 }

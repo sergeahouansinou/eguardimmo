@@ -14,7 +14,10 @@ use App\Modules\Rent\Models\RentAdjustment;
 use App\Modules\Rent\Models\RentNotice;
 use App\Modules\Rent\Models\RentReceipt;
 use App\Modules\Rent\Models\RentSchedule;
+use App\Modules\Rent\Queries\ReminderTargets;
 use App\Modules\Rent\Support\IssuerIdentity;
+use App\Shared\Reminders\ReminderRegistry;
+use App\Shared\Reminders\ReminderWindow;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 
@@ -40,6 +43,10 @@ final class RentServiceProvider extends ServiceProvider
         ]);
 
         $this->loadViewsFrom(__DIR__.'/Views', 'rent');
+
+        $rappels = $this->app->make(ReminderRegistry::class);
+        $rappels->register('rent_due_soon', fn (ReminderWindow $fenetre): iterable => $this->app->make(ReminderTargets::class)->dueSoon($fenetre));
+        $rappels->register('rent_unpaid', fn (ReminderWindow $fenetre): iterable => $this->app->make(ReminderTargets::class)->unpaid($fenetre));
 
         if ($this->app->runningInConsole()) {
             $this->commands([GenerateInstallmentsCommand::class]);

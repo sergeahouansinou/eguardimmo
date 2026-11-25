@@ -21,10 +21,11 @@ final readonly class EffectivePreferences
         private MembershipDirectory $adhesions,
         private PartyLinks $liens,
         private OwnerLinks $proprietaires,
+        private PlatformNotificationTypes $plateforme,
     ) {}
 
     /**
-     * Canaux retenus pour chaque compte, en une requête.
+     * Canaux retenus pour chaque compte, sans ceux que la plateforme a coupés pour tous ; un canal verrouillé ne se coupe jamais.
      *
      * @param  list<string>  $userIds
      * @return array<string, list<NotificationChannel>>
@@ -42,10 +43,15 @@ final readonly class EffectivePreferences
         }
 
         $retenus = [];
+        $coupes = $this->plateforme->cutChannels($type);
+        $ouverts = array_values(array_filter(
+            NotificationChannel::cases(),
+            fn (NotificationChannel $canal): bool => in_array($canal, $type->locked(), true) || ! in_array($canal->value, $coupes, true),
+        ));
 
         foreach ($userIds as $userId) {
             $retenus[$userId] = array_values(array_filter(
-                NotificationChannel::cases(),
+                $ouverts,
                 fn (NotificationChannel $canal): bool => $this->enabled($type, $canal, $choix[$userId][$canal->value] ?? null),
             ));
         }
