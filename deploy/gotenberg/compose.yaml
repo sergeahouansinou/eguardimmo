@@ -1,0 +1,8 @@
+services:
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    restart: unless-stopped
+    # Docker contourne le pare-feu : la publication reste limitée à la boucle locale.
+    ports:
+      - "127.0.0.1:3000:3000"
+    mem_limit: 1g

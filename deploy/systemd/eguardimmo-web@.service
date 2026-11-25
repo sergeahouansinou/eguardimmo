@@ -1,0 +1,28 @@
+[Unit]
+Description=eGuardImmo - application web %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=eg-web-%i
+Group=eg-web-%i
+WorkingDirectory=/srv/eguardimmo/current/apps/%i
+Environment=NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
+EnvironmentFile=/etc/eguardimmo/runtime/%i.env
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port ${PORT}
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectProc=invisible
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+ReadWritePaths=/srv/eguardimmo/current/apps/%i/.next/cache
+
+[Install]
+WantedBy=multi-user.target

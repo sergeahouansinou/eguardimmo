@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 return [
     'gotenberg' => [
-        'url' => (string) env('INVOICING_GOTENBERG_URL', env('RENT_GOTENBERG_URL', '')),
+        'url' => (string) (env('INVOICING_GOTENBERG_URL') ?: env('RENT_GOTENBERG_URL', '')),
         'timeout' => (int) env('INVOICING_GOTENBERG_TIMEOUT', env('RENT_GOTENBERG_TIMEOUT', 15)),
     ],
 
