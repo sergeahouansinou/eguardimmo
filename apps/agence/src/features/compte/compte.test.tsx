@@ -114,7 +114,7 @@ describe("Sécurité", () => {
     expect(screen.getByText("Léa Fontaine n'a pas encore activé la double authentification")).toBeTruthy();
     expect(screen.getByText("Elle devra l'activer à sa prochaine connexion.")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Voir l'équipe" }).getAttribute("href")).toBe("/equipe");
-    expect(screen.getByRole("combobox", { name: /Longueur minimale/ }).textContent).toContain("12 caractères");
+    expect(screen.getByRole("combobox", { name: /Longueur minimale/ }).textContent).toContain("6 caractères");
     expect(screen.getByText("Modifié le 02/09/2026")).toBeTruthy();
     expect(screen.getByText("Application d'authentification · 8 codes de secours")).toBeTruthy();
     expect(screen.getByText("3 appareils, dont cette session")).toBeTruthy();
@@ -162,7 +162,7 @@ describe("Sécurité", () => {
     await user.type(within(dialog).getByLabelText("Nouveau mot de passe"), "court");
     await user.type(within(dialog).getByLabelText("Confirmer le nouveau mot de passe"), "autre");
     await user.click(within(dialog).getByRole("button", { name: "Modifier le mot de passe" }));
-    expect(await within(dialog).findByText("Le mot de passe doit contenir au moins 12 caractères.")).toBeTruthy();
+    expect(await within(dialog).findByText("Le mot de passe doit contenir au moins 6 caractères.")).toBeTruthy();
     expect(within(dialog).getByText("Les deux mots de passe ne correspondent pas.")).toBeTruthy();
     await expectNoA11yViolations(dialog);
   });
@@ -180,6 +180,18 @@ describe("Sécurité", () => {
     expect(await screen.findByText("Modifié le 13/11/2026")).toBeTruthy();
     expect(JSON.stringify(await source.compte.security())).not.toContain("nouveau-secret");
     expect(screen.queryByRole("dialog", { name: "Modifier le mot de passe" })).toBeNull();
+  });
+
+  it("accepte un mot de passe de 6 caractères sans composition", async () => {
+    const user = userEvent.setup();
+    renderScreen(<SecurityPage />);
+    await user.click(await screen.findByRole("button", { name: "Gérer dans Mon compte" }));
+    const dialog = await screen.findByRole("dialog", { name: "Modifier le mot de passe" });
+    await user.type(within(dialog).getByLabelText("Mot de passe actuel"), "ancien-secret");
+    await user.type(within(dialog).getByLabelText("Nouveau mot de passe"), "azerty");
+    await user.type(within(dialog).getByLabelText("Confirmer le nouveau mot de passe"), "azerty");
+    await user.click(within(dialog).getByRole("button", { name: "Modifier le mot de passe" }));
+    expect(await screen.findByText("Mot de passe modifié")).toBeTruthy();
   });
 
   it("refuse un nouveau mot de passe identique à l'actuel", async () => {

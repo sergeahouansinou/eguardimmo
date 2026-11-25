@@ -42,6 +42,11 @@ export function hasFieldError(error: ApiError, field: string): boolean {
   return (error.fieldErrors[field]?.length ?? 0) > 0;
 }
 
+export function fieldMessage(error: unknown, field: string): string | null {
+  if (!(error instanceof ApiError) || error.status !== 422 || !hasFieldError(error, field)) return null;
+  return error.fieldErrors[field]?.join(" ") ?? null;
+}
+
 export function handled<R>(error: unknown, map: (error: ApiError) => R | null): R {
   if (error instanceof ApiError) {
     const result = map(error);

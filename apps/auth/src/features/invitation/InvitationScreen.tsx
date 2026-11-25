@@ -11,7 +11,7 @@ import { CheckboxField, TermsLabel } from "@/components/CheckboxField";
 import { DemoNotice } from "@/components/DemoNotice";
 import { FormAlert } from "@/components/FormAlert";
 import { PasswordField } from "@/components/PasswordField";
-import { PasswordRules } from "@/components/PasswordRules";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { SocialButtons } from "@/components/SocialButtons";
 import { StatusScreen } from "@/components/StatusScreen";
 import { AltLine, ButtonLink } from "@/components/TextLink";
@@ -19,6 +19,7 @@ import { useAcceptInvitation, useInvitation, useSocialSignIn } from "@/features/
 import { invitationSchema } from "@/features/auth/schemas";
 import type { InvitationDetail, InvitationValues } from "@/features/auth/schemas";
 import { formatDate } from "@/lib/format";
+import { PASSWORD_PLACEHOLDER } from "@/lib/password";
 import { ROUTES } from "@/lib/routes";
 
 function copyFor(invitation: InvitationDetail) {
@@ -89,12 +90,12 @@ function InvitationForm({ token, invitation }: { token: string; invitation: Invi
         <TextField label="E-mail" type="email" placeholder="prenom.nom@exemple.fr" autoComplete="username" value={invitation.email} readOnly />
         <PasswordField
           label="Mot de passe *"
-          placeholder="12 caractères minimum"
+          placeholder={PASSWORD_PLACEHOLDER}
           autoComplete="new-password"
           error={errors.password?.message}
           {...form.register("password")}
         />
-        <PasswordRules value={password} />
+        <PasswordStrengthMeter value={password} />
         <CheckboxField label={<TermsLabel />} error={errors.acceptTerms?.message} {...form.register("acceptTerms")} />
         <Button type="submit" loading={form.formState.isSubmitting} className="w-full">
           Activer mon espace

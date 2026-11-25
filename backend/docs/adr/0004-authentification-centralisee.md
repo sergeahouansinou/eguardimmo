@@ -2,6 +2,7 @@
 
 Statut : accepté (2026-11-13), révisé le même jour : la console sort du hub (section « Console »). Complète l'ADR 0002 (Sanctum) et l'ADR 0003 (espaces). Plan : `../.claude/PRPs/plans/auth-centralisee-google-apple.plan.md`.
 Amendement (2026-11-16, ADR 0024) : le locataire s'inscrit par l'inscription ordinaire, sans `IntendedProfile` ; son profil n'est acquis que par l'acceptation d'une invitation envoyée par une organisation, sur une adresse vérifiée égale à l'adresse invitée. Aucun rattachement par e-mail seul (même raison que la liaison automatique écartée ci-dessous).
+Amendement (2026-11-25, mot de passe) : 6 caractères au minimum dans tous les environnements, sans exigence de composition ni contrôle de fuite, à la demande du produit ; plus faible que les recommandations OWASP et NIST (8 au minimum). Limitation de débit, verrou de compte et 2FA inchangés. Les comptes opérateur actifs gardent à la réinitialisation et au changement la règle précédente (production : 12 caractères, composition, contrôle de fuite ; développement : 8) tant que leur alignement n'est pas décidé (`AccountPasswordRule`).
 
 ## Décision
 

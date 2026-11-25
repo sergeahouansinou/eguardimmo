@@ -34,8 +34,6 @@ final class AppServiceProvider extends ServiceProvider
             DB::prohibitDestructiveCommands();
         }
 
-        Password::defaults(fn (): Password => $developpement
-            ? Password::min(8)
-            : Password::min(12)->letters()->mixedCase()->numbers()->symbols()->uncompromised());
+        Password::defaults(fn (): Password => Password::min(6));
     }
 }

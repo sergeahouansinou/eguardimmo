@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PASSWORD_MIN_LENGTH, PASSWORD_PATTERNS } from "@/lib/password";
+import { PASSWORD_MIN_LENGTH, passwordLength } from "@/lib/password";
 
 export const emailSchema = z
   .string()
@@ -9,10 +9,9 @@ export const emailSchema = z
 
 export const newPasswordSchema = z
   .string()
-  .min(PASSWORD_MIN_LENGTH, `Le mot de passe doit contenir au moins ${String(PASSWORD_MIN_LENGTH)} caractères.`)
-  .regex(PASSWORD_PATTERNS.mixedCase, "Ajoutez au moins une majuscule et une minuscule.")
-  .regex(PASSWORD_PATTERNS.digit, "Ajoutez au moins un chiffre.")
-  .regex(PASSWORD_PATTERNS.symbol, "Ajoutez au moins un symbole (par exemple ! ? - _).");
+  .refine((value) => passwordLength(value) >= PASSWORD_MIN_LENGTH, {
+    error: `Le mot de passe doit contenir au moins ${String(PASSWORD_MIN_LENGTH)} caractères.`,
+  });
 
 const requiredText = (message: string) => z.string().trim().min(1, message).max(120, "Texte trop long.");
 

@@ -7,10 +7,11 @@ import { useForm, useWatch } from "react-hook-form";
 import type { UseFormRegisterReturn } from "react-hook-form";
 import { CheckboxField, TermsLabel } from "@/components/CheckboxField";
 import { PasswordField } from "@/components/PasswordField";
-import { PasswordRules } from "@/components/PasswordRules";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { AltLine } from "@/components/TextLink";
 import { registerAgenceSchema, registerBailleurSchema } from "@/features/auth/schemas";
 import type { RegisterAgenceValues, RegisterBailleurValues } from "@/features/auth/schemas";
+import { PASSWORD_PLACEHOLDER } from "@/lib/password";
 import { ChangeProfileLink, RegisterFrame, useRegistration } from "./RegisterFrame";
 
 function PasswordBlock({ registration, error, value }: { registration: UseFormRegisterReturn; error?: string; value: string }) {
@@ -18,12 +19,12 @@ function PasswordBlock({ registration, error, value }: { registration: UseFormRe
     <>
       <PasswordField
         label="Mot de passe *"
-        placeholder="12 caractères minimum"
+        placeholder={PASSWORD_PLACEHOLDER}
         autoComplete="new-password"
         error={error}
         {...registration}
       />
-      <PasswordRules value={value} />
+      <PasswordStrengthMeter value={value} />
     </>
   );
 }

@@ -62,8 +62,17 @@ describe("Inscription bailleur", () => {
     renderWithAuth(<BailleurRegister />);
     const user = await fillPerson("lea.martin@example.com", "court", false);
     await user.click(screen.getByRole("button", { name: "Créer mon espace" }));
-    expect(await screen.findByText(/au moins 12 caractères/)).toBeTruthy();
+    expect(await screen.findByText(/au moins 6 caractères/)).toBeTruthy();
     expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it("accepte 6 caractères sans composition et n’affiche aucune liste de règles", async () => {
+    renderWithAuth(<BailleurRegister />);
+    const user = await fillPerson("lea.martin@example.com", "azerty");
+    expect(screen.getByLabelText(/Mot de passe \*/).getAttribute("placeholder")).toBe("6 caractères minimum");
+    expect(screen.queryByRole("list", { name: "Règles du mot de passe" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Créer mon espace" }));
+    await waitFor(() => { expect(router.push).toHaveBeenCalledWith("/verification-email"); });
   });
 
   it("affiche le message 422 du serveur au lieu d’une erreur générique", async () => {

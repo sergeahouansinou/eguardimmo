@@ -1,5 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { ApiError } from "@eguardimmo/api";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestEnvironment, renderWithAuth } from "../../../test/render";
 import { expectNoA11yViolations } from "../../../test/axe";
@@ -64,6 +65,32 @@ describe("MotDePasseNouveauScreen", () => {
     await user.click(screen.getByRole("button", { name: "Enregistrer le mot de passe" }));
     await waitFor(() => { expect(router.push).toHaveBeenCalledWith("/mot-de-passe/modifie"); });
     expect(environment.store.read()).toBeNull();
+  });
+
+  it("accepte un mot de passe de 6 caractères sans composition", async () => {
+    setLocation("/mot-de-passe/nouveau?jeton=valide");
+    renderWithAuth(<MotDePasseNouveauScreen />, createTestEnvironment("marc"));
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText(/Nouveau mot de passe \*/), "azerty");
+    expect(screen.queryByRole("list", { name: "Règles du mot de passe" })).toBeNull();
+    await user.type(screen.getByLabelText(/Confirmation \*/), "azerty");
+    await user.click(screen.getByRole("button", { name: "Enregistrer le mot de passe" }));
+    await waitFor(() => { expect(router.push).toHaveBeenCalledWith("/mot-de-passe/modifie"); });
+  });
+
+  it("affiche sous le champ le refus du serveur", async () => {
+    setLocation("/mot-de-passe/nouveau?jeton=valide");
+    const environment = createTestEnvironment("marc");
+    const refus = "Le champ mot de passe doit contenir au moins 12 caractères.";
+    const resetPassword = vi.fn(() => Promise.reject(new ApiError(422, "validation_failed", "Certains champs sont invalides.", { password: [refus] })));
+    renderWithAuth(<MotDePasseNouveauScreen />, { ...environment, source: { ...environment.source, resetPassword } });
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText(/Nouveau mot de passe \*/), "azerty");
+    await user.type(screen.getByLabelText(/Confirmation \*/), "azerty");
+    await user.click(screen.getByRole("button", { name: "Enregistrer le mot de passe" }));
+    expect(await screen.findByText(refus)).toBeTruthy();
+    expect(screen.queryByText(/Une erreur est survenue/)).toBeNull();
+    expect(router.push).not.toHaveBeenCalled();
   });
 
   it("transmet le jeton et l’e-mail du lien à la vérification puis à la réinitialisation", async () => {

@@ -10,7 +10,7 @@ import { AuthCard, AuthHeading } from "@/components/AuthCard";
 import { DemoNotice } from "@/components/DemoNotice";
 import { FormAlert } from "@/components/FormAlert";
 import { PasswordField } from "@/components/PasswordField";
-import { PasswordRules } from "@/components/PasswordRules";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { StatusScreen } from "@/components/StatusScreen";
 import { AltLine, ButtonLink, TextLink } from "@/components/TextLink";
 import {
@@ -19,11 +19,13 @@ import {
   useResetPassword,
   useResetTokenCheck,
 } from "@/features/auth/queries";
+import { fieldMessage } from "@/features/auth/api/shared";
 import { forgotPasswordSchema, resetPasswordSchema } from "@/features/auth/schemas";
 import type { ForgotPasswordValues, ResetPasswordValues } from "@/features/auth/schemas";
 import { useReturnContext } from "@/features/auth/useReturnContext";
 import { useSessionGuard } from "@/features/espaces/useSessionGuard";
 import { formatDuration } from "@/lib/format";
+import { PASSWORD_PLACEHOLDER } from "@/lib/password";
 import { ROUTES } from "@/lib/routes";
 import { useConsumedParams } from "@/lib/useConsumedParams";
 
@@ -127,8 +129,10 @@ function ResetPasswordForm({ token, email }: { token: string; email: string }) {
       if (result.status === "ok") router.push("/mot-de-passe/modifie");
       else if (result.status === "expired") router.replace(`${ROUTES.lienExpire}?type=reinitialisation`);
       else setError("password", { message: "Choisissez un mot de passe différent de l’ancien." }, { shouldFocus: true });
-    } catch {
-      setProblem(true);
+    } catch (error) {
+      const message = fieldMessage(error, "password");
+      if (message) setError("password", { message }, { shouldFocus: true });
+      else setProblem(true);
     }
   });
 
@@ -144,7 +148,7 @@ function ResetPasswordForm({ token, email }: { token: string; email: string }) {
       <form noValidate onSubmit={(event) => { void submit(event); }} className="flex flex-col gap-4">
         <PasswordField
           label="Nouveau mot de passe *"
-          placeholder="12 caractères minimum"
+          placeholder={PASSWORD_PLACEHOLDER}
           autoComplete="new-password"
           error={errors.password?.message}
           {...form.register("password")}
@@ -156,7 +160,7 @@ function ResetPasswordForm({ token, email }: { token: string; email: string }) {
           error={errors.confirmation?.message}
           {...form.register("confirmation")}
         />
-        <PasswordRules value={password} extraRule="Différent de l’ancien mot de passe" />
+        <PasswordStrengthMeter value={password} />
         <Button type="submit" loading={form.formState.isSubmitting} className="w-full">
           Enregistrer le mot de passe
         </Button>

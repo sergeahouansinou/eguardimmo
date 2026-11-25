@@ -6,10 +6,12 @@ import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { FormAlert } from "@/components/FormAlert";
 import { PasswordField } from "@/components/PasswordField";
-import { PasswordRules } from "@/components/PasswordRules";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+import { fieldMessage } from "@/features/auth/api/shared";
 import { useChangeEmail, useChangePassword } from "@/features/auth/queries";
 import { changeEmailSchema, changePasswordSchema } from "@/features/auth/schemas";
 import type { ChangeEmailValues, ChangePasswordValues } from "@/features/auth/schemas";
+import { PASSWORD_PLACEHOLDER } from "@/lib/password";
 import { useNoticeStore } from "./noticeStore";
 import { useRequireConfirmation } from "./useConfirmation";
 
@@ -41,8 +43,10 @@ export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean; on
         onOpenChange(false);
         form.reset();
       }
-    } catch {
-      setProblem(true);
+    } catch (error) {
+      const message = fieldMessage(error, "password");
+      if (message) form.setError("password", { message }, { shouldFocus: true });
+      else setProblem(true);
     }
   });
 
@@ -65,7 +69,7 @@ export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean; on
           />
           <PasswordField
             label="Nouveau mot de passe *"
-            placeholder="12 caractères minimum"
+            placeholder={PASSWORD_PLACEHOLDER}
             autoComplete="new-password"
             error={errors.password?.message}
             {...form.register("password")}
@@ -77,7 +81,7 @@ export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean; on
             error={errors.confirmation?.message}
             {...form.register("confirmation")}
           />
-          <PasswordRules value={password} extraRule="Différent de l’ancien mot de passe" />
+          <PasswordStrengthMeter value={password} />
           <div className="flex flex-wrap justify-end gap-2">
             <DialogClose asChild>
               <Button variant="secondary">Annuler</Button>

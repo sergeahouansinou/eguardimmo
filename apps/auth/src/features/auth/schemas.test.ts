@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   backupCodeFormSchema,
+  changePasswordSchema,
   deleteAccountSchema,
   emailSchema,
   invitationSchema,
@@ -18,12 +19,20 @@ describe("schémas de formulaire", () => {
     expect(emailSchema.safeParse("").success).toBe(false);
   });
 
-  it("exige 12 caractères, majuscule, minuscule, chiffre et symbole comme le serveur", () => {
-    expect(newPasswordSchema.safeParse("Mot-De-Passe-2026").success).toBe(true);
-    expect(newPasswordSchema.safeParse("Court1").success).toBe(false);
-    expect(newPasswordSchema.safeParse("motdepassesansmajuscule1").success).toBe(false);
-    expect(newPasswordSchema.safeParse("MotDePasseSansChiffre").success).toBe(false);
-    expect(newPasswordSchema.safeParse("MotDePasse2026Long").success).toBe(false);
+  it.each(["123456", "azerty", "AZERTY", "!?-_*#", "éàçùîô"])("accepte %j : 6 caractères suffisent, sans composition", (value) => {
+    expect(newPasswordSchema.safeParse(value).success).toBe(true);
+  });
+
+  it.each(["", "12345", "😀😀😀"])("refuse %j, sous les 6 caractères comptés comme le serveur", (value) => {
+    const result = newPasswordSchema.safeParse(value);
+    expect(result.error?.issues.map((issue) => issue.message)).toEqual(["Le mot de passe doit contenir au moins 6 caractères."]);
+  });
+
+  it("applique la même règle à la réinitialisation et au changement", () => {
+    expect(resetPasswordSchema.safeParse({ password: "azerty", confirmation: "azerty" }).success).toBe(true);
+    expect(resetPasswordSchema.safeParse({ password: "azert", confirmation: "azert" }).success).toBe(false);
+    expect(changePasswordSchema.safeParse({ current: "ancien", password: "azerty", confirmation: "azerty" }).success).toBe(true);
+    expect(changePasswordSchema.safeParse({ current: "ancien", password: "azert", confirmation: "azert" }).success).toBe(false);
   });
 
   it("exige un mot de passe à la connexion", () => {

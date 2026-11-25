@@ -1,24 +1,14 @@
-export const PASSWORD_MIN_LENGTH = 12;
+export const PASSWORD_MIN_LENGTH = 6;
+export const PASSWORD_PLACEHOLDER = `${String(PASSWORD_MIN_LENGTH)} caractères minimum`;
 
-export const PASSWORD_PATTERNS = {
+const STRENGTH_PATTERNS = {
   mixedCase: /(\p{Ll}+.*\p{Lu})|(\p{Lu}+.*\p{Ll})/u,
   digit: /\p{N}/u,
   symbol: /[\p{Z}\p{S}\p{P}]/u,
 } as const;
 
-export interface PasswordCheck {
-  id: "length" | "case" | "digit" | "symbol";
-  label: string;
-  ok: boolean;
-}
-
-export function checkPassword(value: string): PasswordCheck[] {
-  return [
-    { id: "length", label: `${String(PASSWORD_MIN_LENGTH)} caractères au minimum`, ok: Array.from(value).length >= PASSWORD_MIN_LENGTH },
-    { id: "case", label: "Une majuscule et une minuscule", ok: PASSWORD_PATTERNS.mixedCase.test(value) },
-    { id: "digit", label: "Un chiffre", ok: PASSWORD_PATTERNS.digit.test(value) },
-    { id: "symbol", label: "Un symbole (par exemple ! ? - _)", ok: PASSWORD_PATTERNS.symbol.test(value) },
-  ];
+export function passwordLength(value: string): number {
+  return Array.from(value).length;
 }
 
 export type StrengthLevel = "vide" | "faible" | "moyen" | "bon" | "excellent";
@@ -39,15 +29,15 @@ const STRENGTHS: Record<StrengthLevel, PasswordStrength> = {
 
 export function passwordStrength(value: string): PasswordStrength {
   if (value === "") return STRENGTHS.vide;
-  const length = Array.from(value).length;
+  const length = passwordLength(value);
   const points = [
-    length >= PASSWORD_MIN_LENGTH,
+    length >= 12,
     length >= 16,
-    PASSWORD_PATTERNS.mixedCase.test(value),
-    PASSWORD_PATTERNS.digit.test(value),
-    PASSWORD_PATTERNS.symbol.test(value),
+    STRENGTH_PATTERNS.mixedCase.test(value),
+    STRENGTH_PATTERNS.digit.test(value),
+    STRENGTH_PATTERNS.symbol.test(value),
   ].filter(Boolean).length;
-  const rulesMet = checkPassword(value).every((check) => check.ok);
-  if (!rulesMet) return points <= 1 ? STRENGTHS.faible : STRENGTHS.moyen;
+  if (points <= 1) return STRENGTHS.faible;
+  if (points <= 3) return STRENGTHS.moyen;
   return points >= 5 ? STRENGTHS.excellent : STRENGTHS.bon;
 }

@@ -10,7 +10,7 @@ import type { CompteSource } from "./source";
 
 export interface SecurityState {
   twoFactorRequired: boolean;
-  minPasswordLength: 8 | 10 | 12 | 14 | 16;
+  minPasswordLength: 6 | 8 | 10 | 12 | 14 | 16;
   passwordChangedAt: string;
   passwordStrength: SecurityOverview["connection"]["passwordStrength"];
   devices: readonly Device[];
@@ -19,7 +19,7 @@ export interface SecurityState {
 
 export const INITIAL_SECURITY: SecurityState = {
   twoFactorRequired: true,
-  minPasswordLength: 12,
+  minPasswordLength: 6,
   passwordChangedAt: "2026-09-02",
   passwordStrength: "Forte",
   devices: [
@@ -37,7 +37,7 @@ export const INITIAL_SECURITY: SecurityState = {
   ],
 };
 
-const LENGTHS = { "8": 8, "10": 10, "12": 12, "14": 14, "16": 16 } as const;
+const LENGTHS = { "6": 6, "8": 8, "10": 10, "12": 12, "14": 14, "16": 16 } as const;
 
 function strengthOf(password: string): SecurityState["passwordStrength"] {
   if (password.length >= 14) return "Forte";

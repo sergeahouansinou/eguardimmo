@@ -1,15 +1,15 @@
 import { z } from "zod";
 
-export const MIN_PASSWORD_LENGTHS = [8, 10, 12, 14, 16] as const;
+export const MIN_PASSWORD_LENGTHS = [6, 8, 10, 12, 14, 16] as const;
 
 export const PASSWORD_LENGTH_OPTIONS = MIN_PASSWORD_LENGTHS.map((length) => ({
   value: String(length),
   label: `${String(length)} caractères`,
 }));
 
-export const MIN_LENGTH_VALUES = { 8: "8", 10: "10", 12: "12", 14: "14", 16: "16" } as const;
+export const MIN_LENGTH_VALUES = { 6: "6", 8: "8", 10: "10", 12: "12", 14: "14", 16: "16" } as const;
 
-const minLengthSchema = z.union([z.literal(8), z.literal(10), z.literal(12), z.literal(14), z.literal(16)]);
+const minLengthSchema = z.union([z.literal(6), z.literal(8), z.literal(10), z.literal(12), z.literal(14), z.literal(16)]);
 
 export const deviceSchema = z.object({
   id: z.string(),
@@ -47,7 +47,7 @@ export type SecurityOverview = z.infer<typeof securitySchema>;
 
 export const securityRulesInputSchema = z.object({
   twoFactorRequired: z.boolean(),
-  minPasswordLength: z.enum(["8", "10", "12", "14", "16"]),
+  minPasswordLength: z.enum(["6", "8", "10", "12", "14", "16"]),
 });
 export type SecurityRulesInput = z.input<typeof securityRulesInputSchema>;
 

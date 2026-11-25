@@ -95,7 +95,7 @@ it('limite l\'inscription par throttle:auth', function (): void {
 it('renvoie des messages de validation lisibles en français, jamais une clé de traduction', function (): void {
     $this->postJson('/auth/register', inscription(['password' => 'court', 'password_confirmation' => 'court']))
         ->assertUnprocessable()
-        ->assertJsonPath('errors.password.0', 'Le champ mot de passe doit contenir au moins 8 caractères.');
+        ->assertJsonPath('errors.password.0', 'Le champ mot de passe doit contenir au moins 6 caractères.');
 });
 
 it('enregistre l\'intention d\'inscription du compte', function (): void {
