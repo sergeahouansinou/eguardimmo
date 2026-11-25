@@ -1,4 +1,6 @@
+import { headers } from "next/headers";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { clearPublicReads } from "./cached";
 import { DETAIL, LISTINGS_LAST_PAGE, LISTINGS_PAGE, REF, REF_2 } from "./responses.fixtures";
 import { EMPTY_SEARCH } from "./search";
 import { fetchAllListings, fetchListing, fetchListings } from "./server";
@@ -16,8 +18,15 @@ function stubFetch(handler: (url: URL) => Response | Promise<Response>) {
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
+const KEY = "cle-de-relais-sebook-de-test-0123456789";
+const sentHeaders = (fetchMock: ReturnType<typeof stubFetch>) =>
+  (fetchMock.mock.calls as unknown as [URL, RequestInit][]).map((call) => call[1].headers as Record<string, string>);
+
 afterEach(() => {
+  clearPublicReads();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
+  vi.mocked(headers).mockClear();
 });
 
 describe("fetchListings", () => {
@@ -67,7 +76,7 @@ describe("fetchListing", () => {
     stubFetch(() => json({ code: "not_found", status: 404 }, 404));
     expect((await fetchListing(REF)).status).toBe("absent");
     stubFetch(() => json({ code: "server_error", status: 500 }, 500));
-    expect((await fetchListing(REF)).status).toBe("unavailable");
+    expect((await fetchListing(REF_2)).status).toBe("unavailable");
   });
 
   it("une référence mal formée n’atteint jamais l’API", async () => {
@@ -92,5 +101,41 @@ describe("fetchAllListings", () => {
     let calls = 0;
     stubFetch(() => (++calls === 2 ? json({}, 500) : json(LISTINGS_PAGE)));
     expect((await fetchAllListings()).status).toBe("unavailable");
+  });
+
+  it("des appels simultanés partagent un seul parcours du catalogue", async () => {
+    const fetchMock = stubFetch(() => json(LISTINGS_LAST_PAGE));
+    const results = await Promise.all([fetchAllListings(), fetchAllListings(), fetchAllListings()]);
+    expect(results.map((result) => result.status)).toEqual(["found", "found", "found"]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("un parcours terminé, même en échec, n’est pas resservi au suivant", async () => {
+    stubFetch(() => json({}, 500));
+    expect((await fetchAllListings()).status).toBe("unavailable");
+    stubFetch(() => json(LISTINGS_LAST_PAGE));
+    expect((await fetchAllListings()).status).toBe("found");
+  });
+});
+
+describe("relais de l’adresse du visiteur", () => {
+  it("la liste et l’annonce sont lues au nom du visiteur de la requête", async () => {
+    vi.stubEnv("SEBOOK_RELAY_KEY", KEY);
+    vi.mocked(headers).mockResolvedValueOnce(new Headers({ "x-forwarded-for": "203.0.113.7" })).mockResolvedValueOnce(new Headers({ "x-forwarded-for": "198.51.100.4" }));
+    const fetchMock = stubFetch((url) => json(url.pathname.endsWith("/listings") ? LISTINGS_PAGE : { data: DETAIL }));
+    await fetchListings(EMPTY_SEARCH);
+    await fetchListing(REF);
+    expect(sentHeaders(fetchMock).map((sent) => sent["X-Sebook-Client-Ip"])).toEqual(["203.0.113.7", "198.51.100.4"]);
+  });
+
+  it("le plan du site ne lit aucune requête et ne s’impute à aucun visiteur", async () => {
+    vi.stubEnv("SEBOOK_RELAY_KEY", KEY);
+    const fetchMock = stubFetch(() => json(LISTINGS_LAST_PAGE));
+    await fetchAllListings();
+    expect(headers).not.toHaveBeenCalled();
+    expect(sentHeaders(fetchMock)).toEqual([
+      { Accept: "application/json", "X-Sebook-Relay-Key": KEY },
+      { Accept: "application/json", "X-Sebook-Relay-Key": KEY },
+    ]);
   });
 });

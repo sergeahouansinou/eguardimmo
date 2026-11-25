@@ -43,4 +43,4 @@ vi.mock("next/link", async () => {
 
 vi.mock("@/lib/navigate", () => ({ navigateTo: vi.fn() }));
 
-vi.mock("next/cache", () => ({ cacheLife: vi.fn(), cacheTag: vi.fn() }));
+vi.mock("next/headers", () => ({ headers: vi.fn(() => Promise.resolve(new Headers())) }));

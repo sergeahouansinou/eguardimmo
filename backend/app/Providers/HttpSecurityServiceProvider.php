@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Shared\Http\ConsoleRelay;
 use App\Shared\Http\RateLimitIp;
+use App\Shared\Http\SebookRelay;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
@@ -53,7 +54,7 @@ final class HttpSecurityServiceProvider extends ServiceProvider
 
             return is_int($identifiant) || is_string($identifiant)
                 ? Limit::perMinute(self::LIMITE_UTILISATEUR_PAR_MINUTE)->by('user:'.$identifiant)
-                : Limit::perMinute(self::LIMITE_ANONYME_PAR_MINUTE)->by('ip:'.self::ipCliente($request));
+                : SebookRelay::limite($request) ?? Limit::perMinute(self::LIMITE_ANONYME_PAR_MINUTE)->by('ip:'.self::ipCliente($request));
         });
 
         RateLimiter::for('auth', function (Request $request): array {

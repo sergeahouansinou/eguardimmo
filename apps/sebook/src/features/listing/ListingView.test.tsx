@@ -2,6 +2,7 @@ import { screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MARKETPLACE, renderApp, stubApi } from "../../../test/api";
 import { expectNoA11yViolations } from "../../../test/axe";
+import { clearPublicReads } from "@/marketplace/cached";
 import { AVAILABILITY, DETAIL, QUOTE, REF } from "@/marketplace/responses.fixtures";
 import { ListingView } from "./ListingView";
 
@@ -17,6 +18,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  clearPublicReads();
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
