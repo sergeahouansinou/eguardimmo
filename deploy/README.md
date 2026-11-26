@@ -141,7 +141,11 @@ sudo -u eg-deploy -H ssh -T git@github.com
 
 ## 6. DNS et HTTPS
 
-Enregistrements A vers le serveur, sans joker : `api`, `auth`, `locataire`, `proprietaire`, `agence`, `sebook`, la console et la vitrine. Chez Cloudflare : « DNS only ». Pas d'enregistrement AAAA tant que l'API compte les limites par adresse IPv6 complète : une seule plage les contournerait.
+Enregistrements A vers le serveur, sans joker : `api`, `auth`, `locataire`, `proprietaire`, `agence`, `sebook`, la console et la vitrine. Chez Cloudflare : « DNS only ». En IPv6, l'API compte les limites par préfixe /64 : des enregistrements AAAA sont possibles. Dans ce cas, autoriser aussi les adresses IPv6 des opérateurs sur la console, et vérifier que le serveur résout toujours l'API sur la boucle locale seulement (la commande ne doit afficher que `127.0.0.1`) :
+
+```bash
+getent ahosts api.exemple.fr
+```
 
 La console est **fermée par défaut**. Autoriser les adresses des opérateurs, au-dessus de `deny all;`, dans `/etc/nginx/eguardimmo/console-allow.conf` :
 
@@ -230,7 +234,10 @@ Après modification du dossier `deploy/`, le recopier sur le serveur et relancer
 
 ## Limites connues
 
-- SeBook lit l'API depuis le serveur : toutes ses lectures publiques partagent la limite de 60 requêtes par minute d'une seule adresse IP. Un seul visiteur insistant peut donc priver SeBook de ses annonces : à corriger avant l'ouverture au public.
+- SeBook garde les annonces 5 minutes en mémoire (250 listes, 250 fiches) : une annonce retirée peut rester affichée jusque-là, et le cache repart vide au redémarrage.
+- Les lectures d'annonces de SeBook sont limitées par visiteur (60 par minute) ; son plan du site se partage 120 lectures par minute.
+- Le relais de SeBook passe par la boucle locale : par une autre adresse, Nginx efface ses en-têtes et tous ses visiteurs repartagent une seule limite.
+- En IPv6, un abonné qui dispose d'un /56 ou d'un /48 peut encore changer de préfixe /64 pour multiplier ses essais.
 - La limitation de la console tient à Nginx (liste d'adresses, routes de l'API réservées au serveur) ; l'API elle-même n'exige pas la clé de relais.
 - Sur `api` et `auth`, le journal d'erreurs de Nginx ne garde que les pannes graves : chercher les 502 dans le journal d'accès, `journalctl` et les journaux de l'API.
 - Aucune page `/a-propos` n'existe, et `/conditions` n'est servie que par SeBook : liens légaux masqués tant que `NEXT_PUBLIC_LEGAL_BASE_URL` est vide.

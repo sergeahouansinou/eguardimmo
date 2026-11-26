@@ -91,11 +91,12 @@ fi
 
 set_if_empty "$ETC/backend.env" APP_KEY "base64:$(secret)"
 set_if_empty "$ETC/backend.env" DB_PASSWORD "$(database_password)"
-for key in AUDIT_HMAC_KEY PARTIES_HMAC_KEY BANKING_HMAC_KEY MAIL_UNSUBSCRIBE_KEY CONSOLE_RELAY_KEY; do
+for key in AUDIT_HMAC_KEY PARTIES_HMAC_KEY BANKING_HMAC_KEY MAIL_UNSUBSCRIBE_KEY CONSOLE_RELAY_KEY SEBOOK_RELAY_KEY; do
   set_if_empty "$ETC/backend.env" "$key" "$(secret)"
 done
 set_if_empty "$ETC/runtime/console.env" CONSOLE_SESSION_SECRET "$(secret)"
 set_if_empty "$ETC/runtime/console.env" CONSOLE_RELAY_KEY "$(env_value "$ETC/backend.env" CONSOLE_RELAY_KEY)"
+set_if_empty "$ETC/runtime/sebook.env" SEBOOK_RELAY_KEY "$(env_value "$ETC/backend.env" SEBOOK_RELAY_KEY)"
 
 place "$SOURCE/nginx/console-allow.conf" /etc/nginx/eguardimmo/console-allow.conf 0644 root:root
 # L'API ne sert /api/v1/console qu'à ce serveur : son nom doit s'y résoudre sur la boucle locale.

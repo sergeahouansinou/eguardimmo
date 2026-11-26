@@ -26,7 +26,7 @@ preflight() {
   if grep -rlE '__[A-Z_]+__' "$ETC"; then die "des valeurs __…__ restent à remplacer dans les fichiers ci-dessus."; fi
   require_value "$ETC/deploy.env" REPO_URL
   require_value "$ETC/deploy.env" API_URL
-  for key in APP_KEY DB_PASSWORD AUDIT_HMAC_KEY PARTIES_HMAC_KEY BANKING_HMAC_KEY MAIL_UNSUBSCRIBE_KEY CONSOLE_RELAY_KEY; do
+  for key in APP_KEY DB_PASSWORD AUDIT_HMAC_KEY PARTIES_HMAC_KEY BANKING_HMAC_KEY MAIL_UNSUBSCRIBE_KEY CONSOLE_RELAY_KEY SEBOOK_RELAY_KEY; do
     require_value "$ETC/backend.env" "$key"
   done
   if [ "$(env_value "$ETC/backend.env" MAIL_MAILER)" = mailtrap_transactional ]; then
@@ -35,10 +35,15 @@ preflight() {
   require_value "$ETC/runtime/console.env" CONSOLE_SESSION_SECRET
   [ "$(env_value "$ETC/runtime/console.env" CONSOLE_RELAY_KEY)" = "$(env_value "$ETC/backend.env" CONSOLE_RELAY_KEY)" ] ||
     die "CONSOLE_RELAY_KEY diffère entre l'API et la console."
+  key=$(env_value "$ETC/backend.env" SEBOOK_RELAY_KEY)
+  # L'API ignore sans erreur une clé plus courte : tous les visiteurs de SeBook partageraient une seule limite.
+  [ "${#key}" -ge 32 ] || die "SEBOOK_RELAY_KEY doit faire au moins 32 caractères."
+  [ "$(env_value "$ETC/runtime/sebook.env" SEBOOK_RELAY_KEY)" = "$key" ] ||
+    die "SEBOOK_RELAY_KEY diffère entre l'API et SeBook."
   key=$(env_value "$ETC/deploy.env" API_URL)
   key=${key#https://}
   awk -v host="${key%%/*}" '$1 == "127.0.0.1" { for (i = 2; i <= NF; i++) if ($i == host) found = 1 } END { exit !found }' /etc/hosts ||
-    die "${key%%/*} doit pointer sur 127.0.0.1 dans /etc/hosts, sinon la console est refusée par Nginx."
+    die "${key%%/*} doit pointer sur 127.0.0.1 dans /etc/hosts, sinon Nginx refuse la console et efface les en-têtes de SeBook."
   [ -f /etc/nginx/eguardimmo/console-allow.conf ] || die "/etc/nginx/eguardimmo/console-allow.conf manquant."
   systemctl is-active --quiet mysql || die "MySQL est arrêté."
   systemctl is-active --quiet clamav-daemon || die "ClamAV est arrêté."
